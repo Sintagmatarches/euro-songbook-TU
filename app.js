@@ -1,0 +1,1111 @@
+﻿import { api } from "./ui/api.js";
+import { render, bind } from "./ui/render.js";
+import { router } from "./ui/router.js";
+import { state } from "./ui/state.js";
+import { getInitialLocale, setLocale, t } from "./ui/i18n.js";
+import { normalizeSongCountry, normalizeSongLanguage } from "./shared/song-catalogs.js";
+
+const btnLogin = document.getElementById("btnLogin");
+const btnLogout = document.getElementById("btnLogout");
+const btnMenuLogout = document.getElementById("btnMenuLogout");
+const btnSidebarToggle = document.getElementById("btnSidebarToggle");
+const btnMenuClose = document.getElementById("btnMenuClose");
+const menuDrawer = document.getElementById("menuDrawer");
+const menuBackdrop = document.getElementById("menuBackdrop");
+const mNavMenu = document.getElementById("mNavMenu");
+const btnThemeToggle = document.getElementById("btnThemeToggle");
+const btnInstallApp = document.getElementById("btnInstallApp");
+const themeToggleLabel = document.getElementById("themeToggleLabel");
+const userChip = document.getElementById("userChip");
+const topSearchWrap = document.getElementById("topSearchWrap");
+const topSearchInput = document.getElementById("topSearchInput");
+const topSearchBtn = document.getElementById("topSearchBtn");
+const appBootSplash = document.getElementById("appBootSplash");
+const appBootSplashTitle = document.getElementById("appBootSplashTitle");
+const appBootSplashSubtitle = document.getElementById("appBootSplashSubtitle");
+
+const dlgAuth = document.getElementById("dlgAuth");
+const btnAuthClose = document.getElementById("btnAuthClose");
+const authModeLogin = document.getElementById("authModeLogin");
+const authModeRegister = document.getElementById("authModeRegister");
+const authPaneLogin = document.getElementById("authPaneLogin");
+const authPaneRegister = document.getElementById("authPaneRegister");
+const authLoginNickname = document.getElementById("authLoginNickname");
+const authLoginPassword = document.getElementById("authLoginPassword");
+const authRegisterNickname = document.getElementById("authRegisterNickname");
+const authRegisterEmail = document.getElementById("authRegisterEmail");
+const authRegisterPassword = document.getElementById("authRegisterPassword");
+const authRegisterPasswordConfirm = document.getElementById("authRegisterPasswordConfirm");
+const authMsg = document.getElementById("authMsg");
+const doLogin = document.getElementById("doLogin");
+const doRegister = document.getElementById("doRegister");
+const localeSwitch = document.getElementById("localeSwitch");
+
+const THEME_KEY = "ui_theme";
+const THEMES = ["dark", "light"];
+let activeTheme = "dark";
+let deferredInstallPrompt = null;
+let authViewportCleanup = null;
+let authViewportRaf = 0;
+let authDialogMode = "login";
+const MOTION_MEDIUM_MS = 240;
+const MENU_DRAWER_MOTION_MS = 1220;
+const MENU_BACKDROP_MOTION_MS = 980;
+const DIALOG_MOTION_MS = 980;
+const PAGE_CURTAIN_MOTION_MS = 920;
+const activeTransitions = new WeakMap();
+let pageEnterTimer = 0;
+let stagedRevealTimer = 0;
+let pendingAdminRequestsCount = 0;
+let pendingAdminRequestsFetchedAt = 0;
+let pendingAdminRequestsUserKey = "";
+let pendingAdminRequestsFetchSeq = 0;
+const PENDING_ADMIN_REQUESTS_REFRESH_MS = 45_000;
+let appBootSplashHidden = false;
+let songPageBgParallaxRaf = 0;
+let songPageBgParallaxMetrics = null;
+let songPageBgParallaxLastMeasureAt = 0;
+let songPageBgParallaxLastShiftPx = Number.NaN;
+const SONG_PAGE_BG_PARALLAX_MIN_PX = 180;
+const SONG_PAGE_BG_PARALLAX_MAX_PX = 560;
+const SONG_PAGE_BG_PARALLAX_VIEWPORT_RATIO = 0.52;
+const SONG_PAGE_BG_PARALLAX_MOBILE_MIN_PX = 90;
+const SONG_PAGE_BG_PARALLAX_MOBILE_MAX_PX = 320;
+const SONG_PAGE_BG_PARALLAX_MOBILE_VIEWPORT_RATIO = 0.34;
+const SONG_PAGE_BG_PARALLAX_LAYOUT_MEASURE_INTERVAL_MS = 180;
+// Desired background-vs-foreground scroll ratio (bg : content).
+// Example: 0.2 means background moves ~5x slower than the text/content scroll.
+const SONG_PAGE_BG_PARALLAX_SCROLL_RATIO = 0.2;
+const SONG_PAGE_BG_PARALLAX_LONG_TEXT_SLOWDOWN_MAX = 2.3;
+const SONG_PAGE_BG_PARALLAX_LONG_TEXT_THRESHOLD_PX = 240;
+const STAGED_REVEAL_SELECTOR = ".card, .songCard, .yt-card, .pill, .badge, .song-version-btn, .pager-shell .btn";
+
+function hideAppBootSplash() {
+  if (!appBootSplash || appBootSplashHidden) return;
+  appBootSplashHidden = true;
+  appBootSplash.classList.add("is-hidden");
+  setTimeout(() => appBootSplash.remove(), 320);
+}
+
+function prefersReducedMotion() {
+  return window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+}
+
+function motionDuration(ms = MOTION_MEDIUM_MS) {
+  return prefersReducedMotion() ? 0 : ms;
+}
+
+function clearPendingTransition(node) {
+  const cleanup = activeTransitions.get(node);
+  if (!cleanup) return;
+  cleanup();
+  activeTransitions.delete(node);
+}
+
+function animateElementOpen(node) {
+  if (!node) return;
+  clearPendingTransition(node);
+  node.classList.remove("hidden", "is-closing", "is-open");
+  // Force layout so open transitions/animations restart reliably.
+  void node.offsetWidth;
+  requestAnimationFrame(() => {
+    requestAnimationFrame(() => {
+      if (node.classList.contains("hidden")) return;
+      node.classList.add("is-open");
+    });
+  });
+}
+
+function animateElementClose(node, options = {}) {
+  if (!node) return;
+  const duration = motionDuration(options.duration ?? MOTION_MEDIUM_MS);
+  const onClosed = typeof options.onClosed === "function" ? options.onClosed : null;
+  if (node.classList.contains("hidden") && !node.classList.contains("is-closing")) {
+    if (onClosed) onClosed();
+    return;
+  }
+  clearPendingTransition(node);
+  node.classList.remove("is-open");
+  node.classList.add("is-closing");
+
+  const finish = () => {
+    clearPendingTransition(node);
+    node.classList.remove("is-closing");
+    node.classList.add("hidden");
+    if (onClosed) onClosed();
+  };
+
+  if (duration === 0) {
+    finish();
+    return;
+  }
+
+  const onTransitionEnd = (event) => {
+    if (event.target !== node) return;
+    finish();
+  };
+  const timeoutId = setTimeout(finish, duration + 80);
+  node.addEventListener("transitionend", onTransitionEnd);
+  activeTransitions.set(node, () => {
+    clearTimeout(timeoutId);
+    node.removeEventListener("transitionend", onTransitionEnd);
+  });
+}
+
+function openDialogAnimated(dialog) {
+  if (!dialog) return;
+  clearPendingTransition(dialog);
+  dialog.classList.remove("is-open", "is-closing");
+  if (!dialog.open) dialog.showModal();
+  void dialog.offsetWidth;
+  requestAnimationFrame(() => {
+    requestAnimationFrame(() => {
+      if (!dialog.open) return;
+      dialog.classList.add("is-open");
+    });
+  });
+}
+
+function closeDialogAnimated(dialog) {
+  if (!dialog?.open) return;
+  const duration = motionDuration(DIALOG_MOTION_MS);
+  clearPendingTransition(dialog);
+  dialog.classList.remove("is-open");
+  dialog.classList.add("is-closing");
+
+  const finish = () => {
+    clearPendingTransition(dialog);
+    dialog.classList.remove("is-closing");
+    if (dialog.open) dialog.close();
+  };
+
+  if (duration === 0) {
+    finish();
+    return;
+  }
+
+  const onTransitionEnd = (event) => {
+    if (event.target !== dialog) return;
+    finish();
+  };
+  const timeoutId = setTimeout(finish, duration + 80);
+  dialog.addEventListener("transitionend", onTransitionEnd);
+  activeTransitions.set(dialog, () => {
+    clearTimeout(timeoutId);
+    dialog.removeEventListener("transitionend", onTransitionEnd);
+  });
+}
+
+function animateAppEnter(container) {
+  if (!container || prefersReducedMotion()) return;
+  clearTimeout(pageEnterTimer);
+  container.classList.remove("page-enter", "page-enter-active");
+  requestAnimationFrame(() => {
+    container.classList.add("page-enter");
+    requestAnimationFrame(() => container.classList.add("page-enter-active"));
+  });
+  pageEnterTimer = setTimeout(() => {
+    container.classList.remove("page-enter", "page-enter-active");
+  }, motionDuration(PAGE_CURTAIN_MOTION_MS) + 140);
+}
+
+function clearStagedReveal(container) {
+  clearTimeout(stagedRevealTimer);
+  if (!container) return;
+  container.classList.remove("stagger-ready");
+  container.querySelectorAll(".stagger-item").forEach((node) => {
+    node.classList.remove("stagger-item");
+    node.style.removeProperty("--stagger-index");
+  });
+}
+
+function animateStagedReveal(container) {
+  if (!container) return;
+  clearStagedReveal(container);
+  if (prefersReducedMotion()) return;
+
+  const nodes = Array.from(container.querySelectorAll(STAGED_REVEAL_SELECTOR)).filter((node) => {
+    if (node.classList.contains("hidden")) return false;
+    return !node.closest(".hidden");
+  });
+  if (!nodes.length) return;
+
+  nodes.forEach((node, index) => {
+    node.classList.add("stagger-item");
+    node.style.setProperty("--stagger-index", String(Math.min(index, 16)));
+  });
+
+  requestAnimationFrame(() => container.classList.add("stagger-ready"));
+  stagedRevealTimer = setTimeout(() => clearStagedReveal(container), motionDuration(620) + 140);
+}
+
+function resetSongPageBackgroundParallaxCache() {
+  songPageBgParallaxMetrics = null;
+  songPageBgParallaxLastMeasureAt = 0;
+  songPageBgParallaxLastShiftPx = Number.NaN;
+}
+
+function syncSongPageBackgroundParallax() {
+  if (!document.body.classList.contains("song-page-country-bg")) {
+    document.body.style.removeProperty("--song-page-bg-shift");
+    document.body.style.removeProperty("--song-page-bg-image");
+    document.body.style.removeProperty("--song-page-bg-image-desktop");
+    document.body.style.removeProperty("--song-page-bg-image-mobile");
+    document.body.style.removeProperty("--song-page-bg-focus-x-desktop");
+    document.body.style.removeProperty("--song-page-bg-focus-y-desktop");
+    document.body.style.removeProperty("--song-page-bg-focus-x-mobile");
+    document.body.style.removeProperty("--song-page-bg-focus-y-mobile");
+    resetSongPageBackgroundParallaxCache();
+    return;
+  }
+  if (prefersReducedMotion()) {
+    if (songPageBgParallaxLastShiftPx !== 0) {
+      document.body.style.setProperty("--song-page-bg-shift", "0px");
+      songPageBgParallaxLastShiftPx = 0;
+    }
+    return;
+  }
+  if (document.documentElement?.getAttribute("data-theme") === "light") {
+    if (songPageBgParallaxLastShiftPx !== 0) {
+      document.body.style.setProperty("--song-page-bg-shift", "0px");
+      songPageBgParallaxLastShiftPx = 0;
+    }
+    return;
+  }
+  if (document.body.classList.contains("song-page-country-bg-static")) {
+    if (songPageBgParallaxLastShiftPx !== 0) {
+      document.body.style.setProperty("--song-page-bg-shift", "0px");
+      songPageBgParallaxLastShiftPx = 0;
+    }
+    return;
+  }
+
+  const now = performance.now();
+  const scrollY = window.scrollY || window.pageYOffset || 0;
+  const viewportHeight = window.innerHeight || document.documentElement.clientHeight || 1;
+  const shouldMeasureLayout = (
+    !songPageBgParallaxMetrics
+    || (now - songPageBgParallaxLastMeasureAt) >= SONG_PAGE_BG_PARALLAX_LAYOUT_MEASURE_INTERVAL_MS
+    || songPageBgParallaxMetrics.viewportHeight !== viewportHeight
+  );
+  if (shouldMeasureLayout) {
+    const songCard = document.querySelector(".song-view .song-card-shell.song-card-shell-has-bg");
+    if (songCard) {
+      const cardRect = songCard.getBoundingClientRect();
+      const cardTop = cardRect.top + scrollY;
+      const cardHeight = Math.max(songCard.offsetHeight, viewportHeight);
+      const start = Math.max(0, cardTop - Math.round(viewportHeight * 0.08));
+      const end = Math.max(start + 1, cardTop + cardHeight - Math.round(viewportHeight * 0.62));
+      const scrollRangePx = Math.max(1, end - start);
+      songPageBgParallaxMetrics = {
+        viewportHeight,
+        start,
+        end,
+        scrollRangePx,
+        cardHeight,
+      };
+    } else {
+      const maxScroll = Math.max(1, document.documentElement.scrollHeight - viewportHeight);
+      songPageBgParallaxMetrics = {
+        viewportHeight,
+        start: 0,
+        end: maxScroll,
+        scrollRangePx: maxScroll,
+        cardHeight: viewportHeight,
+      };
+    }
+    songPageBgParallaxLastMeasureAt = now;
+  }
+
+  const metrics = songPageBgParallaxMetrics || {
+    viewportHeight,
+    start: 0,
+    end: 1,
+    scrollRangePx: 1,
+    cardHeight: viewportHeight,
+  };
+  const isMobile = window.matchMedia("(max-width: 960px)").matches;
+  const maxShift = isMobile
+    ? Math.max(
+      SONG_PAGE_BG_PARALLAX_MOBILE_MIN_PX,
+      Math.min(SONG_PAGE_BG_PARALLAX_MOBILE_MAX_PX, Math.round(viewportHeight * SONG_PAGE_BG_PARALLAX_MOBILE_VIEWPORT_RATIO))
+    )
+    : Math.max(
+      SONG_PAGE_BG_PARALLAX_MIN_PX,
+      Math.min(SONG_PAGE_BG_PARALLAX_MAX_PX, Math.round(viewportHeight * SONG_PAGE_BG_PARALLAX_VIEWPORT_RATIO))
+    );
+
+  const progressRange = Math.max(1, metrics.end - metrics.start);
+  const progress = Math.min(1, Math.max(0, (scrollY - metrics.start) / progressRange));
+  const scrollRangePx = metrics.scrollRangePx;
+
+  const cardHeightForSlowdown = metrics.cardHeight;
+  const longTextExtra = Math.max(0, cardHeightForSlowdown - viewportHeight - SONG_PAGE_BG_PARALLAX_LONG_TEXT_THRESHOLD_PX);
+  const longTextRatio = Math.min(1, longTextExtra / Math.max(1, viewportHeight));
+  const slowDownFactor = 1 + (SONG_PAGE_BG_PARALLAX_LONG_TEXT_SLOWDOWN_MAX - 1) * longTextRatio;
+
+  // Parallax: move background slower than content. We cap by maxShift so we never "overshoot" the image.
+  const desiredRange = Math.max(0, Math.round(scrollRangePx * SONG_PAGE_BG_PARALLAX_SCROLL_RATIO));
+  const rangePx = Math.min(maxShift, desiredRange);
+  const shiftPx = Math.round(((0.5 - progress) * rangePx) / slowDownFactor);
+  if (shiftPx !== songPageBgParallaxLastShiftPx) {
+    document.body.style.setProperty("--song-page-bg-shift", `${shiftPx}px`);
+    songPageBgParallaxLastShiftPx = shiftPx;
+  }
+}
+
+function scheduleSongPageBackgroundParallax() {
+  if (songPageBgParallaxRaf) return;
+  songPageBgParallaxRaf = requestAnimationFrame(() => {
+    songPageBgParallaxRaf = 0;
+    syncSongPageBackgroundParallax();
+  });
+}
+
+function handleSongPageBackgroundParallaxViewportChange() {
+  resetSongPageBackgroundParallaxCache();
+  scheduleSongPageBackgroundParallax();
+}
+
+function getRegisterErrorMessage(error) {
+  const status = Number(error?.status || 0);
+  if (status >= 500) {
+    const code = String(error?.data?.code || "");
+    if (code === "auth_schema_legacy") return t("auth.registerServerSchema");
+    return t("auth.registerServerTemporary");
+  }
+  const message = String(error?.message || "").toLowerCase();
+  if (message.includes("nickname")) {
+    if (state.locale === "ru") return "Проверьте ник: уже занят или формат недопустим.";
+    if (state.locale === "uk") return "Перевірте нік: уже зайнятий або формат недійсний.";
+    if (state.locale === "et") return "Kontrolli kasutajanime: juba hõivatud või vorming vale.";
+    return "Check nickname: already taken or invalid format.";
+  }
+  if (message.includes("passwords do not match")) {
+    if (state.locale === "ru") return "Пароли не совпадают.";
+    if (state.locale === "uk") return "Паролі не збігаються.";
+    if (state.locale === "et") return "Paroolid ei ühti.";
+    return "Passwords do not match.";
+  }
+  return error?.message || t("auth.registerFailed");
+}
+
+function authNicknameLabel() {
+  if (state.locale === "ru") return "Ник или email (для входа)";
+  if (state.locale === "uk") return "Нік або email (для входу)";
+  if (state.locale === "et") return "Kasutajanimi või email (sisselogimiseks)";
+  return "Nickname or email (for login)";
+}
+
+function authNicknameRegisterLabel() {
+  if (state.locale === "ru") return "Ник (для регистрации)";
+  if (state.locale === "uk") return "Нік (для реєстрації)";
+  if (state.locale === "et") return "Kasutajanimi (registreerimiseks)";
+  return "Nickname (for registration)";
+}
+
+function authEmailRegisterLabel() {
+  if (state.locale === "ru") return "Эл. почта";
+  if (state.locale === "uk") return "Ел. пошта";
+  if (state.locale === "et") return "Email";
+  return "Email";
+}
+
+function authPasswordConfirmLabel() {
+  if (state.locale === "ru") return "Повторите пароль";
+  if (state.locale === "uk") return "Повторіть пароль";
+  if (state.locale === "et") return "Korda parooli";
+  return "Repeat password";
+}
+
+function authNickAndPassRequiredMessage() {
+  if (state.locale === "ru") return "Введите ник/email и пароль.";
+  if (state.locale === "uk") return "Введіть нік/email і пароль.";
+  if (state.locale === "et") return "Sisesta kasutajanimi/email ja parool.";
+  return "Enter nickname/email and password.";
+}
+
+function authRegisterFieldsRequiredMessage() {
+  if (state.locale === "ru") return "Для регистрации нужны ник, email и пароль.";
+  if (state.locale === "uk") return "Для реєстрації потрібні нік, email і пароль.";
+  if (state.locale === "et") return "Registreerimiseks on vaja kasutajanime, emaili ja parooli.";
+  return "Nickname, email and password are required for registration.";
+}
+
+function authPasswordMismatchMessage() {
+  if (state.locale === "ru") return "Пароли не совпадают.";
+  if (state.locale === "uk") return "Паролі не збігаються.";
+  if (state.locale === "et") return "Paroolid ei ühti.";
+  return "Passwords do not match.";
+}
+
+function setAuthDialogMode(mode = "login") {
+  authDialogMode = mode === "register" ? "register" : "login";
+  const isLogin = authDialogMode === "login";
+  authPaneLogin?.classList.toggle("hidden", !isLogin);
+  authPaneRegister?.classList.toggle("hidden", isLogin);
+  authModeLogin?.classList.toggle("is-active", isLogin);
+  authModeRegister?.classList.toggle("is-active", !isLogin);
+  const authTitle = document.getElementById("authTitle");
+  if (authTitle) authTitle.textContent = isLogin ? t("auth.login") : t("auth.doRegister");
+  if (isLogin) {
+    if (authLoginNickname && !authLoginNickname.value.trim() && authRegisterNickname?.value?.trim()) {
+      authLoginNickname.value = authRegisterNickname.value.trim();
+    }
+    authLoginNickname?.focus({ preventScroll: true });
+  } else {
+    if (authRegisterNickname && !authRegisterNickname.value.trim() && authLoginNickname?.value?.trim()) {
+      authRegisterNickname.value = authLoginNickname.value.trim();
+    }
+    authRegisterNickname?.focus({ preventScroll: true });
+  }
+  authMsg.textContent = "";
+}
+
+function setAuthKeyboardOffset(px = 0) {
+  document.documentElement.style.setProperty("--auth-kb-offset", `${Math.max(0, Math.round(px))}px`);
+}
+
+function stopAuthViewportSync() {
+  if (authViewportCleanup) {
+    authViewportCleanup();
+    authViewportCleanup = null;
+  }
+  if (authViewportRaf) {
+    cancelAnimationFrame(authViewportRaf);
+    authViewportRaf = 0;
+  }
+  setAuthKeyboardOffset(0);
+  document.body.classList.remove("auth-dialog-open");
+}
+
+function startAuthViewportSync() {
+  if (!dlgAuth?.open) return;
+  stopAuthViewportSync();
+  document.body.classList.add("auth-dialog-open");
+
+  const vv = window.visualViewport;
+  const update = () => {
+    if (!dlgAuth?.open) return;
+    if (!vv) {
+      setAuthKeyboardOffset(0);
+      return;
+    }
+    const layoutHeight = window.innerHeight || document.documentElement.clientHeight || 0;
+    const visualBottom = vv.height + vv.offsetTop;
+    const coveredByKeyboard = Math.max(0, layoutHeight - visualBottom);
+    const keyboardLikelyOpen = coveredByKeyboard > 90;
+    const maxShift = Math.round(layoutHeight * 0.55);
+    setAuthKeyboardOffset(keyboardLikelyOpen ? Math.min(coveredByKeyboard + 8, maxShift) : 0);
+  };
+  const schedule = () => {
+    if (authViewportRaf) cancelAnimationFrame(authViewportRaf);
+    authViewportRaf = requestAnimationFrame(update);
+  };
+  const onFocusChange = () => schedule();
+
+  if (vv) {
+    vv.addEventListener("resize", schedule);
+    vv.addEventListener("scroll", schedule);
+  }
+  window.addEventListener("orientationchange", schedule);
+  [
+    authLoginNickname,
+    authLoginPassword,
+    authRegisterNickname,
+    authRegisterEmail,
+    authRegisterPassword,
+    authRegisterPasswordConfirm,
+  ].forEach((el) => {
+    el?.addEventListener("focus", onFocusChange);
+    el?.addEventListener("blur", onFocusChange);
+  });
+
+  authViewportCleanup = () => {
+    if (vv) {
+      vv.removeEventListener("resize", schedule);
+      vv.removeEventListener("scroll", schedule);
+    }
+    window.removeEventListener("orientationchange", schedule);
+    [
+      authLoginNickname,
+      authLoginPassword,
+      authRegisterNickname,
+      authRegisterEmail,
+      authRegisterPassword,
+      authRegisterPasswordConfirm,
+    ].forEach((el) => {
+      el?.removeEventListener("focus", onFocusChange);
+      el?.removeEventListener("blur", onFocusChange);
+    });
+  };
+
+  schedule();
+}
+
+function topSearchText() {
+  if (state.locale === "ru") return { action: "Искать", placeholder: "Искать…" };
+  if (state.locale === "uk") return { action: "Шукати", placeholder: "Шукати…" };
+  if (state.locale === "et") return { action: "Otsi", placeholder: "Otsi…" };
+  return { action: "Search", placeholder: "Search…" };
+}
+
+function installButtonText() {
+  if (state.locale === "ru") return "Установить приложение";
+  if (state.locale === "uk") return "Встановити застосунок";
+  if (state.locale === "et") return "Paigalda rakendus";
+  return "Install app";
+}
+
+function addSongNavText() {
+  if (state.locale === "ru") return "Добавить песню";
+  if (state.locale === "uk") return "Додати пісню";
+  if (state.locale === "et") return "Lisa laul";
+  return "Add song";
+}
+
+function brandSubtitleText() {
+  if (state.locale === "ru") return "Европейский исторический песенник";
+  if (state.locale === "uk") return "Європейський історичний пісенник";
+  if (state.locale === "et") return "Euroopa ajalooline laulik";
+  return "European Historical Songbook";
+}
+
+function appBootLoadingText() {
+  if (state.locale === "ru") return "Загрузка...";
+  if (state.locale === "uk") return "Завантаження...";
+  if (state.locale === "et") return "Laadimine...";
+  return "Loading...";
+}
+
+function getHashQuery() {
+  const hash = location.hash || "#/";
+  const raw = hash.startsWith("#/") ? hash.slice(2) : hash.slice(1);
+  const [, queryPart] = raw.split("?");
+  return new URLSearchParams(queryPart || "");
+}
+
+function setTopSearchState(route) {
+  if (!topSearchWrap || !topSearchInput) return;
+  const isHome = route?.name === "home";
+  const isVisible = !topSearchWrap.classList.contains("hidden") && !topSearchWrap.classList.contains("is-closing");
+  if (isHome && !isVisible) animateElementOpen(topSearchWrap);
+  if (!isHome && isVisible) animateElementClose(topSearchWrap, { duration: 560 });
+  if (!isHome) return;
+  const query = route?.query || Object.fromEntries(getHashQuery());
+  topSearchInput.value = query.q || "";
+}
+
+function runTopSearch() {
+  const q = (topSearchInput?.value || "").trim();
+  const current = getHashQuery();
+  const next = new URLSearchParams();
+  if (q) next.set("q", q);
+  const rawLang = current.get("lang") || "";
+  const lang = normalizeSongLanguage(rawLang) || rawLang;
+  const rawCountry = current.get("country") || "";
+  const country = normalizeSongCountry(rawCountry) || rawCountry;
+  const period = (current.get("period") || "").trim();
+  const performer = (current.get("performer") || "").trim();
+  const year = (current.get("year") || "").trim();
+  if (lang) next.set("lang", lang);
+  if (country) next.set("country", country);
+  if (period) next.set("period", period);
+  if (performer) next.set("performer", performer);
+  if (year) next.set("year", year);
+  next.set("searched", "1");
+  next.set("adv", current.get("adv") || "0");
+  next.set("page", "1");
+  location.hash = `#/${next.toString() ? `?${next.toString()}` : ""}`;
+}
+
+function setNavLabel(id, text) {
+  const node = document.getElementById(id);
+  if (!node) return;
+  const textNode = node.querySelector(".ig-text, .yt-bottom-text");
+  if (textNode) {
+    textNode.textContent = text;
+    return;
+  }
+  node.textContent = text;
+}
+
+function deriveUserDisplayName(user) {
+  if (!user || typeof user !== "object") return "";
+  const nickname = String(user.nickname || "").trim();
+  if (nickname) return nickname;
+  const email = String(user.email || "").trim();
+  if (!email) return "";
+  const at = email.indexOf("@");
+  if (at > 0) return email.slice(0, at);
+  return email;
+}
+
+function updateUserChip() {
+  if (!userChip) return;
+  const displayName = deriveUserDisplayName(state.user);
+  if (!state.user || !displayName) {
+    userChip.textContent = "";
+    userChip.classList.add("hidden");
+    userChip.removeAttribute("title");
+    return;
+  }
+  const email = String(state.user.email || "").trim();
+  userChip.textContent = displayName;
+  userChip.classList.remove("hidden");
+  if (email) userChip.title = email;
+  else userChip.removeAttribute("title");
+}
+
+function canReviewAdminRequests() {
+  if (!state.user) return false;
+  return state.user.role === "super_admin";
+}
+
+function adminAttentionSuffix() {
+  return pendingAdminRequestsCount > 0 ? " !" : "";
+}
+
+function applyAdminAttentionLabels() {
+  const adminText = `${t("nav.admin")}${adminAttentionSuffix()}`;
+  setNavLabel("navAdmin", adminText);
+  setNavLabel("mNavAdmin", adminText);
+  setNavLabel("dNavAdmin", adminText);
+  const requestsText = `${t("admin.tab.requests")}${adminAttentionSuffix()}`;
+  setNavLabel("dNavAdminRequests", requestsText);
+  const menuAdminLabel = document.getElementById("menuAdminLabel");
+  if (menuAdminLabel) menuAdminLabel.textContent = `${t("menu.admin")}${adminAttentionSuffix()}`;
+}
+
+async function refreshAdminRequestsAttention(options = {}) {
+  const force = options.force === true;
+  if (!canReviewAdminRequests()) {
+    pendingAdminRequestsCount = 0;
+    pendingAdminRequestsFetchedAt = 0;
+    pendingAdminRequestsUserKey = "";
+    applyAdminAttentionLabels();
+    return;
+  }
+
+  const userKey = state.user?.id || state.user?.email || "admin";
+  const now = Date.now();
+  if (!force && pendingAdminRequestsUserKey === userKey && now - pendingAdminRequestsFetchedAt < PENDING_ADMIN_REQUESTS_REFRESH_MS) {
+    applyAdminAttentionLabels();
+    return;
+  }
+
+  const fetchSeq = ++pendingAdminRequestsFetchSeq;
+  try {
+    const out = await api.adminRequests({ status: "new", q: "", page: 1 });
+    if (fetchSeq !== pendingAdminRequestsFetchSeq) return;
+    pendingAdminRequestsCount = Math.max(0, Number(out?.total || 0));
+    pendingAdminRequestsFetchedAt = Date.now();
+    pendingAdminRequestsUserKey = userKey;
+  } catch {
+    if (fetchSeq !== pendingAdminRequestsFetchSeq) return;
+    pendingAdminRequestsCount = 0;
+    pendingAdminRequestsFetchedAt = Date.now();
+    pendingAdminRequestsUserKey = userKey;
+  }
+  applyAdminAttentionLabels();
+}
+
+function getInitialTheme() {
+  const raw = localStorage.getItem(THEME_KEY) || "dark";
+  return THEMES.includes(raw) ? raw : "dark";
+}
+
+function updateThemeToggleText() {
+  if (!themeToggleLabel) return;
+  const mode = activeTheme === "light" ? t("theme.light") : t("theme.dark");
+  themeToggleLabel.textContent = t("theme.current", { mode });
+}
+
+function applyTheme(theme, options = {}) {
+  const persist = options.persist !== false;
+  activeTheme = THEMES.includes(theme) ? theme : "dark";
+  document.documentElement.setAttribute("data-theme", activeTheme);
+  if (persist) localStorage.setItem(THEME_KEY, activeTheme);
+  updateThemeToggleText();
+}
+
+function toggleTheme() {
+  applyTheme(activeTheme === "dark" ? "light" : "dark");
+}
+
+function applyStaticTexts() {
+  document.title = t("app.title");
+  document.getElementById("brandTitle").textContent = t("app.title");
+  document.getElementById("brandSubtitle").textContent = brandSubtitleText();
+  if (appBootSplashTitle) appBootSplashTitle.textContent = t("app.title");
+  if (appBootSplashSubtitle) appBootSplashSubtitle.textContent = appBootLoadingText();
+
+  setNavLabel("navCatalog", t("nav.catalog"));
+  setNavLabel("navRequest", addSongNavText());
+  setNavLabel("navFav", t("nav.favorites"));
+
+  setNavLabel("mNavCatalog", t("nav.catalog"));
+  setNavLabel("mNavRequest", addSongNavText());
+  setNavLabel("mNavFav", t("nav.favorites"));
+  setNavLabel("mNavMenu", t("menu.title"));
+
+  setNavLabel("dNavCatalog", t("nav.catalog"));
+  setNavLabel("dNavRequest", addSongNavText());
+  setNavLabel("dNavFav", t("nav.favorites"));
+  setNavLabel("dNavAdminContent", t("admin.tab.content"));
+  setNavLabel("dNavAdminUsers", t("admin.tab.users"));
+
+  document.getElementById("menuTitle").textContent = t("menu.title");
+  document.getElementById("menuMainLabel").textContent = t("menu.sections");
+  document.getElementById("menuSettingsLabel").textContent = t("menu.settings");
+
+  btnSidebarToggle.setAttribute("aria-label", t("menu.open"));
+  if (btnMenuClose) btnMenuClose.setAttribute("aria-label", t("menu.close"));
+
+  btnLogin.textContent = t("auth.login");
+  if (btnLogout) btnLogout.textContent = t("auth.logout");
+  if (btnMenuLogout) btnMenuLogout.textContent = t("auth.logout");
+  if (topSearchInput && topSearchBtn) {
+    const labels = topSearchText();
+    topSearchInput.placeholder = labels.placeholder;
+    topSearchBtn.textContent = labels.action;
+  }
+
+  const footerNote = document.getElementById("footerNote");
+  if (footerNote) footerNote.textContent = t("footer.note");
+  document.getElementById("authTitle").textContent = authDialogMode === "register" ? t("auth.doRegister") : t("auth.login");
+  document.getElementById("authLoginNicknameLabel").textContent = authNicknameLabel();
+  document.getElementById("authLoginPasswordLabel").textContent = t("auth.password");
+  document.getElementById("authRegisterNicknameLabel").textContent = authNicknameRegisterLabel();
+  document.getElementById("authRegisterEmailLabel").textContent = authEmailRegisterLabel();
+  document.getElementById("authRegisterPasswordLabel").textContent = t("auth.password");
+  document.getElementById("authRegisterPasswordConfirmLabel").textContent = authPasswordConfirmLabel();
+  if (authModeLogin) authModeLogin.textContent = t("auth.doLogin");
+  if (authModeRegister) authModeRegister.textContent = t("auth.doRegister");
+  doLogin.textContent = t("auth.doLogin");
+  doRegister.textContent = t("auth.doRegister");
+
+  document.getElementById("promptTitle").textContent = t("prompt.title");
+  document.getElementById("promptTextLabel").textContent = t("prompt.text");
+  document.getElementById("promptCopy").textContent = t("prompt.copy");
+  document.getElementById("promptOpen").textContent = t("prompt.open");
+  document.getElementById("promptClose").textContent = t("prompt.close");
+  if (btnInstallApp) btnInstallApp.textContent = installButtonText();
+  updateThemeToggleText();
+
+  if (localeSwitch) {
+    const labels = { ru: "Rus", et: "Est", en: "Eng", uk: "Ukr" };
+    Array.from(localeSwitch.options).forEach((option) => {
+      option.textContent = labels[option.value] || option.textContent;
+    });
+    localeSwitch.value = state.locale;
+  }
+  applyAdminAttentionLabels();
+  updateUserChip();
+}
+
+function updateInstallButtonVisibility() {
+  if (!btnInstallApp) return;
+  btnInstallApp.classList.toggle("hidden", !deferredInstallPrompt);
+}
+
+function setupInstallPrompt() {
+  if (!btnInstallApp) return;
+  updateInstallButtonVisibility();
+
+  window.addEventListener("beforeinstallprompt", (event) => {
+    event.preventDefault();
+    deferredInstallPrompt = event;
+    updateInstallButtonVisibility();
+  });
+
+  window.addEventListener("appinstalled", () => {
+    deferredInstallPrompt = null;
+    updateInstallButtonVisibility();
+  });
+
+  btnInstallApp.addEventListener("click", async () => {
+    if (!deferredInstallPrompt) return;
+    try {
+      await deferredInstallPrompt.prompt();
+      await deferredInstallPrompt.userChoice;
+    } catch {}
+    deferredInstallPrompt = null;
+    updateInstallButtonVisibility();
+    setMenuOpen(false);
+  });
+}
+
+async function registerServiceWorker() {
+  if (!("serviceWorker" in navigator)) return;
+  try {
+    const swUrl = new URL("./service-worker.js", import.meta.url);
+    const scope = new URL("./", import.meta.url).pathname;
+    const registration = await navigator.serviceWorker.register(swUrl, { scope });
+    if (registration.waiting) {
+      registration.waiting.postMessage({ type: "SKIP_WAITING" });
+    }
+    await navigator.serviceWorker.ready;
+  } catch (error) {
+    console.warn("Service Worker registration failed", error);
+  }
+}
+
+function normalizePath(hash) {
+  const raw = (hash || "#/").replace(/^#/, "");
+  const path = raw.split("?")[0] || "/";
+  return path.startsWith("/") ? path : `/${path}`;
+}
+
+function isLinkActive(path, href) {
+  const hrefPath = normalizePath(href || "#/");
+  if (hrefPath === "/") return path === "/";
+  return path === hrefPath || path.startsWith(`${hrefPath}/`);
+}
+
+function setMenuOpen(open) {
+  if (!menuDrawer || !menuBackdrop) return;
+  if (open) {
+    animateElementOpen(menuBackdrop);
+    animateElementOpen(menuDrawer);
+    menuDrawer.setAttribute("aria-hidden", "false");
+    document.body.classList.add("menu-open");
+    return;
+  }
+  menuDrawer.setAttribute("aria-hidden", "true");
+  animateElementClose(menuDrawer, { duration: MENU_DRAWER_MOTION_MS });
+  animateElementClose(menuBackdrop, { duration: MENU_BACKDROP_MOTION_MS });
+  document.body.classList.remove("menu-open");
+}
+
+function setActiveNav() {
+  const path = normalizePath(location.hash || "#/");
+  Array.from(document.querySelectorAll(".js-route-link")).forEach((a) => {
+    const href = a.getAttribute("href") || "#/";
+    a.classList.toggle("active", isLinkActive(path, href));
+  });
+
+  const canSeeUser = !!state.user;
+  const isAdmin = !!(state.user && state.user.role === "super_admin");
+  const isSuperAdmin = !!(state.user && state.user.role === "super_admin");
+
+  ["navFav", "mNavFav", "dNavFav"].forEach((id) => document.getElementById(id)?.classList.toggle("hidden", !canSeeUser));
+  ["navAdmin", "mNavAdmin", "dNavAdmin", "menuAdminGroup", "dNavAdminContent", "dNavAdminRequests"].forEach((id) => document.getElementById(id)?.classList.toggle("hidden", !isAdmin));
+  document.getElementById("dNavAdminUsers")?.classList.toggle("hidden", !isSuperAdmin);
+
+  btnLogin.classList.toggle("hidden", !!state.user);
+  if (btnLogout) btnLogout.classList.add("hidden");
+  if (btnMenuLogout) btnMenuLogout.classList.toggle("hidden", !state.user);
+  applyAdminAttentionLabels();
+  updateUserChip();
+}
+
+async function refreshMe() {
+  const token = localStorage.getItem("token");
+  if (!token) {
+    state.user = null;
+    setActiveNav();
+    return;
+  }
+  try {
+    state.user = await api.me();
+  } catch {
+    state.user = null;
+  }
+  setActiveNav();
+  void refreshAdminRequestsAttention({ force: true });
+}
+
+async function refreshRoute() {
+  router.handle();
+}
+
+state.locale = getInitialLocale();
+setLocale(state.locale);
+activeTheme = getInitialTheme();
+applyTheme(activeTheme, { persist: false });
+applyStaticTexts();
+setupInstallPrompt();
+void registerServiceWorker();
+
+if (localeSwitch) {
+  localeSwitch.addEventListener("change", () => {
+    setLocale(localeSwitch.value);
+    applyStaticTexts();
+    refreshRoute();
+  });
+}
+
+btnSidebarToggle?.addEventListener("click", () => setMenuOpen(true));
+btnMenuClose?.addEventListener("click", () => setMenuOpen(false));
+menuBackdrop?.addEventListener("click", () => setMenuOpen(false));
+mNavMenu?.addEventListener("click", () => setMenuOpen(true));
+menuDrawer?.querySelectorAll(".js-route-link").forEach((link) => link.addEventListener("click", () => setMenuOpen(false)));
+btnThemeToggle?.addEventListener("click", toggleTheme);
+topSearchBtn?.addEventListener("click", runTopSearch);
+topSearchInput?.addEventListener("keydown", (e) => {
+  if (e.key !== "Enter") return;
+  e.preventDefault();
+  runTopSearch();
+});
+
+window.addEventListener("keydown", (e) => {
+  if (e.key === "Escape") setMenuOpen(false);
+});
+
+btnLogin.addEventListener("click", () => {
+  authMsg.textContent = "";
+  if (authLoginNickname) authLoginNickname.value = state.lastNickname || "";
+  if (authLoginPassword) authLoginPassword.value = "";
+  if (authRegisterNickname) authRegisterNickname.value = state.lastNickname || "";
+  if (authRegisterEmail) authRegisterEmail.value = "";
+  if (authRegisterPassword) authRegisterPassword.value = "";
+  if (authRegisterPasswordConfirm) authRegisterPasswordConfirm.value = "";
+  setAuthDialogMode("login");
+  openDialogAnimated(dlgAuth);
+  startAuthViewportSync();
+});
+authModeLogin?.addEventListener("click", () => setAuthDialogMode("login"));
+authModeRegister?.addEventListener("click", () => setAuthDialogMode("register"));
+btnAuthClose?.addEventListener("click", () => closeDialogAnimated(dlgAuth));
+dlgAuth?.addEventListener("click", (e) => {
+  const rect = dlgAuth.getBoundingClientRect();
+  const inside = (
+    e.clientX >= rect.left
+    && e.clientX <= rect.right
+    && e.clientY >= rect.top
+    && e.clientY <= rect.bottom
+  );
+  if (!inside) closeDialogAnimated(dlgAuth);
+});
+dlgAuth?.addEventListener("cancel", (e) => {
+  e.preventDefault();
+  closeDialogAnimated(dlgAuth);
+});
+dlgAuth?.addEventListener("close", () => {
+  clearPendingTransition(dlgAuth);
+  dlgAuth.classList.remove("is-open", "is-closing");
+  stopAuthViewportSync();
+});
+
+async function doLogout() {
+  await api.logout();
+  state.user = null;
+  pendingAdminRequestsCount = 0;
+  pendingAdminRequestsFetchedAt = 0;
+  pendingAdminRequestsUserKey = "";
+  setActiveNav();
+  router.go("#/");
+}
+
+btnLogout?.addEventListener("click", doLogout);
+btnMenuLogout?.addEventListener("click", async () => {
+  await doLogout();
+  setMenuOpen(false);
+});
+
+doLogin.addEventListener("click", async (e) => {
+  e.preventDefault();
+  authMsg.textContent = "";
+  const nickname = authLoginNickname?.value?.trim() || "";
+  const password = authLoginPassword?.value || "";
+  if (!nickname || !password) {
+    authMsg.textContent = authNickAndPassRequiredMessage();
+    return;
+  }
+  state.lastNickname = nickname;
+  try {
+    await api.login(nickname, password);
+    closeDialogAnimated(dlgAuth);
+    await refreshMe();
+    router.go("#/");
+  } catch (error) {
+    authMsg.textContent = error?.message || t("auth.loginFailed");
+  }
+});
+
+doRegister.addEventListener("click", async (e) => {
+  e.preventDefault();
+  authMsg.textContent = "";
+  const nickname = authRegisterNickname?.value?.trim() || "";
+  const email = authRegisterEmail?.value?.trim() || "";
+  const password = authRegisterPassword?.value || "";
+  const passwordConfirm = authRegisterPasswordConfirm?.value || "";
+  if (!nickname || !email || !password) {
+    authMsg.textContent = authRegisterFieldsRequiredMessage();
+    return;
+  }
+  if (password !== passwordConfirm) {
+    authMsg.textContent = authPasswordMismatchMessage();
+    return;
+  }
+  state.lastNickname = nickname;
+  try {
+    await api.register(nickname, email, password, passwordConfirm);
+    closeDialogAnimated(dlgAuth);
+    await refreshMe();
+    router.go("#/");
+  } catch (error) {
+    authMsg.textContent = getRegisterErrorMessage(error);
+  }
+});
+
+router.on(async (route) => {
+  setTopSearchState(route);
+  setActiveNav();
+  const app = document.getElementById("app");
+  app.classList.toggle("song-layout", route?.name === "song");
+  const isAdminMobile = route?.name === "admin" && window.matchMedia("(max-width: 980px)").matches;
+  app.innerHTML = `<div class="card"><div class="skeleton"></div></div>`;
+  try {
+    const out = await render(route);
+    app.innerHTML = out.html;
+    bind(route, out.ctx);
+    if (route?.name === "admin" && route?.section === "editor") {
+      window.scrollTo({ top: 0, left: 0, behavior: "auto" });
+    }
+    if (isAdminMobile) {
+      clearStagedReveal(app);
+      app.classList.remove("page-enter", "page-enter-active");
+    } else {
+      animateAppEnter(app);
+      animateStagedReveal(app);
+    }
+  } catch (error) {
+    const msg = error?.message || t("app.unexpectedError");
+    app.innerHTML = `<div class="card"><div class="h1">${t("common.error")}</div><div class="sep"></div><div class="muted">${msg}</div></div>`;
+    if (isAdminMobile) {
+      clearStagedReveal(app);
+      app.classList.remove("page-enter", "page-enter-active");
+    } else {
+      animateAppEnter(app);
+      animateStagedReveal(app);
+    }
+  }
+  setMenuOpen(false);
+  setActiveNav();
+  setTopSearchState(route);
+  void refreshAdminRequestsAttention();
+  resetSongPageBackgroundParallaxCache();
+  scheduleSongPageBackgroundParallax();
+  hideAppBootSplash();
+});
+
+window.addEventListener("hashchange", () => {
+  setMenuOpen(false);
+  router.handle();
+  resetSongPageBackgroundParallaxCache();
+  scheduleSongPageBackgroundParallax();
+});
+
+// Keep parallax synced to scroll/viewport changes.
+window.addEventListener("scroll", scheduleSongPageBackgroundParallax, { passive: true });
+window.addEventListener("resize", handleSongPageBackgroundParallaxViewportChange);
+window.visualViewport?.addEventListener?.("resize", handleSongPageBackgroundParallaxViewportChange);
+
+await refreshMe();
+router.handle();
+resetSongPageBackgroundParallaxCache();
+scheduleSongPageBackgroundParallax();
+setTimeout(hideAppBootSplash, 5200);
+

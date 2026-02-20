@@ -1,0 +1,9 @@
+{
+  "scripts": {
+    "build": "npx wrangler pages functions build functions --outdir .wrangler-build",
+    "check": "npm run build"
+  },
+  "dependencies": {
+    "@libsql/client": "^0.17.0"
+  }
+}
