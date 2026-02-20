@@ -78,37 +78,80 @@ export async function onRequestGet({ env, request }) {
       .filter(Boolean)
       .slice(0, 8)
       .map((t) => t.replace(/["']/g, ""));
-    if (!tokens.length) return json({ items: [], total: 0, page: 1, pages: 1 });
+    if (!tokens.length) return json({ items: [], total: 0, page: 1, pages: 1, search_mode: "exact", suggestions: [], suggestions_total: 0 });
 
-    const ftsQuery = tokens.map((t) => `${t}*`).join(" OR ");
+    const cleanedPhrase = tokens.join(" ").trim();
+    const phraseQuery = cleanedPhrase ? `"${cleanedPhrase}"` : "";
+    const strictTokensQuery = tokens.join(" AND ");
+    const fuzzyQuery = tokens.map((t) => `${t}*`).join(" OR ");
+
     const { where, params } = buildSqlFilters(filters, { includeAdminContent });
-    where.push("songs_fts MATCH ?");
-
-    const fullParams = [...params, ftsQuery];
     const fromSql = `
       FROM songs_fts
       JOIN songs s ON s.id = songs_fts.song_id
     `;
-    const whereSql = `WHERE ${where.join(" AND ")}`;
+    const runFts = async (matchQuery, mode) => {
+      const whereWithMatch = [...where, "songs_fts MATCH ?"];
+      const whereSql = `WHERE ${whereWithMatch.join(" AND ")}`;
+      const fullParams = [...params, matchQuery];
+      const totalRow = await dbGet(env, `SELECT COUNT(*) AS c ${fromSql} ${whereSql}`, fullParams);
+      const total = Number(totalRow?.c || 0);
+      if (!total) return null;
+      const pages = Math.max(1, Math.ceil(total / per));
+      const safePage = Math.min(page, pages);
+      const offset = (safePage - 1) * per;
+      const items = await dbAll(
+        env,
+        `SELECT s.id, s.title, s.subtitle, s.lang, s.country, s.period, s.year,
+                snippet(songs_fts, 1, '', '', '...', 12) AS snippet
+         ${fromSql}
+         ${whereSql}
+         ORDER BY bm25(songs_fts) ASC, s.title ASC
+         LIMIT ? OFFSET ?`,
+        [...fullParams, per, offset]
+      );
+      return { items, total, page: safePage, pages, mode };
+    };
 
-    const totalRow = await dbGet(env, `SELECT COUNT(*) AS c ${fromSql} ${whereSql}`, fullParams);
-    const total = Number(totalRow?.c || 0);
-    const pages = Math.max(1, Math.ceil(total / per));
-    const safePage = Math.min(page, pages);
-    const offset = (safePage - 1) * per;
+    const exactPhrase = phraseQuery ? await runFts(phraseQuery, "exact_phrase") : null;
+    if (exactPhrase) {
+      return json({
+        items: exactPhrase.items,
+        total: exactPhrase.total,
+        page: exactPhrase.page,
+        pages: exactPhrase.pages,
+        search_mode: "exact",
+        suggestions: [],
+        suggestions_total: 0,
+      });
+    }
 
-    const items = await dbAll(
-      env,
-      `SELECT s.id, s.title, s.subtitle, s.lang, s.country, s.period, s.year,
-              snippet(songs_fts, 1, '', '', '...', 12) AS snippet
-       ${fromSql}
-       ${whereSql}
-       ORDER BY bm25(songs_fts) ASC, s.title ASC
-       LIMIT ? OFFSET ?`,
-      [...fullParams, per, offset]
-    );
+    const exactTokens = strictTokensQuery ? await runFts(strictTokensQuery, "exact_tokens") : null;
+    if (exactTokens) {
+      return json({
+        items: exactTokens.items,
+        total: exactTokens.total,
+        page: exactTokens.page,
+        pages: exactTokens.pages,
+        search_mode: "exact",
+        suggestions: [],
+        suggestions_total: 0,
+      });
+    }
 
-    return json({ items, total, page: safePage, pages });
+    const fuzzy = await runFts(fuzzyQuery, "fuzzy");
+    const suggestionItems = fuzzy?.items || [];
+    const suggestionTotal = Number(fuzzy?.total || 0);
+
+    return json({
+      items: [],
+      total: 0,
+      page: 1,
+      pages: 1,
+      search_mode: "suggestions",
+      suggestions: suggestionItems,
+      suggestions_total: suggestionTotal,
+    });
   }
 
   const { where, params } = buildSqlFilters(filters, { includeAdminContent });
@@ -131,5 +174,5 @@ export async function onRequestGet({ env, request }) {
     [...params, per, offset]
   );
 
-  return json({ items, total, page: safePage, pages });
+  return json({ items, total, page: safePage, pages, search_mode: "browse", suggestions: [], suggestions_total: 0 });
 }

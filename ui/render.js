@@ -1195,7 +1195,7 @@ function homeUI(data, params, homeExtras = {}) {
     : `<div class="card"><div class="muted">${esc(homeCountryNoDataText())}</div></div>`;
 
   const flagDevice = preferredFlagCardDevice();
-  const cards = (data.items || []).map((s) => {
+  const renderSongCards = (items = []) => items.map((s) => {
     const isVerified = Number(s?.verified || 0) === 1;
     const countryKey = normalizeSongCountry(s?.country || "");
     const background = countryKey ? (backgroundsByCountry.get(countryKey) || {}) : {};
@@ -1226,6 +1226,26 @@ function homeUI(data, params, homeExtras = {}) {
   `;
   }).join("");
 
+  const cards = renderSongCards(data.items || []);
+  const suggestions = Array.isArray(data?.suggestions) ? data.suggestions : [];
+  const suggestionCards = renderSongCards(suggestions);
+  const hasExactResults = (data.items || []).length > 0;
+  const hasSuggestions = suggestions.length > 0;
+  const maybeYouSearchedTitle = uiLocale() === "ru"
+    ? "Возможно, вы искали"
+    : uiLocale() === "uk"
+      ? "Можливо, ви шукали"
+      : uiLocale() === "et"
+        ? "Võib-olla otsisite"
+        : "Maybe you searched for";
+  const exactNotFoundText = uiLocale() === "ru"
+    ? "Точного совпадения не найдено."
+    : uiLocale() === "uk"
+      ? "Точного збігу не знайдено."
+      : uiLocale() === "et"
+        ? "Täpset vastet ei leitud."
+        : "No exact match found.";
+
   const shouldShowResults = didSearch;
 
   return `
@@ -1251,10 +1271,6 @@ function homeUI(data, params, homeExtras = {}) {
       </div>
 
       <div class="yt-chips ${showAdvanced ? "is-open" : "hidden"}" id="yt_advancedPanel">
-        <label class="yt-chip-input">
-          <span>${esc(t("common.search"))}</span>
-          <input class="input" id="yt_q" value="${esc(q)}" />
-        </label>
         <label class="yt-chip-input">
           <span>${esc(t("field.lang"))}</span>
           <select class="select" id="yt_lang">${selectOptions("language", lang, uiText("selectLanguage"))}</select>
@@ -1302,7 +1318,7 @@ function homeUI(data, params, homeExtras = {}) {
         </div>
       </div>
 
-      ${!isCountryLocked ? `<div class="home-country-head">
+      ${!isCountryLocked && !didSearch ? `<div class="home-country-head">
         <div>
           <div class="h1">${esc(homeCountrySectionTitle())}</div>
           <div class="muted">${esc(homeCountrySectionHint())}</div>
@@ -1320,10 +1336,26 @@ function homeUI(data, params, homeExtras = {}) {
             <div class="muted">${esc(t("home.published"))}</div>
           </div>
         </div>
-        <div class="yt-feed">
-          ${cards || `<div class="card"><div class="muted">${esc(t("home.nothing"))}</div><div class="actions" style="margin-top:10px"><a class="btn ghost" href="${esc(makeHash("#/request", { fragment: q || "" }, ["fragment"]))}">${esc(homeReportFragmentLabel())}</a></div></div>`}
-        </div>
-        ${renderPager("yt", page, pages)}
+        ${hasExactResults ? `
+          <div class="yt-feed">
+            ${cards}
+          </div>
+          ${renderPager("yt", page, pages)}
+        ` : hasSuggestions ? `
+          <div class="card home-search-hint">
+            <div class="muted">${esc(exactNotFoundText)}</div>
+          </div>
+          <div class="yt-feed-head yt-results-head">
+            <div class="h2">${esc(maybeYouSearchedTitle)}</div>
+          </div>
+          <div class="yt-feed">
+            ${suggestionCards}
+          </div>
+        ` : `
+          <div class="yt-feed">
+            <div class="card"><div class="muted">${esc(t("home.nothing"))}</div><div class="actions" style="margin-top:10px"><a class="btn ghost" href="${esc(makeHash("#/request", { fragment: q || "" }, ["fragment"]))}">${esc(homeReportFragmentLabel())}</a></div></div>
+          </div>
+        `}
       ` : `
         <div class="card home-search-hint">
           <div class="muted">${esc(homeSearchHintText())}</div>
@@ -1968,7 +2000,16 @@ function songDetailsUI(song, extra = {}) {
               <button class="btn ghost" id="songCompareToggle" type="button">${esc(compareToggleLabel)}</button>
               <div class="song-version-compare-pick hidden" id="songCompareVersionPickWrap">
                 <span>${esc(compareVersionSelectLabel)}</span>
-                <div class="song-version-tabs" id="songCompareVersionPick"></div>
+                <div class="song-compare-controls">
+                  <label class="song-compare-version song-compare-version-left">
+                    <span class="song-compare-version-label">${esc(compareVersionOneTitle)}</span>
+                    <select class="song-compare-select" id="songCompareVersionPickLeft"></select>
+                  </label>
+                  <label class="song-compare-version song-compare-version-right">
+                    <span class="song-compare-version-label">${esc(compareVersionTwoTitle)}</span>
+                    <select class="song-compare-select" id="songCompareVersionPickRight"></select>
+                  </label>
+                </div>
               </div>
             </div>
           ` : ``}
@@ -2122,11 +2163,11 @@ function requestUI(options = {}) {
         : "Send fragment";
   if (isFragmentReport) {
     return `
-      <div class="card">
+      <div class="card request-card">
         <div class="h1">${esc(fragmentTitleText)}</div>
         <div class="muted">${esc(fragmentSubtitleText)}</div>
         <div class="sep"></div>
-        <form id="requestForm" class="list">
+        <form id="requestForm" class="list request-form request-form-vertical">
           <input id="rq_report_fragment" type="hidden" value="1" />
           <input id="rq_title" type="hidden" value="" />
           <input id="rq_subtitle" type="hidden" value="" />
@@ -2141,55 +2182,57 @@ function requestUI(options = {}) {
           <input id="rq_chorus_marker" class="hidden" value="${esc(chorusMarkerLabel())}" />
           <textarea id="rq_chorus" class="hidden"></textarea>
           <div id="rq_draft_banner" class="ac-draft-banner hidden" role="status" aria-live="polite"></div>
-          <label class="field"><div class="fieldLabel">${esc(t("field.source"))} *</div><input class="input" id="rq_source" required /></label>
-          <label class="field"><div class="fieldLabel">${esc(t("field.lyrics"))} *</div><textarea class="textarea" id="rq_lyrics" required></textarea></label>
+          <div class="request-section">
+            <label class="field"><div class="fieldLabel">${esc(t("field.source"))} *</div><input class="input" id="rq_source" required /></label>
+            <label class="field"><div class="fieldLabel">${esc(t("field.lyrics"))} *</div><textarea class="textarea song-editor-text song-editor-text-main" id="rq_lyrics" required></textarea></label>
+          </div>
           <div class="muted small song-decoding-progress" id="rq_decoding">${esc(decodingProgressText(100))}</div>
-          <div class="actions"><button class="btn primary" id="rq_submit" type="submit">${esc(submitFragmentText)}</button></div>
+          <div class="actions request-actions"><button class="btn primary" id="rq_submit" type="submit">${esc(submitFragmentText)}</button></div>
         </form>
       </div>
     `;
   }
   return `
-    <div class="card">
+    <div class="card request-card">
       <div class="h1">${esc(titleText)}</div>
       <div class="muted">${esc(subtitleText)}</div>
       <div class="sep"></div>
-      <form id="requestForm" class="list">
-        <div class="grid2">
+      <form id="requestForm" class="list request-form request-form-vertical">
+        <div class="request-section">
           <label class="field"><div class="fieldLabel">${esc(t("field.title"))} *</div><input class="input" id="rq_title" required /></label>
           <label class="field"><div class="fieldLabel">${esc(uiText("performer"))}</div><input class="input" id="rq_subtitle" /></label>
-        </div>
-        <div class="grid2">
           <label class="field"><div class="fieldLabel">${esc(t("field.lang"))} *</div><select class="select" id="rq_lang">${selectOptions("language", "", uiText("selectLanguage"))}</select></label>
           <label class="field"><div class="fieldLabel">${esc(t("field.country"))} *</div><select class="select" id="rq_country" required>${selectOptions("country", "", uiText("selectCountry"))}</select></label>
-        </div>
-        <div class="grid2">
           <label class="field" id="rq_period_wrap"><div class="fieldLabel">${esc(t("field.period"))}</div><select class="select" id="rq_period">${selectOptions("period", "", uiText("selectPeriod"))}</select></label>
           <label class="field"><div class="fieldLabel">${esc(t("field.year"))}</div><input class="input" id="rq_year" /></label>
-        </div>
-        <div class="grid2">
           <label class="field"><div class="fieldLabel">${esc(uiLocale() === "ru" ? "Регион" : uiLocale() === "uk" ? "Регіон" : uiLocale() === "et" ? "Piirkond" : "Region")}</div><input class="input" id="rq_region" /></label>
           <label class="field"><div class="fieldLabel">${esc(uiLocale() === "ru" ? "Событие" : uiLocale() === "uk" ? "Подія" : uiLocale() === "et" ? "Sündmus" : "Event")}</div><input class="input" id="rq_event" /></label>
+          <label class="field"><div class="fieldLabel">${esc(uiLocale() === "ru" ? "Тематика" : uiLocale() === "uk" ? "Тематика" : uiLocale() === "et" ? "Temaatika" : "Theme")}</div><input class="input" id="rq_theme" /></label>
+          <label class="field"><div class="fieldLabel">${esc(t("field.source"))}</div><input class="input" id="rq_source" /></label>
         </div>
-        <label class="field"><div class="fieldLabel">${esc(uiLocale() === "ru" ? "Тематика" : uiLocale() === "uk" ? "Тематика" : uiLocale() === "et" ? "Temaatika" : "Theme")}</div><input class="input" id="rq_theme" /></label>
         <input id="rq_report_fragment" type="hidden" value="0" />
-        <label class="field"><div class="fieldLabel">${esc(t("field.source"))}</div><input class="input" id="rq_source" /></label>
         <div id="rq_draft_banner" class="ac-draft-banner hidden" role="status" aria-live="polite"></div>
-        <label class="field"><div class="fieldLabel">${esc(t("field.lyrics"))} *</div><textarea class="textarea" id="rq_lyrics" required></textarea></label>
-        <input id="rq_chorus_marker" class="hidden" value="${esc(chorusMarkerLabel())}" />
-        <label class="field"><div class="fieldLabel">${esc(chorusFieldLabel())}</div><textarea class="textarea song-editor-text song-editor-chorus" id="rq_chorus"></textarea></label>
-        <label class="field"><div class="fieldLabel">${esc(uiText("description"))}</div><textarea class="textarea" id="rq_notes"></textarea></label>
+        <div class="request-section">
+          <label class="field"><div class="fieldLabel">${esc(t("field.lyrics"))} *</div><textarea class="textarea song-editor-text song-editor-text-main" id="rq_lyrics" required></textarea></label>
+          <input id="rq_chorus_marker" class="hidden" value="${esc(chorusMarkerLabel())}" />
+          <label class="field"><div class="fieldLabel">${esc(chorusFieldLabel())}</div><textarea class="textarea song-editor-text song-editor-chorus" id="rq_chorus"></textarea></label>
+          <label class="field"><div class="fieldLabel">${esc(uiText("description"))}</div><textarea class="textarea" id="rq_notes"></textarea></label>
+        </div>
         <div class="muted small song-decoding-progress" id="rq_decoding">${esc(decodingProgressText(100))}</div>
 
-        <div class="h2" style="margin-top:10px">${esc(t("song.links"))}</div>
-        <div id="rq_links"></div>
-        <button class="btn ghost" id="rq_addLink" type="button">${esc(t("common.addLink"))}</button>
+        <section class="request-section request-repeater-section">
+          <div class="h2 request-section-title">${esc(t("song.links"))}</div>
+          <div id="rq_links" class="request-repeater"></div>
+          <button class="btn ghost request-add-btn" id="rq_addLink" type="button">${esc(t("common.addLink"))}</button>
+        </section>
 
-        <div class="h2" style="margin-top:10px">${esc(t("song.versions"))}</div>
-        <div id="rq_versions"></div>
-        <button class="btn ghost" id="rq_addVersion" type="button">${esc(t("common.addVersion"))}</button>
+        <section class="request-section request-repeater-section">
+          <div class="h2 request-section-title">${esc(t("song.versions"))}</div>
+          <div id="rq_versions" class="request-repeater"></div>
+          <button class="btn ghost request-add-btn" id="rq_addVersion" type="button">${esc(t("common.addVersion"))}</button>
+        </section>
 
-        <div class="actions"><button class="btn primary" id="rq_submit" type="submit">${esc(submitText)}</button></div>
+        <div class="actions request-actions"><button class="btn primary" id="rq_submit" type="submit">${esc(submitText)}</button></div>
       </form>
     </div>
   `;
@@ -2291,62 +2334,70 @@ function adminEditorUI(song = {}, options = {}) {
   return `
     <div>
       ${adminTabs("content")}
-      <div class="card ac-editor-card ac-editor-page" id="ac_editor">
+      <div class="card ac-editor-card ac-editor-page request-card song-edit-unified" id="ac_editor">
         <div class="row wrap gap">
           <div class="h2">${esc(title)}</div>
           <a class="btn ghost" href="${esc(backHash)}">${esc(t("common.back"))}</a>
         </div>
         <div class="sep"></div>
         <input id="ac_id" class="hidden" value="${esc(song.id || "")}" />
-        <div class="grid2">
-          <label class="field"><div class="fieldLabel">${esc(t("field.title"))} *</div><input id="ac_title" class="input" /></label>
-          <label class="field"><div class="fieldLabel">${esc(uiText("performer"))}</div><input id="ac_subtitle" class="input" /></label>
+        <div class="request-section">
+          <div class="grid2">
+            <label class="field"><div class="fieldLabel">${esc(t("field.title"))} *</div><input id="ac_title" class="input" /></label>
+            <label class="field"><div class="fieldLabel">${esc(uiText("performer"))}</div><input id="ac_subtitle" class="input" /></label>
+          </div>
+          <div class="grid2">
+            <label class="field"><div class="fieldLabel">${esc(t("field.lang"))} *</div><select id="ac_lang" class="select">${selectOptions("language", "", uiText("selectLanguage"))}</select></label>
+            <label class="field"><div class="fieldLabel">${esc(t("field.status"))}</div><select id="ac_status_edit" class="select"><option value="published">${esc(t("status.published"))}</option><option value="draft">${esc(t("status.draft"))}</option></select></label>
+          </div>
+          <div class="grid2">
+            <label class="field"><div class="fieldLabel">${esc(t("field.country"))} *</div><select id="ac_country" class="select" required>${selectOptions("country", "", uiText("selectCountry"))}</select></label>
+            <label class="field hidden" id="ac_period_wrap"><div class="fieldLabel">${esc(t("field.period"))}</div><select id="ac_period" class="select">${selectOptions("period", "", uiText("selectPeriod"))}</select></label>
+          </div>
+          <div class="grid2">
+            <label class="field"><div class="fieldLabel">${esc(uiLocale() === "ru" ? "Регион" : uiLocale() === "uk" ? "Регіон" : uiLocale() === "et" ? "Piirkond" : "Region")}</div><input id="ac_region" class="input" /></label>
+            <label class="field"><div class="fieldLabel">${esc(uiLocale() === "ru" ? "Событие" : uiLocale() === "uk" ? "Подія" : uiLocale() === "et" ? "Sündmus" : "Event")}</div><input id="ac_event" class="input" /></label>
+          </div>
+          <label class="field"><div class="fieldLabel">${esc(uiLocale() === "ru" ? "Тематика" : uiLocale() === "uk" ? "Тематика" : uiLocale() === "et" ? "Temaatika" : "Theme")}</div><input id="ac_theme" class="input" /></label>
+          ${canMarkVerified ? `
+            <label class="field admin-only-toggle admin-only-toggle-inline">
+              <input id="ac_verified" type="checkbox" />
+              <span>${esc(verifiedOnlyLabel())}</span>
+            </label>
+          ` : ``}
+          ${canToggleAdminContent ? `
+            <label class="field admin-only-toggle admin-only-toggle-inline">
+              <input id="ac_admin_content" type="checkbox" />
+              <span>${esc(adminOnlyContentLabel())}</span>
+            </label>
+            <div class="muted small admin-only-hint">${esc(adminOnlyContentHint())}</div>
+          ` : ``}
+          <label class="field"><div class="fieldLabel">${esc(t("field.year"))}</div><input id="ac_year" class="input" /></label>
+          <label class="field"><div class="fieldLabel">${esc(t("field.source"))}</div><input id="ac_source" class="input" /></label>
         </div>
-        <div class="grid2">
-          <label class="field"><div class="fieldLabel">${esc(t("field.lang"))} *</div><select id="ac_lang" class="select">${selectOptions("language", "", uiText("selectLanguage"))}</select></label>
-          <label class="field"><div class="fieldLabel">${esc(t("field.status"))}</div><select id="ac_status_edit" class="select"><option value="published">${esc(t("status.published"))}</option><option value="draft">${esc(t("status.draft"))}</option></select></label>
-        </div>
-        <div class="grid2">
-          <label class="field"><div class="fieldLabel">${esc(t("field.country"))} *</div><select id="ac_country" class="select" required>${selectOptions("country", "", uiText("selectCountry"))}</select></label>
-          <label class="field hidden" id="ac_period_wrap"><div class="fieldLabel">${esc(t("field.period"))}</div><select id="ac_period" class="select">${selectOptions("period", "", uiText("selectPeriod"))}</select></label>
-        </div>
-        <div class="grid2">
-          <label class="field"><div class="fieldLabel">${esc(uiLocale() === "ru" ? "Регион" : uiLocale() === "uk" ? "Регіон" : uiLocale() === "et" ? "Piirkond" : "Region")}</div><input id="ac_region" class="input" /></label>
-          <label class="field"><div class="fieldLabel">${esc(uiLocale() === "ru" ? "Событие" : uiLocale() === "uk" ? "Подія" : uiLocale() === "et" ? "Sündmus" : "Event")}</div><input id="ac_event" class="input" /></label>
-        </div>
-        <label class="field"><div class="fieldLabel">${esc(uiLocale() === "ru" ? "Тематика" : uiLocale() === "uk" ? "Тематика" : uiLocale() === "et" ? "Temaatika" : "Theme")}</div><input id="ac_theme" class="input" /></label>
-        ${canMarkVerified ? `
-          <label class="field admin-only-toggle admin-only-toggle-inline">
-            <input id="ac_verified" type="checkbox" />
-            <span>${esc(verifiedOnlyLabel())}</span>
-          </label>
-        ` : ``}
-        ${canToggleAdminContent ? `
-          <label class="field admin-only-toggle admin-only-toggle-inline">
-            <input id="ac_admin_content" type="checkbox" />
-            <span>${esc(adminOnlyContentLabel())}</span>
-          </label>
-          <div class="muted small admin-only-hint">${esc(adminOnlyContentHint())}</div>
-        ` : ``}
-        <label class="field"><div class="fieldLabel">${esc(t("field.year"))}</div><input id="ac_year" class="input" /></label>
-        <label class="field"><div class="fieldLabel">${esc(t("field.source"))}</div><input id="ac_source" class="input" /></label>
         <div id="ac_draft_banner" class="ac-draft-banner hidden" role="status" aria-live="polite"></div>
-        <label class="field"><div class="fieldLabel">${esc(t("field.lyrics"))} *</div><textarea id="ac_lyrics" class="textarea song-editor-text song-editor-text-main"></textarea></label>
-        <input id="ac_chorus_marker" class="hidden" value="${esc(chorusMarkerLabel())}" />
-        <label class="field"><div class="fieldLabel">${esc(chorusFieldLabel())}</div><textarea id="ac_chorus" class="textarea song-editor-text song-editor-chorus"></textarea></label>
-        <label class="field"><div class="fieldLabel">${esc(uiText("description"))}</div><textarea id="ac_notes" class="textarea song-editor-text"></textarea></label>
+        <div class="request-section">
+          <label class="field"><div class="fieldLabel">${esc(t("field.lyrics"))} *</div><textarea id="ac_lyrics" class="textarea song-editor-text song-editor-text-main"></textarea></label>
+          <input id="ac_chorus_marker" class="hidden" value="${esc(chorusMarkerLabel())}" />
+          <label class="field"><div class="fieldLabel">${esc(chorusFieldLabel())}</div><textarea id="ac_chorus" class="textarea song-editor-text song-editor-chorus"></textarea></label>
+          <label class="field"><div class="fieldLabel">${esc(uiText("description"))}</div><textarea id="ac_notes" class="textarea song-editor-text"></textarea></label>
+        </div>
         <div class="muted small song-decoding-progress" id="ac_decoding">${esc(decodingProgressText(100))}</div>
 
-        <div class="h2" style="margin-top:10px">${esc(t("song.links"))}</div>
-        <div id="ac_links"></div>
-        <button class="btn ghost" id="ac_addLink" type="button">${esc(t("common.addLink"))}</button>
+        <section class="request-section request-repeater-section">
+          <div class="h2 request-section-title">${esc(t("song.links"))}</div>
+          <div id="ac_links" class="request-repeater"></div>
+          <button class="btn ghost request-add-btn" id="ac_addLink" type="button">${esc(t("common.addLink"))}</button>
+        </section>
 
-        <div class="h2" style="margin-top:10px">${esc(t("song.versions"))}</div>
-        <div id="ac_versions"></div>
-        <button class="btn ghost" id="ac_addVersion" type="button">${esc(t("common.addVersion"))}</button>
+        <section class="request-section request-repeater-section">
+          <div class="h2 request-section-title">${esc(t("song.versions"))}</div>
+          <div id="ac_versions" class="request-repeater"></div>
+          <button class="btn ghost request-add-btn" id="ac_addVersion" type="button">${esc(t("common.addVersion"))}</button>
+        </section>
 
         <div id="ac_inline_error" class="ac-inline-error hidden" role="alert" aria-live="polite"></div>
-        <div class="actions" style="margin-top:12px">
+        <div class="actions request-actions" style="margin-top:12px">
           <button class="btn primary" id="ac_save" type="button">${esc(t("common.save"))}</button>
           ${publishBtn}
           ${deleteBtn}
@@ -3900,12 +3951,9 @@ export function bind(route, ctx) {
         setLyricsView(chosen?.lyrics || "");
         promptSong.lang = chosen?.lang || song.lang || "";
         promptSong.source = chosen?.source || song.source || "";
-        const metaParts = [];
-        if (chosen?.title) metaParts.push(chosen.title);
-        if (chosen?.lang) metaParts.push(formatLang(chosen.lang));
         if (versionMeta) {
-          versionMeta.textContent = metaParts.join(" · ");
-          versionMeta.classList.toggle("hidden", !versionMeta.textContent.trim());
+          versionMeta.textContent = "";
+          versionMeta.classList.add("hidden");
         }
         songVersionTabs.querySelectorAll(".song-version-btn").forEach((btn) => {
           btn.classList.toggle("is-active", btn.getAttribute("data-version-id") === chosen?.id);
@@ -3917,20 +3965,22 @@ export function bind(route, ctx) {
       const versionListenTitle2 = qs("songVersionListenTitle2");
       const versionListenLinks1 = qs("songVersionListenLinks1");
       const versionListenLinks2 = qs("songVersionListenLinks2");
-      const versionOneLabel = uiLocale() === "ru"
-        ? "Версия 1"
+      const localizedVersionWord = uiLocale() === "ru"
+        ? "Версия"
         : uiLocale() === "uk"
-          ? "Версія 1"
+          ? "Версія"
           : uiLocale() === "et"
-            ? "Versioon 1"
-            : "Version 1";
-      const versionTwoLabel = uiLocale() === "ru"
-        ? "Версия 2"
-        : uiLocale() === "uk"
-          ? "Версія 2"
-          : uiLocale() === "et"
-            ? "Versioon 2"
-            : "Version 2";
+            ? "Versioon"
+            : "Version";
+      const formatVersionHeading = (version, fallbackIndex = -1) => {
+        const raw = String(version?.title || "").trim();
+        if (!raw) return fallbackIndex >= 0 ? `${localizedVersionWord} ${fallbackIndex + 1}` : localizedVersionWord;
+        const genericMatch = raw.match(/^version(?:\s+\d+)?$/i);
+        if (raw.toLowerCase() === localizedVersionWord.toLowerCase() || genericMatch) {
+          return fallbackIndex >= 0 ? `${localizedVersionWord} ${fallbackIndex + 1}` : localizedVersionWord;
+        }
+        return raw;
+      };
       const compareCandidates = [...versionById.values()].filter((version) => version?.id && version.id !== "__original");
       const renderVersionListenLinks = (items = []) => {
         if (!items.length) return `<span class="song-version-listen-empty">-</span>`;
@@ -3949,8 +3999,9 @@ export function bind(route, ctx) {
           return;
         }
         versionListenPanel.classList.remove("hidden");
-        versionListenTitle1.textContent = `${versionOneLabel}: ${String(leftVersion.title || t("song.version")).trim() || t("song.version")}`;
-        versionListenTitle2.textContent = `${versionTwoLabel}: ${String(rightVersion.title || t("song.version")).trim() || t("song.version")}`;
+        versionListenTitle1.textContent = formatVersionHeading(leftVersion, 0);
+        const rightIndex = compareCandidates.findIndex((version) => version.id === rightVersion.id);
+        versionListenTitle2.textContent = formatVersionHeading(rightVersion, rightIndex >= 0 ? rightIndex + 1 : 1);
         const songLinks = Array.isArray(song?.links) ? song.links : [];
         versionListenLinks1.innerHTML = renderVersionListenLinks(collectListenServiceItemsForVersion(song, songLinks, leftVersion));
         versionListenLinks2.innerHTML = renderVersionListenLinks(collectListenServiceItemsForVersion(song, songLinks, rightVersion));
@@ -3967,16 +4018,43 @@ export function bind(route, ctx) {
       const compareToggleWrap = qs("songCompareToggleWrap");
       const compareToggle = qs("songCompareToggle");
       const comparePickWrap = qs("songCompareVersionPickWrap");
-      const comparePick = qs("songCompareVersionPick");
+      const comparePickLeft = qs("songCompareVersionPickLeft");
+      const comparePickRight = qs("songCompareVersionPickRight");
       const compareDiff = qs("songCompareDiff");
       const baseContent = qs("songVersionBaseContent");
+      const songViewRoot = document.querySelector(".song-view");
       if (compareWrap && compareToggleWrap && compareToggle && compareDiff) {
+        const setCompareLayout = (isOpen) => {
+          if (songViewRoot) songViewRoot.classList.toggle("song-compare-open", !!isOpen);
+        };
+        const localizedVersionWord = uiLocale() === "ru"
+          ? "Версия"
+          : uiLocale() === "uk"
+            ? "Версія"
+            : uiLocale() === "et"
+              ? "Versioon"
+              : "Version";
+        const formatVersionTitle = (version, index = -1) => {
+          const raw = String(version?.title || "").trim();
+          if (!raw) return index >= 0 ? `${localizedVersionWord} ${index + 1}` : localizedVersionWord;
+          if (raw.toLowerCase() === localizedVersionWord.toLowerCase()) {
+            return index >= 0 ? `${localizedVersionWord} ${index + 1}` : localizedVersionWord;
+          }
+          const genericMatch = raw.match(/^version(?:\s+\d+)?$/i);
+          if (genericMatch) {
+            return index >= 0 ? `${localizedVersionWord} ${index + 1}` : localizedVersionWord;
+          }
+          return raw;
+        };
+
         const versionOneTitle = String(compareDiff.getAttribute("data-v1-title") || "").trim() || "Version 1";
         const versionTwoTitle = String(compareDiff.getAttribute("data-v2-title") || "").trim() || "Version 2";
         const performerLabel = String(compareDiff.getAttribute("data-performer-label") || "").trim() || "Performer";
         const yearLabel = String(compareDiff.getAttribute("data-year-label") || "").trim() || "Year";
         const missingMetaText = String(compareDiff.getAttribute("data-meta-missing") || "").trim() || "-";
-        let selectedCompareId = compareCandidates[0]?.id || "__original";
+        const compareOptions = [...versionById.values()].filter((version) => version?.id);
+        let selectedCompareLeftId = activeVersionId;
+        let selectedCompareRightId = compareOptions[1]?.id || compareOptions[0]?.id || "__original";
         const stanzaLabel = uiLocale() === "ru"
           ? "Куплет"
           : uiLocale() === "uk"
@@ -4002,37 +4080,37 @@ export function bind(route, ctx) {
         };
 
         const renderComparePick = () => {
-          if (!comparePick || !comparePickWrap) return;
-          if (compareCandidates.length <= 1) {
-            comparePick.innerHTML = "";
+          if (!comparePickLeft || !comparePickRight || !comparePickWrap) return;
+          if (compareOptions.length <= 0) {
+            comparePickLeft.innerHTML = "";
+            comparePickRight.innerHTML = "";
             comparePickWrap.classList.add("hidden");
             return;
           }
-          comparePickWrap.classList.remove("hidden");
-          comparePick.innerHTML = compareCandidates.map((version, idx) => `
-            <button
-              class="btn ghost song-version-btn song-compare-pick-btn ${version.id === selectedCompareId ? "is-active" : ""}"
-              type="button"
-              data-compare-version-id="${esc(version.id)}"
-            >${idx + 1}</button>
-          `).join("");
-          comparePick.querySelectorAll("[data-compare-version-id]").forEach((btn) => {
-            btn.addEventListener("click", () => {
-              const chosenId = btn.getAttribute("data-compare-version-id") || "";
-              if (!chosenId) return;
-              selectedCompareId = chosenId;
-              renderComparePick();
-              if (!compareWrap.classList.contains("hidden")) renderCompare();
-            });
-          });
+          if (!compareOptions.some((version) => version.id === selectedCompareLeftId)) {
+            selectedCompareLeftId = compareOptions[0]?.id || "__original";
+          }
+          if (!compareOptions.some((version) => version.id === selectedCompareRightId)) {
+            selectedCompareRightId = compareOptions[0]?.id || "__original";
+          }
+          const optionsMarkup = compareOptions.map((version, idx) => {
+            const title = formatVersionTitle(version, idx);
+            return `<option value="${esc(version.id)}">${esc(title)}</option>`;
+          }).join("");
+          comparePickLeft.innerHTML = optionsMarkup;
+          comparePickRight.innerHTML = optionsMarkup;
+          comparePickLeft.value = selectedCompareLeftId;
+          comparePickRight.value = selectedCompareRightId;
         };
 
         const renderCompare = () => {
-          const left = versionById.get("__original") || null;
-          const right = knownVersionIds.has(selectedCompareId)
-            ? (versionById.get(selectedCompareId) || versionById.get("__original"))
-            : versionById.get("__original");
-          if (!left || !right || right.id === "__original") {
+          const left = knownVersionIds.has(selectedCompareLeftId)
+            ? (versionById.get(selectedCompareLeftId) || null)
+            : null;
+          const right = knownVersionIds.has(selectedCompareRightId)
+            ? (versionById.get(selectedCompareRightId) || null)
+            : null;
+          if (!left || !right) {
             compareDiff.innerHTML = "";
             compareWrap.classList.add("hidden");
             return;
@@ -4040,8 +4118,10 @@ export function bind(route, ctx) {
           compareWrap.classList.remove("hidden");
           const leftLyrics = String(left?.lyrics || "");
           const rightLyrics = String(right?.lyrics || "");
-          const leftTitle = String(left?.title || t("song.version")).trim() || t("song.version");
-          const rightTitle = String(right?.title || t("song.version")).trim() || t("song.version");
+          const leftIndex = compareOptions.findIndex((version) => version.id === left.id);
+          const rightIndex = compareOptions.findIndex((version) => version.id === right.id);
+          const leftTitle = formatVersionTitle(left, leftIndex);
+          const rightTitle = formatVersionTitle(right, rightIndex);
           const leftPerformer = String(song?.subtitle || "").trim() || missingMetaText;
           const rightPerformer = String(song?.subtitle || "").trim() || missingMetaText;
           const leftYear = String(song?.year || "").trim() || missingMetaText;
@@ -4073,43 +4153,67 @@ export function bind(route, ctx) {
         };
 
         const syncCompareToggle = () => {
-          const canCompare = compareCandidates.length > 0 && activeVersionId !== "__original";
+          const canCompare = compareOptions.length > 0;
           compareToggleWrap.classList.toggle("hidden", !canCompare);
           if (!canCompare) {
             closeAnimatedElement(compareWrap, { duration: 420 });
             if (baseContent) baseContent.classList.remove("hidden");
+            comparePickWrap.classList.add("hidden");
+            setCompareLayout(false);
             return;
           }
-          if (knownVersionIds.has(activeVersionId) && activeVersionId !== "__original") {
-            selectedCompareId = activeVersionId;
+          if (!isAnimatedElementOpen(compareWrap)) {
+            comparePickWrap.classList.add("hidden");
+          } else {
             renderComparePick();
+            comparePickWrap.classList.remove("hidden");
           }
         };
         syncCompareToggle();
         renderComparePick();
+        comparePickWrap.classList.add("hidden");
         compareWrap.classList.add("hidden");
+        setCompareLayout(false);
+
+        if (comparePickLeft) {
+          comparePickLeft.addEventListener("change", () => {
+            const chosenId = String(comparePickLeft.value || "").trim();
+            if (!chosenId || !knownVersionIds.has(chosenId)) return;
+            selectedCompareLeftId = chosenId;
+            if (!compareWrap.classList.contains("hidden")) renderCompare();
+          });
+        }
+
+        if (comparePickRight) {
+          comparePickRight.addEventListener("change", () => {
+            const chosenId = String(comparePickRight.value || "").trim();
+            if (!chosenId || !knownVersionIds.has(chosenId)) return;
+            selectedCompareRightId = chosenId;
+            if (!compareWrap.classList.contains("hidden")) renderCompare();
+          });
+        }
 
         compareToggle.addEventListener("click", () => {
-          if (selectedCompareId === "__original") return;
           const isOpen = isAnimatedElementOpen(compareWrap);
           if (isOpen) {
             closeAnimatedElement(compareWrap, { duration: 420 });
             if (baseContent) baseContent.classList.remove("hidden");
+            comparePickWrap.classList.add("hidden");
+            setCompareLayout(false);
             return;
           }
+          renderComparePick();
+          comparePickWrap.classList.remove("hidden");
           renderCompare();
           if (baseContent) baseContent.classList.add("hidden");
           openAnimatedElement(compareWrap);
+          setCompareLayout(true);
         });
 
         songVersionTabs.querySelectorAll(".song-version-btn").forEach((btn) => {
           btn.addEventListener("click", () => {
-            const chosenId = btn.getAttribute("data-version-id") || "__original";
-            if (chosenId !== "__original" && knownVersionIds.has(chosenId)) {
-              selectedCompareId = chosenId;
-              renderComparePick();
-              if (!compareWrap.classList.contains("hidden")) renderCompare();
-            }
+            renderComparePick();
+            if (!compareWrap.classList.contains("hidden")) renderCompare();
             syncCompareToggle();
           });
         });
