@@ -4,27 +4,27 @@
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
   <meta name="robots" content="noindex, nofollow, noarchive, nosnippet, noimageindex, notranslate" />
-  <meta name="theme-color" content="#010819" />
+  <meta name="theme-color" content="#000000" />
   <meta name="mobile-web-app-capable" content="yes" />
   <title>European Songbook</title>
-  <link rel="icon" type="image/png" sizes="32x32" href="./ui/assets/pwa-icon-192-clean.png" />
-  <link rel="shortcut icon" href="./ui/assets/pwa-icon-192-clean.png" />
-  <link rel="apple-touch-icon" href="./ui/assets/pwa-icon-512-clean.png" />
+  <link rel="icon" type="image/png" sizes="32x32" href="./ui/assets/pwa-icon-192-20260221.png" />
+  <link rel="shortcut icon" href="./ui/assets/pwa-icon-192-20260221.png" />
+  <link rel="apple-touch-icon" href="./ui/assets/pwa-icon-512-20260221.png" />
   <link rel="manifest" href="./manifest.webmanifest" />
-  <link rel="preload" as="image" href="./ui/assets/logo-emblem.png" />
-  <link rel="preload" as="image" href="./ui/assets/pwa-icon-192-clean.png" />
+  <link rel="preload" as="image" href="./ui/assets/logo-sticker-20260221.png" />
+  <link rel="preload" as="image" href="./ui/assets/pwa-icon-192-20260221.png" />
   <link rel="preload" as="image" href="./ui/assets/ussr-hero.jpg" />
   <style>
-    html, body { background: #010819; }
+    html, body { background: #000000; }
     .app-boot-splash { position: fixed; inset: 0; z-index: 1200; display: grid; place-items: center; }
-    .app-boot-splash-card img { border-radius: 20px; }
+    .app-boot-splash-card img { border-radius: 0; background: transparent; }
   </style>
   <link rel="stylesheet" href="./app.css" />
 </head>
 <body>
   <div class="app-boot-splash" id="appBootSplash" role="status" aria-live="polite" aria-label="Loading application">
     <div class="app-boot-splash-card">
-      <img src="./ui/assets/pwa-icon-192-clean.png" alt="" loading="eager" decoding="async" fetchpriority="high" />
+      <img src="./ui/assets/logo-sticker-20260221.png" alt="" loading="eager" decoding="async" fetchpriority="high" />
       <div class="app-boot-splash-title" id="appBootSplashTitle">European Songbook</div>
       <div class="app-boot-splash-subtitle" id="appBootSplashSubtitle">Loading...</div>
       <span class="app-boot-splash-loader" aria-hidden="true"></span>
@@ -35,7 +35,7 @@
     <div class="brand">
       <button class="btn ghost menu-trigger" id="btnSidebarToggle" type="button" aria-label="Открыть меню">☰</button>
       <a class="logo" href="#/" aria-label="Перейти в каталог">
-        <img src="./ui/assets/logo-emblem.png" alt="" loading="eager" decoding="async" fetchpriority="high" />
+        <img src="./ui/assets/logo-sticker-20260221.png" alt="" loading="eager" decoding="async" fetchpriority="high" />
       </a>
       <div class="brandText">
         <div class="title" id="brandTitle">European Songbook</div>
@@ -244,4 +244,5 @@
   <script type="module" src="./app.js"></script>
 </body>
 </html>
+
 

@@ -1250,16 +1250,6 @@ function homeUI(data, params, homeExtras = {}) {
 
   return `
     <section class="yt-main home-main">
-      <div class="home-hero card">
-        <div class="home-hero-brand">
-          <img src="./ui/assets/logo-emblem.png" alt="" loading="lazy" decoding="async" />
-          <div>
-            <div class="home-hero-title">${esc(t("app.title"))}</div>
-            <div class="home-hero-subtitle">${esc(homeHeroSubtitle())}</div>
-          </div>
-        </div>
-      </div>
-
       <div class="yt-detail-trigger" id="yt_detailToggleWrap">
         <button
           class="btn ghost"
@@ -3705,6 +3695,7 @@ export function bind(route, ctx) {
   document.body.classList.remove("song-page-country-bg");
   document.body.classList.remove("song-page-country-bg-static");
   document.body.classList.remove("home-country-preview");
+  document.body.classList.remove("home-country-preview-visible");
   document.body.style.removeProperty("--song-page-bg-image");
   document.body.style.removeProperty("--song-page-bg-image-desktop");
   document.body.style.removeProperty("--song-page-bg-image-mobile");
@@ -3713,6 +3704,11 @@ export function bind(route, ctx) {
   document.body.style.removeProperty("--song-page-bg-focus-x-mobile");
   document.body.style.removeProperty("--song-page-bg-focus-y-mobile");
   document.body.style.removeProperty("--home-country-preview-image");
+  if (document.body.dataset.homePreviewTimer) {
+    const timerId = Number(document.body.dataset.homePreviewTimer || 0);
+    if (timerId) window.clearTimeout(timerId);
+    delete document.body.dataset.homePreviewTimer;
+  }
   wirePromptButtons();
   wireAutoGrowTextareas(document);
 
@@ -3782,25 +3778,57 @@ export function bind(route, ctx) {
       goWith({ page: target });
     }));
 
+    let currentHomePreviewUrl = "";
+    const queueHomePreviewSwap = (fn, delayMs) => {
+      if (document.body.dataset.homePreviewTimer) {
+        const prev = Number(document.body.dataset.homePreviewTimer || 0);
+        if (prev) window.clearTimeout(prev);
+      }
+      const id = window.setTimeout(() => {
+        delete document.body.dataset.homePreviewTimer;
+        fn();
+      }, delayMs);
+      document.body.dataset.homePreviewTimer = String(id);
+    };
     const setHomeCountryPreview = (url) => {
       const next = String(url || "").trim();
       if (!next) {
-        document.body.classList.remove("home-country-preview");
-        document.body.style.removeProperty("--home-country-preview-image");
+        document.body.classList.remove("home-country-preview-visible");
+        queueHomePreviewSwap(() => {
+          currentHomePreviewUrl = "";
+          document.body.classList.remove("home-country-preview");
+          document.body.style.removeProperty("--home-country-preview-image");
+        }, 760);
         return;
       }
-      document.body.style.setProperty("--home-country-preview-image", toCssUrlValue(next));
-      document.body.classList.add("home-country-preview");
+      if (next === currentHomePreviewUrl && document.body.classList.contains("home-country-preview-visible")) return;
+      if (!document.body.classList.contains("home-country-preview")) {
+        currentHomePreviewUrl = next;
+        document.body.style.setProperty("--home-country-preview-image", toCssUrlValue(next));
+        document.body.classList.add("home-country-preview");
+        window.requestAnimationFrame(() => {
+          document.body.classList.add("home-country-preview-visible");
+        });
+        return;
+      }
+      document.body.classList.remove("home-country-preview-visible");
+      queueHomePreviewSwap(() => {
+        currentHomePreviewUrl = next;
+        document.body.style.setProperty("--home-country-preview-image", toCssUrlValue(next));
+        window.requestAnimationFrame(() => {
+          document.body.classList.add("home-country-preview-visible");
+        });
+      }, 320);
     };
+    const clearHomeCountryPreview = () => setHomeCountryPreview("");
     const hoverPreviewAllowed = !window.matchMedia("(hover: none), (pointer: coarse)").matches;
     if (hoverPreviewAllowed) {
       document.querySelectorAll(".home-country-card").forEach((card) => {
         const previewUrl = String(card.getAttribute("data-home-bg") || "").trim();
         if (!previewUrl) return;
         card.addEventListener("mouseenter", () => setHomeCountryPreview(previewUrl));
-        card.addEventListener("focus", () => setHomeCountryPreview(previewUrl));
-        card.addEventListener("mouseleave", () => setHomeCountryPreview(""));
-        card.addEventListener("blur", () => setHomeCountryPreview(""));
+        card.addEventListener("mouseleave", clearHomeCountryPreview);
+        card.addEventListener("click", clearHomeCountryPreview);
       });
     }
 

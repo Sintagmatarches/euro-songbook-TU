@@ -72,8 +72,17 @@ export const api = {
   async countryCounts() {
     return req("api/country-counts");
   },
-  async login(nickname, password) {
-    const data = await req("api/auth/login", { method: "POST", body: JSON.stringify({ nickname, password }) });
+  async login(login, password) {
+    const value = String(login || "").trim();
+    const data = await req("api/auth/login", {
+      method: "POST",
+      body: JSON.stringify({
+        email: value,
+        nickname: value,
+        login: value,
+        password,
+      }),
+    });
     localStorage.setItem("token", data.token);
     return data;
   },
