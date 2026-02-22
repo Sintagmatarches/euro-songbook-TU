@@ -14,7 +14,6 @@ const menuDrawer = document.getElementById("menuDrawer");
 const menuBackdrop = document.getElementById("menuBackdrop");
 const mNavMenu = document.getElementById("mNavMenu");
 const btnInstallApp = document.getElementById("btnInstallApp");
-const themeToggleLabel = document.getElementById("themeToggleLabel");
 const userChip = document.getElementById("userChip");
 const topSearchWrap = document.getElementById("topSearchWrap");
 const topSearchInput = document.getElementById("topSearchInput");
@@ -41,7 +40,6 @@ const doRegister = document.getElementById("doRegister");
 const localeSwitch = document.getElementById("localeSwitch");
 
 const THEME_KEY = "ui_theme";
-const THEMES = ["dark", "light"];
 let activeTheme = "dark";
 let deferredInstallPrompt = null;
 let authViewportCleanup = null;
@@ -289,13 +287,6 @@ function syncSongPageBackgroundParallax() {
     return;
   }
   if (prefersReducedMotion()) {
-    if (songPageBgParallaxLastShiftPx !== 0) {
-      document.body.style.setProperty("--song-page-bg-shift", "0px");
-      songPageBgParallaxLastShiftPx = 0;
-    }
-    return;
-  }
-  if (document.documentElement?.getAttribute("data-theme") === "light") {
     if (songPageBgParallaxLastShiftPx !== 0) {
       document.body.style.setProperty("--song-page-bg-shift", "0px");
       songPageBgParallaxLastShiftPx = 0;
@@ -749,18 +740,12 @@ function getInitialTheme() {
   return "dark";
 }
 
-function updateThemeToggleText() {
-  if (!themeToggleLabel) return;
-  const mode = activeTheme === "light" ? t("theme.light") : t("theme.dark");
-  themeToggleLabel.textContent = t("theme.current", { mode });
-}
 
-function applyTheme(theme, options = {}) {
+function applyTheme(options = {}) {
   const persist = options.persist !== false;
-  activeTheme = THEMES.includes(theme) ? theme : "dark";
+  activeTheme = "dark";
   document.documentElement.setAttribute("data-theme", activeTheme);
   if (persist) localStorage.setItem(THEME_KEY, activeTheme);
-  updateThemeToggleText();
 }
 
 function applyStaticTexts() {
@@ -821,7 +806,6 @@ function applyStaticTexts() {
   document.getElementById("promptOpen").textContent = t("prompt.open");
   document.getElementById("promptClose").textContent = t("prompt.close");
   if (btnInstallApp) btnInstallApp.textContent = installButtonText();
-  updateThemeToggleText();
 
   if (localeSwitch) {
     const labels = { ru: "Rus", et: "Est", en: "Eng", uk: "Ukr" };
@@ -967,7 +951,7 @@ async function refreshRoute() {
 state.locale = getInitialLocale();
 setLocale(state.locale);
 activeTheme = getInitialTheme();
-applyTheme(activeTheme);
+applyTheme();
 applyStaticTexts();
 setupInstallPrompt();
 void registerServiceWorker();
