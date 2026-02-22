@@ -13,7 +13,6 @@ const btnMenuClose = document.getElementById("btnMenuClose");
 const menuDrawer = document.getElementById("menuDrawer");
 const menuBackdrop = document.getElementById("menuBackdrop");
 const mNavMenu = document.getElementById("mNavMenu");
-const btnThemeToggle = document.getElementById("btnThemeToggle");
 const btnInstallApp = document.getElementById("btnInstallApp");
 const themeToggleLabel = document.getElementById("themeToggleLabel");
 const userChip = document.getElementById("userChip");
@@ -747,8 +746,7 @@ async function refreshAdminRequestsAttention(options = {}) {
 }
 
 function getInitialTheme() {
-  const raw = localStorage.getItem(THEME_KEY) || "dark";
-  return THEMES.includes(raw) ? raw : "dark";
+  return "dark";
 }
 
 function updateThemeToggleText() {
@@ -763,10 +761,6 @@ function applyTheme(theme, options = {}) {
   document.documentElement.setAttribute("data-theme", activeTheme);
   if (persist) localStorage.setItem(THEME_KEY, activeTheme);
   updateThemeToggleText();
-}
-
-function toggleTheme() {
-  applyTheme(activeTheme === "dark" ? "light" : "dark");
 }
 
 function applyStaticTexts() {
@@ -973,7 +967,7 @@ async function refreshRoute() {
 state.locale = getInitialLocale();
 setLocale(state.locale);
 activeTheme = getInitialTheme();
-applyTheme(activeTheme, { persist: false });
+applyTheme(activeTheme);
 applyStaticTexts();
 setupInstallPrompt();
 void registerServiceWorker();
@@ -991,7 +985,6 @@ btnMenuClose?.addEventListener("click", () => setMenuOpen(false));
 menuBackdrop?.addEventListener("click", () => setMenuOpen(false));
 mNavMenu?.addEventListener("click", () => setMenuOpen(true));
 menuDrawer?.querySelectorAll(".js-route-link").forEach((link) => link.addEventListener("click", () => setMenuOpen(false)));
-btnThemeToggle?.addEventListener("click", toggleTheme);
 let topSearchPointerHandledAt = 0;
 topSearchBtn?.addEventListener("pointerup", (e) => {
   e.preventDefault();

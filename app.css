@@ -1,4 +1,4 @@
-﻿:root {
+:root {
   --c-50: #eafbff;
   --c-100: #b8f3ff;
   --c-200: #88ebff;
@@ -228,7 +228,7 @@ body.song-page-country-bg {
   --song-page-bg-focus-y-active: var(--song-page-bg-focus-y-desktop, 50%);
   background-color: #050f40;
   background-image:
-    linear-gradient(180deg, rgba(4, 11, 44, 0.7), rgba(3, 10, 36, 0.8)),
+    linear-gradient(180deg, rgba(0, 0, 0, 0.58), rgba(0, 0, 0, 0.64)),
     var(--song-page-bg-image-active);
   background-position:
     center top,
@@ -4400,7 +4400,7 @@ html[data-theme="light"] body.song-page-country-bg {
   --song-page-bg-shift: 0px;
   background-color: #dcecf9;
   background-image:
-    linear-gradient(180deg, rgba(244, 251, 255, 0.54), rgba(231, 244, 255, 0.62)),
+    linear-gradient(180deg, rgba(0, 0, 0, 0.48), rgba(0, 0, 0, 0.56)),
     var(--song-page-bg-image-active);
   background-position:
     center top,
@@ -6424,10 +6424,12 @@ html[data-theme="light"] .admin-tab-btn:hover {
     background-repeat: no-repeat !important;
     background-size: cover !important;
     background-position: center center !important;
+    background-color: rgba(0, 0, 0, 0.42) !important;
+    background-blend-mode: multiply !important;
     opacity: 0;
     filter: none;
     transform: none;
-    transition: opacity 420ms cubic-bezier(0.22, 0.61, 0.36, 1);
+    transition: opacity 300ms cubic-bezier(0.22, 0.61, 0.36, 1);
     will-change: opacity;
   }
 
@@ -6601,7 +6603,7 @@ html[data-theme="light"] .home-country-card-cta {
 @media (hover: hover) and (pointer: fine) {
   body.home-country-preview:not(.song-page-country-bg)::before,
   body.home-country-preview:not(.song-page-country-bg)::after {
-    transition: opacity 420ms cubic-bezier(0.22, 0.61, 0.36, 1) !important;
+    transition: opacity 300ms cubic-bezier(0.22, 0.61, 0.36, 1) !important;
   }
 }
 
@@ -6741,7 +6743,7 @@ body.song-page-country-bg {
   --song-page-bg-focus-y-active: var(--song-page-bg-focus-y-desktop, 50%);
   background-color: #050f40 !important;
   background-image:
-    linear-gradient(180deg, rgba(4, 11, 44, 0.7), rgba(3, 10, 36, 0.8)),
+    linear-gradient(180deg, rgba(0, 0, 0, 0.58), rgba(0, 0, 0, 0.64)),
     var(--song-page-bg-image-active) !important;
   background-position:
     center top,
@@ -6766,7 +6768,7 @@ body.song-page-country-bg.song-page-country-bg-static {
 html[data-theme="light"] body.song-page-country-bg {
   background-color: #dcecf9 !important;
   background-image:
-    linear-gradient(180deg, rgba(244, 251, 255, 0.54), rgba(231, 244, 255, 0.62)),
+    linear-gradient(180deg, rgba(0, 0, 0, 0.48), rgba(0, 0, 0, 0.56)),
     var(--song-page-bg-image-active) !important;
 }
 
@@ -7007,13 +7009,14 @@ html .yt-bottom-link.active {
   --menu-default-bg-image: url("./picture/AdobeStock_479740218.jpeg");
   --menu-default-bg-image-mobile: url("./picture/phone_wallpaper.jpg");
   --global-wallpaper-bg-shift: 0px;
+  --bg-photo-dim: rgba(0, 0, 0, 0.48);
 }
 
 body,
 html[data-theme="light"] body {
   background-color: #05020f !important;
   background-image:
-    linear-gradient(180deg, rgba(6, 1, 63, 0.56), rgba(6, 1, 63, 0.56)),
+    linear-gradient(180deg, var(--bg-photo-dim), var(--bg-photo-dim)),
     var(--menu-default-bg-image) !important;
   background-repeat: no-repeat !important;
   background-size: cover !important;
@@ -7025,7 +7028,7 @@ html[data-theme="light"] body {
   body,
   html[data-theme="light"] body {
     background-image:
-      linear-gradient(180deg, rgba(6, 1, 63, 0.58), rgba(6, 1, 63, 0.58)),
+      linear-gradient(180deg, var(--bg-photo-dim), var(--bg-photo-dim)),
       var(--menu-default-bg-image-mobile) !important;
     background-repeat: no-repeat !important;
     background-size: cover !important;
@@ -7065,11 +7068,57 @@ html[data-theme="light"] .yt-bottom-nav,
   background-image: none !important;
 }
 
-.ig-drawer-group {
-  background: transparent !important;
+.ig-drawer-backdrop,
+html[data-theme="light"] .ig-drawer-backdrop {
+  background: #000000 !important;
+  backdrop-filter: none !important;
+}
+
+.ig-drawer-group,
+html[data-theme="light"] .ig-drawer-group {
+  background: #160276 !important;
+  background-color: #160276 !important;
   background-image: none !important;
 }
 
-.ig-drawer::before {
-  background: rgba(4, 13, 52, 0.34) !important;
+.ig-drawer::before,
+html[data-theme="light"] .ig-drawer::before {
+  background: #06013F !important;
+  opacity: 1 !important;
 }
+
+
+/* HOME PREVIEW ROOT FIX: keep a single background source while hovering country cards. */
+@media (hover: hover) and (pointer: fine) {
+  body.home-country-preview.home-country-preview-visible:not(.song-page-country-bg),
+  html[data-theme="light"] body.home-country-preview.home-country-preview-visible:not(.song-page-country-bg) {
+    background-color: #05020f !important;
+    background-image: none !important;
+  }
+
+  body.home-country-preview:not(.song-page-country-bg) #app,
+  body.home-country-preview:not(.song-page-country-bg) #app.container.page-main,
+  body.home-country-preview:not(.song-page-country-bg) .page-main,
+  body.home-country-preview:not(.song-page-country-bg) .page-main.song-layout,
+  body.home-country-preview:not(.song-page-country-bg) .home-main,
+  body.home-country-preview:not(.song-page-country-bg) .catalog-main {
+    background: transparent !important;
+    background-color: transparent !important;
+    background-image: none !important;
+  }
+
+  body.home-country-preview.home-country-preview-visible.home-country-preview-layer-a:not(.song-page-country-bg)::before,
+  body.home-country-preview.home-country-preview-visible.home-country-preview-layer-b:not(.song-page-country-bg)::after {
+    opacity: 0.82 !important;
+  }
+
+  body.home-country-preview.home-country-preview-layer-a:not(.song-page-country-bg)::after,
+  body.home-country-preview.home-country-preview-layer-b:not(.song-page-country-bg)::before {
+    opacity: 0 !important;
+  }
+}
+
+
+
+
+

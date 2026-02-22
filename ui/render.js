@@ -4160,7 +4160,7 @@ export function bind(route, ctx) {
       });
     };
     const HOME_PREVIEW_HIDE_DELAY_MS = 0;
-    const HOME_PREVIEW_LAYER_RESET_DELAY_MS = 520;
+    const HOME_PREVIEW_LAYER_RESET_DELAY_MS = 340;
     const scheduleHomeCountryPreviewHide = () => {
       homePreviewHideTimerId = clearTimer(homePreviewHideTimerId, "homePreviewHideTimer");
       homePreviewSwapTimerId = clearTimer(homePreviewSwapTimerId, "homePreviewSwapTimer");
@@ -6485,6 +6485,3 @@ export function bind(route, ctx) {
     return;
   }
 }
-
-
-
