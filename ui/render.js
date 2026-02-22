@@ -5436,28 +5436,40 @@ export function bind(route, ctx) {
       if (uiLocale() === "et") return `${label}: vaja rangelt ${width}x${height}. Kasuta etaloni ${kind === "desktop" ? "1:1" : "12:37"}.`;
       return `${label}: required exactly ${width}x${height}. Use ${kind === "desktop" ? "1:1" : "12:37"}.`;
     };
-    const collectPeriodImageUrls = (config) => {
-      const safeConfig = config && typeof config === "object" ? config : createEmptyPeriodImageConfig();
-      const out = [];
-      const base = String(safeConfig.default || "").trim();
-      if (base) out.push(base);
-      USSR_PERIOD_VALUES.forEach((periodKey) => {
-        const value = String(safeConfig.periods?.[periodKey] || "").trim();
-        if (!value) return;
-        out.push(value);
-      });
-      return Array.from(new Set(out));
-    };
-    const assertVariantBackgroundDimensions = async (kind, refs, config) => {
-      const urls = collectPeriodImageUrls(config);
-      if (!urls.length) return;
-      for (const imageUrl of urls) {
+    const standardizeVariantImageUrl = async (kind, refs, imageUrl, focusX, focusY, zoomLevel) => {
+      const rawUrl = String(imageUrl || "").trim();
+      if (!rawUrl) return "";
+      try {
+        await assertExactImageDimensions(rawUrl, refs.standard.width, refs.standard.height);
+        return rawUrl;
+      } catch {
         try {
-          await assertExactImageDimensions(imageUrl, refs.standard.width, refs.standard.height);
+          return await standardizeBackgroundImage(
+            rawUrl,
+            refs.standard.width,
+            refs.standard.height,
+            focusX,
+            focusY,
+            zoomLevel
+          );
         } catch {
           throw new Error(invalidBackgroundSizeText(kind, refs.standard.width, refs.standard.height));
         }
       }
+    };
+    const standardizeVariantConfigForSave = async (kind, refs, config) => {
+      const safeConfig = config && typeof config === "object" ? config : createEmptyPeriodImageConfig();
+      const focusX = clampPercent(refs.focusX?.value || 50);
+      const focusY = clampPercent(refs.focusY?.value || 50);
+      const zoomLevel = readVariantZoom(kind);
+      const out = createEmptyPeriodImageConfig();
+      out.default = await standardizeVariantImageUrl(kind, refs, safeConfig.default, focusX, focusY, zoomLevel);
+      for (const periodKey of USSR_PERIOD_VALUES) {
+        const value = String(safeConfig.periods?.[periodKey] || "").trim();
+        if (!value) continue;
+        out.periods[periodKey] = await standardizeVariantImageUrl(kind, refs, value, focusX, focusY, zoomLevel);
+      }
+      return out;
     };
 
     const items = Array.isArray(ctx?.data?.items) ? ctx.data.items : [];
@@ -6371,8 +6383,8 @@ export function bind(route, ctx) {
         if (variantBaseSource.desktop) await rebuildFromBaseSource("desktop");
         if (variantBaseSource.mobile) await rebuildFromBaseSource("mobile");
         persistAllVariantScopeValues();
-        await assertVariantBackgroundDimensions("desktop", desktopRefs, variantConfigState.desktop);
-        await assertVariantBackgroundDimensions("mobile", mobileRefs, variantConfigState.mobile);
+        variantConfigState.desktop = await standardizeVariantConfigForSave("desktop", desktopRefs, variantConfigState.desktop);
+        variantConfigState.mobile = await standardizeVariantConfigForSave("mobile", mobileRefs, variantConfigState.mobile);
         const payload = {
           country,
           desktop_image_url: serializePeriodImageConfig(variantConfigState.desktop),

@@ -5564,20 +5564,13 @@ body {
 }
 
 @media (max-width: 960px) {
-  body {
-    background-image:
-      linear-gradient(180deg, var(--bg-photo-dim), var(--bg-photo-dim)),
-      var(--menu-default-bg-image-mobile) !important;
+  body:not(.song-page-country-bg) {
+    background-image: none !important;
+    background-color: #000000 !important;
     background-repeat: no-repeat !important;
     background-size: cover !important;
     background-position: center 50% !important;
     background-attachment: scroll !important;
-  }
-
-  /* Phone only: while drawer menu is open, disable wallpaper behind menu. */
-  body.menu-open {
-    background-image: none !important;
-    background-color: #05020f !important;
   }
 }
 
