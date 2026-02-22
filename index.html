@@ -44,10 +44,10 @@
     </div>
 
     <div class="topActions">
-      <div class="catalog-top-search hidden" id="topSearchWrap">
-        <input class="input catalog-top-search-input" id="topSearchInput" placeholder="Искать…" />
-        <button class="btn primary catalog-top-search-btn" id="topSearchBtn" type="button">Искать</button>
-      </div>
+      <form class="catalog-top-search hidden" id="topSearchWrap" role="search" action="javascript:void(0);">
+        <input class="input catalog-top-search-input" id="topSearchInput" placeholder="Искать…" enterkeyhint="search" autocomplete="off" autocapitalize="none" spellcheck="false" />
+        <button class="btn primary catalog-top-search-btn" id="topSearchBtn" type="submit">Искать</button>
+      </form>
       <select class="select" id="localeSwitch">
         <option value="ru">Rus</option>
         <option value="et">Est</option>

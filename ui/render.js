@@ -1,4 +1,4 @@
-﻿
+
 import { api } from "./api.js";
 import { state } from "./state.js";
 import { t } from "./i18n.js";
@@ -23,9 +23,9 @@ const PERMISSION_LABELS = {
   "songs.view_admin_content": { ru: "Доступ к admin-only контенту", en: "View admin-only content", et: "Admin-only sisu vaatamine" },
   "variants.manage": { ru: "Управление версиями текста", en: "Manage text variants", et: "Tekstiversioonide haldus" },
   "links.manage": { ru: "Управление ссылками", en: "Manage links", et: "Linkide haldus" },
-  "proposals.review": { ru: "Просмотр заявок", en: "Review requests", et: "Taotluste ülevaatus" },
+  "proposals.review": { ru: "Просмотр заявок", en: "Review requests", et: "Taotluste ulevaatus" },
   "proposals.approve": { ru: "Одобрение заявок", en: "Approve requests", et: "Taotluste kinnitamine" },
-  "proposals.reject": { ru: "Отклонение заявок", en: "Reject requests", et: "Taotluste tagasilükkamine" },
+  "proposals.reject": { ru: "Отклонение заявок", en: "Reject requests", et: "Taotluste tagasilukkamine" },
 };
 
 const PERMISSION_DESCRIPTIONS = {
@@ -37,7 +37,7 @@ const PERMISSION_DESCRIPTIONS = {
   "songs.edit": {
     ru: "Разрешает менять поля существующих песен.",
     en: "Allows editing existing song fields.",
-    et: "Lubab muuta olemasolevate laulude välju.",
+    et: "Lubab muuta olemasolevate laulude valju.",
   },
   "songs.delete": {
     ru: "Разрешает удалять песни и связанные данные.",
@@ -47,7 +47,7 @@ const PERMISSION_DESCRIPTIONS = {
   "songs.view_admin_content": {
     ru: "Разрешает видеть и помечать песни как admin-only.",
     en: "Allows viewing and marking songs as admin-only.",
-    et: "Lubab näha ja märkida laule admin-only sisuks.",
+    et: "Lubab naha ja markida laule admin-only sisuks.",
   },
   "variants.manage": {
     ru: "Разрешает добавлять и редактировать версии текста.",
@@ -57,12 +57,12 @@ const PERMISSION_DESCRIPTIONS = {
   "links.manage": {
     ru: "Разрешает управлять внешними ссылками для прослушивания.",
     en: "Allows managing external listening links.",
-    et: "Lubab hallata väliseid kuulamislinke.",
+    et: "Lubab hallata valiseid kuulamislinke.",
   },
   "proposals.review": {
     ru: "Открывает доступ к просмотру заявок пользователей.",
     en: "Grants access to view user requests.",
-    et: "Annab ligipääsu kasutajate taotluste vaatamiseks.",
+    et: "Annab ligipaasu kasutajate taotluste vaatamiseks.",
   },
   "proposals.approve": {
     ru: "Разрешает одобрять заявки и публиковать их как песни.",
@@ -72,7 +72,7 @@ const PERMISSION_DESCRIPTIONS = {
   "proposals.reject": {
     ru: "Разрешает отклонять заявки пользователей.",
     en: "Allows rejecting user requests.",
-    et: "Lubab kasutajate taotlusi tagasi lükata.",
+    et: "Lubab kasutajate taotlusi tagasi lukata.",
   },
 };
 
@@ -114,6 +114,9 @@ function openAnimatedElement(node) {
 function closeAnimatedElement(node, options = {}) {
   if (!node) return;
   const duration = uiMotionDuration(options.duration ?? UI_MOTION_MEDIUM_MS);
+  const transitionProperty = typeof options.transitionProperty === "string"
+    ? options.transitionProperty.trim()
+    : "";
   const onClosed = typeof options.onClosed === "function" ? options.onClosed : null;
   if (node.classList.contains("hidden") && !node.classList.contains("is-closing")) {
     if (onClosed) onClosed();
@@ -137,6 +140,7 @@ function closeAnimatedElement(node, options = {}) {
 
   const onTransitionEnd = (event) => {
     if (event.target !== node) return;
+    if (transitionProperty && event.propertyName !== transitionProperty) return;
     finish();
   };
   const timeoutId = setTimeout(finish, duration + 80);
@@ -153,18 +157,18 @@ function isAnimatedElementOpen(node) {
   return !node.classList.contains("is-closing");
 }
 
-function setAnimatedElementOpen(node, open) {
+function setAnimatedElementOpen(node, open, options = {}) {
   if (!node) return false;
   if (open) {
     openAnimatedElement(node);
     return true;
   }
-  closeAnimatedElement(node);
+  closeAnimatedElement(node, options);
   return false;
 }
 
-function toggleAnimatedElement(node) {
-  return setAnimatedElementOpen(node, !isAnimatedElementOpen(node));
+function toggleAnimatedElement(node, options = {}) {
+  return setAnimatedElementOpen(node, !isAnimatedElementOpen(node), options);
 }
 
 function openDialogAnimated(dialog) {
@@ -272,7 +276,7 @@ function showStatusOverlay(message, tone = "success") {
 function requiredFieldsErrorText() {
   if (uiLocale() === "ru") return "Не заполнены обязательные поля";
   if (uiLocale() === "uk") return "Не заповнені обов'язкові поля";
-  if (uiLocale() === "et") return "Kohustuslikud väljad on täitmata";
+  if (uiLocale() === "et") return "Kohustuslikud valjad on taitmata";
   return "Required fields are missing";
 }
 
@@ -734,7 +738,7 @@ function adminOnlyContentLabel() {
 function adminOnlyContentHint() {
   if (uiLocale() === "ru") return "Песня видна только пользователям с правом просмотра admin-only.";
   if (uiLocale() === "uk") return "Пісня видима лише користувачам із правом перегляду admin-only.";
-  if (uiLocale() === "et") return "Laul on nähtav ainult kasutajatele, kellel on admin-only vaatamise õigus.";
+  if (uiLocale() === "et") return "Laul on nahtav ainult kasutajatele, kellel on admin-only vaatamise oigus.";
   return "The song is visible only to users with admin-only viewing permission.";
 }
 
@@ -931,7 +935,7 @@ function renderPager(prefix, page, pages) {
     : uiLocale() === "uk"
       ? "Вперед"
       : uiLocale() === "et"
-        ? "Järgmine"
+        ? "Jargmine"
         : "Next";
   return     `
     <div class="yt-pager pager-shell" data-pager="${esc(prefix)}">
@@ -1065,7 +1069,7 @@ function homeResultsTitle() {
 function homeSearchHintText() {
   if (uiLocale() === "ru") return "Результаты песен появятся после поиска или выбора страны.";
   if (uiLocale() === "uk") return "Результати пісень з'являться після пошуку або вибору країни.";
-  if (uiLocale() === "et") return "Laulude tulemused ilmuvad pärast otsingut või riigi valikut.";
+  if (uiLocale() === "et") return "Laulude tulemused ilmuvad parast otsingut voi riigi valikut.";
   return "Song results appear after search or country selection.";
 }
 
@@ -1088,6 +1092,46 @@ function homeReportFragmentLabel() {
   if (uiLocale() === "uk") return "Не знайшли? Повідомити фрагмент";
   if (uiLocale() === "et") return "Ei leidnud? Saada katkend";
   return "Not found? Report fragment";
+}
+
+function homeLoadingResultsText() {
+  if (uiLocale() === "ru") return "Загружаем карточки...";
+  if (uiLocale() === "uk") return "Завантажуємо картки...";
+  if (uiLocale() === "et") return "Laen kaarte...";
+  return "Loading cards...";
+}
+
+function renderHomeSongCard(song = {}, options = {}) {
+  const backgroundsByCountry = options.backgroundsByCountry instanceof Map ? options.backgroundsByCountry : new Map();
+  const flagDevice = options.flagDevice || preferredFlagCardDevice();
+  const isVerified = Number(song?.verified || 0) === 1;
+  const countryKey = normalizeSongCountry(song?.country || "");
+  const background = countryKey ? (backgroundsByCountry.get(countryKey) || {}) : {};
+  const flagConfig = parseFlagPreviewConfig(String(background?.preview_flag_image_value || background?.preview_flag_image_url || "").trim());
+  const flagUrl = resolveFlagPreviewImage(flagConfig, {
+    country: song?.country || "",
+    period: song?.period || "",
+    year: song?.year || "",
+    kind: "long",
+    device: flagDevice,
+  });
+  const cardStyle = flagUrl ? ` style="${esc(`--yt-card-flag-image:${toCssUrlValue(flagUrl)}`)}"` : "";
+  return `
+    <a class="yt-card ${flagUrl ? "yt-card-has-flag" : ""}" href="#/song/${encodeURIComponent(song.id)}"${cardStyle}>
+      ${song.year ? `<span class="yt-card-year">${esc(song.year)}</span>` : ``}
+      <div class="yt-card-content">
+        <div class="yt-card-title-row">
+          <div class="yt-card-title">${esc(song.title)}</div>
+          ${isVerified ? `<span class="yt-card-verified">${esc(verifiedLabel())}</span>` : ``}
+        </div>
+        ${song.subtitle ? `<div class="yt-card-performer">${esc(song.subtitle)}</div>` : ``}
+        <div class="yt-card-meta-row">
+          <span class="yt-card-line">${esc(formatLang(song.lang))}</span>
+          <span class="yt-card-line">${esc(formatCountry(song.country))}</span>
+        </div>
+      </div>
+    </a>
+  `;
 }
 
 function homeUI(data, params, homeExtras = {}) {
@@ -1113,7 +1157,7 @@ function homeUI(data, params, homeExtras = {}) {
     : uiLocale() === "uk"
       ? "Розширений пошук"
     : uiLocale() === "et"
-      ? "Täpsem otsing"
+      ? "Tapsem otsing"
       : "Advanced search";
   const hideAdvancedLabel = uiLocale() === "ru"
     ? "Скрыть детали"
@@ -1194,41 +1238,25 @@ function homeUI(data, params, homeExtras = {}) {
     `).join("")
     : `<div class="card"><div class="muted">${esc(homeCountryNoDataText())}</div></div>`;
 
-  const flagDevice = preferredFlagCardDevice();
-  const renderSongCards = (items = []) => items.map((s) => {
-    const isVerified = Number(s?.verified || 0) === 1;
-    const countryKey = normalizeSongCountry(s?.country || "");
-    const background = countryKey ? (backgroundsByCountry.get(countryKey) || {}) : {};
-    const flagConfig = parseFlagPreviewConfig(String(background?.preview_flag_image_value || background?.preview_flag_image_url || "").trim());
-    const flagUrl = resolveFlagPreviewImage(flagConfig, {
-      country: s?.country || "",
-      period: s?.period || "",
-      year: s?.year || "",
-      kind: "long",
-      device: flagDevice,
-    });
-    const cardStyle = flagUrl ? ` style="${esc(`--yt-card-flag-image:${toCssUrlValue(flagUrl)}`)}"` : "";
-    return `
-    <a class="yt-card ${flagUrl ? "yt-card-has-flag" : ""}" href="#/song/${encodeURIComponent(s.id)}"${cardStyle}>
-      ${s.year ? `<span class="yt-card-year">${esc(s.year)}</span>` : ``}
-      <div class="yt-card-content">
-        <div class="yt-card-title-row">
-          <div class="yt-card-title">${esc(s.title)}</div>
-          ${isVerified ? `<span class="yt-card-verified">${esc(verifiedLabel())}</span>` : ``}
-        </div>
-        ${s.subtitle ? `<div class="yt-card-performer">${esc(s.subtitle)}</div>` : ``}
-        <div class="yt-card-meta-row">
-          <span class="yt-card-line">${esc(formatLang(s.lang))}</span>
-          <span class="yt-card-line">${esc(formatCountry(s.country))}</span>
-        </div>
+  const loadingResultsText = homeLoadingResultsText();
+  const resultLoadingScreenMarkup = `
+    <div class="card home-search-hint home-results-loader-screen" id="yt_results_loading_screen">
+      <div class="home-results-loader-row">
+        <span class="home-results-spinner" aria-hidden="true"></span>
+        <span class="muted">${esc(loadingResultsText)}</span>
       </div>
-    </a>
+    </div>
   `;
-  }).join("");
-
-  const cards = renderSongCards(data.items || []);
+  const resultLoaderMarkup = `
+    <div class="card home-search-hint home-results-loader" id="yt_results_loader">
+      <div class="home-results-loader-row">
+        <span class="home-results-spinner" aria-hidden="true"></span>
+        <span class="muted">${esc(loadingResultsText)}</span>
+      </div>
+    </div>
+  `;
+  const resultSentinelMarkup = `<div class="home-results-sentinel hidden" id="yt_results_sentinel" aria-hidden="true"></div>`;
   const suggestions = Array.isArray(data?.suggestions) ? data.suggestions : [];
-  const suggestionCards = renderSongCards(suggestions);
   const hasExactResults = (data.items || []).length > 0;
   const hasSuggestions = suggestions.length > 0;
   const maybeYouSearchedTitle = uiLocale() === "ru"
@@ -1236,14 +1264,14 @@ function homeUI(data, params, homeExtras = {}) {
     : uiLocale() === "uk"
       ? "Можливо, ви шукали"
       : uiLocale() === "et"
-        ? "Võib-olla otsisite"
+        ? "Voib-olla otsisite"
         : "Maybe you searched for";
   const exactNotFoundText = uiLocale() === "ru"
     ? "Точного совпадения не найдено."
     : uiLocale() === "uk"
       ? "Точного збігу не знайдено."
       : uiLocale() === "et"
-        ? "Täpset vastet ei leitud."
+        ? "Tapset vastet ei leitud."
         : "No exact match found.";
 
   const shouldShowResults = didSearch;
@@ -1252,7 +1280,7 @@ function homeUI(data, params, homeExtras = {}) {
     <section class="yt-main home-main">
       <div class="yt-detail-trigger" id="yt_detailToggleWrap">
         <button
-          class="btn ghost"
+          class="btn ghost ${showAdvanced ? "is-open" : ""}"
           id="yt_toggleAdvanced"
           type="button"
           data-label-open="${esc(hideAdvancedLabel)}"
@@ -1284,7 +1312,7 @@ function homeUI(data, params, homeExtras = {}) {
           <input class="input" id="yt_region" value="${esc(region)}" />
         </label>
         <label class="yt-chip-input">
-          <span>${esc(uiLocale() === "ru" ? "Событие" : uiLocale() === "uk" ? "Подія" : uiLocale() === "et" ? "Sündmus" : "Event")}</span>
+          <span>${esc(uiLocale() === "ru" ? "Событие" : uiLocale() === "uk" ? "Подія" : uiLocale() === "et" ? "Sundmus" : "Event")}</span>
           <input class="input" id="yt_event" value="${esc(event)}" />
         </label>
         <label class="yt-chip-input">
@@ -1327,9 +1355,11 @@ function homeUI(data, params, homeExtras = {}) {
           </div>
         </div>
         ${hasExactResults ? `
-          <div class="yt-feed">
-            ${cards}
+          ${resultLoadingScreenMarkup}
+          <div class="yt-feed yt-feed-progressive is-chunk-loading" id="yt_results_feed" data-feed-mode="exact">
           </div>
+          ${resultLoaderMarkup}
+          ${resultSentinelMarkup}
           ${renderPager("yt", page, pages)}
         ` : hasSuggestions ? `
           <div class="card home-search-hint">
@@ -1338,16 +1368,18 @@ function homeUI(data, params, homeExtras = {}) {
           <div class="yt-feed-head yt-results-head">
             <div class="h2">${esc(maybeYouSearchedTitle)}</div>
           </div>
-          <div class="yt-feed">
-            ${suggestionCards}
+          ${resultLoadingScreenMarkup}
+          <div class="yt-feed yt-feed-progressive is-chunk-loading" id="yt_results_feed" data-feed-mode="suggestions">
           </div>
+          ${resultLoaderMarkup}
+          ${resultSentinelMarkup}
         ` : `
           <div class="yt-feed">
             <div class="card"><div class="muted">${esc(t("home.nothing"))}</div><div class="actions" style="margin-top:10px"><a class="btn ghost" href="${esc(makeHash("#/request", { fragment: q || "" }, ["fragment"]))}">${esc(homeReportFragmentLabel())}</a></div></div>
           </div>
         `}
       ` : `
-        <div class="card home-search-hint">
+        <div class="card home-search-hint home-search-hint-flat">
           <div class="muted">${esc(homeSearchHintText())}</div>
         </div>
       `}
@@ -1548,6 +1580,77 @@ function splitLyricsToStanzas(text = "") {
     .filter(Boolean);
 }
 
+function normalizeCompareStanza(text = "") {
+  return String(text || "")
+    .replace(/\r\n?/g, "\n")
+    .toLowerCase()
+    .split("\n")
+    .map((line) => line.trim())
+    .filter(Boolean)
+    .join("\n")
+    .replace(/[^\p{L}\p{N}\n\s]+/gu, " ")
+    .replace(/[ \t]+/g, " ")
+    .replace(/\n{2,}/g, "\n")
+    .trim();
+}
+
+function tokenizeCompareStanza(text = "") {
+  const normalized = normalizeCompareStanza(text).replace(/\n/g, " ");
+  return normalized.match(/[\p{L}\p{N}]+/gu) || [];
+}
+
+function compareStanzaSimilarity(sourceText = "", targetText = "") {
+  const sourceNorm = normalizeCompareStanza(sourceText);
+  const targetNorm = normalizeCompareStanza(targetText);
+  if (!sourceNorm || !targetNorm) return { score: 0, overlap: 0 };
+  if (sourceNorm === targetNorm) return { score: 1, overlap: 999 };
+
+  const sourceTokens = tokenizeCompareStanza(sourceNorm);
+  const targetTokens = tokenizeCompareStanza(targetNorm);
+  if (!sourceTokens.length || !targetTokens.length) return { score: 0, overlap: 0 };
+
+  const sourceFreq = new Map();
+  sourceTokens.forEach((token) => sourceFreq.set(token, (sourceFreq.get(token) || 0) + 1));
+  const targetFreq = new Map();
+  targetTokens.forEach((token) => targetFreq.set(token, (targetFreq.get(token) || 0) + 1));
+
+  let overlap = 0;
+  sourceFreq.forEach((count, token) => {
+    const rightCount = targetFreq.get(token) || 0;
+    if (rightCount > 0) overlap += Math.min(count, rightCount);
+  });
+  if (!overlap) return { score: 0, overlap: 0 };
+
+  const dice = (2 * overlap) / (sourceTokens.length + targetTokens.length);
+  const sourceLines = sourceNorm.split("\n").filter(Boolean).length || 1;
+  const targetLines = targetNorm.split("\n").filter(Boolean).length || 1;
+  const lineBalance = Math.min(sourceLines, targetLines) / Math.max(sourceLines, targetLines);
+  const score = (dice * 0.92) + (lineBalance * 0.08);
+  return { score, overlap };
+}
+
+function alignCompareStanzas(sourceStanzas = [], targetStanzas = []) {
+  const src = Array.isArray(sourceStanzas) ? sourceStanzas : [];
+  const dst = Array.isArray(targetStanzas) ? targetStanzas : [];
+  const rowCount = Math.max(src.length, dst.length);
+  const rows = [];
+  for (let idx = 0; idx < rowCount; idx += 1) {
+    const hasSource = idx < src.length;
+    const hasTarget = idx < dst.length;
+    const sourceText = hasSource ? String(src[idx] || "") : "";
+    const targetText = hasTarget ? String(dst[idx] || "") : "";
+    const isExact = hasSource
+      && hasTarget
+      && normalizeCompareStanza(sourceText) === normalizeCompareStanza(targetText);
+    rows.push({
+      sourceIndex: hasSource ? idx : null,
+      targetIndex: hasTarget ? idx : null,
+      isExact,
+    });
+  }
+  return rows;
+}
+
 function diffWordsToKeepSet(sourceWords = [], targetWords = []) {
   const src = sourceWords.map((w) => String(w || "").toLowerCase());
   const dst = targetWords.map((w) => String(w || "").toLowerCase());
@@ -1577,21 +1680,67 @@ function diffWordsToKeepSet(sourceWords = [], targetWords = []) {
   return keep;
 }
 
-function renderCompareWordMarkup(sourceText = "", targetText = "") {
+function compactCompareKeepSet(rawKeep = new Set(), sourceWords = []) {
+  const sorted = [...rawKeep]
+    .filter((idx) => Number.isInteger(idx) && idx >= 0)
+    .sort((a, b) => a - b);
+  if (!sorted.length) return new Set();
+  const compact = new Set();
+  let runStart = 0;
+  while (runStart < sorted.length) {
+    let runEnd = runStart;
+    while (runEnd + 1 < sorted.length && sorted[runEnd + 1] === sorted[runEnd] + 1) {
+      runEnd += 1;
+    }
+    const runLength = (runEnd - runStart) + 1;
+    if (runLength >= 2) {
+      for (let i = runStart; i <= runEnd; i += 1) compact.add(sorted[i]);
+    } else {
+      const idx = sorted[runStart];
+      const token = String(sourceWords[idx] || "").toLowerCase().replace(/[^\p{L}\p{N}]+/gu, "");
+      if (token.length >= 5) compact.add(idx);
+    }
+    runStart = runEnd + 1;
+  }
+  return compact;
+}
+
+function isCompareAttachedPunctuation(ch = "") {
+  return /[.,!?;:)\]}\u00BB\u201D]/u.test(String(ch || ""));
+}
+
+function renderCompareWordMarkup(sourceText = "", targetText = "", options = {}) {
+  const skipDiff = !!options.skipDiff;
   const src = String(sourceText || "");
+  if (!src) return "";
+  if (skipDiff) return renderTextWithUnknownMarkers(src);
   const dst = String(targetText || "");
-  const wordRe = /[\p{L}\p{N}?]+/gu;
-  const srcWords = src.match(wordRe) || [];
-  const dstWords = dst.match(wordRe) || [];
-  const keep = diffWordsToKeepSet(srcWords, dstWords);
+  const matchWordRe = /[\p{L}\p{N}?]+/gu;
+  const srcWords = src.match(matchWordRe) || [];
+  const dstWords = dst.match(matchWordRe) || [];
+  const keepRaw = diffWordsToKeepSet(srcWords, dstWords);
+  const keep = compactCompareKeepSet(keepRaw, srcWords);
   let wordIndex = 0;
-  return esc(src).replace(wordRe, (word) => {
+  let out = "";
+  let lastIndex = 0;
+  const renderWordRe = /[\p{L}\p{N}?]+/gu;
+  let match = renderWordRe.exec(src);
+  while (match) {
+    const start = match.index;
+    const end = start + match[0].length;
+    out += renderTextWithUnknownMarkers(src.slice(lastIndex, start));
+    let spanEnd = end;
+    while (spanEnd < src.length && isCompareAttachedPunctuation(src[spanEnd])) spanEnd += 1;
     const idx = wordIndex;
     wordIndex += 1;
-    const safeWord = String(word || "").replace(/\?/g, `<span class="song-unknown-char">?</span>`);
-    if (keep.has(idx)) return safeWord;
-    return `<span class="song-version-word-diff">${safeWord}</span>`;
-  });
+    const safeWord = renderTextWithUnknownMarkers(src.slice(start, spanEnd));
+    if (keep.has(idx)) out += `<span class="song-version-word-diff">${safeWord}</span>`;
+    else out += `<span class="song-version-word-similar">${safeWord}</span>`;
+    lastIndex = spanEnd;
+    match = renderWordRe.exec(src);
+  }
+  out += renderTextWithUnknownMarkers(src.slice(lastIndex));
+  return out;
 }
 
 function decodingProgressText(percent) {
@@ -1599,7 +1748,7 @@ function decodingProgressText(percent) {
   const shown = Number.isInteger(value) ? String(value) : value.toFixed(1);
   if (uiLocale() === "ru") return `Песня расшифрована на ${shown}%`;
   if (uiLocale() === "uk") return `Пісню розшифровано на ${shown}%`;
-  if (uiLocale() === "et") return `Laul on dešifreeritud ${shown}%`;
+  if (uiLocale() === "et") return `Laul on desifreeritud ${shown}%`;
   return `Song is deciphered by ${shown}%`;
 }
 
@@ -1669,7 +1818,7 @@ function lyricsComposerTitle() {
 function lyricsComposerHint() {
   if (uiLocale() === "ru") return "Сначала добавьте полноценный припев, потом для повторов используйте блок «Повтор припева».";
   if (uiLocale() === "uk") return "Спочатку додайте повний приспів, потім для повторів використовуйте блок «Повтор приспіву».";
-  if (uiLocale() === "et") return "Lisa esmalt täis koor, korduste jaoks kasuta plokki \"Koori kordus\".";
+  if (uiLocale() === "et") return "Lisa esmalt tais koor, korduste jaoks kasuta plokki \"Koori kordus\".";
   return "Add a full chorus first, then use the chorus repeat block for repeated sections.";
 }
 
@@ -1690,7 +1839,7 @@ function lyricsComposerInsertLabel() {
 function lyricsComposerSelectLabel() {
   if (uiLocale() === "ru") return "Тип блока";
   if (uiLocale() === "uk") return "Тип блоку";
-  if (uiLocale() === "et") return "Ploki tüüp";
+  if (uiLocale() === "et") return "Ploki tuup";
   return "Block type";
 }
 
@@ -1795,6 +1944,10 @@ function songDetailsUI(song, extra = {}) {
   );
   const listenItems = collectListenServiceItems(song, links);
   const hasListenItems = listenItems.length > 0;
+  const linksEditorHash = canOpenEditor
+    ? makeHash("#/admin/editor", { id: song.id, focus: "links", addLink: "1" }, ["id", "focus", "addLink"])
+    : "";
+  const showDescriptionInSongCard = false;
   const canSeeStatus = can("songs.edit");
   const favLabel = extra.isFav ? t("song.delFav") : t("song.addFav");
   const statusLabel = song.status === "draft" ? t("status.draft") : t("status.published");
@@ -1803,7 +1956,7 @@ function songDetailsUI(song, extra = {}) {
     ? `<span class="song-status-dot ${statusClass}" title="${esc(statusLabel)}" aria-label="${esc(statusLabel)}"></span>`
     : "";
   const verifiedPill = Number(song?.verified || 0) === 1
-    ? `<span class="song-verified-pill" title="${esc(verifiedLabel())}" aria-label="${esc(verifiedLabel())}">✓ ${esc(verifiedLabel())}</span>`
+    ? `<span class="song-verified-pill" title="${esc(verifiedLabel())}" aria-label="${esc(verifiedLabel())}">? ${esc(verifiedLabel())}</span>`
     : "";
   const editActionBtn = canOpenEditor
     ? `<a class="btn ghost song-edit-top" id="btnSongEditNav" href="${esc(makeHash("#/admin/editor", { id: song.id }, ["id"]))}" title="${esc(t("song.tools"))}" aria-label="${esc(t("song.tools"))}">
@@ -1814,7 +1967,7 @@ function songDetailsUI(song, extra = {}) {
     </a>`
     : "";
   const playActionBtn = hasListenItems
-    ? `<button class="btn primary song-play-now" id="btnSongListen" type="button" aria-label="${esc(listenCtaText())}"><span class="song-listen-icon-glyph" aria-hidden="true">♫</span><span>${esc(listenCtaText())}</span></button>`
+    ? `<button class="btn primary song-play-now" id="btnSongListen" type="button" aria-label="${esc(listenCtaText())}"><span class="song-listen-icon-glyph" aria-hidden="true">d</span><span>${esc(listenCtaText())}</span></button>`
     : "";
   const copyActionBtn = `
     <button class="btn ghost song-header-tool song-copy-main" id="btnCopyLyrics" type="button" title="${esc(t("prompt.copy"))}" aria-label="${esc(t("prompt.copy"))}">
@@ -1847,11 +2000,11 @@ function songDetailsUI(song, extra = {}) {
     : uiLocale() === "uk"
       ? "Оберіть тип запиту та відкрийте ChatGPT."
       : uiLocale() === "et"
-        ? "Vali päringu tüüp ja ava kohe ChatGPT."
+        ? "Vali paringu tuup ja ava kohe ChatGPT."
         : "Choose a prompt type and open ChatGPT.";
   const aiContextDesc = uiLocale() === "ru" ? "Исторический фон" : uiLocale() === "uk" ? "Історичний контекст" : uiLocale() === "et" ? "Ajalooline taust" : "Historical context";
-  const aiTranslateDesc = uiLocale() === "ru" ? "Литературный перевод" : uiLocale() === "uk" ? "Літературний переклад" : uiLocale() === "et" ? "Kirjanduslik tõlge" : "Literary translation";
-  const aiExplainDesc = uiLocale() === "ru" ? "Образы и смысл" : uiLocale() === "uk" ? "Образи та сенс" : uiLocale() === "et" ? "Kujundid ja mõte" : "Meaning and imagery";
+  const aiTranslateDesc = uiLocale() === "ru" ? "Литературный перевод" : uiLocale() === "uk" ? "Літературний переклад" : uiLocale() === "et" ? "Kirjanduslik tolge" : "Literary translation";
+  const aiExplainDesc = uiLocale() === "ru" ? "Образы и смысл" : uiLocale() === "uk" ? "Образи та сенс" : uiLocale() === "et" ? "Kujundid ja mote" : "Meaning and imagery";
   const initialLyrics = renderStructuredLyrics(song.lyrics || "");
   const initialDecodingPercent = decodeLyricsProgressPercent(initialLyrics.expanded || song.lyrics || "");
   const categoryChips = [
@@ -1885,14 +2038,14 @@ function songDetailsUI(song, extra = {}) {
     : uiLocale() === "uk"
       ? "Порівняти версії"
       : uiLocale() === "et"
-        ? "Võrdle versioone"
+        ? "Vordle versioone"
         : "Compare versions";
   const compareMetaMissing = uiLocale() === "ru"
     ? "не указано"
     : uiLocale() === "uk"
       ? "не вказано"
       : uiLocale() === "et"
-        ? "määramata"
+        ? "maaramata"
         : "Not specified";
   const compareVersionOneTitle = uiLocale() === "ru"
     ? "Версия 1"
@@ -1927,7 +2080,7 @@ function songDetailsUI(song, extra = {}) {
     : uiLocale() === "uk"
       ? "Оберіть номер версії для порівняння"
       : uiLocale() === "et"
-      ? "Vali võrdlemiseks versiooni number"
+      ? "Vali vordlemiseks versiooni number"
       : "Choose version number to compare";
   const compareListenLabel = uiLocale() === "ru"
     ? "Слушать"
@@ -2041,6 +2194,11 @@ function songDetailsUI(song, extra = {}) {
                 </div>
               </div>
             </div>
+            ${canOpenEditor ? `
+              <div class="song-version-listen-admin-actions hidden" id="songVersionListenAdminActions">
+                <a class="btn ghost song-version-listen-manage" href="${esc(linksEditorHash)}">${esc(t("common.addLink"))}</a>
+              </div>
+            ` : ``}
           ` : renderListenServiceRows(listenItems)}
           ${!state.user ? `<div class="muted small song-fav-hint">${esc(t("song.loginForFav"))}</div>` : ``}
 
@@ -2052,15 +2210,15 @@ function songDetailsUI(song, extra = {}) {
               </div>
               <div class="song-ai-row">
                 <button class="song-ai-link" id="btnPromptContext" type="button">
-                  <span class="song-ai-link-icon" aria-hidden="true">◉</span>
+                  <span class="song-ai-link-icon" aria-hidden="true">?</span>
                   <span class="song-ai-link-copy"><strong>${esc(t("song.aiContext"))}</strong><small>${esc(aiContextDesc)}</small></span>
                 </button>
                 <button class="song-ai-link" id="btnPromptTranslate" type="button">
-                  <span class="song-ai-link-icon" aria-hidden="true">⇄</span>
+                  <span class="song-ai-link-icon" aria-hidden="true">?</span>
                   <span class="song-ai-link-copy"><strong>${esc(t("song.aiTranslate"))}</strong><small>${esc(aiTranslateDesc)}</small></span>
                 </button>
                 <button class="song-ai-link" id="btnPromptExplain" type="button">
-                  <span class="song-ai-link-icon" aria-hidden="true">✦</span>
+                  <span class="song-ai-link-icon" aria-hidden="true">?</span>
                   <span class="song-ai-link-copy"><strong>${esc(t("song.aiExplain"))}</strong><small>${esc(aiExplainDesc)}</small></span>
                 </button>
               </div>
@@ -2069,7 +2227,7 @@ function songDetailsUI(song, extra = {}) {
         </div>
       </div>
 
-      ${song.notes ? `<div class="card" style="margin-top:12px"><div class="h2">${esc(uiText("description"))}</div><div class="sep"></div><div class="muted">${esc(song.notes)}</div></div>` : ``}
+      ${(showDescriptionInSongCard && song.notes) ? `<div class="card" style="margin-top:12px"><div class="h2">${esc(uiText("description"))}</div><div class="sep"></div><div class="muted">${esc(song.notes)}</div></div>` : ``}
       ${showAuditBlock ? `
         <div class="card song-audit-card">
           <div class="muted small"><strong>${esc(songAuditAddedLabel())}:</strong> ${esc(creatorName)}</div>
@@ -2128,7 +2286,7 @@ function requestUI(options = {}) {
     : uiLocale() === "uk"
       ? "Заповніть картку повністю: за наявності прав публікація одразу, інакше заявка піде на модерацію."
     : uiLocale() === "et"
-      ? "Täida kaart täielikult: õiguste korral avaldatakse kohe, muidu läheb modereerimisele."
+      ? "Taida kaart taielikult: oiguste korral avaldatakse kohe, muidu laheb modereerimisele."
       : "Fill in all fields: published immediately with permissions, otherwise sent for moderation.";
   const fragmentTitleText = uiLocale() === "ru"
     ? "Не нашли песню? Отправьте фрагмент"
@@ -2142,7 +2300,7 @@ function requestUI(options = {}) {
     : uiLocale() === "uk"
       ? "Вкажіть лише текст фрагмента та джерело. Заявку отримає супер-адміністратор."
       : uiLocale() === "et"
-        ? "Lisa ainult tekstikatkend ja allikas. Taotlus läheb ainult super-adminile."
+        ? "Lisa ainult tekstikatkend ja allikas. Taotlus laheb ainult super-adminile."
         : "Provide only fragment text and source. The request is sent to super admin only.";
   const submitFragmentText = uiLocale() === "ru"
     ? "Отправить фрагмент"
@@ -2196,7 +2354,7 @@ function requestUI(options = {}) {
           <label class="field" id="rq_period_wrap"><div class="fieldLabel">${esc(t("field.period"))}</div><select class="select" id="rq_period">${selectOptions("period", "", uiText("selectPeriod"))}</select></label>
           <label class="field"><div class="fieldLabel">${esc(t("field.year"))}</div><input class="input" id="rq_year" /></label>
           <label class="field"><div class="fieldLabel">${esc(uiLocale() === "ru" ? "Регион" : uiLocale() === "uk" ? "Регіон" : uiLocale() === "et" ? "Piirkond" : "Region")}</div><input class="input" id="rq_region" /></label>
-          <label class="field"><div class="fieldLabel">${esc(uiLocale() === "ru" ? "Событие" : uiLocale() === "uk" ? "Подія" : uiLocale() === "et" ? "Sündmus" : "Event")}</div><input class="input" id="rq_event" /></label>
+          <label class="field"><div class="fieldLabel">${esc(uiLocale() === "ru" ? "Событие" : uiLocale() === "uk" ? "Подія" : uiLocale() === "et" ? "Sundmus" : "Event")}</div><input class="input" id="rq_event" /></label>
           <label class="field"><div class="fieldLabel">${esc(uiLocale() === "ru" ? "Тематика" : uiLocale() === "uk" ? "Тематика" : uiLocale() === "et" ? "Temaatika" : "Theme")}</div><input class="input" id="rq_theme" /></label>
           <label class="field"><div class="fieldLabel">${esc(t("field.source"))}</div><input class="input" id="rq_source" /></label>
         </div>
@@ -2346,7 +2504,7 @@ function adminEditorUI(song = {}, options = {}) {
           </div>
           <div class="grid2">
             <label class="field"><div class="fieldLabel">${esc(uiLocale() === "ru" ? "Регион" : uiLocale() === "uk" ? "Регіон" : uiLocale() === "et" ? "Piirkond" : "Region")}</div><input id="ac_region" class="input" /></label>
-            <label class="field"><div class="fieldLabel">${esc(uiLocale() === "ru" ? "Событие" : uiLocale() === "uk" ? "Подія" : uiLocale() === "et" ? "Sündmus" : "Event")}</div><input id="ac_event" class="input" /></label>
+            <label class="field"><div class="fieldLabel">${esc(uiLocale() === "ru" ? "Событие" : uiLocale() === "uk" ? "Подія" : uiLocale() === "et" ? "Sundmus" : "Event")}</div><input id="ac_event" class="input" /></label>
           </div>
           <label class="field"><div class="fieldLabel">${esc(uiLocale() === "ru" ? "Тематика" : uiLocale() === "uk" ? "Тематика" : uiLocale() === "et" ? "Temaatika" : "Theme")}</div><input id="ac_theme" class="input" /></label>
           ${canMarkVerified ? `
@@ -2374,10 +2532,15 @@ function adminEditorUI(song = {}, options = {}) {
         </div>
         <div class="muted small song-decoding-progress" id="ac_decoding">${esc(decodingProgressText(100))}</div>
 
-        <section class="request-section request-repeater-section">
+        <section class="request-section request-repeater-section" id="ac_links_section">
           <div class="h2 request-section-title">${esc(t("song.links"))}</div>
           <div id="ac_links" class="request-repeater"></div>
-          <button class="btn ghost request-add-btn" id="ac_addLink" type="button">${esc(t("common.addLink"))}</button>
+          <div class="request-quick-links">
+            <button class="btn ghost request-add-btn" id="ac_addLink" type="button">${esc(t("common.addLink"))}</button>
+            <button class="btn ghost request-add-btn" id="ac_addLinkYoutube" type="button">+ YouTube</button>
+            <button class="btn ghost request-add-btn" id="ac_addLinkSovmusic" type="button">+ SovMusic</button>
+            <button class="btn ghost request-add-btn" id="ac_addLinkRecords" type="button">+ Russian Records</button>
+          </div>
         </section>
 
         <section class="request-section request-repeater-section">
@@ -2422,7 +2585,7 @@ function adminRequestsUI(data, params) {
                 ${(r.region || r.event || r.theme || Number(r.report_fragment || 0) === 1) ? `
                   <div class="songMeta">${[
                     r.region ? `${esc(uiLocale() === "ru" ? "Регион" : uiLocale() === "uk" ? "Регіон" : uiLocale() === "et" ? "Piirkond" : "Region")}: ${esc(r.region)}` : "",
-                    r.event ? `${esc(uiLocale() === "ru" ? "Событие" : uiLocale() === "uk" ? "Подія" : uiLocale() === "et" ? "Sündmus" : "Event")}: ${esc(r.event)}` : "",
+                    r.event ? `${esc(uiLocale() === "ru" ? "Событие" : uiLocale() === "uk" ? "Подія" : uiLocale() === "et" ? "Sundmus" : "Event")}: ${esc(r.event)}` : "",
                     r.theme ? `${esc(uiLocale() === "ru" ? "Тематика" : uiLocale() === "uk" ? "Тематика" : uiLocale() === "et" ? "Temaatika" : "Theme")}: ${esc(r.theme)}` : "",
                     Number(r.report_fragment || 0) === 1 ? esc(uiLocale() === "ru" ? "Сообщение фрагмента" : uiLocale() === "uk" ? "Повідомлення фрагмента" : uiLocale() === "et" ? "Katkendi teavitus" : "Fragment report") : "",
                   ].filter(Boolean).join(" · ")}</div>
@@ -2449,7 +2612,7 @@ function adminUsersUI(data) {
     : uiLocale() === "uk"
       ? "Усі мови"
       : uiLocale() === "et"
-        ? "Kõik keeled"
+        ? "Koik keeled"
         : "All languages";
   const langOptions = SONG_LANGUAGE_VALUES.map((value) => ({ value, label: formatLang(value) }));
   const scopeBlockLabel = uiLocale() === "ru"
@@ -2471,7 +2634,7 @@ function adminUsersUI(data) {
     : uiLocale() === "uk"
       ? "Повноваження"
       : uiLocale() === "et"
-        ? "Õigused"
+        ? "Oigused"
         : "Permissions";
   const superAdminBadgeLabel = uiLocale() === "ru"
     ? "Супер-администратор"
@@ -2485,14 +2648,14 @@ function adminUsersUI(data) {
     : uiLocale() === "uk"
       ? "Системна роль: супер-адміністратор. Зміна через інтерфейс недоступна."
       : uiLocale() === "et"
-        ? "Süsteemiroll: superadministraator. Muutmine liidese kaudu pole lubatud."
+        ? "Susteemiroll: superadministraator. Muutmine liidese kaudu pole lubatud."
         : "System role: super admin. Editing from UI is disabled.";
   const accessLevelLabel = uiLocale() === "ru"
     ? "Уровень доступа"
     : uiLocale() === "uk"
       ? "Рівень доступу"
       : uiLocale() === "et"
-        ? "Juurdepääsu tase"
+        ? "Juurdepaasu tase"
         : "Access level";
   const userRoleLabel = uiLocale() === "ru"
     ? "Пользователь"
@@ -2601,7 +2764,7 @@ function adminCountryBackgroundsUI(data) {
     : uiLocale() === "uk"
       ? "Задайте окремі фони для ПК і телефону, перетягніть кадр мишкою/пальцем і налаштуйте зум."
       : uiLocale() === "et"
-        ? "Määra eraldi taustad lauaarvutile ja telefonile, lohista kaadrit hiire/sõrmega ja sea suum."
+        ? "Maara eraldi taustad lauaarvutile ja telefonile, lohista kaadrit hiire/sormega ja sea suum."
         : "Set separate desktop/mobile backgrounds, drag the frame with mouse/touch, and adjust zoom.";
   const countryLabel = uiLocale() === "ru"
     ? "Страна"
@@ -2610,22 +2773,36 @@ function adminCountryBackgroundsUI(data) {
       : uiLocale() === "et"
         ? "Riik"
         : "Country";
+  const countrySearchLabel = uiLocale() === "ru"
+    ? "Поиск страны"
+    : uiLocale() === "uk"
+      ? "Пошук країни"
+      : uiLocale() === "et"
+        ? "Riigi otsing"
+        : "Country search";
+  const countrySearchPlaceholder = uiLocale() === "ru"
+    ? "Начните вводить название или код (например: ussr)"
+    : uiLocale() === "uk"
+      ? "Почніть вводити назву або код (наприклад: ussr)"
+      : uiLocale() === "et"
+        ? "Sisesta nimi voi kood (nt ussr)"
+        : "Start typing name or code (e.g. ussr)";
   const periodScopeLabel = uiLocale() === "ru" ? "Эпоха СССР для фона" : uiLocale() === "uk" ? "Епоха СРСР для фону" : uiLocale() === "et" ? "NSVL taustaperiood" : "USSR era for background";
-  const periodScopeDefaultLabel = uiLocale() === "ru" ? "Базовый фон (все эпохи)" : uiLocale() === "uk" ? "Базовий фон (усі епохи)" : uiLocale() === "et" ? "Põhitaust (kõik perioodid)" : "Default background (all eras)";
+  const periodScopeDefaultLabel = uiLocale() === "ru" ? "Базовый фон (все эпохи)" : uiLocale() === "uk" ? "Базовий фон (усі епохи)" : uiLocale() === "et" ? "Pohitaust (koik perioodid)" : "Default background (all eras)";
   const periodScopeHint = uiLocale() === "ru"
     ? "Выберите эпоху, чтобы задать отдельный фон для периода СССР."
     : uiLocale() === "uk"
       ? "Оберіть епоху, щоб задати окремий фон для періоду СРСР."
       : uiLocale() === "et"
-        ? "Vali periood, et määrata NSVL ajastule eraldi taust."
+        ? "Vali periood, et maarata NSVL ajastule eraldi taust."
         : "Choose an era to set a dedicated USSR period background.";
   const desktopLabel = uiLocale() === "ru" ? "ПК" : uiLocale() === "uk" ? "ПК" : uiLocale() === "et" ? "Lauaarvuti" : "Desktop";
   const mobileLabel = uiLocale() === "ru" ? "Телефон" : uiLocale() === "uk" ? "Телефон" : uiLocale() === "et" ? "Telefon" : "Mobile";
   const uploadLabel = uiLocale() === "ru" ? "Загрузить файл" : uiLocale() === "uk" ? "Завантажити файл" : uiLocale() === "et" ? "Laadi fail" : "Upload file";
-  const urlLabel = uiLocale() === "ru" ? "или URL изображения" : uiLocale() === "uk" ? "або URL зображення" : uiLocale() === "et" ? "või pildi URL" : "or image URL";
+  const urlLabel = uiLocale() === "ru" ? "или URL изображения" : uiLocale() === "uk" ? "або URL зображення" : uiLocale() === "et" ? "voi pildi URL" : "or image URL";
   const zoomLabel = uiLocale() === "ru" ? "Зум" : uiLocale() === "uk" ? "Зум" : uiLocale() === "et" ? "Suum" : "Zoom";
   const saveLabel = uiLocale() === "ru" ? "Сохранить" : uiLocale() === "uk" ? "Зберегти" : uiLocale() === "et" ? "Salvesta" : "Save";
-  const clearLabel = uiLocale() === "ru" ? "Очистить" : uiLocale() === "uk" ? "Очистити" : uiLocale() === "et" ? "Tühjenda" : "Clear";
+  const clearLabel = uiLocale() === "ru" ? "Очистить" : uiLocale() === "uk" ? "Очистити" : uiLocale() === "et" ? "Tuhjenda" : "Clear";
   const previewLabel = uiLocale() === "ru" ? "Предпросмотр" : uiLocale() === "uk" ? "Попередній перегляд" : uiLocale() === "et" ? "Eelvaade" : "Preview";
   const dragHint = uiLocale() === "ru"
     ? "Перетащите изображение, чтобы выставить кадр"
@@ -2653,7 +2830,7 @@ function adminCountryBackgroundsUI(data) {
     : uiLocale() === "uk"
       ? "Міні-карта прокрутки (вся картинка + видиме вікно)"
       : uiLocale() === "et"
-        ? "Kerimise minimapp (kogu pilt + nähtav aken)"
+        ? "Kerimise minimapp (kogu pilt + nahtav aken)"
         : "Scroll minimap (full image + visible window)";
   const scrollLabel = uiLocale() === "ru" ? "Прокрутка" : uiLocale() === "uk" ? "Прокрутка" : uiLocale() === "et" ? "Kerimine" : "Scroll";
   const nudgeHint = uiLocale() === "ru"
@@ -2661,7 +2838,7 @@ function adminCountryBackgroundsUI(data) {
     : uiLocale() === "uk"
       ? "Точне налаштування кадру кнопками"
       : uiLocale() === "et"
-        ? "Kaadri peenhäälestus nuppudega"
+        ? "Kaadri peenhaalestus nuppudega"
         : "Fine frame tuning with buttons";
   const centerLabel = uiLocale() === "ru" ? "Центр" : uiLocale() === "uk" ? "Центр" : uiLocale() === "et" ? "Keskele" : "Center";
   const stepLabel = uiLocale() === "ru" ? "Шаг" : uiLocale() === "uk" ? "Крок" : uiLocale() === "et" ? "Samm" : "Step";
@@ -2677,9 +2854,9 @@ function adminCountryBackgroundsUI(data) {
   const flagMobileStd = FLAG_CARD_STANDARDS.mobileLong;
   const flagTitle = uiLocale() === "ru" ? "Флаг для карточек каталога" : uiLocale() === "uk" ? "Прапор для карток каталогу" : uiLocale() === "et" ? "Kataloogi kaartide lipp" : "Flag for catalog cards";
   const flagDesktopInputLabel = uiLocale() === "ru" ? "Файл флага (ПК)" : uiLocale() === "uk" ? "Файл прапора (ПК)" : uiLocale() === "et" ? "Lipu fail (lauaarvuti)" : "Flag file (desktop)";
-  const flagDesktopUrlLabel = uiLocale() === "ru" ? "или URL флага (ПК)" : uiLocale() === "uk" ? "або URL прапора (ПК)" : uiLocale() === "et" ? "või lipu URL (lauaarvuti)" : "or flag URL (desktop)";
+  const flagDesktopUrlLabel = uiLocale() === "ru" ? "или URL флага (ПК)" : uiLocale() === "uk" ? "або URL прапора (ПК)" : uiLocale() === "et" ? "voi lipu URL (lauaarvuti)" : "or flag URL (desktop)";
   const flagMobileInputLabel = uiLocale() === "ru" ? "Файл флага (телефон)" : uiLocale() === "uk" ? "Файл прапора (телефон)" : uiLocale() === "et" ? "Lipu fail (telefon)" : "Flag file (mobile)";
-  const flagMobileUrlLabel = uiLocale() === "ru" ? "или URL флага (телефон)" : uiLocale() === "uk" ? "або URL прапора (телефон)" : uiLocale() === "et" ? "või lipu URL (telefon)" : "or flag URL (mobile)";
+  const flagMobileUrlLabel = uiLocale() === "ru" ? "или URL флага (телефон)" : uiLocale() === "uk" ? "або URL прапора (телефон)" : uiLocale() === "et" ? "voi lipu URL (telefon)" : "or flag URL (mobile)";
   const flagSuperAdminHint = uiLocale() === "ru"
     ? "Флаг страны может менять только супер-админ."
     : uiLocale() === "uk"
@@ -2687,7 +2864,7 @@ function adminCountryBackgroundsUI(data) {
       : uiLocale() === "et"
         ? "Riigi lippu saab muuta ainult superadmin."
         : "Only super admin can change country flags.";
-  const flagPreviewTitle = uiLocale() === "ru" ? "Пример карточки" : uiLocale() === "uk" ? "Приклад картки" : uiLocale() === "et" ? "Kaardi näidis" : "Card preview";
+  const flagPreviewTitle = uiLocale() === "ru" ? "Пример карточки" : uiLocale() === "uk" ? "Приклад картки" : uiLocale() === "et" ? "Kaardi naidis" : "Card preview";
   const flagPreviewSong = uiLocale() === "ru" ? "Демо песня" : uiLocale() === "uk" ? "Демо пісня" : uiLocale() === "et" ? "Demo laul" : "Demo song";
   const flagPreviewCountry = uiLocale() === "ru" ? "Страна - эпоха" : uiLocale() === "uk" ? "Країна - епоха" : uiLocale() === "et" ? "Riik - ajastu" : "Country - period";
   const flagCardLongDesktopLabel = uiLocale() === "ru" ? "Каталог ПК (длинная)" : uiLocale() === "uk" ? "Каталог ПК (довга)" : uiLocale() === "et" ? "Kataloog lauaarvuti (pikk)" : "Desktop catalog (long)";
@@ -2712,6 +2889,10 @@ function adminCountryBackgroundsUI(data) {
             <option value="" selected>${esc(uiText("selectCountry"))}</option>
             ${options.map((opt) => `<option value="${esc(opt.value)}">${esc(opt.label)}</option>`).join("")}
           </select>
+        </label>
+        <label class="field">
+          <div class="fieldLabel">${esc(countrySearchLabel)}</div>
+          <input class="input" id="ab_country_search" placeholder="${esc(countrySearchPlaceholder)}" autocomplete="off" />
         </label>
         <label class="field hidden" id="ab_period_scope_wrap">
           <div class="fieldLabel">${esc(periodScopeLabel)}</div>
@@ -2746,11 +2927,11 @@ function adminCountryBackgroundsUI(data) {
             <div class="ab-preview-nav-wrap">
               <div class="muted small">${esc(nudgeHint)} · ${esc(stepLabel)} 1%</div>
               <div class="ab-preview-nav">
-                <button class="btn ghost ab-nav-btn" type="button" data-ab-kind="desktop" data-ab-dx="0" data-ab-dy="-1">↑</button>
-                <button class="btn ghost ab-nav-btn" type="button" data-ab-kind="desktop" data-ab-dx="-1" data-ab-dy="0">←</button>
+                <button class="btn ghost ab-nav-btn" type="button" data-ab-kind="desktop" data-ab-dx="0" data-ab-dy="-1">^</button>
+                <button class="btn ghost ab-nav-btn" type="button" data-ab-kind="desktop" data-ab-dx="-1" data-ab-dy="0"><</button>
                 <button class="btn ghost ab-nav-btn" type="button" data-ab-kind="desktop" data-ab-center="1">${esc(centerLabel)}</button>
-                <button class="btn ghost ab-nav-btn" type="button" data-ab-kind="desktop" data-ab-dx="1" data-ab-dy="0">→</button>
-                <button class="btn ghost ab-nav-btn" type="button" data-ab-kind="desktop" data-ab-dx="0" data-ab-dy="1">↓</button>
+                <button class="btn ghost ab-nav-btn" type="button" data-ab-kind="desktop" data-ab-dx="1" data-ab-dy="0">></button>
+                <button class="btn ghost ab-nav-btn" type="button" data-ab-kind="desktop" data-ab-dx="0" data-ab-dy="1">v</button>
               </div>
             </div>
             <div class="ab-scroll-wrap">
@@ -2792,11 +2973,11 @@ function adminCountryBackgroundsUI(data) {
             <div class="ab-preview-nav-wrap">
               <div class="muted small">${esc(nudgeHint)} · ${esc(stepLabel)} 1%</div>
               <div class="ab-preview-nav">
-                <button class="btn ghost ab-nav-btn" type="button" data-ab-kind="mobile" data-ab-dx="0" data-ab-dy="-1">↑</button>
-                <button class="btn ghost ab-nav-btn" type="button" data-ab-kind="mobile" data-ab-dx="-1" data-ab-dy="0">←</button>
+                <button class="btn ghost ab-nav-btn" type="button" data-ab-kind="mobile" data-ab-dx="0" data-ab-dy="-1">^</button>
+                <button class="btn ghost ab-nav-btn" type="button" data-ab-kind="mobile" data-ab-dx="-1" data-ab-dy="0"><</button>
                 <button class="btn ghost ab-nav-btn" type="button" data-ab-kind="mobile" data-ab-center="1">${esc(centerLabel)}</button>
-                <button class="btn ghost ab-nav-btn" type="button" data-ab-kind="mobile" data-ab-dx="1" data-ab-dy="0">→</button>
-                <button class="btn ghost ab-nav-btn" type="button" data-ab-kind="mobile" data-ab-dx="0" data-ab-dy="1">↓</button>
+                <button class="btn ghost ab-nav-btn" type="button" data-ab-kind="mobile" data-ab-dx="1" data-ab-dy="0">></button>
+                <button class="btn ghost ab-nav-btn" type="button" data-ab-kind="mobile" data-ab-dx="0" data-ab-dy="1">v</button>
               </div>
             </div>
             <div class="ab-scroll-wrap">
@@ -3634,7 +3815,7 @@ export async function render(route) {
           : uiLocale() === "uk"
             ? "Недостатньо прав для перегляду заявок."
             : uiLocale() === "et"
-              ? "Taotluste vaatamiseks pole piisavalt õigusi."
+              ? "Taotluste vaatamiseks pole piisavalt oigusi."
               : "Not enough permissions to review requests.";
         return { html: `${adminTabs("requests")}<div class="card"><div class="muted">${esc(deniedText)}</div></div>`, ctx: { section } };
       }
@@ -3654,7 +3835,7 @@ export async function render(route) {
           : uiLocale() === "uk"
             ? "Недостатньо прав для керування фонами країн."
             : uiLocale() === "et"
-              ? "Riikide taustade haldamiseks pole piisavalt õigusi."
+              ? "Riikide taustade haldamiseks pole piisavalt oigusi."
               : "Not enough permissions to manage country backgrounds.";
         return { html: `${adminTabs("backgrounds")}<div class="card"><div class="muted">${esc(deniedText)}</div></div>`, ctx: { section } };
       }
@@ -3696,6 +3877,8 @@ export function bind(route, ctx) {
   document.body.classList.remove("song-page-country-bg-static");
   document.body.classList.remove("home-country-preview");
   document.body.classList.remove("home-country-preview-visible");
+  document.body.classList.remove("home-country-preview-layer-a");
+  document.body.classList.remove("home-country-preview-layer-b");
   document.body.style.removeProperty("--song-page-bg-image");
   document.body.style.removeProperty("--song-page-bg-image-desktop");
   document.body.style.removeProperty("--song-page-bg-image-mobile");
@@ -3704,6 +3887,18 @@ export function bind(route, ctx) {
   document.body.style.removeProperty("--song-page-bg-focus-x-mobile");
   document.body.style.removeProperty("--song-page-bg-focus-y-mobile");
   document.body.style.removeProperty("--home-country-preview-image");
+  document.body.style.removeProperty("--home-country-preview-image-a");
+  document.body.style.removeProperty("--home-country-preview-image-b");
+  if (document.body.dataset.homePreviewSwapTimer) {
+    const timerId = Number(document.body.dataset.homePreviewSwapTimer || 0);
+    if (timerId) window.clearTimeout(timerId);
+    delete document.body.dataset.homePreviewSwapTimer;
+  }
+  if (document.body.dataset.homePreviewHideTimer) {
+    const timerId = Number(document.body.dataset.homePreviewHideTimer || 0);
+    if (timerId) window.clearTimeout(timerId);
+    delete document.body.dataset.homePreviewHideTimer;
+  }
   if (document.body.dataset.homePreviewTimer) {
     const timerId = Number(document.body.dataset.homePreviewTimer || 0);
     if (timerId) window.clearTimeout(timerId);
@@ -3731,17 +3926,41 @@ export function bind(route, ctx) {
       }
     }));
     syncPeriodVisibility("yt_country", "yt_period_wrap", "yt_period");
+    const syncAdvancedPanelOpenHeight = () => {
+      const panel = qs("yt_advancedPanel");
+      if (!panel || panel.classList.contains("hidden")) return;
+      const nextHeight = Math.max(1, Math.ceil(panel.scrollHeight));
+      panel.style.setProperty("--yt-advanced-open-height", `${nextHeight}px`);
+    };
+    requestAnimationFrame(() => {
+      syncAdvancedPanelOpenHeight();
+      setTimeout(syncAdvancedPanelOpenHeight, 140);
+    });
     qs("yt_country")?.addEventListener("change", () => {
       syncPeriodVisibility("yt_country", "yt_period_wrap", "yt_period");
+      requestAnimationFrame(syncAdvancedPanelOpenHeight);
     });
     qs("yt_toggleAdvanced")?.addEventListener("click", () => {
       const panel = qs("yt_advancedPanel");
       if (!panel) return;
       const toggleButton = qs("yt_toggleAdvanced");
-      const isOpen = toggleAnimatedElement(panel);
+      const isOpen = toggleAnimatedElement(panel, {
+        duration: 980,
+        transitionProperty: "max-height",
+      });
+      if (isOpen) {
+        requestAnimationFrame(() => {
+          syncAdvancedPanelOpenHeight();
+          setTimeout(syncAdvancedPanelOpenHeight, 140);
+        });
+      }
       const openLabel = toggleButton?.getAttribute("data-label-open") || "";
       const closedLabel = toggleButton?.getAttribute("data-label-closed") || "";
-      if (toggleButton) toggleButton.textContent = isOpen ? openLabel : closedLabel;
+      if (toggleButton) {
+        toggleButton.textContent = isOpen ? openLabel : closedLabel;
+        toggleButton.classList.toggle("is-open", !!isOpen);
+        toggleButton.setAttribute("aria-expanded", isOpen ? "true" : "false");
+      }
     });
     qs("yt_applyAdvanced")?.addEventListener("click", () => {
       goWith({ page: 1, searched: "1", adv: "1" });
@@ -3778,58 +3997,238 @@ export function bind(route, ctx) {
       goWith({ page: target });
     }));
 
-    let currentHomePreviewUrl = "";
-    const queueHomePreviewSwap = (fn, delayMs) => {
-      if (document.body.dataset.homePreviewTimer) {
-        const prev = Number(document.body.dataset.homePreviewTimer || 0);
-        if (prev) window.clearTimeout(prev);
+    const progressiveFeed = qs("yt_results_feed");
+    const progressiveLoader = qs("yt_results_loader");
+    const progressiveLoadingScreen = qs("yt_results_loading_screen");
+    const progressiveSentinel = qs("yt_results_sentinel");
+    if (params.searched === "1" && progressiveFeed) {
+      const sourceMode = String(progressiveFeed.getAttribute("data-feed-mode") || "exact").trim();
+      const sourceItems = sourceMode === "suggestions"
+        ? (Array.isArray(ctx?.data?.suggestions) ? ctx.data.suggestions : [])
+        : (Array.isArray(ctx?.data?.items) ? ctx.data.items : []);
+      const sourceBackgrounds = Array.isArray(ctx?.countryBackgrounds) ? ctx.countryBackgrounds : [];
+      const backgroundsByCountry = new Map();
+      sourceBackgrounds.forEach((item) => {
+        const normalized = normalizeCountryBackground(item, item?.country || "");
+        const key = normalizeSongCountry(normalized?.country || "");
+        if (!key || backgroundsByCountry.has(key)) return;
+        backgroundsByCountry.set(key, normalized);
+      });
+      const flagDevice = preferredFlagCardDevice();
+      const maxCards = Math.min(10, sourceItems.length);
+      const queue = sourceItems.slice(0, maxCards);
+      progressiveFeed.innerHTML = "";
+      if (!queue.length) {
+        progressiveFeed.classList.remove("is-chunk-loading");
+        progressiveLoadingScreen?.classList.add("hidden");
+        progressiveLoader?.classList.add("hidden");
+        progressiveSentinel?.classList.add("hidden");
+      } else {
+        progressiveFeed.classList.add("is-chunk-loading");
+        progressiveLoadingScreen?.classList.remove("hidden");
+        progressiveLoader?.classList.add("hidden");
+        progressiveSentinel?.classList.remove("hidden");
+        let cursor = 0;
+        let appendInProgress = false;
+        let started = false;
+        const teardownScrollPump = () => {
+          window.removeEventListener("scroll", onScrollPump);
+          window.removeEventListener("resize", onScrollPump);
+        };
+        const finishProgressiveFeed = () => {
+          teardownScrollPump();
+          if (!document.body.contains(progressiveFeed)) return;
+          progressiveSentinel?.classList.add("hidden");
+          progressiveLoadingScreen?.classList.add("hidden");
+          progressiveLoader?.classList.add("hidden");
+          if (cursor >= queue.length) {
+            progressiveFeed.classList.remove("is-chunk-loading");
+          }
+        };
+        const appendOneCard = () => {
+          if (appendInProgress || !started) return;
+          if (!document.body.contains(progressiveFeed)) {
+            finishProgressiveFeed();
+            return;
+          }
+          if (cursor >= queue.length) {
+            finishProgressiveFeed();
+            return;
+          }
+          appendInProgress = true;
+          const song = queue[cursor];
+          const cardHtml = renderHomeSongCard(song, { backgroundsByCountry, flagDevice });
+          progressiveFeed.insertAdjacentHTML("beforeend", `<div class="home-result-item is-entering">${cardHtml}</div>`);
+          const insertedNode = progressiveFeed.lastElementChild;
+          cursor += 1;
+          window.requestAnimationFrame(() => {
+            insertedNode?.classList.remove("is-entering");
+            appendInProgress = false;
+            if (cursor >= queue.length) {
+              finishProgressiveFeed();
+              return;
+            }
+            progressiveLoader?.classList.add("hidden");
+            window.setTimeout(() => {
+              onScrollPump();
+            }, 0);
+          });
+        };
+        const onScrollPump = () => {
+          if (!started) return;
+          if (!document.body.contains(progressiveFeed)) {
+            finishProgressiveFeed();
+            return;
+          }
+          if (cursor >= queue.length) {
+            finishProgressiveFeed();
+            return;
+          }
+          const sentinelTop = progressiveSentinel
+            ? progressiveSentinel.getBoundingClientRect().top
+            : progressiveFeed.getBoundingClientRect().bottom;
+          if (sentinelTop > window.innerHeight + 100) return;
+          progressiveLoader?.classList.remove("hidden");
+          appendOneCard();
+        };
+        window.addEventListener("scroll", onScrollPump, { passive: true });
+        window.addEventListener("resize", onScrollPump, { passive: true });
+        window.setTimeout(() => {
+          if (!document.body.contains(progressiveFeed)) {
+            finishProgressiveFeed();
+            return;
+          }
+          started = true;
+          progressiveLoadingScreen?.classList.add("hidden");
+          appendOneCard();
+          onScrollPump();
+        }, 180);
       }
-      const id = window.setTimeout(() => {
-        delete document.body.dataset.homePreviewTimer;
-        fn();
-      }, delayMs);
-      document.body.dataset.homePreviewTimer = String(id);
+    }
+
+    let currentHomePreviewUrl = "";
+    let pendingHomePreviewUrl = "";
+    let activeHomePreviewLayer = "a";
+    let homePreviewSwapTimerId = 0;
+    let homePreviewHideTimerId = 0;
+    const homePreviewImageCache = new Map();
+    const setBodyTimerRef = (name, id) => {
+      if (id) document.body.dataset[name] = String(id);
+      else delete document.body.dataset[name];
+    };
+    const clearTimer = (id, timerName = "") => {
+      if (id) window.clearTimeout(id);
+      if (timerName) setBodyTimerRef(timerName, 0);
+      return 0;
+    };
+    const preloadHomePreviewImage = (url) => {
+      const src = String(url || "").trim();
+      if (!src) return Promise.resolve();
+      if (homePreviewImageCache.has(src)) return homePreviewImageCache.get(src);
+      const loading = new Promise((resolve) => {
+        const img = new Image();
+        img.decoding = "async";
+        img.onload = () => resolve();
+        img.onerror = () => resolve();
+        img.src = src;
+      });
+      homePreviewImageCache.set(src, loading);
+      return loading;
+    };
+    const applyHomeCountryPreview = (url, options = {}) => {
+      const next = String(url || "").trim();
+      if (!next) return;
+      const swapLayer = options.swapLayer === true;
+      const keepVisible = options.keepVisible === true;
+      const targetLayer = swapLayer ? (activeHomePreviewLayer === "a" ? "b" : "a") : activeHomePreviewLayer;
+      const targetLayerClass = `home-country-preview-layer-${targetLayer}`;
+      const previousLayerClass = `home-country-preview-layer-${activeHomePreviewLayer}`;
+      currentHomePreviewUrl = next;
+      document.body.style.setProperty(`--home-country-preview-image-${targetLayer}`, toCssUrlValue(next));
+      if (!document.body.classList.contains("home-country-preview")) {
+        document.body.classList.add("home-country-preview");
+      }
+      document.body.classList.add(targetLayerClass);
+      if (swapLayer) {
+        document.body.classList.remove(previousLayerClass);
+        activeHomePreviewLayer = targetLayer;
+      }
+      if (keepVisible && document.body.classList.contains("home-country-preview-visible")) return;
+      window.requestAnimationFrame(() => {
+        if (pendingHomePreviewUrl !== next) return;
+        document.body.classList.add("home-country-preview-visible");
+      });
+    };
+    const HOME_PREVIEW_HIDE_DELAY_MS = 0;
+    const HOME_PREVIEW_LAYER_RESET_DELAY_MS = 520;
+    const scheduleHomeCountryPreviewHide = () => {
+      homePreviewHideTimerId = clearTimer(homePreviewHideTimerId, "homePreviewHideTimer");
+      homePreviewSwapTimerId = clearTimer(homePreviewSwapTimerId, "homePreviewSwapTimer");
+      homePreviewHideTimerId = window.setTimeout(() => {
+        homePreviewHideTimerId = 0;
+        setBodyTimerRef("homePreviewHideTimer", 0);
+        if (pendingHomePreviewUrl) return;
+        document.body.classList.remove("home-country-preview-visible");
+        homePreviewSwapTimerId = window.setTimeout(() => {
+          homePreviewSwapTimerId = 0;
+          setBodyTimerRef("homePreviewSwapTimer", 0);
+          if (pendingHomePreviewUrl) return;
+          currentHomePreviewUrl = "";
+          document.body.classList.remove("home-country-preview");
+          document.body.classList.remove("home-country-preview-layer-a");
+          document.body.classList.remove("home-country-preview-layer-b");
+          document.body.style.removeProperty("--home-country-preview-image");
+          document.body.style.removeProperty("--home-country-preview-image-a");
+          document.body.style.removeProperty("--home-country-preview-image-b");
+          activeHomePreviewLayer = "a";
+        }, HOME_PREVIEW_LAYER_RESET_DELAY_MS);
+        setBodyTimerRef("homePreviewSwapTimer", homePreviewSwapTimerId);
+      }, HOME_PREVIEW_HIDE_DELAY_MS);
+      setBodyTimerRef("homePreviewHideTimer", homePreviewHideTimerId);
     };
     const setHomeCountryPreview = (url) => {
       const next = String(url || "").trim();
+      pendingHomePreviewUrl = next;
+      homePreviewHideTimerId = clearTimer(homePreviewHideTimerId, "homePreviewHideTimer");
+      homePreviewSwapTimerId = clearTimer(homePreviewSwapTimerId, "homePreviewSwapTimer");
       if (!next) {
-        document.body.classList.remove("home-country-preview-visible");
-        queueHomePreviewSwap(() => {
-          currentHomePreviewUrl = "";
-          document.body.classList.remove("home-country-preview");
-          document.body.style.removeProperty("--home-country-preview-image");
-        }, 760);
+        scheduleHomeCountryPreviewHide();
         return;
       }
-      if (next === currentHomePreviewUrl && document.body.classList.contains("home-country-preview-visible")) return;
-      if (!document.body.classList.contains("home-country-preview")) {
-        currentHomePreviewUrl = next;
-        document.body.style.setProperty("--home-country-preview-image", toCssUrlValue(next));
-        document.body.classList.add("home-country-preview");
-        window.requestAnimationFrame(() => {
-          document.body.classList.add("home-country-preview-visible");
-        });
-        return;
-      }
-      document.body.classList.remove("home-country-preview-visible");
-      queueHomePreviewSwap(() => {
-        currentHomePreviewUrl = next;
-        document.body.style.setProperty("--home-country-preview-image", toCssUrlValue(next));
-        window.requestAnimationFrame(() => {
-          document.body.classList.add("home-country-preview-visible");
-        });
-      }, 320);
+      const isVisible = document.body.classList.contains("home-country-preview-visible");
+      if (next === currentHomePreviewUrl && isVisible) return;
+      const shouldSwapLayer = !!(currentHomePreviewUrl && next !== currentHomePreviewUrl);
+      applyHomeCountryPreview(next, { keepVisible: isVisible, swapLayer: shouldSwapLayer });
+      void preloadHomePreviewImage(next);
     };
     const clearHomeCountryPreview = () => setHomeCountryPreview("");
     const hoverPreviewAllowed = !window.matchMedia("(hover: none), (pointer: coarse)").matches;
     if (hoverPreviewAllowed) {
-      document.querySelectorAll(".home-country-card").forEach((card) => {
+      const homeCountryCards = Array.from(document.querySelectorAll(".home-country-card"));
+      const previewUrls = new Set();
+      homeCountryCards.forEach((card) => {
         const previewUrl = String(card.getAttribute("data-home-bg") || "").trim();
         if (!previewUrl) return;
+        previewUrls.add(previewUrl);
         card.addEventListener("mouseenter", () => setHomeCountryPreview(previewUrl));
-        card.addEventListener("mouseleave", clearHomeCountryPreview);
+        card.addEventListener("mouseleave", (event) => {
+          const nextTarget = event?.relatedTarget;
+          if (nextTarget && typeof nextTarget.closest === "function" && nextTarget.closest(".home-country-card")) return;
+          clearHomeCountryPreview();
+        });
         card.addEventListener("click", clearHomeCountryPreview);
       });
+      if (previewUrls.size > 0) {
+        window.setTimeout(() => {
+          previewUrls.forEach((url) => {
+            void preloadHomePreviewImage(url);
+          });
+        }, 0);
+      }
+      const homeCountryGrid = document.querySelector(".home-country-grid");
+      if (homeCountryGrid) {
+        homeCountryGrid.addEventListener("mouseleave", clearHomeCountryPreview);
+      }
     }
 
     return;
@@ -3993,6 +4392,7 @@ export function bind(route, ctx) {
       const versionListenTitle2 = qs("songVersionListenTitle2");
       const versionListenLinks1 = qs("songVersionListenLinks1");
       const versionListenLinks2 = qs("songVersionListenLinks2");
+      const versionListenAdminActions = qs("songVersionListenAdminActions");
       const localizedVersionWord = uiLocale() === "ru"
         ? "Версия"
         : uiLocale() === "uk"
@@ -4024,15 +4424,21 @@ export function bind(route, ctx) {
           : (compareCandidates[0] || null);
         if (!leftVersion || !rightVersion) {
           versionListenPanel.classList.add("hidden");
+          if (versionListenAdminActions) versionListenAdminActions.classList.remove("hidden");
           return;
         }
-        versionListenPanel.classList.remove("hidden");
+        const songLinks = Array.isArray(song?.links) ? song.links : [];
+        const leftItems = collectListenServiceItemsForVersion(song, songLinks, leftVersion);
+        const rightItems = collectListenServiceItemsForVersion(song, songLinks, rightVersion);
+        const hasAnyLinks = leftItems.length > 0 || rightItems.length > 0;
+        versionListenPanel.classList.toggle("hidden", !hasAnyLinks);
+        if (versionListenAdminActions) versionListenAdminActions.classList.toggle("hidden", hasAnyLinks);
+        if (!hasAnyLinks) return;
         versionListenTitle1.textContent = formatVersionHeading(leftVersion, 0);
         const rightIndex = compareCandidates.findIndex((version) => version.id === rightVersion.id);
         versionListenTitle2.textContent = formatVersionHeading(rightVersion, rightIndex >= 0 ? rightIndex + 1 : 1);
-        const songLinks = Array.isArray(song?.links) ? song.links : [];
-        versionListenLinks1.innerHTML = renderVersionListenLinks(collectListenServiceItemsForVersion(song, songLinks, leftVersion));
-        versionListenLinks2.innerHTML = renderVersionListenLinks(collectListenServiceItemsForVersion(song, songLinks, rightVersion));
+        versionListenLinks1.innerHTML = renderVersionListenLinks(leftItems);
+        versionListenLinks2.innerHTML = renderVersionListenLinks(rightItems);
       };
       syncVersionListenPanel();
       songVersionTabs.querySelectorAll(".song-version-btn").forEach((btn) => {
@@ -4091,20 +4497,63 @@ export function bind(route, ctx) {
               ? "Salm"
               : "Stanza";
 
-        const renderPaneStanzas = (sourceStanzas = [], targetStanzas = []) => {
-          const maxStanzas = Math.max(sourceStanzas.length, targetStanzas.length);
-          if (!maxStanzas) return `<div class="muted small">${esc(t("common.empty"))}</div>`;
-          return Array.from({ length: maxStanzas }, (_, idx) => {
-            const source = String(sourceStanzas[idx] || "");
-            const target = String(targetStanzas[idx] || "");
-            const html = renderCompareWordMarkup(source, target);
+        const renderPaneStanzas = (rows = [], ownStanzas = [], peerStanzas = [], ownIndexKey, peerIndexKey) => {
+          if (!rows.length) return `<div class="muted small">${esc(t("common.empty"))}</div>`;
+          return rows.map((row, rowIndex) => {
+            const ownIndex = Number.isInteger(row?.[ownIndexKey]) ? row[ownIndexKey] : null;
+            const peerIndex = Number.isInteger(row?.[peerIndexKey]) ? row[peerIndexKey] : null;
+            const ownText = ownIndex === null ? "" : String(ownStanzas[ownIndex] || "");
+            const peerText = peerIndex === null ? "" : String(peerStanzas[peerIndex] || "");
+            const skipDiff = !!row?.isExact && !!ownText && !!peerText;
+            const stanzaHtml = ownText
+              ? renderCompareWordMarkup(ownText, peerText, { skipDiff })
+              : `<span class="muted small">-</span>`;
+            const stanzaIndexLabel = ownIndex === null ? "-" : `${stanzaLabel} ${ownIndex + 1}`;
+            const rowClasses = [
+              "song-version-stanza-row",
+              ownIndex === null ? "is-missing" : "",
+            ].filter(Boolean).join(" ");
             return `
-              <section class="song-version-stanza-row">
-                <div class="song-version-stanza-label">${esc(`${stanzaLabel} ${idx + 1}`)}</div>
-                <pre class="song-version-stanza-text">${html || `<span class="muted small">-</span>`}</pre>
+              <section class="${rowClasses}" data-compare-row="${rowIndex}">
+                <div class="song-version-stanza-label">${esc(stanzaIndexLabel)}</div>
+                <pre class="song-version-stanza-text">${stanzaHtml}</pre>
               </section>
             `;
           }).join("");
+        };
+
+        const syncCompareStanzaRowHeights = () => {
+          const leftRows = Array.from(compareDiff.querySelectorAll(".song-version-pane-left .song-version-stanza-row"));
+          const rightRows = Array.from(compareDiff.querySelectorAll(".song-version-pane-right .song-version-stanza-row"));
+          const rowCount = Math.max(leftRows.length, rightRows.length);
+          for (let idx = 0; idx < rowCount; idx += 1) {
+            const leftRow = leftRows[idx] || null;
+            const rightRow = rightRows[idx] || null;
+            if (leftRow) leftRow.style.minHeight = "";
+            if (rightRow) rightRow.style.minHeight = "";
+          }
+          for (let idx = 0; idx < rowCount; idx += 1) {
+            const leftRow = leftRows[idx] || null;
+            const rightRow = rightRows[idx] || null;
+            const maxHeight = Math.max(
+              leftRow ? leftRow.offsetHeight : 0,
+              rightRow ? rightRow.offsetHeight : 0
+            );
+            if (maxHeight > 0) {
+              const px = `${maxHeight}px`;
+              if (leftRow) leftRow.style.minHeight = px;
+              if (rightRow) rightRow.style.minHeight = px;
+            }
+          }
+        };
+
+        const scheduleCompareStanzaRowSync = () => {
+          requestAnimationFrame(() => {
+            syncCompareStanzaRowHeights();
+            setTimeout(syncCompareStanzaRowHeights, 90);
+            setTimeout(syncCompareStanzaRowHeights, 220);
+            setTimeout(syncCompareStanzaRowHeights, 420);
+          });
         };
 
         const renderComparePick = () => {
@@ -4156,10 +4605,11 @@ export function bind(route, ctx) {
           const rightYear = String(song?.year || "").trim() || missingMetaText;
           const leftStanzas = splitLyricsToStanzas(leftLyrics);
           const rightStanzas = splitLyricsToStanzas(rightLyrics);
-          const leftHtml = renderPaneStanzas(leftStanzas, rightStanzas);
-          const rightHtml = renderPaneStanzas(rightStanzas, leftStanzas);
+          const alignedRows = alignCompareStanzas(leftStanzas, rightStanzas);
+          const leftHtml = renderPaneStanzas(alignedRows, leftStanzas, rightStanzas, "sourceIndex", "targetIndex");
+          const rightHtml = renderPaneStanzas(alignedRows, rightStanzas, leftStanzas, "targetIndex", "sourceIndex");
           compareDiff.innerHTML = `
-            <div class="song-version-pane">
+            <div class="song-version-pane song-version-pane-left">
               <div class="song-version-pane-head">
                 <div class="song-version-pane-title">${esc(versionOneTitle)}</div>
                 <div class="song-version-pane-name">${esc(leftTitle)}</div>
@@ -4168,7 +4618,7 @@ export function bind(route, ctx) {
               </div>
               <div class="song-version-pane-body">${leftHtml}</div>
             </div>
-            <div class="song-version-pane">
+            <div class="song-version-pane song-version-pane-right">
               <div class="song-version-pane-head">
                 <div class="song-version-pane-title">${esc(versionTwoTitle)}</div>
                 <div class="song-version-pane-name">${esc(rightTitle)}</div>
@@ -4178,6 +4628,7 @@ export function bind(route, ctx) {
               <div class="song-version-pane-body">${rightHtml}</div>
             </div>
           `;
+          scheduleCompareStanzaRowSync();
         };
 
         const syncCompareToggle = () => {
@@ -4610,7 +5061,7 @@ export function bind(route, ctx) {
             : uiLocale() === "uk"
               ? "Заповніть текст фрагмента та джерело."
               : uiLocale() === "et"
-                ? "Täida katkendi tekst ja allikas."
+                ? "Taida katkendi tekst ja allikas."
                 : "Fill fragment text and source.")
           : t("request.required");
         showStatusOverlay(message, "error");
@@ -4739,12 +5190,24 @@ export function bind(route, ctx) {
     setupContentDraftExitPersistence(() => (hasDiffFromBase ? collectContentPayload() : null));
 
     qs("ac_country")?.addEventListener("change", () => syncPeriodVisibility("ac_country", "ac_period_wrap", "ac_period"));
-    qs("ac_addLink")?.addEventListener("click", () => {
-      qs("ac_links").insertAdjacentHTML("beforeend", songInlineLinkRow());
+    const appendEditorLinkRow = (initial = {}) => {
+      qs("ac_links")?.insertAdjacentHTML("beforeend", songInlineLinkRow(initial));
       wireDynamicRows(editorRoot);
       wireAutoGrowTextareas(editorRoot);
       syncDraftState(collectContentPayload());
       scheduleDraftSave();
+    };
+    qs("ac_addLink")?.addEventListener("click", () => {
+      appendEditorLinkRow();
+    });
+    qs("ac_addLinkYoutube")?.addEventListener("click", () => {
+      appendEditorLinkRow({ title: "YouTube", kind: "youtube" });
+    });
+    qs("ac_addLinkSovmusic")?.addEventListener("click", () => {
+      appendEditorLinkRow({ title: "SovMusic", kind: "sovmusic" });
+    });
+    qs("ac_addLinkRecords")?.addEventListener("click", () => {
+      appendEditorLinkRow({ title: "Russian Records", kind: "russian-records" });
     });
     qs("ac_addVersion")?.addEventListener("click", () => {
       qs("ac_versions").insertAdjacentHTML("beforeend", songInlineVersionRow());
@@ -4754,6 +5217,21 @@ export function bind(route, ctx) {
       scheduleDraftSave();
     });
     wireDynamicRows(editorRoot);
+    const shouldFocusLinks = String(route?.query?.focus || "").trim().toLowerCase() === "links";
+    const shouldAddLinkByQuery = String(route?.query?.addLink || "").trim() === "1";
+    if (shouldAddLinkByQuery) {
+      appendEditorLinkRow();
+    }
+    if (shouldFocusLinks) {
+      requestAnimationFrame(() => {
+        const linksSection = qs("ac_links_section");
+        linksSection?.scrollIntoView({ behavior: "smooth", block: "start" });
+        const lastLinkUrlInput = Array.from(editorRoot.querySelectorAll(".ss_link_row .ss_link_url")).pop();
+        if (lastLinkUrlInput instanceof HTMLInputElement) {
+          lastLinkUrlInput.focus({ preventScroll: true });
+        }
+      });
+    }
     const refreshAdminDecoding = () => syncDecodingIndicator("ac_decoding", "ac_lyrics", "ac_chorus", "ac_chorus_marker");
     refreshAdminDecoding();
     ["ac_lyrics", "ac_chorus", "ac_chorus_marker"].forEach((id) => {
@@ -4908,6 +5386,7 @@ export function bind(route, ctx) {
   if (route.name === "admin" && ctx.section === "backgrounds") {
     const updatedNode = qs("ab_updated");
     const countrySelect = qs("ab_country");
+    const countrySearchInput = qs("ab_country_search");
     const saveBtn = qs("ab_save");
     const clearBtn = qs("ab_clear");
     const openPreviewBtn = qs("ab_open_preview");
@@ -4922,7 +5401,7 @@ export function bind(route, ctx) {
       : uiLocale() === "uk"
         ? "Невірний формат прапора. Використовуйте файл, data:image..., повний http(s) URL або /relative/path."
         : uiLocale() === "et"
-          ? "Vigane lipu formaat. Kasuta faili, data:image..., täis http(s) URL-i või /relative/path."
+          ? "Vigane lipu formaat. Kasuta faili, data:image..., tais http(s) URL-i voi /relative/path."
           : "Invalid flag format. Use file, data:image..., absolute http(s) URL, or /relative/path.";
     const flagRangeFromLabel = uiLocale() === "ru" ? "С года" : uiLocale() === "uk" ? "З року" : uiLocale() === "et" ? "Aastast" : "From year";
     const flagRangeToLabel = uiLocale() === "ru" ? "По год" : uiLocale() === "uk" ? "До року" : uiLocale() === "et" ? "Kuni aastani" : "To year";
@@ -4932,7 +5411,7 @@ export function bind(route, ctx) {
     const flagRangeUploadMobileLabel = uiLocale() === "ru" ? "Файл (телефон)" : uiLocale() === "uk" ? "Файл (телефон)" : uiLocale() === "et" ? "Fail (telefon)" : "File (mobile)";
     const flagRangeRemoveLabel = uiLocale() === "ru" ? "Удалить" : uiLocale() === "uk" ? "Видалити" : uiLocale() === "et" ? "Eemalda" : "Remove";
     const flagRangeLimitText = uiLocale() === "ru" ? "Можно добавить максимум 10 флагов по годам." : uiLocale() === "uk" ? "Можна додати максимум 10 прапорів за роками." : uiLocale() === "et" ? "Lisada saab kuni 10 aastavahemiku lippu." : "You can add up to 10 date-based flags.";
-    const flagRangeInvalidText = uiLocale() === "ru" ? "Укажите корректные годы (С года <= По год)." : uiLocale() === "uk" ? "Вкажіть коректні роки (З року <= До року)." : uiLocale() === "et" ? "Sisesta korrektsed aastad (algus <= lõpp)." : "Use valid years (from <= to).";
+    const flagRangeInvalidText = uiLocale() === "ru" ? "Укажите корректные годы (С года <= По год)." : uiLocale() === "uk" ? "Вкажіть коректні роки (З року <= До року)." : uiLocale() === "et" ? "Sisesta korrektsed aastad (algus <= lopp)." : "Use valid years (from <= to).";
 
     const items = Array.isArray(ctx?.data?.items) ? ctx.data.items : [];
     const byCountry = new Map();
@@ -4940,6 +5419,82 @@ export function bind(route, ctx) {
       const normalized = normalizeCountryBackground(item, item?.country || "");
       if (normalized?.country) byCountry.set(normalized.country, normalized);
     });
+    const countryPlaceholderLabel = uiText("selectCountry");
+    const normalizeCountrySearchValue = (value = "") => String(value || "")
+      .toLowerCase()
+      .trim()
+      .replace(/\s+/g, " ");
+    const countryOptions = Array.from(countrySelect.options)
+      .map((opt) => ({
+        value: normalizeSongCountry(opt.value || "") || "",
+        label: String(opt.textContent || "").trim(),
+      }))
+      .filter((opt) => opt.value && opt.label);
+    const renderCountryOptions = (list = [], selectedValue = "") => {
+      const normalizedSelected = normalizeSongCountry(selectedValue || "") || "";
+      const safeList = Array.isArray(list) ? list.filter((opt) => opt?.value) : [];
+      countrySelect.innerHTML = "";
+      const placeholder = document.createElement("option");
+      placeholder.value = "";
+      placeholder.textContent = countryPlaceholderLabel;
+      countrySelect.appendChild(placeholder);
+      const selectedOption = normalizedSelected
+        ? countryOptions.find((opt) => opt.value === normalizedSelected) || null
+        : null;
+      const renderList = selectedOption && !safeList.some((opt) => opt.value === selectedOption.value)
+        ? [selectedOption, ...safeList]
+        : safeList;
+      renderList.forEach((opt) => {
+        const option = document.createElement("option");
+        option.value = opt.value;
+        option.textContent = opt.label;
+        countrySelect.appendChild(option);
+      });
+      if (normalizedSelected) {
+        countrySelect.value = normalizedSelected;
+      }
+    };
+    const filterCountryOptions = (queryRaw = "") => {
+      const query = normalizeCountrySearchValue(queryRaw);
+      if (!query) return [...countryOptions];
+      return countryOptions.filter((opt) => (
+        normalizeCountrySearchValue(opt.label).includes(query)
+        || opt.value.includes(query)
+      ));
+    };
+    const pickCountryByQuery = (queryRaw = "") => {
+      const query = normalizeCountrySearchValue(queryRaw);
+      if (!query) return "";
+      const exactCode = countryOptions.find((opt) => opt.value === query);
+      if (exactCode) return exactCode.value;
+      const exactLabel = countryOptions.find((opt) => normalizeCountrySearchValue(opt.label) === query);
+      if (exactLabel) return exactLabel.value;
+      const startsWith = countryOptions.find((opt) => normalizeCountrySearchValue(opt.label).startsWith(query));
+      if (startsWith) return startsWith.value;
+      const contains = countryOptions.find((opt) => (
+        normalizeCountrySearchValue(opt.label).includes(query)
+        || opt.value.includes(query)
+      ));
+      return contains ? contains.value : "";
+    };
+    const syncCountrySearchInput = () => {
+      if (!countrySearchInput) return;
+      const selected = normalizeSongCountry(countrySelect.value || "") || "";
+      const selectedOption = countryOptions.find((opt) => opt.value === selected);
+      countrySearchInput.value = selectedOption ? selectedOption.label : "";
+    };
+    const applyCountryFromSearch = (queryRaw = "", triggerChange = true) => {
+      const nextCountry = pickCountryByQuery(queryRaw);
+      if (!nextCountry) return false;
+      renderCountryOptions(filterCountryOptions(queryRaw), nextCountry);
+      const hasChanged = countrySelect.value !== nextCountry;
+      countrySelect.value = nextCountry;
+      if (hasChanged && triggerChange) {
+        countrySelect.dispatchEvent(new Event("change"));
+      }
+      return true;
+    };
+    renderCountryOptions(countryOptions, countrySelect.value || "");
 
     const desktopRefs = {
       url: qs("ab_desktop_url"),
@@ -5703,7 +6258,33 @@ export function bind(route, ctx) {
     countrySelect.addEventListener("change", () => {
       persistAllVariantScopeValues();
       fillEditor(countrySelect.value);
+      syncCountrySearchInput();
+      if (countrySearchInput) {
+        renderCountryOptions(countryOptions, countrySelect.value || "");
+      }
     });
+
+    if (countrySearchInput) {
+      countrySearchInput.addEventListener("input", () => {
+        renderCountryOptions(filterCountryOptions(countrySearchInput.value || ""), countrySelect.value || "");
+      });
+      countrySearchInput.addEventListener("keydown", (event) => {
+        if (event.key !== "Enter") return;
+        event.preventDefault();
+        const hasMatch = applyCountryFromSearch(countrySearchInput.value || "", true);
+        if (!hasMatch) return;
+        syncCountrySearchInput();
+      });
+      countrySearchInput.addEventListener("change", () => {
+        const hasMatch = applyCountryFromSearch(countrySearchInput.value || "", true);
+        if (!hasMatch) return;
+        syncCountrySearchInput();
+      });
+      countrySearchInput.addEventListener("blur", () => {
+        renderCountryOptions(countryOptions, countrySelect.value || "");
+        syncCountrySearchInput();
+      });
+    }
 
     clearBtn.addEventListener("click", async () => {
       const country = normalizeSongCountry(countrySelect.value || "");
@@ -5825,6 +6406,7 @@ export function bind(route, ctx) {
       refs.scroll?.addEventListener("input", () => applyScrollMinimap(refs === mobileRefs ? "mobile" : "desktop"));
     });
 
+    syncCountrySearchInput();
     fillEditor(countrySelect.value || "");
     return;
   }
@@ -5853,7 +6435,7 @@ export function bind(route, ctx) {
       const prompt = uiLocale() === "ru"
         ? "Полностью удалить данные пользователя? Аккаунт будет очищен без блокировки."
         : uiLocale() === "et"
-          ? "Kustuta kasutaja andmed täielikult? Konto puhastatakse ilma blokeerimiseta."
+          ? "Kustuta kasutaja andmed taielikult? Konto puhastatakse ilma blokeerimiseta."
           : "Delete all user data? Account will be fully cleared without blocking.";
       if (!confirm(prompt)) return;
       try {
@@ -5903,5 +6485,6 @@ export function bind(route, ctx) {
     return;
   }
 }
+
 
 

@@ -66,6 +66,7 @@ let songPageBgParallaxRaf = 0;
 let songPageBgParallaxMetrics = null;
 let songPageBgParallaxLastMeasureAt = 0;
 let songPageBgParallaxLastShiftPx = Number.NaN;
+let globalWallpaperLastShiftPx = Number.NaN;
 const SONG_PAGE_BG_PARALLAX_MIN_PX = 180;
 const SONG_PAGE_BG_PARALLAX_MAX_PX = 560;
 const SONG_PAGE_BG_PARALLAX_VIEWPORT_RATIO = 0.52;
@@ -78,6 +79,15 @@ const SONG_PAGE_BG_PARALLAX_LAYOUT_MEASURE_INTERVAL_MS = 180;
 const SONG_PAGE_BG_PARALLAX_SCROLL_RATIO = 0.2;
 const SONG_PAGE_BG_PARALLAX_LONG_TEXT_SLOWDOWN_MAX = 2.3;
 const SONG_PAGE_BG_PARALLAX_LONG_TEXT_THRESHOLD_PX = 240;
+const GLOBAL_WALLPAPER_PARALLAX_MIN_PX = 44;
+const GLOBAL_WALLPAPER_PARALLAX_MAX_PX = 240;
+const GLOBAL_WALLPAPER_PARALLAX_VIEWPORT_RATIO = 0.24;
+const GLOBAL_WALLPAPER_PARALLAX_SCROLL_RATIO = 0.11;
+const GLOBAL_WALLPAPER_ASSET_URLS = [
+  "./picture/AdobeStock_479740218.jpeg",
+  "./picture/phone_wallpaper.jpg",
+];
+let globalWallpaperAssetsPreloaded = false;
 const STAGED_REVEAL_SELECTOR = ".card, .songCard, .yt-card, .pill, .badge, .song-version-btn, .pager-shell .btn";
 
 function hideAppBootSplash() {
@@ -245,7 +255,28 @@ function resetSongPageBackgroundParallaxCache() {
   songPageBgParallaxLastShiftPx = Number.NaN;
 }
 
+function preloadGlobalWallpaperAssets() {
+  if (globalWallpaperAssetsPreloaded) return;
+  globalWallpaperAssetsPreloaded = true;
+  GLOBAL_WALLPAPER_ASSET_URLS.forEach((url) => {
+    const src = String(url || "").trim();
+    if (!src) return;
+    const img = new Image();
+    img.decoding = "async";
+    img.src = src;
+  });
+}
+
+function syncGlobalWallpaperParallax() {
+  // Keep global wallpaper static (no parallax shift on home/catalog).
+  if (globalWallpaperLastShiftPx !== 0) {
+    document.body.style.setProperty("--global-wallpaper-bg-shift", "0px");
+    globalWallpaperLastShiftPx = 0;
+  }
+}
+
 function syncSongPageBackgroundParallax() {
+  syncGlobalWallpaperParallax();
   if (!document.body.classList.contains("song-page-country-bg")) {
     document.body.style.removeProperty("--song-page-bg-shift");
     document.body.style.removeProperty("--song-page-bg-image");
@@ -587,13 +618,13 @@ function getHashQuery() {
 
 function setTopSearchState(route) {
   if (!topSearchWrap || !topSearchInput) return;
-  const isHome = route?.name === "home";
-  const isVisible = !topSearchWrap.classList.contains("hidden") && !topSearchWrap.classList.contains("is-closing");
-  if (isHome && !isVisible) animateElementOpen(topSearchWrap);
-  if (!isHome && isVisible) animateElementClose(topSearchWrap, { duration: 560 });
-  if (!isHome) return;
+  const routeName = String(route?.name || "").trim();
+  const shouldShowSearch = routeName === "home" || routeName === "song";
+  const isOpen = topSearchWrap.classList.contains("is-open") && !topSearchWrap.classList.contains("is-closing");
+  if (shouldShowSearch && !isOpen) animateElementOpen(topSearchWrap);
+  if (!shouldShowSearch && isOpen) animateElementClose(topSearchWrap, { duration: 560 });
   const query = route?.query || Object.fromEntries(getHashQuery());
-  topSearchInput.value = query.q || "";
+  if (query.q !== undefined) topSearchInput.value = query.q || "";
 }
 
 function runTopSearch() {
@@ -616,7 +647,12 @@ function runTopSearch() {
   next.set("searched", "1");
   next.set("adv", current.get("adv") || "0");
   next.set("page", "1");
-  location.hash = `#/${next.toString() ? `?${next.toString()}` : ""}`;
+  const nextHash = `#/${next.toString() ? `?${next.toString()}` : ""}`;
+  if (location.hash === nextHash) {
+    router.handle();
+    return;
+  }
+  location.hash = nextHash;
 }
 
 function setNavLabel(id, text) {
@@ -838,7 +874,21 @@ function setupInstallPrompt() {
 
 async function registerServiceWorker() {
   if (!("serviceWorker" in navigator)) return;
+  const enableServiceWorker = false;
   try {
+    if (!enableServiceWorker) {
+      const registrations = await navigator.serviceWorker.getRegistrations();
+      await Promise.all(registrations.map((registration) => registration.unregister()));
+      if ("caches" in window) {
+        const cacheKeys = await caches.keys();
+        await Promise.all(
+          cacheKeys
+            .filter((key) => String(key || "").startsWith("songbook-app-"))
+            .map((key) => caches.delete(key)),
+        );
+      }
+      return;
+    }
     const swUrl = new URL("./service-worker.js", import.meta.url);
     const scope = new URL("./", import.meta.url).pathname;
     const registration = await navigator.serviceWorker.register(swUrl, { scope });
@@ -942,7 +992,26 @@ menuBackdrop?.addEventListener("click", () => setMenuOpen(false));
 mNavMenu?.addEventListener("click", () => setMenuOpen(true));
 menuDrawer?.querySelectorAll(".js-route-link").forEach((link) => link.addEventListener("click", () => setMenuOpen(false)));
 btnThemeToggle?.addEventListener("click", toggleTheme);
-topSearchBtn?.addEventListener("click", runTopSearch);
+let topSearchPointerHandledAt = 0;
+topSearchBtn?.addEventListener("pointerup", (e) => {
+  e.preventDefault();
+  topSearchPointerHandledAt = Date.now();
+  runTopSearch();
+});
+topSearchBtn?.addEventListener("click", (e) => {
+  if (Date.now() - topSearchPointerHandledAt < 400) {
+    e.preventDefault();
+    return;
+  }
+  e.preventDefault();
+  runTopSearch();
+});
+if (topSearchWrap instanceof HTMLFormElement) {
+  topSearchWrap.addEventListener("submit", (e) => {
+    e.preventDefault();
+    runTopSearch();
+  });
+}
 topSearchInput?.addEventListener("keydown", (e) => {
   if (e.key !== "Enter") return;
   e.preventDefault();
@@ -1103,6 +1172,7 @@ window.addEventListener("scroll", scheduleSongPageBackgroundParallax, { passive:
 window.addEventListener("resize", handleSongPageBackgroundParallaxViewportChange);
 window.visualViewport?.addEventListener?.("resize", handleSongPageBackgroundParallaxViewportChange);
 
+preloadGlobalWallpaperAssets();
 await refreshMe();
 router.handle();
 resetSongPageBackgroundParallaxCache();

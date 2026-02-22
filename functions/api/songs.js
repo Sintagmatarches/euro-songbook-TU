@@ -4,6 +4,7 @@ import { ensureSchemaAndSeed } from "../_lib/schema.js";
 import { normalizeSongCountry, normalizeSongLanguage, normalizeSongPeriod } from "../../shared/song-catalogs.js";
 
 const GERMAN_COLLABORATORS_FILTER_VALUES = ["german_collaborators", "latvian_ss_legion", "estonian_ss_division"];
+const SONGS_PAGE_SIZE = 10;
 
 function clamp(n, a, b) {
   n = parseInt(n || "1", 10);
@@ -64,7 +65,7 @@ export async function onRequestGet({ env, request }) {
   const performer = rawPerformer;
   const year = rawYear;
   const page = clamp(url.searchParams.get("page"), 1, 9999);
-  const per = 20;
+  const per = SONGS_PAGE_SIZE;
 
   if ((rawLang && !lang) || (rawCountry && !country) || (rawPeriod && !period)) {
     return json({ items: [], total: 0, page, pages: 1 });
@@ -94,7 +95,11 @@ export async function onRequestGet({ env, request }) {
       const whereWithMatch = [...where, "songs_fts MATCH ?"];
       const whereSql = `WHERE ${whereWithMatch.join(" AND ")}`;
       const fullParams = [...params, matchQuery];
-      const totalRow = await dbGet(env, `SELECT COUNT(*) AS c ${fromSql} ${whereSql}`, fullParams);
+      const titleMatchQuery = `title:(${matchQuery})`;
+      const titleWhereWithMatch = [...where, "songs_fts MATCH ?"];
+      const titleWhereSql = `WHERE ${titleWhereWithMatch.join(" AND ")}`;
+      const titleParams = [...params, titleMatchQuery];
+      const totalRow = await dbGet(env, `SELECT COUNT(DISTINCT s.id) AS c ${fromSql} ${whereSql}`, fullParams);
       const total = Number(totalRow?.c || 0);
       if (!total) return null;
       const pages = Math.max(1, Math.ceil(total / per));
@@ -102,13 +107,36 @@ export async function onRequestGet({ env, request }) {
       const offset = (safePage - 1) * per;
       const items = await dbAll(
         env,
-        `SELECT s.id, s.title, s.subtitle, s.lang, s.country, s.period, s.year,
-                snippet(songs_fts, 1, '', '', '...', 12) AS snippet
-         ${fromSql}
-         ${whereSql}
-         ORDER BY bm25(songs_fts) ASC, s.title ASC
+        `WITH matched AS (
+           SELECT
+             s.id AS song_id,
+             MIN(songs_fts.rowid) AS pick_rowid
+           ${fromSql}
+           ${whereSql}
+           GROUP BY s.id
+         ),
+         title_hits AS (
+           SELECT DISTINCT s.id AS song_id
+           ${fromSql}
+           ${titleWhereSql}
+         )
+         SELECT
+           s.id,
+           s.title,
+           s.subtitle,
+           s.lang,
+           s.country,
+           s.period,
+           s.year,
+           snippet(songs_fts, 1, '', '', '...', 12) AS snippet,
+           CASE WHEN title_hits.song_id IS NULL THEN 0 ELSE 1 END AS title_match
+         FROM matched
+         JOIN songs s ON s.id = matched.song_id
+         JOIN songs_fts ON songs_fts.rowid = matched.pick_rowid
+         LEFT JOIN title_hits ON title_hits.song_id = s.id
+         ORDER BY title_match DESC, s.title ASC
          LIMIT ? OFFSET ?`,
-        [...fullParams, per, offset]
+        [...fullParams, ...titleParams, per, offset]
       );
       return { items, total, page: safePage, pages, mode };
     };
