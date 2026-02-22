@@ -360,17 +360,16 @@ const LISTEN_SERVICES = [
 ];
 
 // "Viewport" is what the user sees on screen; "standard" is the stored background asset size.
-// We keep the viewport sizes stable for previews, while the stored asset can be "deeper"
-// to allow parallax/scroll reveal.
+// Viewports stay close to runtime device shapes, while stored assets follow strict editor standards.
 const COUNTRY_BACKGROUND_VIEWPORTS = {
   desktop: { width: 1600, height: 900 }, // 16:9
   mobile: { width: 900, height: 1600 }, // 9:16
 };
 
 const COUNTRY_BACKGROUND_STANDARDS = {
-  // Keep stored assets in the same base ratio as runtime viewports.
-  desktop: { width: 1600, height: 900 }, // 16:9
-  mobile: { width: 900, height: 1600 }, // 9:16
+  // Strict project standards for country backgrounds.
+  desktop: { width: 4096, height: 4096 }, // 1:1
+  mobile: { width: 1200, height: 3700 }, // 12:37
 };
 
 const FLAG_CARD_STANDARDS = {
@@ -1539,9 +1538,8 @@ function isUnknownQuestionMarkAt(text, index) {
   if (text[index] !== "?") return false;
   const prev = index > 0 ? text[index - 1] : "";
   const next = index + 1 < text.length ? text[index + 1] : "";
-  const isLineEnd = next === "" || next === "\n";
-  if (!isLineEnd) return true;
-  return prev === "?";
+  // Count as unknown only when question marks form a group (?? or more).
+  return prev === "?" || next === "?";
 }
 
 function countUnknownQuestionMarks(text) {
@@ -1571,6 +1569,12 @@ function normalizeCompareText(text = "") {
   return String(text || "").replace(/\r\n?/g, "\n").trim();
 }
 
+function normalizeCompareToken(text = "") {
+  return String(text || "")
+    .toLowerCase()
+    .replace(/ё/g, "е");
+}
+
 function splitLyricsToStanzas(text = "") {
   const normalized = normalizeCompareText(text);
   if (!normalized) return [];
@@ -1584,6 +1588,7 @@ function normalizeCompareStanza(text = "") {
   return String(text || "")
     .replace(/\r\n?/g, "\n")
     .toLowerCase()
+    .replace(/ё/g, "е")
     .split("\n")
     .map((line) => line.trim())
     .filter(Boolean)
@@ -1652,8 +1657,8 @@ function alignCompareStanzas(sourceStanzas = [], targetStanzas = []) {
 }
 
 function diffWordsToKeepSet(sourceWords = [], targetWords = []) {
-  const src = sourceWords.map((w) => String(w || "").toLowerCase());
-  const dst = targetWords.map((w) => String(w || "").toLowerCase());
+  const src = sourceWords.map((w) => normalizeCompareToken(w));
+  const dst = targetWords.map((w) => normalizeCompareToken(w));
   const m = src.length;
   const n = dst.length;
   if (!m || !n) return new Set();
@@ -1697,7 +1702,7 @@ function compactCompareKeepSet(rawKeep = new Set(), sourceWords = []) {
       for (let i = runStart; i <= runEnd; i += 1) compact.add(sorted[i]);
     } else {
       const idx = sorted[runStart];
-      const token = String(sourceWords[idx] || "").toLowerCase().replace(/[^\p{L}\p{N}]+/gu, "");
+      const token = normalizeCompareToken(sourceWords[idx] || "").replace(/[^\p{L}\p{N}]+/gu, "");
       if (token.length >= 5) compact.add(idx);
     }
     runStart = runEnd + 1;
@@ -2766,6 +2771,13 @@ function adminCountryBackgroundsUI(data) {
       : uiLocale() === "et"
         ? "Maara eraldi taustad lauaarvutile ja telefonile, lohista kaadrit hiire/sormega ja sea suum."
         : "Set separate desktop/mobile backgrounds, drag the frame with mouse/touch, and adjust zoom.";
+  const strictSizeHint = uiLocale() === "ru"
+    ? "Строгий стандарт фонов: ПК 4096x4096 (1:1), телефон 1200x3700 (12:37). Сохраняются только такие размеры."
+    : uiLocale() === "uk"
+      ? "Строгий стандарт фонів: ПК 4096x4096 (1:1), телефон 1200x3700 (12:37). Зберігаються лише такі розміри."
+      : uiLocale() === "et"
+        ? "Range taustastandard: lauaarvuti 4096x4096 (1:1), telefon 1200x3700 (12:37). Salvestatakse ainult need mootmed."
+        : "Strict background standard: desktop 4096x4096 (1:1), mobile 1200x3700 (12:37). Only these dimensions are saved.";
   const countryLabel = uiLocale() === "ru"
     ? "Страна"
     : uiLocale() === "uk"
@@ -2882,6 +2894,7 @@ function adminCountryBackgroundsUI(data) {
       <div class="card ac-editor-card ab-editor">
         <div class="h2">${esc(title)}</div>
         <div class="muted small">${esc(subtitle)}</div>
+        <div class="muted small">${esc(strictSizeHint)}</div>
         <div class="sep"></div>
         <label class="field">
           <div class="fieldLabel">${esc(countryLabel)}</div>
@@ -5412,6 +5425,40 @@ export function bind(route, ctx) {
     const flagRangeRemoveLabel = uiLocale() === "ru" ? "Удалить" : uiLocale() === "uk" ? "Видалити" : uiLocale() === "et" ? "Eemalda" : "Remove";
     const flagRangeLimitText = uiLocale() === "ru" ? "Можно добавить максимум 10 флагов по годам." : uiLocale() === "uk" ? "Можна додати максимум 10 прапорів за роками." : uiLocale() === "et" ? "Lisada saab kuni 10 aastavahemiku lippu." : "You can add up to 10 date-based flags.";
     const flagRangeInvalidText = uiLocale() === "ru" ? "Укажите корректные годы (С года <= По год)." : uiLocale() === "uk" ? "Вкажіть коректні роки (З року <= До року)." : uiLocale() === "et" ? "Sisesta korrektsed aastad (algus <= lopp)." : "Use valid years (from <= to).";
+    const variantKindLabel = (kind) => {
+      if (kind === "desktop") return uiLocale() === "ru" ? "ПК" : uiLocale() === "uk" ? "ПК" : uiLocale() === "et" ? "Lauaarvuti" : "Desktop";
+      return uiLocale() === "ru" ? "Телефон" : uiLocale() === "uk" ? "Телефон" : uiLocale() === "et" ? "Telefon" : "Mobile";
+    };
+    const invalidBackgroundSizeText = (kind, width, height) => {
+      const label = variantKindLabel(kind);
+      if (uiLocale() === "ru") return `${label}: требуется строго ${width}x${height}. Используйте эталон ${kind === "desktop" ? "1:1" : "12:37"}.`;
+      if (uiLocale() === "uk") return `${label}: потрібно строго ${width}x${height}. Використайте еталон ${kind === "desktop" ? "1:1" : "12:37"}.`;
+      if (uiLocale() === "et") return `${label}: vaja rangelt ${width}x${height}. Kasuta etaloni ${kind === "desktop" ? "1:1" : "12:37"}.`;
+      return `${label}: required exactly ${width}x${height}. Use ${kind === "desktop" ? "1:1" : "12:37"}.`;
+    };
+    const collectPeriodImageUrls = (config) => {
+      const safeConfig = config && typeof config === "object" ? config : createEmptyPeriodImageConfig();
+      const out = [];
+      const base = String(safeConfig.default || "").trim();
+      if (base) out.push(base);
+      USSR_PERIOD_VALUES.forEach((periodKey) => {
+        const value = String(safeConfig.periods?.[periodKey] || "").trim();
+        if (!value) return;
+        out.push(value);
+      });
+      return Array.from(new Set(out));
+    };
+    const assertVariantBackgroundDimensions = async (kind, refs, config) => {
+      const urls = collectPeriodImageUrls(config);
+      if (!urls.length) return;
+      for (const imageUrl of urls) {
+        try {
+          await assertExactImageDimensions(imageUrl, refs.standard.width, refs.standard.height);
+        } catch {
+          throw new Error(invalidBackgroundSizeText(kind, refs.standard.width, refs.standard.height));
+        }
+      }
+    };
 
     const items = Array.isArray(ctx?.data?.items) ? ctx.data.items : [];
     const byCountry = new Map();
@@ -6324,6 +6371,8 @@ export function bind(route, ctx) {
         if (variantBaseSource.desktop) await rebuildFromBaseSource("desktop");
         if (variantBaseSource.mobile) await rebuildFromBaseSource("mobile");
         persistAllVariantScopeValues();
+        await assertVariantBackgroundDimensions("desktop", desktopRefs, variantConfigState.desktop);
+        await assertVariantBackgroundDimensions("mobile", mobileRefs, variantConfigState.mobile);
         const payload = {
           country,
           desktop_image_url: serializePeriodImageConfig(variantConfigState.desktop),
@@ -6485,3 +6534,4 @@ export function bind(route, ctx) {
     return;
   }
 }
+
