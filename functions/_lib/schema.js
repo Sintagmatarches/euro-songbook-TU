@@ -458,6 +458,18 @@ export async function ensureSchema(env) {
   );
   await ensureCountryBackgroundColumns(env);
 
+  await dbRun(
+    env,
+    `CREATE TABLE IF NOT EXISTS country_background_chunks (
+      country TEXT NOT NULL,
+      field TEXT NOT NULL,
+      chunk_index INTEGER NOT NULL,
+      chunk_value TEXT NOT NULL,
+      updated_at TEXT NOT NULL DEFAULT (datetime('now')),
+      PRIMARY KEY(country, field, chunk_index)
+    )`
+  );
+
   await dbRun(env, `CREATE INDEX IF NOT EXISTS idx_songs_status_title ON songs(status, title)`);
   await dbRun(env, `CREATE INDEX IF NOT EXISTS idx_songs_lang ON songs(lang)`);
   await dbRun(env, `CREATE INDEX IF NOT EXISTS idx_songs_admin_content ON songs(is_admin_content)`);
@@ -471,6 +483,7 @@ export async function ensureSchema(env) {
   }
   await dbRun(env, `CREATE INDEX IF NOT EXISTS idx_rate_limits_reset ON rate_limits(reset_at)`);
   await dbRun(env, `CREATE INDEX IF NOT EXISTS idx_country_backgrounds_updated_at ON country_backgrounds(updated_at DESC)`);
+  await dbRun(env, "CREATE INDEX IF NOT EXISTS idx_country_background_chunks_country_field ON country_background_chunks(country, field, chunk_index)");
   await dbRun(env, `CREATE INDEX IF NOT EXISTS idx_song_requests_status_created ON song_requests(status, created_at DESC)`);
   await dbRun(env, `CREATE INDEX IF NOT EXISTS idx_song_requests_user_created ON song_requests(user_id, created_at DESC)`);
 
