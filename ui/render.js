@@ -5438,6 +5438,7 @@ export function bind(route, ctx) {
     const flagRangeRemoveLabel = uiLocale() === "ru" ? "Удалить" : uiLocale() === "uk" ? "Видалити" : uiLocale() === "et" ? "Eemalda" : "Remove";
     const flagRangeLimitText = uiLocale() === "ru" ? "Можно добавить максимум 10 флагов по годам." : uiLocale() === "uk" ? "Можна додати максимум 10 прапорів за роками." : uiLocale() === "et" ? "Lisada saab kuni 10 aastavahemiku lippu." : "You can add up to 10 date-based flags.";
     const flagRangeInvalidText = uiLocale() === "ru" ? "Укажите корректные годы (С года <= По год)." : uiLocale() === "uk" ? "Вкажіть коректні роки (З року <= До року)." : uiLocale() === "et" ? "Sisesta korrektsed aastad (algus <= lopp)." : "Use valid years (from <= to).";
+    const selectCountryBeforeSaveText = uiLocale() === "ru" ? "Сначала выберите страну." : uiLocale() === "uk" ? "Спочатку оберіть країну." : uiLocale() === "et" ? "Vali esmalt riik." : "Select country first.";
     const variantKindLabel = (kind) => {
       if (kind === "desktop") return uiLocale() === "ru" ? "ПК" : uiLocale() === "uk" ? "ПК" : uiLocale() === "et" ? "Lauaarvuti" : "Desktop";
       return uiLocale() === "ru" ? "Телефон" : uiLocale() === "uk" ? "Телефон" : uiLocale() === "et" ? "Telefon" : "Mobile";
@@ -6389,8 +6390,18 @@ export function bind(route, ctx) {
     });
 
     saveBtn.addEventListener("click", async () => {
-      const country = normalizeSongCountry(countrySelect.value || "");
-      if (!country) return;
+      let country = normalizeSongCountry(countrySelect.value || "");
+      if (!country && countrySearchInput) {
+        const hasMatch = applyCountryFromSearch(countrySearchInput.value || "", false);
+        if (hasMatch) {
+          country = normalizeSongCountry(countrySelect.value || "");
+          syncCountrySearchInput();
+        }
+      }
+      if (!country) {
+        showStatusOverlay(selectCountryBeforeSaveText, "info");
+        return;
+      }
       const keepScope = activePeriodScope();
       const initialText = saveBtn.textContent;
       saveBtn.disabled = true;
