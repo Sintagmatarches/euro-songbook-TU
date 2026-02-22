@@ -6470,7 +6470,10 @@ export function bind(route, ctx) {
             square: nextDesktopFlagUrl,
           });
           nextConfig.ranges = nextRanges;
-          payload.preview_flag_image_url = serializeFlagPreviewConfig(nextConfig);
+          const nextSerializedFlagConfig = serializeFlagPreviewConfig(nextConfig);
+          if (nextSerializedFlagConfig !== String(flagState.raw || "").trim()) {
+            payload.preview_flag_image_url = nextSerializedFlagConfig;
+          }
         }
         const out = await api.adminSaveCountryBackground(payload);
         if (out?.deleted) {

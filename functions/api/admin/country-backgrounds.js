@@ -183,7 +183,8 @@ export async function onRequestPut({ env, request }) {
   const mobileFocusX = clampFocus(body?.mobile_focus_x ?? body?.mobileFocusX);
   const mobileFocusY = clampFocus(body?.mobile_focus_y ?? body?.mobileFocusY);
   const current = await fetchCountryBackground(env, country);
-  let previewFlagImageUrl = String(current?.preview_flag_image_url || "").trim();
+  const currentPreviewFlagImageUrl = String(current?.preview_flag_image_url || "").trim();
+  let previewFlagImageUrl = currentPreviewFlagImageUrl;
   const hasFlagPayload = (
     Object.prototype.hasOwnProperty.call(body || {}, "preview_flag_image_url")
     || Object.prototype.hasOwnProperty.call(body || {}, "previewFlagImageUrl")
@@ -203,7 +204,9 @@ export async function onRequestPut({ env, request }) {
     previewFlagImageUrl = parsedFlag || "";
   }
 
-  if (!desktopImageUrl && !mobileImageUrl && !previewFlagImageUrl) {
+  const effectivePreviewFlagImageUrl = hasFlagPayload ? previewFlagImageUrl : currentPreviewFlagImageUrl;
+
+  if (!desktopImageUrl && !mobileImageUrl && !effectivePreviewFlagImageUrl) {
     await dbRun(env, `DELETE FROM country_backgrounds WHERE lower(country)=?`, [country]);
     return json({ ok: true, deleted: true, country });
   }
@@ -218,7 +221,7 @@ export async function onRequestPut({ env, request }) {
        ON CONFLICT(country) DO UPDATE SET
          desktop_image_url = excluded.desktop_image_url,
          mobile_image_url = excluded.mobile_image_url,
-         preview_flag_image_url = excluded.preview_flag_image_url,
+         preview_flag_image_url = COALESCE(excluded.preview_flag_image_url, country_backgrounds.preview_flag_image_url),
          desktop_focus_x = excluded.desktop_focus_x,
          desktop_focus_y = excluded.desktop_focus_y,
          mobile_focus_x = excluded.mobile_focus_x,
@@ -230,7 +233,7 @@ export async function onRequestPut({ env, request }) {
         country,
         desktopImageUrl,
         mobileImageUrl,
-        previewFlagImageUrl,
+        hasFlagPayload ? previewFlagImageUrl : null,
         desktopFocusX,
         desktopFocusY,
         mobileFocusX,
