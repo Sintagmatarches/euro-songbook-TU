@@ -3298,6 +3298,19 @@ function computeBackgroundCrop(sourceWidth, sourceHeight, targetWidth, targetHei
   };
 }
 
+const MAX_BACKGROUND_DATA_URL_LENGTH = 1_500_000;
+const BACKGROUND_EXPORT_QUALITIES = [0.88, 0.8, 0.72, 0.64, 0.56, 0.48, 0.4, 0.34, 0.28, 0.22, 0.18];
+
+function exportCanvasWebpUnderLimit(canvas, maxLen = MAX_BACKGROUND_DATA_URL_LENGTH) {
+  let fallback = "";
+  for (const quality of BACKGROUND_EXPORT_QUALITIES) {
+    const encoded = canvas.toDataURL("image/webp", quality);
+    if (!fallback) fallback = encoded;
+    if (encoded.length <= maxLen) return encoded;
+  }
+  return fallback || canvas.toDataURL("image/webp", 0.18);
+}
+
 async function standardizeBackgroundImage(sourceUrl, width, height, focusX, focusY, zoomLevel = 1) {
   const image = await loadImageElement(sourceUrl);
   const sourceWidth = Math.max(1, Number(image.naturalWidth || image.width || 1));
@@ -3314,7 +3327,7 @@ async function standardizeBackgroundImage(sourceUrl, width, height, focusX, focu
   ctx.imageSmoothingEnabled = true;
   ctx.imageSmoothingQuality = "high";
   ctx.drawImage(image, crop.cropX, crop.cropY, crop.cropWidth, crop.cropHeight, 0, 0, targetWidth, targetHeight);
-  return canvas.toDataURL("image/webp", 0.88);
+  return exportCanvasWebpUnderLimit(canvas);
 }
 
 async function standardizeFlagImageHorizontalCrop(sourceUrl, width, height) {
@@ -5439,22 +5452,26 @@ export function bind(route, ctx) {
     const standardizeVariantImageUrl = async (kind, refs, imageUrl, focusX, focusY, zoomLevel) => {
       const rawUrl = String(imageUrl || "").trim();
       if (!rawUrl) return "";
-      try {
-        await assertExactImageDimensions(rawUrl, refs.standard.width, refs.standard.height);
-        return rawUrl;
-      } catch {
+      const needsDataRebuild = rawUrl.startsWith("data:image/") && rawUrl.length > MAX_BACKGROUND_DATA_URL_LENGTH;
+      if (!needsDataRebuild) {
         try {
-          return await standardizeBackgroundImage(
-            rawUrl,
-            refs.standard.width,
-            refs.standard.height,
-            focusX,
-            focusY,
-            zoomLevel
-          );
+          await assertExactImageDimensions(rawUrl, refs.standard.width, refs.standard.height);
+          return rawUrl;
         } catch {
-          throw new Error(invalidBackgroundSizeText(kind, refs.standard.width, refs.standard.height));
+          // Rebuild below.
         }
+      }
+      try {
+        return await standardizeBackgroundImage(
+          rawUrl,
+          refs.standard.width,
+          refs.standard.height,
+          focusX,
+          focusY,
+          zoomLevel
+        );
+      } catch {
+        throw new Error(invalidBackgroundSizeText(kind, refs.standard.width, refs.standard.height));
       }
     };
     const standardizeVariantConfigForSave = async (kind, refs, config) => {

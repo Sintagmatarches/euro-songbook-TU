@@ -209,35 +209,48 @@ export async function onRequestPut({ env, request }) {
   }
 
   const legacyImageUrl = desktopImageUrl || mobileImageUrl;
-  await dbRun(
-    env,
-    `INSERT INTO country_backgrounds (
-       country, desktop_image_url, mobile_image_url, preview_flag_image_url, desktop_focus_x, desktop_focus_y, mobile_focus_x, mobile_focus_y, image_url, updated_at, updated_by
-     ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, datetime('now'), ?)
-     ON CONFLICT(country) DO UPDATE SET
-       desktop_image_url = excluded.desktop_image_url,
-       mobile_image_url = excluded.mobile_image_url,
-       preview_flag_image_url = excluded.preview_flag_image_url,
-       desktop_focus_x = excluded.desktop_focus_x,
-       desktop_focus_y = excluded.desktop_focus_y,
-       mobile_focus_x = excluded.mobile_focus_x,
-       mobile_focus_y = excluded.mobile_focus_y,
-       image_url = excluded.image_url,
-       updated_at = datetime('now'),
-       updated_by = excluded.updated_by`,
-    [
-      country,
-      desktopImageUrl,
-      mobileImageUrl,
-      previewFlagImageUrl,
-      desktopFocusX,
-      desktopFocusY,
-      mobileFocusX,
-      mobileFocusY,
-      legacyImageUrl,
-      access.id,
-    ]
-  );
+  try {
+    await dbRun(
+      env,
+      `INSERT INTO country_backgrounds (
+         country, desktop_image_url, mobile_image_url, preview_flag_image_url, desktop_focus_x, desktop_focus_y, mobile_focus_x, mobile_focus_y, image_url, updated_at, updated_by
+       ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, datetime('now'), ?)
+       ON CONFLICT(country) DO UPDATE SET
+         desktop_image_url = excluded.desktop_image_url,
+         mobile_image_url = excluded.mobile_image_url,
+         preview_flag_image_url = excluded.preview_flag_image_url,
+         desktop_focus_x = excluded.desktop_focus_x,
+         desktop_focus_y = excluded.desktop_focus_y,
+         mobile_focus_x = excluded.mobile_focus_x,
+         mobile_focus_y = excluded.mobile_focus_y,
+         image_url = excluded.image_url,
+         updated_at = datetime('now'),
+         updated_by = excluded.updated_by`,
+      [
+        country,
+        desktopImageUrl,
+        mobileImageUrl,
+        previewFlagImageUrl,
+        desktopFocusX,
+        desktopFocusY,
+        mobileFocusX,
+        mobileFocusY,
+        legacyImageUrl,
+        access.id,
+      ]
+    );
+  } catch (e) {
+    const message = String(e?.message || "").toLowerCase();
+    if (
+      message.includes("too large")
+      || message.includes("string or blob")
+      || message.includes("statement too long")
+      || message.includes("request body")
+    ) {
+      return err("Background image is too large after processing. Please use a lighter image.", 413);
+    }
+    throw e;
+  }
 
   const item = await fetchCountryBackground(env, country);
   return json({ ok: true, item });
