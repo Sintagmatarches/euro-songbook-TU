@@ -81,7 +81,6 @@ const qs = (id) => document.getElementById(id);
 const uiLocale = () => (state.locale || "ru");
 const UI_MOTION_MEDIUM_MS = 860;
 const uiTransitionState = new WeakMap();
-let homeCardParallaxCleanup = null;
 
 function uiPrefersReducedMotion() {
   return window.matchMedia("(prefers-reduced-motion: reduce)").matches;
@@ -1115,10 +1114,9 @@ function renderHomeSongCard(song = {}, options = {}) {
     kind: "long",
     device: flagDevice,
   });
-  const cardAttrs = [];
-  if (flagUrl) cardAttrs.push(`data-card-flag="${esc(flagUrl)}"`);
+  const cardStyle = flagUrl ? ` style="${esc(`--yt-card-flag-image:${toCssUrlValue(flagUrl)}`)}"` : "";
   return `
-    <a class="yt-card ${flagUrl ? "yt-card-has-flag" : ""}" href="#/song/${encodeURIComponent(song.id)}" ${cardAttrs.join(" ")}>
+    <a class="yt-card ${flagUrl ? "yt-card-has-flag" : ""}" href="#/song/${encodeURIComponent(song.id)}"${cardStyle}>
       ${song.year ? `<span class="yt-card-year">${esc(song.year)}</span>` : ``}
       <div class="yt-card-content">
         <div class="yt-card-title-row">
@@ -1227,8 +1225,10 @@ function homeUI(data, params, homeExtras = {}) {
         class="home-country-card ${item.isActive ? "is-active" : ""}"
         href="${esc(item.href)}"
         data-home-bg="${esc(item.previewBg || "")}"
-        data-home-wall="${esc(item.wallBg || "")}"
-        data-home-flag="${esc(item.flagBg || "")}"
+        style="${esc([
+    item.wallBg ? `--home-country-wall:${toCssUrlValue(item.wallBg)}` : "",
+    item.flagBg ? `--home-country-flag:${toCssUrlValue(item.flagBg)}` : "",
+  ].filter(Boolean).join(";"))}"
       >
         <span class="home-country-card-label">${esc(item.label)}</span>
         <span class="home-country-card-count">${esc(homeCountrySongsCountLabel(item.count))}</span>
@@ -3898,10 +3898,6 @@ export async function render(route) {
 
 export function bind(route, ctx) {
   teardownContentDraftExitPersistence();
-  if (typeof homeCardParallaxCleanup === "function") {
-    homeCardParallaxCleanup();
-    homeCardParallaxCleanup = null;
-  }
   document.body.classList.remove("song-tools-open");
   document.body.classList.remove("song-page-country-bg");
   document.body.classList.remove("song-page-country-bg-static");
@@ -4027,55 +4023,6 @@ export function bind(route, ctx) {
       goWith({ page: target });
     }));
 
-    const applyCardWallpaperVars = (card) => {
-      if (!(card instanceof HTMLElement)) return;
-      if (card.classList.contains("home-country-card")) {
-        if (card.dataset.bgReady === "1") return;
-        const wall = String(card.getAttribute("data-home-wall") || "").trim();
-        const flag = String(card.getAttribute("data-home-flag") || "").trim();
-        if (wall) card.style.setProperty("--home-country-wall", toCssUrlValue(wall));
-        if (flag) card.style.setProperty("--home-country-flag", toCssUrlValue(flag));
-        card.dataset.bgReady = "1";
-        return;
-      }
-      if (card.classList.contains("yt-card")) {
-        if (card.dataset.bgReady === "1") return;
-        const flag = String(card.getAttribute("data-card-flag") || "").trim();
-        if (flag) {
-          card.style.setProperty("--yt-card-flag-image", toCssUrlValue(flag));
-          card.classList.add("yt-card-has-flag");
-        } else {
-          card.style.removeProperty("--yt-card-flag-image");
-          card.classList.remove("yt-card-has-flag");
-        }
-        card.dataset.bgReady = "1";
-      }
-    };
-
-    const hydrateCardWallpapers = () => {
-      const cards = Array.from(document.querySelectorAll(".home-country-card, .yt-card"));
-      if (!cards.length) return;
-      if (!("IntersectionObserver" in window)) {
-        cards.forEach((card) => applyCardWallpaperVars(card));
-        return;
-      }
-      const observer = new IntersectionObserver((entries) => {
-        entries.forEach((entry) => {
-          if (!entry.isIntersecting) return;
-          const card = entry.target;
-          applyCardWallpaperVars(card);
-          observer.unobserve(card);
-        });
-      }, {
-        rootMargin: "220px 0px",
-        threshold: 0.01,
-      });
-      cards.forEach((card) => {
-        if (card.dataset.bgReady === "1") return;
-        observer.observe(card);
-      });
-    };
-
     const progressiveFeed = qs("yt_results_feed");
     const progressiveLoader = qs("yt_results_loader");
     const progressiveLoadingScreen = qs("yt_results_loading_screen");
@@ -4094,97 +4041,96 @@ export function bind(route, ctx) {
         backgroundsByCountry.set(key, normalized);
       });
       const flagDevice = preferredFlagCardDevice();
-      const cards = sourceItems
-        .slice(0, 10)
-        .map((song) => `<div class="home-result-item">${renderHomeSongCard(song, { backgroundsByCountry, flagDevice })}</div>`)
-        .join("");
-
-      progressiveFeed.innerHTML = cards;
-      progressiveFeed.classList.remove("is-chunk-loading");
-      progressiveLoadingScreen?.classList.add("hidden");
-      progressiveLoader?.classList.add("hidden");
-      progressiveSentinel?.classList.add("hidden");
-    }
-
-    const wireCardParallax = () => {
-      const cards = Array.from(document.querySelectorAll(".home-country-card, .yt-card"));
-      if (!cards.length) return () => {};
-
-      const resetCardShift = (card) => {
-        if (!(card instanceof HTMLElement)) return;
-        card.style.setProperty("--card-bg-shift-x", "0px");
-        card.style.setProperty("--card-bg-shift-y", "0px");
-      };
-
-      let rafId = 0;
-      const updateByScroll = () => {
-        rafId = 0;
-        const viewportHeight = window.innerHeight || document.documentElement.clientHeight || 1;
-        cards.forEach((card) => {
-          const rect = card.getBoundingClientRect();
-          if (rect.bottom < -120 || rect.top > viewportHeight + 120) return;
-          const centerY = rect.top + rect.height / 2;
-          const normalized = (centerY - viewportHeight / 2) / Math.max(1, viewportHeight / 2);
-          const shiftY = Math.max(-4, Math.min(4, Math.round(normalized * -4)));
-          card.style.setProperty("--card-bg-shift-y", `${shiftY}px`);
-        });
-      };
-
-      const scheduleUpdate = () => {
-        if (rafId) return;
-        rafId = window.requestAnimationFrame(updateByScroll);
-      };
-
-      const onScroll = () => scheduleUpdate();
-      const onResize = () => scheduleUpdate();
-      window.addEventListener("scroll", onScroll, { passive: true });
-      window.addEventListener("resize", onResize, { passive: true });
-      window.visualViewport?.addEventListener?.("resize", onResize, { passive: true });
-
-      const pointerCleanups = [];
-      const pointerAllowed = !window.matchMedia("(hover: none), (pointer: coarse)").matches;
-      if (pointerAllowed) {
-        cards.forEach((card) => {
-          resetCardShift(card);
-          const onMove = (event) => {
-            const rect = card.getBoundingClientRect();
-            const width = Math.max(1, rect.width);
-            const px = ((event.clientX - rect.left) / width) - 0.5;
-            const shiftX = Math.max(-6, Math.min(6, Math.round(px * 12)));
-            card.style.setProperty("--card-bg-shift-x", `${shiftX}px`);
-          };
-          const onLeave = () => {
-            card.style.setProperty("--card-bg-shift-x", "0px");
-            scheduleUpdate();
-          };
-          card.addEventListener("mousemove", onMove, { passive: true });
-          card.addEventListener("mouseleave", onLeave);
-          pointerCleanups.push(() => {
-            card.removeEventListener("mousemove", onMove);
-            card.removeEventListener("mouseleave", onLeave);
-          });
-        });
+      const maxCards = Math.min(10, sourceItems.length);
+      const queue = sourceItems.slice(0, maxCards);
+      progressiveFeed.innerHTML = "";
+      if (!queue.length) {
+        progressiveFeed.classList.remove("is-chunk-loading");
+        progressiveLoadingScreen?.classList.add("hidden");
+        progressiveLoader?.classList.add("hidden");
+        progressiveSentinel?.classList.add("hidden");
       } else {
-        cards.forEach((card) => card.style.setProperty("--card-bg-shift-x", "0px"));
+        progressiveFeed.classList.add("is-chunk-loading");
+        progressiveLoadingScreen?.classList.remove("hidden");
+        progressiveLoader?.classList.add("hidden");
+        progressiveSentinel?.classList.remove("hidden");
+        let cursor = 0;
+        let appendInProgress = false;
+        let started = false;
+        const teardownScrollPump = () => {
+          window.removeEventListener("scroll", onScrollPump);
+          window.removeEventListener("resize", onScrollPump);
+        };
+        const finishProgressiveFeed = () => {
+          teardownScrollPump();
+          if (!document.body.contains(progressiveFeed)) return;
+          progressiveSentinel?.classList.add("hidden");
+          progressiveLoadingScreen?.classList.add("hidden");
+          progressiveLoader?.classList.add("hidden");
+          if (cursor >= queue.length) {
+            progressiveFeed.classList.remove("is-chunk-loading");
+          }
+        };
+        const appendOneCard = () => {
+          if (appendInProgress || !started) return;
+          if (!document.body.contains(progressiveFeed)) {
+            finishProgressiveFeed();
+            return;
+          }
+          if (cursor >= queue.length) {
+            finishProgressiveFeed();
+            return;
+          }
+          appendInProgress = true;
+          const song = queue[cursor];
+          const cardHtml = renderHomeSongCard(song, { backgroundsByCountry, flagDevice });
+          progressiveFeed.insertAdjacentHTML("beforeend", `<div class="home-result-item is-entering">${cardHtml}</div>`);
+          const insertedNode = progressiveFeed.lastElementChild;
+          cursor += 1;
+          window.requestAnimationFrame(() => {
+            insertedNode?.classList.remove("is-entering");
+            appendInProgress = false;
+            if (cursor >= queue.length) {
+              finishProgressiveFeed();
+              return;
+            }
+            progressiveLoader?.classList.add("hidden");
+            window.setTimeout(() => {
+              onScrollPump();
+            }, 0);
+          });
+        };
+        const onScrollPump = () => {
+          if (!started) return;
+          if (!document.body.contains(progressiveFeed)) {
+            finishProgressiveFeed();
+            return;
+          }
+          if (cursor >= queue.length) {
+            finishProgressiveFeed();
+            return;
+          }
+          const sentinelTop = progressiveSentinel
+            ? progressiveSentinel.getBoundingClientRect().top
+            : progressiveFeed.getBoundingClientRect().bottom;
+          if (sentinelTop > window.innerHeight + 100) return;
+          progressiveLoader?.classList.remove("hidden");
+          appendOneCard();
+        };
+        window.addEventListener("scroll", onScrollPump, { passive: true });
+        window.addEventListener("resize", onScrollPump, { passive: true });
+        window.setTimeout(() => {
+          if (!document.body.contains(progressiveFeed)) {
+            finishProgressiveFeed();
+            return;
+          }
+          started = true;
+          progressiveLoadingScreen?.classList.add("hidden");
+          appendOneCard();
+          onScrollPump();
+        }, 180);
       }
-
-      scheduleUpdate();
-
-      return () => {
-        if (rafId) {
-          window.cancelAnimationFrame(rafId);
-          rafId = 0;
-        }
-        window.removeEventListener("scroll", onScroll);
-        window.removeEventListener("resize", onResize);
-        window.visualViewport?.removeEventListener?.("resize", onResize);
-        pointerCleanups.forEach((cleanup) => cleanup());
-        cards.forEach((card) => resetCardShift(card));
-      };
-    };
-
-    hydrateCardWallpapers();
-    homeCardParallaxCleanup = wireCardParallax();
+    }
 
     let currentHomePreviewUrl = "";
     let pendingHomePreviewUrl = "";
