@@ -6668,7 +6668,7 @@ html[data-theme="light"] .admin-tab-btn:hover {
 
   body.home-country-preview.home-country-preview-visible.home-country-preview-layer-a:not(.song-page-country-bg)::before,
   body.home-country-preview.home-country-preview-visible.home-country-preview-layer-b:not(.song-page-country-bg)::after {
-    opacity: 0.5;
+    opacity: 1;
     filter: none;
     transform: none;
   }
