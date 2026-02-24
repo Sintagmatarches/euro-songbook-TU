@@ -7308,10 +7308,12 @@ html[data-theme="light"] body.song-page-country-bg .topbar {
 }
 
 .ig-drawer-group {
-  background: transparent !important;
+  background: #160276 !important;
+  background-color: #160276 !important;
   background-image: none !important;
 }
 
 .ig-drawer::before {
-  background: rgba(4, 13, 52, 0.34) !important;
+  background: #040d34 !important;
+  opacity: 1 !important;
 }
