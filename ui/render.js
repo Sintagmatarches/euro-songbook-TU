@@ -1097,15 +1097,15 @@ function homeReportFragmentLabel() {
 }
 
 function homeLoadingResultsText() {
-  if (uiLocale() === "ru") return "Загружае карточки...";
-  if (uiLocale() === "uk") return "Завантажуєо картки...";
+  if (uiLocale() === "ru") return "Загружаем карточки...";
+  if (uiLocale() === "uk") return "Завантажуємо картки...";
   if (uiLocale() === "et") return "Laen kaarte...";
   return "Loading cards...";
 }
 
 function homeRecentSongsLabel() {
-  if (uiLocale() === "ru") return "Неавно обавленные песн";
-  if (uiLocale() === "uk") return "Неавно оані пісні";
+  if (uiLocale() === "ru") return "Недавно добавленные песни";
+  if (uiLocale() === "uk") return "Нещодавно додані пісні";
   if (uiLocale() === "et") return "Hiljuti lisatud laulud";
   return "Recently added songs";
 }
