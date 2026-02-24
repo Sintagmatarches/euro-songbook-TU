@@ -7317,3 +7317,36 @@ html[data-theme="light"] body.song-page-country-bg .topbar {
   background: #040d34 !important;
   opacity: 1 !important;
 }
+
+/* Final fix: menu item cards must be fully opaque (no wallpaper bleed on hover) */
+.ig-drawer-link,
+.ig-drawer-button,
+html[data-theme="light"] .ig-drawer-link,
+html[data-theme="light"] .ig-drawer-button {
+  background: #06013f !important;
+  background-color: #06013f !important;
+  background-image: none !important;
+  opacity: 1 !important;
+  backdrop-filter: none !important;
+  -webkit-backdrop-filter: none !important;
+}
+
+.ig-drawer-link:hover,
+.ig-drawer-button:hover,
+html[data-theme="light"] .ig-drawer-link:hover,
+html[data-theme="light"] .ig-drawer-button:hover {
+  background: #0015ff !important;
+  background-color: #0015ff !important;
+  background-image: none !important;
+  opacity: 1 !important;
+}
+
+.ig-drawer-link.active,
+.ig-drawer-button.active,
+html[data-theme="light"] .ig-drawer-link.active,
+html[data-theme="light"] .ig-drawer-button.active {
+  background: #0015ff !important;
+  background-color: #0015ff !important;
+  background-image: none !important;
+  opacity: 1 !important;
+}
