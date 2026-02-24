@@ -4622,6 +4622,7 @@ export function bind(route, ctx) {
 
     qs("btnSongDraftNav")?.addEventListener("click", async () => {
       const button = qs("btnSongDraftNav");
+      const editorAllowed = can("songs.edit");
       if (button) button.disabled = true;
       try {
         const songId = String(song?.id || "").trim();
@@ -4633,7 +4634,7 @@ export function bind(route, ctx) {
           .sort((a, b) => String(b?.updated_at || "").localeCompare(String(a?.updated_at || "")))[0];
         let draftId = String(existing?.id || "").trim();
         if (!draftId) {
-          if (!canOpenEditor) throw new Error(t("admin.accessDenied"));
+          if (!editorAllowed) throw new Error(t("admin.accessDenied"));
           const created = await api.createDraft({ song_id: songId });
           draftId = String(created?.draft_id || "").trim();
         }
