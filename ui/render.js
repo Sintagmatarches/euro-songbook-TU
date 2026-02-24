@@ -16,60 +16,60 @@ import { ADMIN_PERMISSION_VALUES } from "../shared/admin-permissions.js";
 const ADMIN_PERMISSIONS = ADMIN_PERMISSION_VALUES;
 
 const PERMISSION_LABELS = {
-  "songs.create": { ru: "Р РЋР С•Р В·Р Т‘Р В°Р Р…Р С‘Р Вµ Р С—Р ВµРЎРѓР ВµР Р…", en: "Create songs", et: "Laulude loomine" },
-  "songs.edit": { ru: "Р В Р ВµР Т‘Р В°Р С”РЎвЂљР С‘РЎР‚Р С•Р Р†Р В°Р Р…Р С‘Р Вµ Р С—Р ВµРЎРѓР ВµР Р…", en: "Edit songs", et: "Laulude muutmine" },
-  "songs.delete": { ru: "Р Р€Р Т‘Р В°Р В»Р ВµР Р…Р С‘Р Вµ Р С—Р ВµРЎРѓР ВµР Р…", en: "Delete songs", et: "Laulude kustutamine" },
-  "songs.view_admin_content": { ru: "Р вЂќР С•РЎРѓРЎвЂљРЎС“Р С— Р С” admin-only Р С”Р С•Р Р…РЎвЂљР ВµР Р…РЎвЂљРЎС“", en: "View admin-only content", et: "Admin-only sisu vaatamine" },
-  "variants.manage": { ru: "Р Р€Р С—РЎР‚Р В°Р Р†Р В»Р ВµР Р…Р С‘Р Вµ Р Р†Р ВµРЎР‚РЎРѓР С‘РЎРЏР СР С‘ РЎвЂљР ВµР С”РЎРѓРЎвЂљР В°", en: "Manage text variants", et: "Tekstiversioonide haldus" },
-  "links.manage": { ru: "Р Р€Р С—РЎР‚Р В°Р Р†Р В»Р ВµР Р…Р С‘Р Вµ РЎРѓРЎРѓРЎвЂ№Р В»Р С”Р В°Р СР С‘", en: "Manage links", et: "Linkide haldus" },
-  "proposals.review": { ru: "Р СџРЎР‚Р С•РЎРѓР СР С•РЎвЂљРЎР‚ Р В·Р В°РЎРЏР Р†Р С•Р С”", en: "Review requests", et: "Taotluste ulevaatus" },
-  "proposals.approve": { ru: "Р С›Р Т‘Р С•Р В±РЎР‚Р ВµР Р…Р С‘Р Вµ Р В·Р В°РЎРЏР Р†Р С•Р С”", en: "Approve requests", et: "Taotluste kinnitamine" },
-  "proposals.reject": { ru: "Р С›РЎвЂљР С”Р В»Р С•Р Р…Р ВµР Р…Р С‘Р Вµ Р В·Р В°РЎРЏР Р†Р С•Р С”", en: "Reject requests", et: "Taotluste tagasilukkamine" },
+  "songs.create": { ru: "????????? ??????", en: "Create songs", et: "Laulude loomine" },
+  "songs.edit": { ru: "?????????????????? ??????", en: "Edit songs", et: "Laulude muutmine" },
+  "songs.delete": { ru: "????????? ??????", en: "Delete songs", et: "Laulude kustutamine" },
+  "songs.view_admin_content": { ru: "?????? ? admin-only ????????", en: "View admin-only content", et: "Admin-only sisu vaatamine" },
+  "variants.manage": { ru: "Управление версиями текста", en: "Manage text variants", et: "Tekstiversioonide haldus" },
+  "links.manage": { ru: "Управление ссылками", en: "Manage links", et: "Linkide haldus" },
+  "proposals.review": { ru: "Просмотр заявок", en: "Review requests", et: "Taotluste ulevaatus" },
+  "proposals.approve": { ru: "????????????? ??????????", en: "Approve requests", et: "Taotluste kinnitamine" },
+  "proposals.reject": { ru: "?????????????? ??????????", en: "Reject requests", et: "Taotluste tagasilukkamine" },
 };
 
 const PERMISSION_DESCRIPTIONS = {
   "songs.create": {
-    ru: "Р В Р В°Р В·РЎР‚Р ВµРЎв‚¬Р В°Р ВµРЎвЂљ РЎРѓР С•Р В·Р Т‘Р В°Р Р†Р В°РЎвЂљРЎРЉ Р Р…Р С•Р Р†РЎвЂ№Р Вµ Р С”Р В°РЎР‚РЎвЂљР С•РЎвЂЎР С”Р С‘ Р С—Р ВµРЎРѓР ВµР Р….",
+    ru: "?????????????? ???????????????? ??????? ????????? ??????.",
     en: "Allows creating new song entries.",
     et: "Lubab luua uusi laulukirjeid.",
   },
   "songs.edit": {
-    ru: "Р В Р В°Р В·РЎР‚Р ВµРЎв‚¬Р В°Р ВµРЎвЂљ Р СР ВµР Р…РЎРЏРЎвЂљРЎРЉ Р С—Р С•Р В»РЎРЏ РЎРѓРЎС“РЎвЂ°Р ВµРЎРѓРЎвЂљР Р†РЎС“РЎР‹РЎвЂ°Р С‘РЎвЂ¦ Р С—Р ВµРЎРѓР ВµР Р….",
+    ru: "Разрешает менять поля существующих песен.",
     en: "Allows editing existing song fields.",
     et: "Lubab muuta olemasolevate laulude valju.",
   },
   "songs.delete": {
-    ru: "Р В Р В°Р В·РЎР‚Р ВµРЎв‚¬Р В°Р ВµРЎвЂљ РЎС“Р Т‘Р В°Р В»РЎРЏРЎвЂљРЎРЉ Р С—Р ВµРЎРѓР Р…Р С‘ Р С‘ РЎРѓР Р†РЎРЏР В·Р В°Р Р…Р Р…РЎвЂ№Р Вµ Р Т‘Р В°Р Р…Р Р…РЎвЂ№Р Вµ.",
+    ru: "????????????? ???????????? ????? ? ????????????? ??????????.",
     en: "Allows deleting songs and related data.",
     et: "Lubab kustutada laule ja nendega seotud andmeid.",
   },
   "songs.view_admin_content": {
-    ru: "Р В Р В°Р В·РЎР‚Р ВµРЎв‚¬Р В°Р ВµРЎвЂљ Р Р†Р С‘Р Т‘Р ВµРЎвЂљРЎРЉ Р С‘ Р С—Р С•Р СР ВµРЎвЂЎР В°РЎвЂљРЎРЉ Р С—Р ВµРЎРѓР Р…Р С‘ Р С”Р В°Р С” admin-only.",
+    ru: "Разрешает видеть и помечать песни как admin-only.",
     en: "Allows viewing and marking songs as admin-only.",
     et: "Lubab naha ja markida laule admin-only sisuks.",
   },
   "variants.manage": {
-    ru: "Р В Р В°Р В·РЎР‚Р ВµРЎв‚¬Р В°Р ВµРЎвЂљ Р Т‘Р С•Р В±Р В°Р Р†Р В»РЎРЏРЎвЂљРЎРЉ Р С‘ РЎР‚Р ВµР Т‘Р В°Р С”РЎвЂљР С‘РЎР‚Р С•Р Р†Р В°РЎвЂљРЎРЉ Р Р†Р ВµРЎР‚РЎРѓР С‘Р С‘ РЎвЂљР ВµР С”РЎРѓРЎвЂљР В°.",
+    ru: "?????????????? ??????????????? ? ??????????????????? ?????????? ??????.",
     en: "Allows adding and editing lyric versions.",
     et: "Lubab lisada ja muuta tekstiversioone.",
   },
   "links.manage": {
-    ru: "Р В Р В°Р В·РЎР‚Р ВµРЎв‚¬Р В°Р ВµРЎвЂљ РЎС“Р С—РЎР‚Р В°Р Р†Р В»РЎРЏРЎвЂљРЎРЉ Р Р†Р Р…Р ВµРЎв‚¬Р Р…Р С‘Р СР С‘ РЎРѓРЎРѓРЎвЂ№Р В»Р С”Р В°Р СР С‘ Р Т‘Р В»РЎРЏ Р С—РЎР‚Р С•РЎРѓР В»РЎС“РЎв‚¬Р С‘Р Р†Р В°Р Р…Р С‘РЎРЏ.",
+    ru: "Разрешает управлять внешними ссылками для прослушивания.",
     en: "Allows managing external listening links.",
     et: "Lubab hallata valiseid kuulamislinke.",
   },
   "proposals.review": {
-    ru: "Р С›РЎвЂљР С”РЎР‚РЎвЂ№Р Р†Р В°Р ВµРЎвЂљ Р Т‘Р С•РЎРѓРЎвЂљРЎС“Р С— Р С” Р С—РЎР‚Р С•РЎРѓР СР С•РЎвЂљРЎР‚РЎС“ Р В·Р В°РЎРЏР Р†Р С•Р С” Р С—Р С•Р В»РЎРЉР В·Р С•Р Р†Р В°РЎвЂљР ВµР В»Р ВµР в„–.",
+    ru: "Открывает доступ к просмотру заявок пользователей.",
     en: "Grants access to view user requests.",
     et: "Annab ligipaasu kasutajate taotluste vaatamiseks.",
   },
   "proposals.approve": {
-    ru: "Р В Р В°Р В·РЎР‚Р ВµРЎв‚¬Р В°Р ВµРЎвЂљ Р С•Р Т‘Р С•Р В±РЎР‚РЎРЏРЎвЂљРЎРЉ Р В·Р В°РЎРЏР Р†Р С”Р С‘ Р С‘ Р С—РЎС“Р В±Р В»Р С‘Р С”Р С•Р Р†Р В°РЎвЂљРЎРЉ Р С‘РЎвЂ¦ Р С”Р В°Р С” Р С—Р ВµРЎРѓР Р…Р С‘.",
+    ru: "?????????????? ?????????????? ?????? ? ?????????????? ?? ???? ?????.",
     en: "Allows approving requests and publishing them as songs.",
     et: "Lubab taotlusi kinnitada ja avaldada lauludena.",
   },
   "proposals.reject": {
-    ru: "Р В Р В°Р В·РЎР‚Р ВµРЎв‚¬Р В°Р ВµРЎвЂљ Р С•РЎвЂљР С”Р В»Р С•Р Р…РЎРЏРЎвЂљРЎРЉ Р В·Р В°РЎРЏР Р†Р С”Р С‘ Р С—Р С•Р В»РЎРЉР В·Р С•Р Р†Р В°РЎвЂљР ВµР В»Р ВµР в„–.",
+    ru: "?????????????? ???????????????? ???????? ???????????????.",
     en: "Allows rejecting user requests.",
     et: "Lubab kasutajate taotlusi tagasi lukata.",
   },
@@ -216,8 +216,8 @@ let saveSuccessCleanupTimer = 0;
 let contentDraftExitCleanup = null;
 
 function saveSuccessWord() {
-  if (uiLocale() === "ru") return "Р РЋР С•РЎвЂ¦РЎР‚Р В°Р Р…Р ВµР Р…Р С•";
-  if (uiLocale() === "uk") return "Р вЂ”Р В±Р ВµРЎР‚Р ВµР В¶Р ВµР Р…Р С•";
+  if (uiLocale() === "ru") return "Сохранено";
+  if (uiLocale() === "uk") return "Збережено";
   if (uiLocale() === "et") return "Salvestatud";
   return "Saved";
 }
@@ -273,8 +273,8 @@ function showStatusOverlay(message, tone = "success") {
 }
 
 function requiredFieldsErrorText() {
-  if (uiLocale() === "ru") return "Р СњР Вµ Р В·Р В°Р С—Р С•Р В»Р Р…Р ВµР Р…РЎвЂ№ Р С•Р В±РЎРЏР В·Р В°РЎвЂљР ВµР В»РЎРЉР Р…РЎвЂ№Р Вµ Р С—Р С•Р В»РЎРЏ";
-  if (uiLocale() === "uk") return "Р СњР Вµ Р В·Р В°Р С—Р С•Р Р†Р Р…Р ВµР Р…РЎвЂ“ Р С•Р В±Р С•Р Р†'РЎРЏР В·Р С”Р С•Р Р†РЎвЂ“ Р С—Р С•Р В»РЎРЏ";
+  if (uiLocale() === "ru") return "Не заполнены обязательные поля";
+  if (uiLocale() === "uk") return "Не заповнені обов'язкові поля";
   if (uiLocale() === "et") return "Kohustuslikud valjad on taitmata";
   return "Required fields are missing";
 }
@@ -289,12 +289,12 @@ function songVersionsSummaryText(count) {
     const abs = Math.abs(safeCount);
     const mod100 = abs % 100;
     const mod10 = abs % 10;
-    let word = "Р Р†Р ВµРЎР‚РЎРѓР С‘Р в„–";
+    let word = "версий";
     if (mod100 < 11 || mod100 > 14) {
-      if (mod10 === 1) word = "Р Р†Р ВµРЎР‚РЎРѓР С‘РЎР‹";
-      else if (mod10 >= 2 && mod10 <= 4) word = "Р Р†Р ВµРЎР‚РЎРѓР С‘Р С‘";
+      if (mod10 === 1) word = "версию";
+      else if (mod10 >= 2 && mod10 <= 4) word = "версии";
     }
-    return `Р В­РЎвЂљР В° Р С—Р ВµРЎРѓР Р…РЎРЏ Р С‘Р СР ВµР ВµРЎвЂљ ${safeCount} ${word}`;
+    return `Эта песня имеет ${safeCount} ${word}`;
   }
   if (uiLocale() === "et") {
     const word = safeCount === 1 ? "versioon" : "versiooni";
@@ -700,71 +700,71 @@ function listenServiceKeyFromLink(link = {}) {
 }
 
 function listenSectionTitle() {
-  if (uiLocale() === "ru") return "Р РЋР В»РЎС“РЎв‚¬Р В°РЎвЂљРЎРЉ Р Р…Р В° Р С—Р В»Р В°РЎвЂљРЎвЂћР С•РЎР‚Р СР В°РЎвЂ¦";
-  if (uiLocale() === "uk") return "Р РЋР В»РЎС“РЎвЂ¦Р В°РЎвЂљР С‘ Р Р…Р В° Р С—Р В»Р В°РЎвЂљРЎвЂћР С•РЎР‚Р СР В°РЎвЂ¦";
+  if (uiLocale() === "ru") return "Слушать на платформах";
+  if (uiLocale() === "uk") return "Слухати на платфорах";
   if (uiLocale() === "et") return "Kuula platvormidel";
   return "Listen on platforms";
 }
 
 function listenCtaText() {
-  if (uiLocale() === "ru") return "Р вЂњР Т‘Р Вµ РЎРѓР В»РЎС“РЎв‚¬Р В°РЎвЂљРЎРЉ";
-  if (uiLocale() === "uk") return "Р вЂќР Вµ РЎРѓР В»РЎС“РЎвЂ¦Р В°РЎвЂљР С‘";
+  if (uiLocale() === "ru") return "Где слушать";
+  if (uiLocale() === "uk") return "Р”Рµ слухати";
   if (uiLocale() === "et") return "Kus kuulata";
   return "Where to listen";
 }
 
 function listenCtaHint() {
-  if (uiLocale() === "ru") return "Р С›РЎвЂљР С”РЎР‚Р С•Р в„–РЎвЂљР Вµ РЎРѓР С—Р С‘РЎРѓР С•Р С” РЎРѓР ВµРЎР‚Р Р†Р С‘РЎРѓР С•Р Р† Р Р…Р С‘Р В¶Р Вµ";
-  if (uiLocale() === "uk") return "Р вЂ™РЎвЂ“Р Т‘Р С”РЎР‚Р С‘Р в„–РЎвЂљР Вµ РЎРѓР С—Р С‘РЎРѓР С•Р С” РЎРѓР ВµРЎР‚Р Р†РЎвЂ“РЎРѓРЎвЂ“Р Р† Р Р…Р С‘Р В¶РЎвЂЎР Вµ";
+  if (uiLocale() === "ru") return "Откройте список сервисов ниже";
+  if (uiLocale() === "uk") return "Відкрийте список сервісів нижче";
   if (uiLocale() === "et") return "Ava allpool teenuste nimekiri";
   return "Open the service list below";
 }
 
 function versionListenSectionTitle() {
-  if (uiLocale() === "ru") return "Р РЋР В»РЎС“РЎв‚¬Р В°РЎвЂљРЎРЉ Р С—Р С• Р Р†Р ВµРЎР‚РЎРѓР С‘РЎРЏР С";
-  if (uiLocale() === "uk") return "Р РЋР В»РЎС“РЎвЂ¦Р В°РЎвЂљР С‘ Р В·Р В° Р Р†Р ВµРЎР‚РЎРѓРЎвЂ“РЎРЏР СР С‘";
+  if (uiLocale() === "ru") return "Слушать по версиям";
+  if (uiLocale() === "uk") return "Слухати Р·Р° версіяи";
   if (uiLocale() === "et") return "Kuula versioonide kaupa";
   return "Listen by versions";
 }
 
 function adminOnlyContentLabel() {
-  if (uiLocale() === "ru") return "Admin-only Р С”Р С•Р Р…РЎвЂљР ВµР Р…РЎвЂљ";
-  if (uiLocale() === "uk") return "Р С™Р С•Р Р…РЎвЂљР ВµР Р…РЎвЂљ Р В»Р С‘РЎв‚¬Р Вµ Р Т‘Р В»РЎРЏ Р В°Р Т‘Р СРЎвЂ“Р Р…РЎвЂ“Р Р†";
+  if (uiLocale() === "ru") return "Admin-only контент";
+  if (uiLocale() === "uk") return "Контент лише для адінів";
   if (uiLocale() === "et") return "Admin-only sisu";
   return "Admin-only content";
 }
 
 function adminOnlyContentHint() {
-  if (uiLocale() === "ru") return "Р СџР ВµРЎРѓР Р…РЎРЏ Р Р†Р С‘Р Т‘Р Р…Р В° РЎвЂљР С•Р В»РЎРЉР С”Р С• Р С—Р С•Р В»РЎРЉР В·Р С•Р Р†Р В°РЎвЂљР ВµР В»РЎРЏР С РЎРѓ Р С—РЎР‚Р В°Р Р†Р С•Р С Р С—РЎР‚Р С•РЎРѓР СР С•РЎвЂљРЎР‚Р В° admin-only.";
-  if (uiLocale() === "uk") return "Р СџРЎвЂ“РЎРѓР Р…РЎРЏ Р Р†Р С‘Р Т‘Р С‘Р СР В° Р В»Р С‘РЎв‚¬Р Вµ Р С”Р С•РЎР‚Р С‘РЎРѓРЎвЂљРЎС“Р Р†Р В°РЎвЂЎР В°Р С РЎвЂ“Р В· Р С—РЎР‚Р В°Р Р†Р С•Р С Р С—Р ВµРЎР‚Р ВµР С–Р В»РЎРЏР Т‘РЎС“ admin-only.";
+  if (uiLocale() === "ru") return "Песня видна только пользователям с правом просмотра admin-only.";
+  if (uiLocale() === "uk") return "Пісня видима лише користувачам із правом перегляду admin-only.";
   if (uiLocale() === "et") return "Laul on nahtav ainult kasutajatele, kellel on admin-only vaatamise oigus.";
   return "The song is visible only to users with admin-only viewing permission.";
 }
 
 function songAuditAddedLabel() {
-  if (uiLocale() === "ru") return "Р вЂќР С•Р В±Р В°Р Р†Р С‘Р В»";
-  if (uiLocale() === "uk") return "Р вЂќР С•Р Т‘Р В°Р Р†";
+  if (uiLocale() === "ru") return "Добавил";
+  if (uiLocale() === "uk") return "Додав";
   if (uiLocale() === "et") return "Lisaja";
   return "Added by";
 }
 
 function songAuditEditedLabel() {
-  if (uiLocale() === "ru") return "Р В Р ВµР Т‘Р В°Р С”РЎвЂљР С‘РЎР‚Р С•Р Р†Р В°Р В»";
-  if (uiLocale() === "uk") return "Р В Р ВµР Т‘Р В°Р С–РЎС“Р Р†Р В°Р Р†";
+  if (uiLocale() === "ru") return "Редактировал";
+  if (uiLocale() === "uk") return "Редагував";
   if (uiLocale() === "et") return "Muutis";
   return "Edited by";
 }
 
 function songAuditUnknown() {
-  if (uiLocale() === "ru") return "Р Р…Р Вµ РЎС“Р С”Р В°Р В·Р В°Р Р…Р С•";
-  if (uiLocale() === "uk") return "Р Р…Р Вµ Р Р†Р С”Р В°Р В·Р В°Р Р…Р С•";
+  if (uiLocale() === "ru") return "не указано";
+  if (uiLocale() === "uk") return "не вказано";
   if (uiLocale() === "et") return "puudub";
   return "not set";
 }
 
 function closeEditorLabel() {
-  if (uiLocale() === "ru") return "Р вЂ”Р В°Р С”РЎР‚РЎвЂ№РЎвЂљРЎРЉ РЎР‚Р ВµР Т‘Р В°Р С”РЎвЂљР С•РЎР‚";
-  if (uiLocale() === "uk") return "Р вЂ”Р В°Р С”РЎР‚Р С‘РЎвЂљР С‘ РЎР‚Р ВµР Т‘Р В°Р С”РЎвЂљР С•РЎР‚";
+  if (uiLocale() === "ru") return "Закрыть редактор";
+  if (uiLocale() === "uk") return "Закрити редактор";
   if (uiLocale() === "et") return "Sulge redaktor";
   return "Close editor";
 }
@@ -923,16 +923,16 @@ function renderPager(prefix, page, pages) {
   const total = Math.max(1, pages || 1);
   const items = pagerWindow(current, total);
   const prevLabel = uiLocale() === "ru"
-    ? "Р СњР В°Р В·Р В°Р Т‘"
+    ? "Назад"
     : uiLocale() === "uk"
-      ? "Р СњР В°Р В·Р В°Р Т‘"
+      ? "Назад"
       : uiLocale() === "et"
         ? "Eelmine"
         : "Prev";
   const nextLabel = uiLocale() === "ru"
-    ? "Р вЂ™Р С—Р ВµРЎР‚РЎвЂР Т‘"
+    ? "Вперд"
     : uiLocale() === "uk"
-      ? "Р вЂ™Р С—Р ВµРЎР‚Р ВµР Т‘"
+      ? "Вперед"
       : uiLocale() === "et"
         ? "Jargmine"
         : "Next";
@@ -1011,29 +1011,29 @@ function collectHomeFilters() {
 }
 
 function homeHeroSubtitle() {
-  if (uiLocale() === "ru") return "Р ВРЎРѓРЎвЂљР С•РЎР‚Р С‘РЎвЂЎР ВµРЎРѓР С”Р С‘Р Вµ Р С—Р ВµРЎРѓР Р…Р С‘ Р вЂўР Р†РЎР‚Р С•Р С—РЎвЂ№ Р С—Р С• РЎРЊР С—Р С•РЎвЂ¦Р В°Р С Р С‘ РЎРѓРЎвЂљРЎР‚Р В°Р Р…Р В°Р С";
-  if (uiLocale() === "uk") return "Р вЂ РЎРѓРЎвЂљР С•РЎР‚Р С‘РЎвЂЎР Р…РЎвЂ“ Р С—РЎвЂ“РЎРѓР Р…РЎвЂ“ Р вЂћР Р†РЎР‚Р С•Р С—Р С‘ Р В·Р В° Р ВµР С—Р С•РЎвЂ¦Р В°Р СР С‘ РЎвЂљР В° Р С”РЎР‚Р В°РЎвЂ”Р Р…Р В°Р СР С‘";
+  if (uiLocale() === "ru") return "Исторические песни Европы по эпохам и странам";
+  if (uiLocale() === "uk") return "Історичні пісні Європи за епохами та країнами";
   if (uiLocale() === "et") return "Euroopa ajaloolised laulud ajastute ja riikide kaupa";
   return "European historical songs by eras and countries";
 }
 
 function homeCountrySectionTitle() {
-  if (uiLocale() === "ru") return "Р вЂ™РЎвЂ№Р В±Р С•РЎР‚ РЎРѓРЎвЂљРЎР‚Р В°Р Р…РЎвЂ№";
-  if (uiLocale() === "uk") return "Р вЂ™Р С‘Р В±РЎвЂ“РЎР‚ Р С”РЎР‚Р В°РЎвЂ”Р Р…Р С‘";
+  if (uiLocale() === "ru") return "Выбор страны";
+  if (uiLocale() === "uk") return "Вибір країни";
   if (uiLocale() === "et") return "Riigi valik";
   return "Choose country";
 }
 
 function homeCountrySectionHint() {
-  if (uiLocale() === "ru") return "Р вЂ™РЎвЂ№Р В±Р ВµРЎР‚Р С‘РЎвЂљР Вµ РЎРѓРЎвЂљРЎР‚Р В°Р Р…РЎС“, РЎвЂЎРЎвЂљР С•Р В±РЎвЂ№ Р С•РЎвЂљР С”РЎР‚РЎвЂ№РЎвЂљРЎРЉ Р С—Р ВµРЎРѓР Р…Р С‘ РЎРЊРЎвЂљР С•Р в„– Р С”Р В°РЎвЂљР ВµР С–Р С•РЎР‚Р С‘Р С‘";
-  if (uiLocale() === "uk") return "Р С›Р В±Р ВµРЎР‚РЎвЂ“РЎвЂљРЎРЉ Р С”РЎР‚Р В°РЎвЂ”Р Р…РЎС“, РЎвЂ°Р С•Р В± Р Р†РЎвЂ“Р Т‘Р С”РЎР‚Р С‘РЎвЂљР С‘ Р С—РЎвЂ“РЎРѓР Р…РЎвЂ“ РЎвЂ РЎвЂ“РЎвЂќРЎвЂ” Р С”Р В°РЎвЂљР ВµР С–Р С•РЎР‚РЎвЂ“РЎвЂ”";
+  if (uiLocale() === "ru") return "Выберите страну, чтобы открыть песни этой категории";
+  if (uiLocale() === "uk") return "Оберіть країну, щоб відкрити пісні С†С–С”С— категорії";
   if (uiLocale() === "et") return "Vali riik, et avada selle kategooria laulud";
   return "Pick a country to open songs in this category";
 }
 
 function homeCountryOpenLabel() {
-  if (uiLocale() === "ru") return "Р С›РЎвЂљР С”РЎР‚РЎвЂ№РЎвЂљРЎРЉ Р С—Р ВµРЎРѓР Р…Р С‘";
-  if (uiLocale() === "uk") return "Р вЂ™РЎвЂ“Р Т‘Р С”РЎР‚Р С‘РЎвЂљР С‘ Р С—РЎвЂ“РЎРѓР Р…РЎвЂ“";
+  if (uiLocale() === "ru") return "Открыть песни";
+  if (uiLocale() === "uk") return "Відкрити пісні";
   if (uiLocale() === "et") return "Ava laulud";
   return "Open songs";
 }
@@ -1041,71 +1041,71 @@ function homeCountryOpenLabel() {
 function homeCountrySongsCountLabel(count) {
   const n = Number(count || 0);
   if (uiLocale() === "ru") {
-    if (n % 10 === 1 && n % 100 !== 11) return `${n} Р С—Р ВµРЎРѓР Р…РЎРЏ`;
-    if (n % 10 >= 2 && n % 10 <= 4 && (n % 100 < 12 || n % 100 > 14)) return `${n} Р С—Р ВµРЎРѓР Р…Р С‘`;
-    return `${n} Р С—Р ВµРЎРѓР ВµР Р…`;
+    if (n % 10 === 1 && n % 100 !== 11) return `${n} песня`;
+    if (n % 10 >= 2 && n % 10 <= 4 && (n % 100 < 12 || n % 100 > 14)) return `${n} песни`;
+    return `${n} песен`;
   }
   if (uiLocale() === "uk") {
-    if (n % 10 === 1 && n % 100 !== 11) return `${n} Р С—РЎвЂ“РЎРѓР Р…РЎРЏ`;
-    if (n % 10 >= 2 && n % 10 <= 4 && (n % 100 < 12 || n % 100 > 14)) return `${n} Р С—РЎвЂ“РЎРѓР Р…РЎвЂ“`;
-    return `${n} Р С—РЎвЂ“РЎРѓР ВµР Р…РЎРЉ`;
+    if (n % 10 === 1 && n % 100 !== 11) return `${n} пісня`;
+    if (n % 10 >= 2 && n % 10 <= 4 && (n % 100 < 12 || n % 100 > 14)) return `${n} пісні`;
+    return `${n} пісень`;
   }
   if (uiLocale() === "et") return `${n} laulu`;
   return `${n} songs`;
 }
 
 function homeCountryNoDataText() {
-  if (uiLocale() === "ru") return "Р В¤Р С•Р Р…РЎвЂ№ РЎРѓРЎвЂљРЎР‚Р В°Р Р… Р С—Р С•Р С”Р В° Р Р…Р Вµ Р Р…Р В°РЎРѓРЎвЂљРЎР‚Р С•Р ВµР Р…РЎвЂ№.";
-  if (uiLocale() === "uk") return "Р В¤Р С•Р Р…Р С‘ Р С”РЎР‚Р В°РЎвЂ”Р Р… Р С—Р С•Р С”Р С‘ Р Р…Р Вµ Р Р…Р В°Р В»Р В°РЎв‚¬РЎвЂљР С•Р Р†Р В°Р Р…РЎвЂ“.";
+  if (uiLocale() === "ru") return "Фоны стран пока не настроены.";
+  if (uiLocale() === "uk") return "Фони країн поки не налаштовані.";
   if (uiLocale() === "et") return "Riikide taustad pole veel seadistatud.";
   return "Country backgrounds are not configured yet.";
 }
 
 function homeResultsTitle() {
-  if (uiLocale() === "ru") return "Р В Р ВµР В·РЎС“Р В»РЎРЉРЎвЂљР В°РЎвЂљРЎвЂ№ Р С—Р С•Р С‘РЎРѓР С”Р В°";
-  if (uiLocale() === "uk") return "Р В Р ВµР В·РЎС“Р В»РЎРЉРЎвЂљР В°РЎвЂљР С‘ Р С—Р С•РЎв‚¬РЎС“Р С”РЎС“";
+  if (uiLocale() === "ru") return "Результаты поиска";
+  if (uiLocale() === "uk") return "Результати пошуку";
   if (uiLocale() === "et") return "Otsingutulemused";
   return "Search results";
 }
 
 function homeSearchHintText() {
-  if (uiLocale() === "ru") return "Р В Р ВµР В·РЎС“Р В»РЎРЉРЎвЂљР В°РЎвЂљРЎвЂ№ Р С—Р ВµРЎРѓР ВµР Р… Р С—Р С•РЎРЏР Р†РЎРЏРЎвЂљРЎРѓРЎРЏ Р С—Р С•РЎРѓР В»Р Вµ Р С—Р С•Р С‘РЎРѓР С”Р В° Р С‘Р В»Р С‘ Р Р†РЎвЂ№Р В±Р С•РЎР‚Р В° РЎРѓРЎвЂљРЎР‚Р В°Р Р…РЎвЂ№.";
-  if (uiLocale() === "uk") return "Р В Р ВµР В·РЎС“Р В»РЎРЉРЎвЂљР В°РЎвЂљР С‘ Р С—РЎвЂ“РЎРѓР ВµР Р…РЎРЉ Р В·'РЎРЏР Р†Р В»РЎРЏРЎвЂљРЎРЉРЎРѓРЎРЏ Р С—РЎвЂ“РЎРѓР В»РЎРЏ Р С—Р С•РЎв‚¬РЎС“Р С”РЎС“ Р В°Р В±Р С• Р Р†Р С‘Р В±Р С•РЎР‚РЎС“ Р С”РЎР‚Р В°РЎвЂ”Р Р…Р С‘.";
+  if (uiLocale() === "ru") return "Результаты песен появятся после поиска или выбора страны.";
+  if (uiLocale() === "uk") return "Результати пісень Р·'являться після пошуку або вибору країни.";
   if (uiLocale() === "et") return "Laulude tulemused ilmuvad parast otsingut voi riigi valikut.";
   return "Song results appear after search or country selection.";
 }
 
 function verifiedLabel() {
-  if (uiLocale() === "ru") return "Р СџРЎР‚Р С•Р Р†Р ВµРЎР‚Р ВµР Р…Р С•";
-  if (uiLocale() === "uk") return "Р СџР ВµРЎР‚Р ВµР Р†РЎвЂ“РЎР‚Р ВµР Р…Р С•";
+  if (uiLocale() === "ru") return "Проверено";
+  if (uiLocale() === "uk") return "Перевірено";
   if (uiLocale() === "et") return "Kontrollitud";
   return "Verified";
 }
 
 function verifiedOnlyLabel() {
-  if (uiLocale() === "ru") return "Р СћР С•Р В»РЎРЉР С”Р С• Р С—РЎР‚Р С•Р Р†Р ВµРЎР‚Р ВµР Р…Р Р…РЎвЂ№Р Вµ";
-  if (uiLocale() === "uk") return "Р вЂєР С‘РЎв‚¬Р Вµ Р С—Р ВµРЎР‚Р ВµР Р†РЎвЂ“РЎР‚Р ВµР Р…РЎвЂ“";
+  if (uiLocale() === "ru") return "Только проверенные";
+  if (uiLocale() === "uk") return "Лише перевірені";
   if (uiLocale() === "et") return "Ainult kontrollitud";
   return "Verified only";
 }
 
 function homeReportFragmentLabel() {
-  if (uiLocale() === "ru") return "Р СњР Вµ Р Р…Р В°РЎв‚¬Р В»Р С‘? Р РЋР С•Р С•Р В±РЎвЂ°Р С‘РЎвЂљРЎРЉ РЎвЂћРЎР‚Р В°Р С–Р СР ВµР Р…РЎвЂљ";
-  if (uiLocale() === "uk") return "Р СњР Вµ Р В·Р Р…Р В°Р в„–РЎв‚¬Р В»Р С‘? Р СџР С•Р Р†РЎвЂ“Р Т‘Р С•Р СР С‘РЎвЂљР С‘ РЎвЂћРЎР‚Р В°Р С–Р СР ВµР Р…РЎвЂљ";
+  if (uiLocale() === "ru") return "Не нашли? Сообщить фрагмент";
+  if (uiLocale() === "uk") return "Не знайшли? Повідомити фрагмент";
   if (uiLocale() === "et") return "Ei leidnud? Saada katkend";
   return "Not found? Report fragment";
 }
 
 function homeLoadingResultsText() {
-  if (uiLocale() === "ru") return "Р вЂ”Р В°Р С–РЎР‚РЎС“Р В¶Р В°Р ВµР С Р С”Р В°РЎР‚РЎвЂљР С•РЎвЂЎР С”Р С‘...";
-  if (uiLocale() === "uk") return "Р вЂ”Р В°Р Р†Р В°Р Р…РЎвЂљР В°Р В¶РЎС“РЎвЂќР СР С• Р С”Р В°РЎР‚РЎвЂљР С”Р С‘...";
+  if (uiLocale() === "ru") return "Загружае карточки...";
+  if (uiLocale() === "uk") return "Завантажуєо картки...";
   if (uiLocale() === "et") return "Laen kaarte...";
   return "Loading cards...";
 }
 
 function homeRecentSongsLabel() {
-  if (uiLocale() === "ru") return "Р В РЎСљР В Р’ВµР В РўвЂР В Р’В°Р В Р вЂ Р В Р вЂ¦Р В РЎвЂў Р В РўвЂР В РЎвЂўР В Р’В±Р В Р’В°Р В Р вЂ Р В Р’В»Р В Р’ВµР В Р вЂ¦Р В Р вЂ¦Р РЋРІР‚в„–Р В Р’Вµ Р В РЎвЂ”Р В Р’ВµР РЋР С“Р В Р вЂ¦Р В РЎвЂ";
-  if (uiLocale() === "uk") return "Р В РЎСљР В Р’ВµР В РўвЂР В Р’В°Р В Р вЂ Р В Р вЂ¦Р В РЎвЂў Р В РўвЂР В РЎвЂўР В РўвЂР В Р’В°Р В Р вЂ¦Р РЋРІР‚вЂњ Р В РЎвЂ”Р РЋРІР‚вЂњР РЋР С“Р В Р вЂ¦Р РЋРІР‚вЂњ";
+  if (uiLocale() === "ru") return "Неавно обавленные песн";
+  if (uiLocale() === "uk") return "Неавно оані пісні";
   if (uiLocale() === "et") return "Hiljuti lisatud laulud";
   return "Recently added songs";
 }
@@ -1163,16 +1163,16 @@ function homeUI(data, params, homeExtras = {}) {
   const hasAdvancedValue = !!(lang || period || region || event || theme || verified || performer || year);
   const showAdvanced = params.adv === "1" || (!isCountryLocked && hasAdvancedValue);
   const advancedLabel = uiLocale() === "ru"
-    ? "Р вЂќР ВµРЎвЂљР В°Р В»РЎРЉР Р…РЎвЂ№Р в„– Р С—Р С•Р С‘РЎРѓР С”"
+    ? "Детальный поиск"
     : uiLocale() === "uk"
-      ? "Р В Р С•Р В·РЎв‚¬Р С‘РЎР‚Р ВµР Р…Р С‘Р в„– Р С—Р С•РЎв‚¬РЎС“Р С”"
+      ? "Розширений пошук"
     : uiLocale() === "et"
       ? "Tapsem otsing"
       : "Advanced search";
   const hideAdvancedLabel = uiLocale() === "ru"
-    ? "Р РЋР С”РЎР‚РЎвЂ№РЎвЂљРЎРЉ Р Т‘Р ВµРЎвЂљР В°Р В»Р С‘"
+    ? "Скрыть детали"
     : uiLocale() === "uk"
-      ? "Р РЋРЎвЂ¦Р С•Р Р†Р В°РЎвЂљР С‘ Р Т‘Р ВµРЎвЂљР В°Р В»РЎвЂ“"
+      ? "Сховати деталі"
     : uiLocale() === "et"
       ? "Peida detailid"
       : "Hide details";
@@ -1277,16 +1277,16 @@ function homeUI(data, params, homeExtras = {}) {
   const hasExactResults = (data.items || []).length > 0;
   const hasSuggestions = suggestions.length > 0;
   const maybeYouSearchedTitle = uiLocale() === "ru"
-    ? "Р вЂ™Р С•Р В·Р СР С•Р В¶Р Р…Р С•, Р Р†РЎвЂ№ Р С‘РЎРѓР С”Р В°Р В»Р С‘"
+    ? "Возожно, вы искали"
     : uiLocale() === "uk"
-      ? "Р СљР С•Р В¶Р В»Р С‘Р Р†Р С•, Р Р†Р С‘ РЎв‚¬РЎС“Р С”Р В°Р В»Р С‘"
+      ? "Можливо, ви шукали"
       : uiLocale() === "et"
         ? "Voib-olla otsisite"
         : "Maybe you searched for";
   const exactNotFoundText = uiLocale() === "ru"
-    ? "Р СћР С•РЎвЂЎР Р…Р С•Р С–Р С• РЎРѓР С•Р Р†Р С—Р В°Р Т‘Р ВµР Р…Р С‘РЎРЏ Р Р…Р Вµ Р Р…Р В°Р в„–Р Т‘Р ВµР Р…Р С•."
+    ? "Точного совпадения не найдено."
     : uiLocale() === "uk"
-      ? "Р СћР С•РЎвЂЎР Р…Р С•Р С–Р С• Р В·Р В±РЎвЂ“Р С–РЎС“ Р Р…Р Вµ Р В·Р Р…Р В°Р в„–Р Т‘Р ВµР Р…Р С•."
+      ? "Точного збігу не знайдено."
       : uiLocale() === "et"
         ? "Tapset vastet ei leitud."
         : "No exact match found.";
@@ -1329,15 +1329,15 @@ function homeUI(data, params, homeExtras = {}) {
           <input class="input" id="yt_performer" value="${esc(performer)}" />
         </label>
         <label class="yt-chip-input">
-          <span>${esc(uiLocale() === "ru" ? "Р В Р ВµР С–Р С‘Р С•Р Р…" : uiLocale() === "uk" ? "Р В Р ВµР С–РЎвЂ“Р С•Р Р…" : uiLocale() === "et" ? "Piirkond" : "Region")}</span>
+          <span>${esc(uiLocale() === "ru" ? "Регион" : uiLocale() === "uk" ? "Регіон" : uiLocale() === "et" ? "Piirkond" : "Region")}</span>
           <input class="input" id="yt_region" value="${esc(region)}" />
         </label>
         <label class="yt-chip-input">
-          <span>${esc(uiLocale() === "ru" ? "Р РЋР С•Р В±РЎвЂ№РЎвЂљР С‘Р Вµ" : uiLocale() === "uk" ? "Р СџР С•Р Т‘РЎвЂ“РЎРЏ" : uiLocale() === "et" ? "Sundmus" : "Event")}</span>
+          <span>${esc(uiLocale() === "ru" ? "Событие" : uiLocale() === "uk" ? "Подія" : uiLocale() === "et" ? "Sundmus" : "Event")}</span>
           <input class="input" id="yt_event" value="${esc(event)}" />
         </label>
         <label class="yt-chip-input">
-          <span>${esc(uiLocale() === "ru" ? "Р СћР ВµР СР В°РЎвЂљР С‘Р С”Р В°" : uiLocale() === "uk" ? "Р СћР ВµР СР В°РЎвЂљР С‘Р С”Р В°" : uiLocale() === "et" ? "Temaatika" : "Theme")}</span>
+          <span>${esc(uiLocale() === "ru" ? "Театика" : uiLocale() === "uk" ? "Театика" : uiLocale() === "et" ? "Temaatika" : "Theme")}</span>
           <input class="input" id="yt_theme" value="${esc(theme)}" />
         </label>
         <label class="yt-chip-input yt-chip-checkbox">
@@ -1410,40 +1410,40 @@ globalThis.__songbookDraftOpStatusStore = draftOpStatusStore;
 function draftUiText(key, vars = {}) {
   const locale = uiLocale();
   const pack = {
-    variantBadgeManual: { ru: "Р СѓС‡РЅРѕР№", uk: "Р СѓС‡РЅРёР№", et: "Kasitsi", en: "Manual" },
-    variantBadgeSuggested: { ru: "РџРѕРґСЃРєР°Р·РєР°", uk: "РџРёРґРєР°Р·РєР°", et: "Soovitus", en: "Suggested" },
-    variantBadgeConflict: { ru: "РљРѕРЅС„Р»РёРєС‚", uk: "РљРѕРЅС„Р»РёРєС‚", et: "Konflikt", en: "Conflict" },
-    variantsToggle: { ru: "Р’Р°СЂРёР°РЅС‚С‹", uk: "Р’Р°СЂРёР°РЅС‚С‹", et: "Variandid", en: "Variants" },
-    useVariant: { ru: "Р’С‹Р±СЂР°С‚СЊ", uk: "РћР±СЂР°С‚Рё", et: "Kasuta", en: "Use" },
-    newVariantPlaceholder: { ru: "РўРµРєСЃС‚ РІР°СЂРёР°РЅС‚Р°", uk: "РўРµРєСЃС‚ РІР°СЂРёР°РЅС‚Сѓ", et: "Variandi tekst", en: "Variant text" },
-    addVariantManual: { ru: "Р”РѕР±Р°РІРёС‚СЊ РІР°СЂРёР°РЅС‚", uk: "Р”РѕРґР°С‚Рё РІР°СЂРёР°РЅС‚", et: "Lisa variant", en: "Add variant" },
-    addVariantSuggested: { ru: "Р”РѕР±Р°РІРёС‚СЊ РїРѕРґСЃРєР°Р·РєСѓ", uk: "Р”РѕРґР°С‚Рё РїРёРґРєР°Р·РєСѓ", et: "Lisa soovitus", en: "Add suggested" },
-    owner: { ru: "РІР»Р°РґРµР»РµС†", uk: "РІР»Р°СЃРЅРёРє", et: "omanik", en: "owner" },
-    draftFallbackTitle: { ru: "Р§РµСЂРЅРѕРІРёРє", uk: "Р§РµСЂРЅРµС‚РєР°", et: "Mustand", en: "Draft" },
-    draftMeta: { ru: "Р§РµСЂРЅРѕРІРёРє: {draftId} В· v{version}", uk: "Р§РµСЂРЅРµС‚РєР°: {draftId} В· v{version}", et: "Mustand: {draftId} В· v{version}", en: "Draft: {draftId} В· v{version}" },
-    collaboratorNicknamePlaceholder: { ru: "РќРёРєРЅРµР№Рј", uk: "РќРёРєРЅРµР№Рј", et: "Kasutajanimi", en: "Nickname" },
-    addCollaborator: { ru: "Р”РѕР±Р°РІРёС‚СЊ СЃРѕР°РІС‚РѕСЂР°", uk: "Р”РѕРґР°С‚Рё СЃРїРёРІР°РІС‚РѕСЂР°", et: "Lisa kaasautor", en: "Add collaborator" },
-    publishDraft: { ru: "РћРїСѓР±Р»РёРєРѕРІР°С‚СЊ С‡РµСЂРЅРѕРІРёРє", uk: "РћРїСѓР±Р»РёРєСѓРІР°С‚Рё С‡РµСЂРЅРµС‚РєСѓ", et: "Avalda mustand", en: "Publish draft" },
-    liveStatus: { ru: "Live-СЃС‚Р°С‚СѓСЃ", uk: "Live-СЃС‚Р°С‚СѓСЃ", et: "Live olek", en: "Live status" },
-    statusOffline: { ru: "РѕС„С„Р»Р°Р№РЅ", uk: "РѕС„Р»Р°Р№РЅ", et: "vorgust maas", en: "offline" },
-    statusConnecting: { ru: "РїРѕРґРєР»СЋС‡РµРЅРёРµ...", uk: "РїРёРґРєР»СЋС‡РµРЅРЅСЏ...", et: "uhendamine...", en: "connecting..." },
-    statusOnline: { ru: "РѕРЅР»Р°Р№РЅ", uk: "РѕРЅР»Р°Р№РЅ", et: "vorgus", en: "online" },
-    statusOnlineWithNames: { ru: "РѕРЅР»Р°Р№РЅ: {names}", uk: "РѕРЅР»Р°Р№РЅ: {names}", et: "vorgus: {names}", en: "online: {names}" },
-    statusReconnecting: { ru: "РїРµСЂРµРїРѕРґРєР»СЋС‡РµРЅРёРµ...", uk: "РїРµСЂРµРїРёРґРєР»СЋС‡РµРЅРЅСЏ...", et: "taasuhendamine...", en: "reconnecting..." },
-    statusConnectionError: { ru: "РѕС€РёР±РєР° СЃРѕРµРґРёРЅРµРЅРёСЏ", uk: "РїРѕРјРёР»РєР° Р·'РµРґРЅР°РЅРЅСЏ", et: "uhenduse viga", en: "connection error" },
-    statusWsUnsupported: { ru: "WebSocket РЅРµ РїРѕРґРґРµСЂР¶РёРІР°РµС‚СЃСЏ", uk: "WebSocket РЅРµ РїРёРґС‚СЂРёРјСѓРµС‚СЊСЃСЏ", et: "WebSocket pole toetatud", en: "WebSocket unsupported" },
-    wsNotConnected: { ru: "WebSocket РЅРµ РїРѕРґРєР»СЋС‡РµРЅ", uk: "WebSocket РЅРµ РїРёРґРєР»СЋС‡РµРЅРёР№", et: "WebSocket pole uhendatud", en: "WebSocket is not connected" },
-    promptCopied: { ru: "РџСЂРѕРјРїС‚ СЃРєРѕРїРёСЂРѕРІР°РЅ", uk: "РџСЂРѕРјРїС‚ СЃРєРѕРїРёР№РѕРІР°РЅРѕ", et: "Prompt kopeeritud", en: "Prompt copied" },
-    promptCopyFailed: { ru: "РќРµ СѓРґР°Р»РѕСЃСЊ СЃРєРѕРїРёСЂРѕРІР°С‚СЊ", uk: "РќРµ РІРґР°Р»РѕСЃСЏ СЃРєРѕРїРёСЋРІР°С‚Рё", et: "Kopeerimine ebaonnestus", en: "Copy failed" },
-    conflictSaved: { ru: "РљРѕРЅС„Р»РёРєС‚ СЃРѕС…СЂР°РЅРµРЅ РєР°Рє РѕС‚РґРµР»СЊРЅС‹Р№ РІР°СЂРёР°РЅС‚", uk: "РљРѕРЅС„Р»РёРєС‚ Р·Р±РµСЂРµР¶РµРЅРѕ СЏРє РѕРєСЂРµРјРёР№ РІР°СЂРёР°РЅС‚", et: "Konflikt salvestati eraldi variandina", en: "Conflict saved as extra variant" },
-    draftPublished: { ru: "Р§РµСЂРЅРѕРІРёРє РѕРїСѓР±Р»РёРєРѕРІР°РЅ", uk: "Р§РµСЂРЅРµС‚РєСѓ РѕРїСѓР±Р»РёРєРѕРІР°РЅРѕ", et: "Mustand avaldati", en: "Draft published" },
-    openCollaborativeDraft: { ru: "РЎРѕРІРјРµСЃС‚РЅС‹Р№ С‡РµСЂРЅРѕРІРёРє", uk: "РЎРїРёР»СЊРЅР° С‡РµСЂРЅРµС‚РєР°", et: "Koostoo mustand", en: "Collaborative draft" },
-    draftNotCreated: { ru: "Р§РµСЂРЅРѕРІРёРє РЅРµ СЃРѕР·РґР°РЅ", uk: "Р§РµСЂРЅРµС‚РєСѓ РЅРµ СЃС‚РІРѕСЂРµРЅРѕ", et: "Mustandit ei loodud", en: "Draft was not created" },
-    opStatusPending: { ru: "РѕР¶РёРґР°РµС‚", uk: "РѕС‡РёРєСѓРµ", et: "ootel", en: "pending" },
-    opStatusApplied: { ru: "РїСЂРёРјРµРЅРµРЅРѕ", uk: "Р·Р°СЃС‚РѕСЃРѕРІР°РЅРѕ", et: "rakendatud", en: "applied" },
-    opStatusPersisted: { ru: "СЃРѕС…СЂР°РЅРµРЅРѕ", uk: "Р·Р±РµСЂРµР¶РµРЅРѕ", et: "salvestatud", en: "persisted" },
-    aiCopy: { ru: "РљРѕРїРёСЂРѕРІР°С‚СЊ AI-РїСЂРѕРјРїС‚", uk: "РљРѕРїРёСЋРІР°С‚Рё AI-РїСЂРѕРјРїС‚", et: "Kopeeri AI prompt", en: "AI copy" },
-    aiOpen: { ru: "РћС‚РєСЂС‹С‚СЊ ChatGPT", uk: "Р’РёРґРєСЂРёС‚Рё ChatGPT", et: "Ava ChatGPT", en: "Open ChatGPT" },
+    variantBadgeManual: { ru: "Ручной", uk: "Ручний", et: "Kasitsi", en: "Manual" },
+    variantBadgeSuggested: { ru: "Подсказка", uk: "Пидказка", et: "Soovitus", en: "Suggested" },
+    variantBadgeConflict: { ru: "Конфликт", uk: "Конфликт", et: "Konflikt", en: "Conflict" },
+    variantsToggle: { ru: "Варианты", uk: "Варианты", et: "Variandid", en: "Variants" },
+    useVariant: { ru: "Выбрать", uk: "Обрати", et: "Kasuta", en: "Use" },
+    newVariantPlaceholder: { ru: "Текст варианта", uk: "Текст варианту", et: "Variandi tekst", en: "Variant text" },
+    addVariantManual: { ru: "Добавить вариант", uk: "Додати вариант", et: "Lisa variant", en: "Add variant" },
+    addVariantSuggested: { ru: "Добавить подсказку", uk: "Додати пидказку", et: "Lisa soovitus", en: "Add suggested" },
+    owner: { ru: "владелец", uk: "власник", et: "omanik", en: "owner" },
+    draftFallbackTitle: { ru: "Черновик", uk: "Чернетка", et: "Mustand", en: "Draft" },
+    draftMeta: { ru: "Черновик: {draftId} · v{version}", uk: "Чернетка: {draftId} · v{version}", et: "Mustand: {draftId} · v{version}", en: "Draft: {draftId} · v{version}" },
+    collaboratorNicknamePlaceholder: { ru: "Никнейм", uk: "Никнейм", et: "Kasutajanimi", en: "Nickname" },
+    addCollaborator: { ru: "Добавить соавтора", uk: "Додати спивавтора", et: "Lisa kaasautor", en: "Add collaborator" },
+    publishDraft: { ru: "Опубликовать черновик", uk: "Опубликувати чернетку", et: "Avalda mustand", en: "Publish draft" },
+    liveStatus: { ru: "Live-статус", uk: "Live-статус", et: "Live olek", en: "Live status" },
+    statusOffline: { ru: "оффлайн", uk: "офлайн", et: "vorgust maas", en: "offline" },
+    statusConnecting: { ru: "подключение...", uk: "пидключення...", et: "uhendamine...", en: "connecting..." },
+    statusOnline: { ru: "онлайн", uk: "онлайн", et: "vorgus", en: "online" },
+    statusOnlineWithNames: { ru: "онлайн: {names}", uk: "онлайн: {names}", et: "vorgus: {names}", en: "online: {names}" },
+    statusReconnecting: { ru: "переподключение...", uk: "перепидключення...", et: "taasuhendamine...", en: "reconnecting..." },
+    statusConnectionError: { ru: "ошибка соединения", uk: "помилка Р·'еднання", et: "uhenduse viga", en: "connection error" },
+    statusWsUnsupported: { ru: "WebSocket не поддерживается", uk: "WebSocket не пидтримуеться", et: "WebSocket pole toetatud", en: "WebSocket unsupported" },
+    wsNotConnected: { ru: "WebSocket не подключен", uk: "WebSocket не пидключений", et: "WebSocket pole uhendatud", en: "WebSocket is not connected" },
+    promptCopied: { ru: "Промпт скопирован", uk: "Промпт скопийовано", et: "Prompt kopeeritud", en: "Prompt copied" },
+    promptCopyFailed: { ru: "Не удалось скопировать", uk: "Не вдалося скопиювати", et: "Kopeerimine ebaonnestus", en: "Copy failed" },
+    conflictSaved: { ru: "Конфликт сохранен как отдельный вариант", uk: "Конфликт збережено як окремий вариант", et: "Konflikt salvestati eraldi variandina", en: "Conflict saved as extra variant" },
+    draftPublished: { ru: "Черновик опубликован", uk: "Чернетку опубликовано", et: "Mustand avaldati", en: "Draft published" },
+    openCollaborativeDraft: { ru: "Совместный черновик", uk: "Спильна чернетка", et: "Koostoo mustand", en: "Collaborative draft" },
+    draftNotCreated: { ru: "Черновик не создан", uk: "Чернетку не створено", et: "Mustandit ei loodud", en: "Draft was not created" },
+    opStatusPending: { ru: "ожидает", uk: "очикуе", et: "ootel", en: "pending" },
+    opStatusApplied: { ru: "применено", uk: "застосовано", et: "rakendatud", en: "applied" },
+    opStatusPersisted: { ru: "сохранено", uk: "збережено", et: "salvestatud", en: "persisted" },
+    aiCopy: { ru: "Копировать AI-промпт", uk: "Копиювати AI-промпт", et: "Kopeeri AI prompt", en: "AI copy" },
+    aiOpen: { ru: "Открыть ChatGPT", uk: "Видкрити ChatGPT", et: "Ava ChatGPT", en: "Open ChatGPT" },
   };
   const fallback = pack[key]?.en || key;
   const template = pack[key]?.[locale] || fallback;
@@ -1621,26 +1621,26 @@ function buildPrompt(kind, song) {
   return head + `\n${t("prompt.explainTask")}\n` + body;
 }
 
-const CHORUS_KEYWORDS = ["Р С—РЎР‚Р С‘Р С—Р ВµР Р†", "Р С—РЎР‚Р С‘РЎРѓР С—iР Р†", "Р С—РЎР‚Р С‘РЎРѓР С—РЎвЂ“Р Р†", "chorus", "refrain", "koor"];
-const VERSE_KEYWORDS = ["Р С”РЎС“Р С—Р В»Р ВµРЎвЂљ", "verse", "stanza", "salm"];
+const CHORUS_KEYWORDS = ["припев", "приспiв", "приспів", "chorus", "refrain", "koor"];
+const VERSE_KEYWORDS = ["куплет", "verse", "stanza", "salm"];
 
 function chorusMarkerLabel() {
-  if (uiLocale() === "ru") return "Р СџРЎР‚Р С‘Р С—Р ВµР Р†";
-  if (uiLocale() === "uk") return "Р СџРЎР‚Р С‘РЎРѓР С—РЎвЂ“Р Р†";
+  if (uiLocale() === "ru") return "Припев";
+  if (uiLocale() === "uk") return "Приспів";
   if (uiLocale() === "et") return "Koor";
   return "Chorus";
 }
 
 function verseMarkerLabel() {
-  if (uiLocale() === "ru") return "Р С™РЎС“Р С—Р В»Р ВµРЎвЂљ";
-  if (uiLocale() === "uk") return "Р С™РЎС“Р С—Р В»Р ВµРЎвЂљ";
+  if (uiLocale() === "ru") return "Куплет";
+  if (uiLocale() === "uk") return "Куплет";
   if (uiLocale() === "et") return "Salm";
   return "Verse";
 }
 
 function chorusFieldLabel() {
-  if (uiLocale() === "ru") return "Р СџРЎР‚Р С‘Р С—Р ВµР Р†";
-  if (uiLocale() === "uk") return "Р СџРЎР‚Р С‘РЎРѓР С—РЎвЂ“Р Р†";
+  if (uiLocale() === "ru") return "Припев";
+  if (uiLocale() === "uk") return "Приспів";
   if (uiLocale() === "et") return "Koor";
   return "Chorus";
 }
@@ -1648,7 +1648,7 @@ function chorusFieldLabel() {
 function normalizeSectionToken(line) {
   return String(line || "")
     .toLowerCase()
-    .replace(/[.:!?,;()[\]{}"'\-РІР‚вЂњРІР‚вЂќ]+/g, " ")
+    .replace(/[.:!?,;()[\]{}"'\-–—]+/g, " ")
     .replace(/\s+/g, " ")
     .trim();
 }
@@ -2029,8 +2029,8 @@ function renderCompareWordMarkup(sourceText = "", targetText = "", options = {})
 function decodingProgressText(percent) {
   const value = Number.isFinite(percent) ? percent : 100;
   const shown = Number.isInteger(value) ? String(value) : value.toFixed(1);
-  if (uiLocale() === "ru") return `Р СџР ВµРЎРѓР Р…РЎРЏ РЎР‚Р В°РЎРѓРЎв‚¬Р С‘РЎвЂћРЎР‚Р С•Р Р†Р В°Р Р…Р В° Р Р…Р В° ${shown}%`;
-  if (uiLocale() === "uk") return `Р СџРЎвЂ“РЎРѓР Р…РЎР‹ РЎР‚Р С•Р В·РЎв‚¬Р С‘РЎвЂћРЎР‚Р С•Р Р†Р В°Р Р…Р С• Р Р…Р В° ${shown}%`;
+  if (uiLocale() === "ru") return `Песня расшифрована на ${shown}%`;
+  if (uiLocale() === "uk") return `Пісню розшифровано на ${shown}%`;
   if (uiLocale() === "et") return `Laul on desifreeritud ${shown}%`;
   return `Song is deciphered by ${shown}%`;
 }
@@ -2092,36 +2092,36 @@ function syncDecodingIndicator(outputId, lyricsId, chorusId, markerId) {
 }
 
 function lyricsComposerTitle() {
-  if (uiLocale() === "ru") return "Р РЋРЎвЂљРЎР‚РЎС“Р С”РЎвЂљРЎС“РЎР‚Р В° РЎвЂљР ВµР С”РЎРѓРЎвЂљР В°";
-  if (uiLocale() === "uk") return "Р РЋРЎвЂљРЎР‚РЎС“Р С”РЎвЂљРЎС“РЎР‚Р В° РЎвЂљР ВµР С”РЎРѓРЎвЂљРЎС“";
+  if (uiLocale() === "ru") return "Структура текста";
+  if (uiLocale() === "uk") return "Структура тексту";
   if (uiLocale() === "et") return "Teksti struktuur";
   return "Lyrics structure";
 }
 
 function lyricsComposerHint() {
-  if (uiLocale() === "ru") return "Р РЋР Р…Р В°РЎвЂЎР В°Р В»Р В° Р Т‘Р С•Р В±Р В°Р Р†РЎРЉРЎвЂљР Вµ Р С—Р С•Р В»Р Р…Р С•РЎвЂ Р ВµР Р…Р Р…РЎвЂ№Р в„– Р С—РЎР‚Р С‘Р С—Р ВµР Р†, Р С—Р С•РЎвЂљР С•Р С Р Т‘Р В»РЎРЏ Р С—Р С•Р Р†РЎвЂљР С•РЎР‚Р С•Р Р† Р С‘РЎРѓР С—Р С•Р В»РЎРЉР В·РЎС“Р в„–РЎвЂљР Вµ Р В±Р В»Р С•Р С” Р’В«Р СџР С•Р Р†РЎвЂљР С•РЎР‚ Р С—РЎР‚Р С‘Р С—Р ВµР Р†Р В°Р’В».";
-  if (uiLocale() === "uk") return "Р РЋР С—Р С•РЎвЂЎР В°РЎвЂљР С”РЎС“ Р Т‘Р С•Р Т‘Р В°Р в„–РЎвЂљР Вµ Р С—Р С•Р Р†Р Р…Р С‘Р в„– Р С—РЎР‚Р С‘РЎРѓР С—РЎвЂ“Р Р†, Р С—Р С•РЎвЂљРЎвЂ“Р С Р Т‘Р В»РЎРЏ Р С—Р С•Р Р†РЎвЂљР С•РЎР‚РЎвЂ“Р Р† Р Р†Р С‘Р С”Р С•РЎР‚Р С‘РЎРѓРЎвЂљР С•Р Р†РЎС“Р в„–РЎвЂљР Вµ Р В±Р В»Р С•Р С” Р’В«Р СџР С•Р Р†РЎвЂљР С•РЎР‚ Р С—РЎР‚Р С‘РЎРѓР С—РЎвЂ“Р Р†РЎС“Р’В».";
+  if (uiLocale() === "ru") return "Сначала добавьте полноценный припев, пото для повторов используйте блок «Повтор припева».";
+  if (uiLocale() === "uk") return "Спочатку додайте повний приспів, поті для повторів використовуйте блок «Повтор приспіву».";
   if (uiLocale() === "et") return "Lisa esmalt tais koor, korduste jaoks kasuta plokki \"Koori kordus\".";
   return "Add a full chorus first, then use the chorus repeat block for repeated sections.";
 }
 
 function chorusWithTextSuffix() {
-  if (uiLocale() === "ru") return "+ РЎвЂљР ВµР С”РЎРѓРЎвЂљ";
-  if (uiLocale() === "uk") return "+ РЎвЂљР ВµР С”РЎРѓРЎвЂљ";
+  if (uiLocale() === "ru") return "+ текст";
+  if (uiLocale() === "uk") return "+ текст";
   if (uiLocale() === "et") return "+ tekst";
   return "+ text";
 }
 
 function lyricsComposerInsertLabel() {
-  if (uiLocale() === "ru") return "Р вЂ™РЎРѓРЎвЂљР В°Р Р†Р С‘РЎвЂљРЎРЉ Р В±Р В»Р С•Р С”";
-  if (uiLocale() === "uk") return "Р вЂ™РЎРѓРЎвЂљР В°Р Р†Р С‘РЎвЂљР С‘ Р В±Р В»Р С•Р С”";
+  if (uiLocale() === "ru") return "Вставить блок";
+  if (uiLocale() === "uk") return "Вставити блок";
   if (uiLocale() === "et") return "Lisa plokk";
   return "Insert block";
 }
 
 function lyricsComposerSelectLabel() {
-  if (uiLocale() === "ru") return "Р СћР С‘Р С— Р В±Р В»Р С•Р С”Р В°";
-  if (uiLocale() === "uk") return "Р СћР С‘Р С— Р В±Р В»Р С•Р С”РЎС“";
+  if (uiLocale() === "ru") return "Тип блока";
+  if (uiLocale() === "uk") return "Тип блоку";
   if (uiLocale() === "et") return "Ploki tuup";
   return "Block type";
 }
@@ -2129,13 +2129,13 @@ function lyricsComposerSelectLabel() {
 function lyricsTemplateLabel(kind) {
   if (kind === "verse") return verseMarkerLabel();
   if (kind === "chorus-full") {
-    if (uiLocale() === "ru") return "Р СџРЎР‚Р С‘Р С—Р ВµР Р† (РЎРѓ РЎвЂљР ВµР С”РЎРѓРЎвЂљР С•Р С)";
-    if (uiLocale() === "uk") return "Р СџРЎР‚Р С‘РЎРѓР С—РЎвЂ“Р Р† (Р В· РЎвЂљР ВµР С”РЎРѓРЎвЂљР С•Р С)";
+    if (uiLocale() === "ru") return "Припев (с тексто)";
+    if (uiLocale() === "uk") return "Приспів (Р· тексто)";
     if (uiLocale() === "et") return "Koor (tekstiga)";
     return "Chorus (with text)";
   }
-  if (uiLocale() === "ru") return "Р СџР С•Р Р†РЎвЂљР С•РЎР‚ Р С—РЎР‚Р С‘Р С—Р ВµР Р†Р В°";
-  if (uiLocale() === "uk") return "Р СџР С•Р Р†РЎвЂљР С•РЎР‚ Р С—РЎР‚Р С‘РЎРѓР С—РЎвЂ“Р Р†РЎС“";
+  if (uiLocale() === "ru") return "Повтор припева";
+  if (uiLocale() === "uk") return "Повтор приспіву";
   if (uiLocale() === "et") return "Koori kordus";
   return "Chorus repeat";
 }
@@ -2265,29 +2265,29 @@ function songDetailsUI(song, extra = {}) {
   `;
   const favActionBtn = state.user
     ? `<button class="btn ghost song-header-tool song-fav-main ${extra.isFav ? "is-active" : ""}" id="btnFavToggle" type="button" aria-pressed="${extra.isFav ? "true" : "false"}" title="${esc(favLabel)}" aria-label="${esc(favLabel)}">
-      <span class="song-header-tool-icon" aria-hidden="true">${extra.isFav ? "РІВвЂ¦" : "РІВвЂ "}</span>
+      <span class="song-header-tool-icon" aria-hidden="true">${extra.isFav ? "★" : "☆"}</span>
       <span class="song-header-tool-text">${esc(favLabel)}</span>
     </button>`
     : "";
   const headerActionButtons = [editActionBtn, copyActionBtn, favActionBtn].filter(Boolean).join("");
   const hasHeaderSide = !!(statusDot || verifiedPill || headerActionButtons);
   const aiHubTitle = uiLocale() === "ru"
-    ? "Р ВР В-Р С—Р С•Р СР С•РЎвЂ°Р Р…Р С‘Р С” Р С—Р С• Р С—Р ВµРЎРѓР Р…Р Вµ"
+    ? "ИИ-помощник по песне"
     : uiLocale() === "uk"
-      ? "Р РЃР вЂ -Р С—Р С•Р СРЎвЂ“РЎвЂЎР Р…Р С‘Р С” Р Т‘Р В»РЎРЏ Р С—РЎвЂ“РЎРѓР Р…РЎвЂ“"
+      ? "ШІ-помічник для пісні"
       : uiLocale() === "et"
         ? "AI lauluabiline"
         : "AI Song Assistant";
   const aiHubSubtitle = uiLocale() === "ru"
-    ? "Р вЂ™РЎвЂ№Р В±Р ВµРЎР‚Р С‘РЎвЂљР Вµ РЎвЂћР С•РЎР‚Р СР В°РЎвЂљ Р В·Р В°Р С—РЎР‚Р С•РЎРѓР В° Р С‘ РЎРѓРЎР‚Р В°Р В·РЎС“ Р С•РЎвЂљР С”РЎР‚Р С•Р в„–РЎвЂљР Вµ ChatGPT."
+    ? "Выберите формат запроса и сразу откройте ChatGPT."
     : uiLocale() === "uk"
-      ? "Р С›Р В±Р ВµРЎР‚РЎвЂ“РЎвЂљРЎРЉ РЎвЂљР С‘Р С— Р В·Р В°Р С—Р С‘РЎвЂљРЎС“ РЎвЂљР В° Р Р†РЎвЂ“Р Т‘Р С”РЎР‚Р С‘Р в„–РЎвЂљР Вµ ChatGPT."
+      ? "Оберіть тип запиту та відкрийте ChatGPT."
       : uiLocale() === "et"
         ? "Vali paringu tuup ja ava kohe ChatGPT."
         : "Choose a prompt type and open ChatGPT.";
-  const aiContextDesc = uiLocale() === "ru" ? "Р ВРЎРѓРЎвЂљР С•РЎР‚Р С‘РЎвЂЎР ВµРЎРѓР С”Р С‘Р в„– РЎвЂћР С•Р Р…" : uiLocale() === "uk" ? "Р вЂ РЎРѓРЎвЂљР С•РЎР‚Р С‘РЎвЂЎР Р…Р С‘Р в„– Р С”Р С•Р Р…РЎвЂљР ВµР С”РЎРѓРЎвЂљ" : uiLocale() === "et" ? "Ajalooline taust" : "Historical context";
-  const aiTranslateDesc = uiLocale() === "ru" ? "Р вЂєР С‘РЎвЂљР ВµРЎР‚Р В°РЎвЂљРЎС“РЎР‚Р Р…РЎвЂ№Р в„– Р С—Р ВµРЎР‚Р ВµР Р†Р С•Р Т‘" : uiLocale() === "uk" ? "Р вЂєРЎвЂ“РЎвЂљР ВµРЎР‚Р В°РЎвЂљРЎС“РЎР‚Р Р…Р С‘Р в„– Р С—Р ВµРЎР‚Р ВµР С”Р В»Р В°Р Т‘" : uiLocale() === "et" ? "Kirjanduslik tolge" : "Literary translation";
-  const aiExplainDesc = uiLocale() === "ru" ? "Р С›Р В±РЎР‚Р В°Р В·РЎвЂ№ Р С‘ РЎРѓР СРЎвЂ№РЎРѓР В»" : uiLocale() === "uk" ? "Р С›Р В±РЎР‚Р В°Р В·Р С‘ РЎвЂљР В° РЎРѓР ВµР Р…РЎРѓ" : uiLocale() === "et" ? "Kujundid ja mote" : "Meaning and imagery";
+  const aiContextDesc = uiLocale() === "ru" ? "Исторический фон" : uiLocale() === "uk" ? "Історичний контекст" : uiLocale() === "et" ? "Ajalooline taust" : "Historical context";
+  const aiTranslateDesc = uiLocale() === "ru" ? "Литературный перевод" : uiLocale() === "uk" ? "Літературний переклад" : uiLocale() === "et" ? "Kirjanduslik tolge" : "Literary translation";
+  const aiExplainDesc = uiLocale() === "ru" ? "Образы и смысл" : uiLocale() === "uk" ? "Образи та сенс" : uiLocale() === "et" ? "Kujundid ja mote" : "Meaning and imagery";
   const initialLyrics = renderStructuredLyrics(song.lyrics || "", {
     line_confidences: extractLyricsLineConfidences(song?.lyrics_meta_json || null),
   });
@@ -2319,65 +2319,65 @@ function songDetailsUI(song, extra = {}) {
   const hasVersionChoices = versionOptions.length >= 2;
   const hasTopControls = !!playActionBtn || hasVersionChoices;
   const compareToggleLabel = uiLocale() === "ru"
-    ? "Р РЋРЎР‚Р В°Р Р†Р Р…Р С‘РЎвЂљРЎРЉ Р Р†Р ВµРЎР‚РЎРѓР С‘Р С‘"
+    ? "Сравнить версии"
     : uiLocale() === "uk"
-      ? "Р СџР С•РЎР‚РЎвЂ“Р Р†Р Р…РЎРЏРЎвЂљР С‘ Р Р†Р ВµРЎР‚РЎРѓРЎвЂ“РЎвЂ”"
+      ? "Порівняти версії"
       : uiLocale() === "et"
         ? "Vordle versioone"
         : "Compare versions";
   const compareMetaMissing = uiLocale() === "ru"
-    ? "Р Р…Р Вµ РЎС“Р С”Р В°Р В·Р В°Р Р…Р С•"
+    ? "не указано"
     : uiLocale() === "uk"
-      ? "Р Р…Р Вµ Р Р†Р С”Р В°Р В·Р В°Р Р…Р С•"
+      ? "не вказано"
       : uiLocale() === "et"
         ? "maaramata"
         : "Not specified";
   const compareVersionOneTitle = uiLocale() === "ru"
-    ? "Р вЂ™Р ВµРЎР‚РЎРѓР С‘РЎРЏ 1"
+    ? "Версия 1"
     : uiLocale() === "uk"
-      ? "Р вЂ™Р ВµРЎР‚РЎРѓРЎвЂ“РЎРЏ 1"
+      ? "Версія 1"
       : uiLocale() === "et"
         ? "Versioon 1"
         : "Version 1";
   const compareVersionTwoTitle = uiLocale() === "ru"
-    ? "Р вЂ™Р ВµРЎР‚РЎРѓР С‘РЎРЏ 2"
+    ? "Версия 2"
     : uiLocale() === "uk"
-      ? "Р вЂ™Р ВµРЎР‚РЎРѓРЎвЂ“РЎРЏ 2"
+      ? "Версія 2"
       : uiLocale() === "et"
         ? "Versioon 2"
         : "Version 2";
   const comparePerformerLabel = uiLocale() === "ru"
-    ? "Р С’Р Р†РЎвЂљР С•РЎР‚ Р С‘РЎРѓР С—Р С•Р В»Р Р…Р ВµР Р…Р С‘РЎРЏ"
+    ? "Автор исполнения"
     : uiLocale() === "uk"
-      ? "Р С’Р Р†РЎвЂљР С•РЎР‚ Р Р†Р С‘Р С”Р С•Р Р…Р В°Р Р…Р Р…РЎРЏ"
+      ? "Автор виконання"
       : uiLocale() === "et"
         ? "Esitaja"
         : "Performer";
   const compareYearLabel = uiLocale() === "ru"
-    ? "Р вЂњР С•Р Т‘ Р С‘РЎРѓР С—Р С•Р В»Р Р…Р ВµР Р…Р С‘РЎРЏ"
+    ? "Год исполнения"
     : uiLocale() === "uk"
-      ? "Р В РЎвЂ“Р С” Р Р†Р С‘Р С”Р С•Р Р…Р В°Р Р…Р Р…РЎРЏ"
+      ? "Рік виконання"
       : uiLocale() === "et"
         ? "Esitusaasta"
         : "Performance year";
   const compareVersionSelectLabel = uiLocale() === "ru"
-    ? "Р вЂ™РЎвЂ№Р В±Р ВµРЎР‚Р С‘РЎвЂљР Вµ Р Р…Р С•Р СР ВµРЎР‚ Р Р†Р ВµРЎР‚РЎРѓР С‘Р С‘ Р Т‘Р В»РЎРЏ РЎРѓРЎР‚Р В°Р Р†Р Р…Р ВµР Р…Р С‘РЎРЏ"
+    ? "Выберите ноер версии для сравнения"
     : uiLocale() === "uk"
-      ? "Р С›Р В±Р ВµРЎР‚РЎвЂ“РЎвЂљРЎРЉ Р Р…Р С•Р СР ВµРЎР‚ Р Р†Р ВµРЎР‚РЎРѓРЎвЂ“РЎвЂ” Р Т‘Р В»РЎРЏ Р С—Р С•РЎР‚РЎвЂ“Р Р†Р Р…РЎРЏР Р…Р Р…РЎРЏ"
+      ? "Оберіть ноер версії для порівняння"
       : uiLocale() === "et"
       ? "Vali vordlemiseks versiooni number"
       : "Choose version number to compare";
   const compareListenLabel = uiLocale() === "ru"
-    ? "Р РЋР В»РЎС“РЎв‚¬Р В°РЎвЂљРЎРЉ"
+    ? "Слушать"
     : uiLocale() === "uk"
-      ? "Р РЋР В»РЎС“РЎвЂ¦Р В°РЎвЂљР С‘"
+      ? "Слухати"
       : uiLocale() === "et"
         ? "Kuula"
         : "Listen";
   const compareListenMissing = uiLocale() === "ru"
-    ? "РЎРѓРЎРѓРЎвЂ№Р В»Р С•Р С” Р Р…Р ВµРЎвЂљ"
+    ? "ссылок нет"
     : uiLocale() === "uk"
-      ? "Р С—Р С•РЎРѓР С‘Р В»Р В°Р Р…РЎРЉ Р Р…Р ВµР СР В°РЎвЂќ"
+      ? "посилань неає"
       : uiLocale() === "et"
         ? "linke pole"
         : "no links";
@@ -2534,7 +2534,7 @@ function favoritesUI(data) {
       <div class="muted">${esc(t("favorites.subtitle"))}</div>
       <div class="sep"></div>
       <div class="list">
-        ${items.length ? items.map((s) => `<a class="songCard" href="#/song/${encodeURIComponent(s.id)}"><div><div class="songTitle">${esc(s.title)}</div><div class="songMeta">${esc(formatLang(s.lang))} Р’В· ${esc(formatCountry(s.country))} Р’В· ${esc(formatPeriod(s.period))}</div></div><span class="btn ghost">-&gt;</span></a>`).join("") : `<div class="muted">${esc(t("favorites.empty"))}</div>`}
+        ${items.length ? items.map((s) => `<a class="songCard" href="#/song/${encodeURIComponent(s.id)}"><div><div class="songTitle">${esc(s.title)}</div><div class="songMeta">${esc(formatLang(s.lang))} · ${esc(formatCountry(s.country))} · ${esc(formatPeriod(s.period))}</div></div><span class="btn ghost">-&gt;</span></a>`).join("") : `<div class="muted">${esc(t("favorites.empty"))}</div>`}
       </div>
     </div>
   `;
@@ -2544,53 +2544,53 @@ function requestUI(options = {}) {
   const isFragmentReport = !!options.isFragmentReport;
   if (!state.user) {
     const notLoggedTitle = uiLocale() === "ru"
-      ? "Р вЂќР С•Р В±Р В°Р Р†Р С‘РЎвЂљРЎРЉ Р С—Р ВµРЎРѓР Р…РЎР‹"
+      ? "Добавить песню"
       : uiLocale() === "uk"
-        ? "Р вЂќР С•Р Т‘Р В°РЎвЂљР С‘ Р С—РЎвЂ“РЎРѓР Р…РЎР‹"
+        ? "Додати пісню"
         : uiLocale() === "et"
           ? "Lisa laul"
           : "Add song";
     return `<div class="card"><div class="h1">${esc(notLoggedTitle)}</div><div class="sep"></div><div class="muted">${esc(t("request.needLogin"))}</div></div>`;
   }
   const titleText = uiLocale() === "ru"
-    ? "Р вЂќР С•Р В±Р В°Р Р†Р С‘РЎвЂљРЎРЉ Р С—Р ВµРЎРѓР Р…РЎР‹"
+    ? "Добавить песню"
     : uiLocale() === "uk"
-      ? "Р вЂќР С•Р Т‘Р В°РЎвЂљР С‘ Р С—РЎвЂ“РЎРѓР Р…РЎР‹"
+      ? "Додати пісню"
       : uiLocale() === "et"
         ? "Lisa laul"
         : "Add song";
   const submitText = uiLocale() === "ru"
-    ? "Р вЂќР С•Р В±Р В°Р Р†Р С‘РЎвЂљРЎРЉ"
+    ? "Добавить"
     : uiLocale() === "uk"
-      ? "Р вЂќР С•Р Т‘Р В°РЎвЂљР С‘"
+      ? "Додати"
       : uiLocale() === "et"
         ? "Lisa"
         : "Add";
   const subtitleText = uiLocale() === "ru"
-    ? "Р вЂ”Р В°Р С—Р С•Р В»Р Р…Р С‘РЎвЂљР Вµ Р С”Р В°РЎР‚РЎвЂљР С•РЎвЂЎР С”РЎС“ Р С—Р С•Р В»Р Р…Р С•РЎРѓРЎвЂљРЎРЉРЎР‹: Р С—РЎР‚Р С‘ Р С—РЎР‚Р В°Р Р†Р В°РЎвЂ¦ Р С—РЎС“Р В±Р В»Р С‘Р С”Р В°РЎвЂ Р С‘РЎРЏ РЎРѓРЎР‚Р В°Р В·РЎС“, Р С‘Р Р…Р В°РЎвЂЎР Вµ Р С•РЎвЂљР С—РЎР‚Р В°Р Р†Р С”Р В° Р Р…Р В° Р СР С•Р Т‘Р ВµРЎР‚Р В°РЎвЂ Р С‘РЎР‹."
+    ? "Заполните карточку полностью: при правах публикация сразу, иначе отправка на одерацию."
     : uiLocale() === "uk"
-      ? "Р вЂ”Р В°Р С—Р С•Р Р†Р Р…РЎвЂ“РЎвЂљРЎРЉ Р С”Р В°РЎР‚РЎвЂљР С”РЎС“ Р С—Р С•Р Р†Р Р…РЎвЂ“РЎРѓРЎвЂљРЎР‹: Р В·Р В° Р Р…Р В°РЎРЏР Р†Р Р…Р С•РЎРѓРЎвЂљРЎвЂ“ Р С—РЎР‚Р В°Р Р† Р С—РЎС“Р В±Р В»РЎвЂ“Р С”Р В°РЎвЂ РЎвЂ“РЎРЏ Р С•Р Т‘РЎР‚Р В°Р В·РЎС“, РЎвЂ“Р Р…Р В°Р С”РЎв‚¬Р Вµ Р В·Р В°РЎРЏР Р†Р С”Р В° Р С—РЎвЂ“Р Т‘Р Вµ Р Р…Р В° Р СР С•Р Т‘Р ВµРЎР‚Р В°РЎвЂ РЎвЂ“РЎР‹."
+      ? "Заповніть картку повністю: Р·Р° наявності прав публікація одразу, інакше заявка піде на одерацію."
     : uiLocale() === "et"
       ? "Taida kaart taielikult: oiguste korral avaldatakse kohe, muidu laheb modereerimisele."
       : "Fill in all fields: published immediately with permissions, otherwise sent for moderation.";
   const fragmentTitleText = uiLocale() === "ru"
-    ? "Р СњР Вµ Р Р…Р В°РЎв‚¬Р В»Р С‘ Р С—Р ВµРЎРѓР Р…РЎР‹? Р С›РЎвЂљР С—РЎР‚Р В°Р Р†РЎРЉРЎвЂљР Вµ РЎвЂћРЎР‚Р В°Р С–Р СР ВµР Р…РЎвЂљ"
+    ? "Не нашли песню? Отправьте фрагмент"
     : uiLocale() === "uk"
-      ? "Р СњР Вµ Р В·Р Р…Р В°Р в„–РЎв‚¬Р В»Р С‘ Р С—РЎвЂ“РЎРѓР Р…РЎР‹? Р СњР В°Р Т‘РЎвЂ“РЎв‚¬Р В»РЎвЂ“РЎвЂљРЎРЉ РЎвЂћРЎР‚Р В°Р С–Р СР ВµР Р…РЎвЂљ"
+      ? "Не знайшли пісню? Надішліть фрагмент"
       : uiLocale() === "et"
         ? "Ei leidnud laulu? Saada katkend"
         : "Didn't find a song? Send a fragment";
   const fragmentSubtitleText = uiLocale() === "ru"
-    ? "Р Р€Р С”Р В°Р В¶Р С‘РЎвЂљР Вµ РЎвЂљР С•Р В»РЎРЉР С”Р С• РЎвЂљР ВµР С”РЎРѓРЎвЂљ РЎвЂћРЎР‚Р В°Р С–Р СР ВµР Р…РЎвЂљР В° Р С‘ Р С‘РЎРѓРЎвЂљР С•РЎвЂЎР Р…Р С‘Р С”. Р вЂ”Р В°РЎРЏР Р†Р С”Р В° РЎС“Р в„–Р Т‘Р ВµРЎвЂљ Р Р…Р В° РЎР‚Р В°РЎРѓРЎРѓР СР С•РЎвЂљРЎР‚Р ВµР Р…Р С‘Р Вµ РЎРѓРЎС“Р С—Р ВµРЎР‚-Р В°Р Т‘Р СР С‘Р Р…Р С‘РЎРѓРЎвЂљРЎР‚Р В°РЎвЂљР С•РЎР‚РЎС“."
+    ? "Укажите только текст фрагмента и источник. Заявка уйдет на рассмотрение супер-администратору."
     : uiLocale() === "uk"
-      ? "Р вЂ™Р С”Р В°Р В¶РЎвЂ“РЎвЂљРЎРЉ Р В»Р С‘РЎв‚¬Р Вµ РЎвЂљР ВµР С”РЎРѓРЎвЂљ РЎвЂћРЎР‚Р В°Р С–Р СР ВµР Р…РЎвЂљР В° РЎвЂљР В° Р Т‘Р В¶Р ВµРЎР‚Р ВµР В»Р С•. Р вЂ”Р В°РЎРЏР Р†Р С”РЎС“ Р С•РЎвЂљРЎР‚Р С‘Р СР В°РЎвЂќ РЎРѓРЎС“Р С—Р ВµРЎР‚-Р В°Р Т‘Р СРЎвЂ“Р Р…РЎвЂ“РЎРѓРЎвЂљРЎР‚Р В°РЎвЂљР С•РЎР‚."
+      ? "Вкажіть лише текст фрагмента та джерело. Заявку отримає супер-адміністратор."
       : uiLocale() === "et"
         ? "Lisa ainult tekstikatkend ja allikas. Taotlus laheb ainult super-adminile."
         : "Provide only fragment text and source. The request is sent to super admin only.";
   const submitFragmentText = uiLocale() === "ru"
-    ? "Р С›РЎвЂљР С—РЎР‚Р В°Р Р†Р С‘РЎвЂљРЎРЉ РЎвЂћРЎР‚Р В°Р С–Р СР ВµР Р…РЎвЂљ"
+    ? "Отправить фрагмент"
     : uiLocale() === "uk"
-      ? "Р СњР В°Р Т‘РЎвЂ“РЎРѓР В»Р В°РЎвЂљР С‘ РЎвЂћРЎР‚Р В°Р С–Р СР ВµР Р…РЎвЂљ"
+      ? "Надіслати фрагмент"
       : uiLocale() === "et"
         ? "Saada katkend"
         : "Send fragment";
@@ -2638,9 +2638,9 @@ function requestUI(options = {}) {
           <label class="field"><div class="fieldLabel">${esc(t("field.country"))} *</div><select class="select" id="rq_country" required>${selectOptions("country", "", uiText("selectCountry"))}</select></label>
           <label class="field" id="rq_period_wrap"><div class="fieldLabel">${esc(t("field.period"))}</div><select class="select" id="rq_period">${selectOptions("period", "", uiText("selectPeriod"))}</select></label>
           <label class="field"><div class="fieldLabel">${esc(t("field.year"))}</div><input class="input" id="rq_year" /></label>
-          <label class="field"><div class="fieldLabel">${esc(uiLocale() === "ru" ? "Р В Р ВµР С–Р С‘Р С•Р Р…" : uiLocale() === "uk" ? "Р В Р ВµР С–РЎвЂ“Р С•Р Р…" : uiLocale() === "et" ? "Piirkond" : "Region")}</div><input class="input" id="rq_region" /></label>
-          <label class="field"><div class="fieldLabel">${esc(uiLocale() === "ru" ? "Р РЋР С•Р В±РЎвЂ№РЎвЂљР С‘Р Вµ" : uiLocale() === "uk" ? "Р СџР С•Р Т‘РЎвЂ“РЎРЏ" : uiLocale() === "et" ? "Sundmus" : "Event")}</div><input class="input" id="rq_event" /></label>
-          <label class="field"><div class="fieldLabel">${esc(uiLocale() === "ru" ? "Р СћР ВµР СР В°РЎвЂљР С‘Р С”Р В°" : uiLocale() === "uk" ? "Р СћР ВµР СР В°РЎвЂљР С‘Р С”Р В°" : uiLocale() === "et" ? "Temaatika" : "Theme")}</div><input class="input" id="rq_theme" /></label>
+          <label class="field"><div class="fieldLabel">${esc(uiLocale() === "ru" ? "Регион" : uiLocale() === "uk" ? "Регіон" : uiLocale() === "et" ? "Piirkond" : "Region")}</div><input class="input" id="rq_region" /></label>
+          <label class="field"><div class="fieldLabel">${esc(uiLocale() === "ru" ? "Событие" : uiLocale() === "uk" ? "Подія" : uiLocale() === "et" ? "Sundmus" : "Event")}</div><input class="input" id="rq_event" /></label>
+          <label class="field"><div class="fieldLabel">${esc(uiLocale() === "ru" ? "Театика" : uiLocale() === "uk" ? "Театика" : uiLocale() === "et" ? "Temaatika" : "Theme")}</div><input class="input" id="rq_theme" /></label>
           <label class="field"><div class="fieldLabel">${esc(t("field.source"))}</div><input class="input" id="rq_source" /></label>
         </div>
         <input id="rq_report_fragment" type="hidden" value="0" />
@@ -2677,16 +2677,16 @@ function adminAccessDeniedUI() {
 
 function adminTabs(active) {
   const songsTabLabel = uiLocale() === "ru"
-    ? "Р СџР ВµРЎРѓР Р…Р С‘"
+    ? "Песни"
     : uiLocale() === "uk"
-      ? "Р СџРЎвЂ“РЎРѓР Р…РЎвЂ“"
+      ? "Пісні"
       : uiLocale() === "et"
         ? "Laulud"
         : "Songs";
   const backgroundsTabLabel = uiLocale() === "ru"
-    ? "Р В¤Р С•Р Р…РЎвЂ№ РЎРѓРЎвЂљРЎР‚Р В°Р Р…"
+    ? "Фоны стран"
     : uiLocale() === "uk"
-      ? "Р В¤Р С•Р Р…Р С‘ Р С”РЎР‚Р В°РЎвЂ”Р Р…"
+      ? "Фони країн"
       : uiLocale() === "et"
         ? "Riikide taustad"
         : "Country backgrounds";
@@ -2706,7 +2706,7 @@ function adminContentUI(data, params) {
   const localDraftIdentities = listCurrentUserDraftIdentities();
   const hasNewSongDraft = localDraftIdentities.has("__new");
   const newSongLabel = hasNewSongDraft
-    ? `${t("admin.newSong")} Р’В· ${t("status.draft")}`
+    ? `${t("admin.newSong")} · ${t("status.draft")}`
     : t("admin.newSong");
   const page = data?.page || 1;
   const pages = data?.pages || 1;
@@ -2717,7 +2717,7 @@ function adminContentUI(data, params) {
     <a class="songCard ac_item ${isRecent ? "is-recent" : ""}" href="#/admin/editor?id=${encodeURIComponent(s.id)}">
       <div class="ac_item_preview ${isRecent ? "is-recent" : ""}">
         <div class="songTitle">${esc(s.title)}</div>
-        <div class="songMeta">${esc(formatCountry(s.country))}${s.year ? ` Р’В· ${esc(s.year)}` : ""}</div>
+        <div class="songMeta">${esc(formatCountry(s.country))}${s.year ? ` · ${esc(s.year)}` : ""}</div>
       </div>
       ${badge(status)}
     </a>
@@ -2755,17 +2755,17 @@ function adminEditorUI(song = {}, options = {}) {
   const backHash = options.backHash || "#/admin/content";
   const deleteBtn = isNew ? "" : `<button class="btn danger" id="ac_delete" type="button">${esc(t("common.delete"))}</button>`;
   const publishBtnLabel = uiLocale() === "ru"
-    ? "Р С›Р С—РЎС“Р В±Р В»Р С‘Р С”Р С•Р Р†Р В°РЎвЂљРЎРЉ"
+    ? "Опубликовать"
     : uiLocale() === "uk"
-      ? "Р С›Р С—РЎС“Р В±Р В»РЎвЂ“Р С”РЎС“Р Р†Р В°РЎвЂљР С‘"
+      ? "Опублікувати"
       : uiLocale() === "et"
         ? "Avalda"
         : "Publish";
   const publishBtn = `<button class="btn" id="ac_publish" type="button">${esc(publishBtnLabel)}</button>`;
   const draftBtn = `<button class="btn ghost" id="ac_open_draft" type="button">${esc(draftUiText("openCollaborativeDraft"))}</button>`;
   const title = isNew
-    ? (uiLocale() === "ru" ? "Р СњР С•Р Р†Р В°РЎРЏ Р С—Р ВµРЎРѓР Р…РЎРЏ" : uiLocale() === "uk" ? "Р СњР С•Р Р†Р В° Р С—РЎвЂ“РЎРѓР Р…РЎРЏ" : uiLocale() === "et" ? "Uus laul" : "New song")
-    : (uiLocale() === "ru" ? "Р В Р ВµР Т‘Р В°Р С”РЎвЂљР С‘РЎР‚Р С•Р Р†Р В°Р Р…Р С‘Р Вµ Р С—Р ВµРЎРѓР Р…Р С‘" : uiLocale() === "uk" ? "Р В Р ВµР Т‘Р В°Р С–РЎС“Р Р†Р В°Р Р…Р Р…РЎРЏ Р С—РЎвЂ“РЎРѓР Р…РЎвЂ“" : uiLocale() === "et" ? "Laulu muutmine" : "Edit song");
+    ? (uiLocale() === "ru" ? "Новая песня" : uiLocale() === "uk" ? "Нова пісня" : uiLocale() === "et" ? "Uus laul" : "New song")
+    : (uiLocale() === "ru" ? "Редактирование песни" : uiLocale() === "uk" ? "Редагування пісні" : uiLocale() === "et" ? "Laulu muutmine" : "Edit song");
   return `
     <div>
       ${adminTabs("content")}
@@ -2790,10 +2790,10 @@ function adminEditorUI(song = {}, options = {}) {
             <label class="field hidden" id="ac_period_wrap"><div class="fieldLabel">${esc(t("field.period"))}</div><select id="ac_period" class="select">${selectOptions("period", "", uiText("selectPeriod"))}</select></label>
           </div>
           <div class="grid2">
-            <label class="field"><div class="fieldLabel">${esc(uiLocale() === "ru" ? "Р В Р ВµР С–Р С‘Р С•Р Р…" : uiLocale() === "uk" ? "Р В Р ВµР С–РЎвЂ“Р С•Р Р…" : uiLocale() === "et" ? "Piirkond" : "Region")}</div><input id="ac_region" class="input" /></label>
-            <label class="field"><div class="fieldLabel">${esc(uiLocale() === "ru" ? "Р РЋР С•Р В±РЎвЂ№РЎвЂљР С‘Р Вµ" : uiLocale() === "uk" ? "Р СџР С•Р Т‘РЎвЂ“РЎРЏ" : uiLocale() === "et" ? "Sundmus" : "Event")}</div><input id="ac_event" class="input" /></label>
+            <label class="field"><div class="fieldLabel">${esc(uiLocale() === "ru" ? "Регион" : uiLocale() === "uk" ? "Регіон" : uiLocale() === "et" ? "Piirkond" : "Region")}</div><input id="ac_region" class="input" /></label>
+            <label class="field"><div class="fieldLabel">${esc(uiLocale() === "ru" ? "Событие" : uiLocale() === "uk" ? "Подія" : uiLocale() === "et" ? "Sundmus" : "Event")}</div><input id="ac_event" class="input" /></label>
           </div>
-          <label class="field"><div class="fieldLabel">${esc(uiLocale() === "ru" ? "Р СћР ВµР СР В°РЎвЂљР С‘Р С”Р В°" : uiLocale() === "uk" ? "Р СћР ВµР СР В°РЎвЂљР С‘Р С”Р В°" : uiLocale() === "et" ? "Temaatika" : "Theme")}</div><input id="ac_theme" class="input" /></label>
+          <label class="field"><div class="fieldLabel">${esc(uiLocale() === "ru" ? "Театика" : uiLocale() === "uk" ? "Театика" : uiLocale() === "et" ? "Temaatika" : "Theme")}</div><input id="ac_theme" class="input" /></label>
           ${canMarkVerified ? `
             <label class="field admin-only-toggle admin-only-toggle-inline">
               <input id="ac_verified" type="checkbox" />
@@ -2869,14 +2869,14 @@ function adminRequestsUI(data, params) {
             <div class="songCard" data-id="${esc(r.id)}">
               <div style="width:100%">
                 <div class="row"><div class="songTitle">${esc(r.title)}</div><div>${badge(r.status)}</div></div>
-                <div class="songMeta">${esc(formatLang(r.lang))} Р’В· ${esc(formatCountry(r.country))} Р’В· ${esc(formatPeriod(r.period))} Р’В· ${esc(r.user_email || "")}</div>
+                <div class="songMeta">${esc(formatLang(r.lang))} · ${esc(formatCountry(r.country))} · ${esc(formatPeriod(r.period))} · ${esc(r.user_email || "")}</div>
                 ${(r.region || r.event || r.theme || Number(r.report_fragment || 0) === 1) ? `
                   <div class="songMeta">${[
-                    r.region ? `${esc(uiLocale() === "ru" ? "Р В Р ВµР С–Р С‘Р С•Р Р…" : uiLocale() === "uk" ? "Р В Р ВµР С–РЎвЂ“Р С•Р Р…" : uiLocale() === "et" ? "Piirkond" : "Region")}: ${esc(r.region)}` : "",
-                    r.event ? `${esc(uiLocale() === "ru" ? "Р РЋР С•Р В±РЎвЂ№РЎвЂљР С‘Р Вµ" : uiLocale() === "uk" ? "Р СџР С•Р Т‘РЎвЂ“РЎРЏ" : uiLocale() === "et" ? "Sundmus" : "Event")}: ${esc(r.event)}` : "",
-                    r.theme ? `${esc(uiLocale() === "ru" ? "Р СћР ВµР СР В°РЎвЂљР С‘Р С”Р В°" : uiLocale() === "uk" ? "Р СћР ВµР СР В°РЎвЂљР С‘Р С”Р В°" : uiLocale() === "et" ? "Temaatika" : "Theme")}: ${esc(r.theme)}` : "",
-                    Number(r.report_fragment || 0) === 1 ? esc(uiLocale() === "ru" ? "Р РЋР С•Р С•Р В±РЎвЂ°Р ВµР Р…Р С‘Р Вµ РЎвЂћРЎР‚Р В°Р С–Р СР ВµР Р…РЎвЂљР В°" : uiLocale() === "uk" ? "Р СџР С•Р Р†РЎвЂ“Р Т‘Р С•Р СР В»Р ВµР Р…Р Р…РЎРЏ РЎвЂћРЎР‚Р В°Р С–Р СР ВµР Р…РЎвЂљР В°" : uiLocale() === "et" ? "Katkendi teavitus" : "Fragment report") : "",
-                  ].filter(Boolean).join(" Р’В· ")}</div>
+                    r.region ? `${esc(uiLocale() === "ru" ? "Регион" : uiLocale() === "uk" ? "Регіон" : uiLocale() === "et" ? "Piirkond" : "Region")}: ${esc(r.region)}` : "",
+                    r.event ? `${esc(uiLocale() === "ru" ? "Событие" : uiLocale() === "uk" ? "Подія" : uiLocale() === "et" ? "Sundmus" : "Event")}: ${esc(r.event)}` : "",
+                    r.theme ? `${esc(uiLocale() === "ru" ? "Театика" : uiLocale() === "uk" ? "Театика" : uiLocale() === "et" ? "Temaatika" : "Theme")}: ${esc(r.theme)}` : "",
+                    Number(r.report_fragment || 0) === 1 ? esc(uiLocale() === "ru" ? "Сообщение фрагмента" : uiLocale() === "uk" ? "Повідомлення фрагмента" : uiLocale() === "et" ? "Katkendi teavitus" : "Fragment report") : "",
+                  ].filter(Boolean).join(" · ")}</div>
                 ` : ``}
                 <pre class="lyrics" style="margin-top:8px">${esc((r.lyrics || "").slice(0, 400))}</pre>
                 <input class="input ar_comment" placeholder="${esc(t("admin.requests.comment"))}" style="margin-top:8px" />
@@ -2896,66 +2896,66 @@ function adminRequestsUI(data, params) {
 function adminUsersUI(data) {
   const items = data?.items || [];
   const allLangLabel = uiLocale() === "ru"
-    ? "Р вЂ™РЎРѓР Вµ РЎРЏР В·РЎвЂ№Р С”Р С‘"
+    ? "Все языки"
     : uiLocale() === "uk"
-      ? "Р Р€РЎРѓРЎвЂ“ Р СР С•Р Р†Р С‘"
+      ? "Усі мови"
       : uiLocale() === "et"
         ? "Koik keeled"
         : "All languages";
   const langOptions = SONG_LANGUAGE_VALUES.map((value) => ({ value, label: formatLang(value) }));
   const scopeBlockLabel = uiLocale() === "ru"
-    ? "Р Р‡Р В·РЎвЂ№Р С”Р С‘ Р С—Р ВµРЎРѓР ВµР Р…"
+    ? "Языки песен"
     : uiLocale() === "uk"
-      ? "Р СљР С•Р Р†Р С‘ Р С—РЎвЂ“РЎРѓР ВµР Р…РЎРЉ"
+      ? "Мови пісень"
       : uiLocale() === "et"
         ? "Laulude keeled"
         : "Song languages";
   const purgeLabel = uiLocale() === "ru"
-    ? "Р Р€Р Т‘Р В°Р В»Р С‘РЎвЂљРЎРЉ Р Т‘Р В°Р Р…Р Р…РЎвЂ№Р Вµ Р С—Р С•Р В»РЎРЉР В·Р С•Р Р†Р В°РЎвЂљР ВµР В»РЎРЏ РЎРѓ РЎРѓР В°Р в„–РЎвЂљР В°"
+    ? "Удалить данные пользователя с сайта"
     : uiLocale() === "uk"
-      ? "Р вЂ™Р С‘Р Т‘Р В°Р В»Р С‘РЎвЂљР С‘ Р Т‘Р В°Р Р…РЎвЂ“ Р С”Р С•РЎР‚Р С‘РЎРѓРЎвЂљРЎС“Р Р†Р В°РЎвЂЎР В° Р В· РЎРѓР В°Р в„–РЎвЂљРЎС“"
+      ? "Видалити дані користувача Р· сайту"
     : uiLocale() === "et"
       ? "Kustuta kasutaja andmed saidilt"
       : "Delete user data from site";
   const permsCollapseLabel = uiLocale() === "ru"
-    ? "Р СџР С•Р В»Р Р…Р С•Р СР С•РЎвЂЎР С‘РЎРЏ"
+    ? "Полномочия"
     : uiLocale() === "uk"
-      ? "Р СџР С•Р Р†Р Р…Р С•Р Р†Р В°Р В¶Р ВµР Р…Р Р…РЎРЏ"
+      ? "Повноваження"
       : uiLocale() === "et"
         ? "Oigused"
         : "Permissions";
   const superAdminBadgeLabel = uiLocale() === "ru"
-    ? "Р РЋРЎС“Р С—Р ВµРЎР‚-Р В°Р Т‘Р СР С‘Р Р…Р С‘РЎРѓРЎвЂљРЎР‚Р В°РЎвЂљР С•РЎР‚"
+    ? "Супер-адинистратор"
     : uiLocale() === "uk"
-      ? "Р РЋРЎС“Р С—Р ВµРЎР‚-Р В°Р Т‘Р СРЎвЂ“Р Р…РЎвЂ“РЎРѓРЎвЂљРЎР‚Р В°РЎвЂљР С•РЎР‚"
+      ? "Супер-адіністратор"
       : uiLocale() === "et"
         ? "Superadministraator"
         : "Super admin";
   const superAdminHint = uiLocale() === "ru"
-    ? "Р РЋР С‘РЎРѓРЎвЂљР ВµР СР Р…Р В°РЎРЏ РЎР‚Р С•Р В»РЎРЉ: РЎРѓРЎС“Р С—Р ВµРЎР‚-Р В°Р Т‘Р СР С‘Р Р…Р С‘РЎРѓРЎвЂљРЎР‚Р В°РЎвЂљР С•РЎР‚. Р ВР В·Р СР ВµР Р…Р ВµР Р…Р С‘Р Вµ РЎвЂЎР ВµРЎР‚Р ВµР В· Р С‘Р Р…РЎвЂљР ВµРЎР‚РЎвЂћР ВµР в„–РЎРѓ Р Р…Р ВµР Т‘Р С•РЎРѓРЎвЂљРЎС“Р С—Р Р…Р С•."
+    ? "Системная роль: супер-администратор. Изменение через интерфейс недоступно."
     : uiLocale() === "uk"
-      ? "Р РЋР С‘РЎРѓРЎвЂљР ВµР СР Р…Р В° РЎР‚Р С•Р В»РЎРЉ: РЎРѓРЎС“Р С—Р ВµРЎР‚-Р В°Р Т‘Р СРЎвЂ“Р Р…РЎвЂ“РЎРѓРЎвЂљРЎР‚Р В°РЎвЂљР С•РЎР‚. Р вЂ”Р СРЎвЂ“Р Р…Р В° РЎвЂЎР ВµРЎР‚Р ВµР В· РЎвЂ“Р Р…РЎвЂљР ВµРЎР‚РЎвЂћР ВµР в„–РЎРѓ Р Р…Р ВµР Т‘Р С•РЎРѓРЎвЂљРЎС“Р С—Р Р…Р В°."
+      ? "Системна роль: супер-адміністратор. Зміна через інтерфейс недоступна."
       : uiLocale() === "et"
         ? "Susteemiroll: superadministraator. Muutmine liidese kaudu pole lubatud."
         : "System role: super admin. Editing from UI is disabled.";
   const accessLevelLabel = uiLocale() === "ru"
-    ? "Р Р€РЎР‚Р С•Р Р†Р ВµР Р…РЎРЉ Р Т‘Р С•РЎРѓРЎвЂљРЎС“Р С—Р В°"
+    ? "Уровень доступа"
     : uiLocale() === "uk"
-      ? "Р В РЎвЂ“Р Р†Р ВµР Р…РЎРЉ Р Т‘Р С•РЎРѓРЎвЂљРЎС“Р С—РЎС“"
+      ? "Рівень доступу"
       : uiLocale() === "et"
         ? "Juurdepaasu tase"
         : "Access level";
   const userRoleLabel = uiLocale() === "ru"
-    ? "Р СџР С•Р В»РЎРЉР В·Р С•Р Р†Р В°РЎвЂљР ВµР В»РЎРЉ"
+    ? "Пользователь"
     : uiLocale() === "uk"
-      ? "Р С™Р С•РЎР‚Р С‘РЎРѓРЎвЂљРЎС“Р Р†Р В°РЎвЂЎ"
+      ? "Користувач"
       : uiLocale() === "et"
         ? "Kasutaja"
         : "User";
   const adminRoleLabel = uiLocale() === "ru"
-    ? "Р С’Р Т‘Р СР С‘Р Р…Р С‘РЎРѓРЎвЂљРЎР‚Р В°РЎвЂљР С•РЎР‚"
+    ? "Адинистратор"
     : uiLocale() === "uk"
-      ? "Р С’Р Т‘Р СРЎвЂ“Р Р…РЎвЂ“РЎРѓРЎвЂљРЎР‚Р В°РЎвЂљР С•РЎР‚"
+      ? "Адіністратор"
       : uiLocale() === "et"
         ? "Administraator"
         : "Administrator";
@@ -2980,7 +2980,7 @@ function adminUsersUI(data) {
                     <div class="songTitle">${esc(displayName)}</div>
                     ${isSystemSuper ? `<span class="badge ok">${esc(superAdminBadgeLabel)}</span>` : ``}
                   </div>
-                  <div class="songMeta">${esc(u.email || "")} Р’В· ${esc(u.id)} Р’В· ${esc(u.created_at || "")}</div>
+                  <div class="songMeta">${esc(u.email || "")} · ${esc(u.id)} · ${esc(u.created_at || "")}</div>
                   ${isSystemSuper ? `<div class="muted small" style="margin-top:6px">${esc(superAdminHint)}</div>` : ``}
                   <div class="grid2" style="margin-top:8px">
                     <label class="field">
@@ -3041,67 +3041,67 @@ function adminCountryBackgroundsUI(data) {
   const desktopViewport = COUNTRY_BACKGROUND_VIEWPORTS.desktop;
   const mobileViewport = COUNTRY_BACKGROUND_VIEWPORTS.mobile;
   const title = uiLocale() === "ru"
-    ? "Р В Р ВµР Т‘Р В°Р С”РЎвЂљР С•РЎР‚ РЎвЂћР С•Р Р…Р С•Р Р† РЎРѓРЎвЂљРЎР‚Р В°Р Р…РЎвЂ№"
+    ? "Редактор фонов страны"
     : uiLocale() === "uk"
-      ? "Р В Р ВµР Т‘Р В°Р С”РЎвЂљР С•РЎР‚ РЎвЂћР С•Р Р…РЎвЂ“Р Р† Р С”РЎР‚Р В°РЎвЂ”Р Р…Р С‘"
+      ? "Редактор фонів країни"
       : uiLocale() === "et"
         ? "Riigi tausta redaktor"
         : "Country background editor";
   const subtitle = uiLocale() === "ru"
-    ? "Р вЂ”Р В°Р Т‘Р В°Р в„–РЎвЂљР Вµ Р С•РЎвЂљР Т‘Р ВµР В»РЎРЉР Р…РЎвЂ№Р Вµ РЎвЂћР С•Р Р…РЎвЂ№ Р Т‘Р В»РЎРЏ Р СџР С™ Р С‘ РЎвЂљР ВµР В»Р ВµРЎвЂћР С•Р Р…Р В°, Р С—Р ВµРЎР‚Р ВµРЎвЂљР В°РЎвЂ°Р С‘РЎвЂљР Вµ Р С”Р В°Р Т‘РЎР‚ Р СРЎвЂ№РЎв‚¬РЎРЉРЎР‹/Р С—Р В°Р В»РЎРЉРЎвЂ Р ВµР С Р С‘ Р Р…Р В°РЎРѓРЎвЂљРЎР‚Р С•Р в„–РЎвЂљР Вµ Р В·РЎС“Р С."
+    ? "Задайте отдельные фоны для ПК и телефона, перетащите кадр ышью/пальце и настройте зу."
     : uiLocale() === "uk"
-      ? "Р вЂ”Р В°Р Т‘Р В°Р в„–РЎвЂљР Вµ Р С•Р С”РЎР‚Р ВµР СРЎвЂ“ РЎвЂћР С•Р Р…Р С‘ Р Т‘Р В»РЎРЏ Р СџР С™ РЎвЂ“ РЎвЂљР ВµР В»Р ВµРЎвЂћР С•Р Р…РЎС“, Р С—Р ВµРЎР‚Р ВµРЎвЂљРЎРЏР С–Р Р…РЎвЂ“РЎвЂљРЎРЉ Р С”Р В°Р Т‘РЎР‚ Р СР С‘РЎв‚¬Р С”Р С•РЎР‹/Р С—Р В°Р В»РЎРЉРЎвЂ Р ВµР С РЎвЂ“ Р Р…Р В°Р В»Р В°РЎв‚¬РЎвЂљРЎС“Р в„–РЎвЂљР Вµ Р В·РЎС“Р С."
+      ? "Задайте окреі фони для ПК С– телефону, перетягніть кадр ишкою/пальце С– налаштуйте зу."
       : uiLocale() === "et"
         ? "Maara eraldi taustad lauaarvutile ja telefonile, lohista kaadrit hiire/sormega ja sea suum."
         : "Set separate desktop/mobile backgrounds, drag the frame with mouse/touch, and adjust zoom.";
   const countryLabel = uiLocale() === "ru"
-    ? "Р РЋРЎвЂљРЎР‚Р В°Р Р…Р В°"
+    ? "Страна"
     : uiLocale() === "uk"
-      ? "Р С™РЎР‚Р В°РЎвЂ”Р Р…Р В°"
+      ? "Країна"
       : uiLocale() === "et"
         ? "Riik"
         : "Country";
   const countrySearchLabel = uiLocale() === "ru"
-    ? "Р СџР С•Р С‘РЎРѓР С” РЎРѓРЎвЂљРЎР‚Р В°Р Р…РЎвЂ№"
+    ? "Поиск страны"
     : uiLocale() === "uk"
-      ? "Р СџР С•РЎв‚¬РЎС“Р С” Р С”РЎР‚Р В°РЎвЂ”Р Р…Р С‘"
+      ? "Пошук країни"
       : uiLocale() === "et"
         ? "Riigi otsing"
         : "Country search";
   const countrySearchPlaceholder = uiLocale() === "ru"
-    ? "Р СњР В°РЎвЂЎР Р…Р С‘РЎвЂљР Вµ Р Р†Р Р†Р С•Р Т‘Р С‘РЎвЂљРЎРЉ Р Р…Р В°Р В·Р Р†Р В°Р Р…Р С‘Р Вµ Р С‘Р В»Р С‘ Р С”Р С•Р Т‘ (Р Р…Р В°Р С—РЎР‚Р С‘Р СР ВµРЎР‚: ussr)"
+    ? "Начните вводить название или код (например: ussr)"
     : uiLocale() === "uk"
-      ? "Р СџР С•РЎвЂЎР Р…РЎвЂ“РЎвЂљРЎРЉ Р Р†Р Р†Р С•Р Т‘Р С‘РЎвЂљР С‘ Р Р…Р В°Р В·Р Р†РЎС“ Р В°Р В±Р С• Р С”Р С•Р Т‘ (Р Р…Р В°Р С—РЎР‚Р С‘Р С”Р В»Р В°Р Т‘: ussr)"
+      ? "Почніть вводити назву або код (наприклад: ussr)"
       : uiLocale() === "et"
         ? "Sisesta nimi voi kood (nt ussr)"
         : "Start typing name or code (e.g. ussr)";
-  const periodScopeLabel = uiLocale() === "ru" ? "Р В­Р С—Р С•РЎвЂ¦Р В° Р РЋР РЋР РЋР В  Р Т‘Р В»РЎРЏ РЎвЂћР С•Р Р…Р В°" : uiLocale() === "uk" ? "Р вЂўР С—Р С•РЎвЂ¦Р В° Р РЋР В Р РЋР В  Р Т‘Р В»РЎРЏ РЎвЂћР С•Р Р…РЎС“" : uiLocale() === "et" ? "NSVL taustaperiood" : "USSR era for background";
-  const periodScopeDefaultLabel = uiLocale() === "ru" ? "Р вЂР В°Р В·Р С•Р Р†РЎвЂ№Р в„– РЎвЂћР С•Р Р… (Р Р†РЎРѓР Вµ РЎРЊР С—Р С•РЎвЂ¦Р С‘)" : uiLocale() === "uk" ? "Р вЂР В°Р В·Р С•Р Р†Р С‘Р в„– РЎвЂћР С•Р Р… (РЎС“РЎРѓРЎвЂ“ Р ВµР С—Р С•РЎвЂ¦Р С‘)" : uiLocale() === "et" ? "Pohitaust (koik perioodid)" : "Default background (all eras)";
+  const periodScopeLabel = uiLocale() === "ru" ? "Эпоха СССР для фона" : uiLocale() === "uk" ? "Епоха СРСР для фону" : uiLocale() === "et" ? "NSVL taustaperiood" : "USSR era for background";
+  const periodScopeDefaultLabel = uiLocale() === "ru" ? "азовый фон (все эпохи)" : uiLocale() === "uk" ? "азовий фон (усі епохи)" : uiLocale() === "et" ? "Pohitaust (koik perioodid)" : "Default background (all eras)";
   const periodScopeHint = uiLocale() === "ru"
-    ? "Р вЂ™РЎвЂ№Р В±Р ВµРЎР‚Р С‘РЎвЂљР Вµ РЎРЊР С—Р С•РЎвЂ¦РЎС“, РЎвЂЎРЎвЂљР С•Р В±РЎвЂ№ Р В·Р В°Р Т‘Р В°РЎвЂљРЎРЉ Р С•РЎвЂљР Т‘Р ВµР В»РЎРЉР Р…РЎвЂ№Р в„– РЎвЂћР С•Р Р… Р Т‘Р В»РЎРЏ Р С—Р ВµРЎР‚Р С‘Р С•Р Т‘Р В° Р РЋР РЋР РЋР В ."
+    ? "Выберите эпоху, чтобы задать отдельный фон для периода СССР."
     : uiLocale() === "uk"
-      ? "Р С›Р В±Р ВµРЎР‚РЎвЂ“РЎвЂљРЎРЉ Р ВµР С—Р С•РЎвЂ¦РЎС“, РЎвЂ°Р С•Р В± Р В·Р В°Р Т‘Р В°РЎвЂљР С‘ Р С•Р С”РЎР‚Р ВµР СР С‘Р в„– РЎвЂћР С•Р Р… Р Т‘Р В»РЎРЏ Р С—Р ВµРЎР‚РЎвЂ“Р С•Р Т‘РЎС“ Р РЋР В Р РЋР В ."
+      ? "Оберіть епоху, щоб задати окреий фон для періоду СРСР."
       : uiLocale() === "et"
         ? "Vali periood, et maarata NSVL ajastule eraldi taust."
         : "Choose an era to set a dedicated USSR period background.";
-  const desktopLabel = uiLocale() === "ru" ? "Р СџР С™" : uiLocale() === "uk" ? "Р СџР С™" : uiLocale() === "et" ? "Lauaarvuti" : "Desktop";
-  const mobileLabel = uiLocale() === "ru" ? "Р СћР ВµР В»Р ВµРЎвЂћР С•Р Р…" : uiLocale() === "uk" ? "Р СћР ВµР В»Р ВµРЎвЂћР С•Р Р…" : uiLocale() === "et" ? "Telefon" : "Mobile";
-  const uploadLabel = uiLocale() === "ru" ? "Р вЂ”Р В°Р С–РЎР‚РЎС“Р В·Р С‘РЎвЂљРЎРЉ РЎвЂћР В°Р в„–Р В»" : uiLocale() === "uk" ? "Р вЂ”Р В°Р Р†Р В°Р Р…РЎвЂљР В°Р В¶Р С‘РЎвЂљР С‘ РЎвЂћР В°Р в„–Р В»" : uiLocale() === "et" ? "Laadi fail" : "Upload file";
-  const urlLabel = uiLocale() === "ru" ? "Р С‘Р В»Р С‘ URL Р С‘Р В·Р С•Р В±РЎР‚Р В°Р В¶Р ВµР Р…Р С‘РЎРЏ" : uiLocale() === "uk" ? "Р В°Р В±Р С• URL Р В·Р С•Р В±РЎР‚Р В°Р В¶Р ВµР Р…Р Р…РЎРЏ" : uiLocale() === "et" ? "voi pildi URL" : "or image URL";
-  const zoomLabel = uiLocale() === "ru" ? "Р вЂ”РЎС“Р С" : uiLocale() === "uk" ? "Р вЂ”РЎС“Р С" : uiLocale() === "et" ? "Suum" : "Zoom";
-  const saveLabel = uiLocale() === "ru" ? "Р РЋР С•РЎвЂ¦РЎР‚Р В°Р Р…Р С‘РЎвЂљРЎРЉ" : uiLocale() === "uk" ? "Р вЂ”Р В±Р ВµРЎР‚Р ВµР С–РЎвЂљР С‘" : uiLocale() === "et" ? "Salvesta" : "Save";
-  const clearLabel = uiLocale() === "ru" ? "Р С›РЎвЂЎР С‘РЎРѓРЎвЂљР С‘РЎвЂљРЎРЉ" : uiLocale() === "uk" ? "Р С›РЎвЂЎР С‘РЎРѓРЎвЂљР С‘РЎвЂљР С‘" : uiLocale() === "et" ? "Tuhjenda" : "Clear";
-  const previewLabel = uiLocale() === "ru" ? "Р СџРЎР‚Р ВµР Т‘Р С—РЎР‚Р С•РЎРѓР СР С•РЎвЂљРЎР‚" : uiLocale() === "uk" ? "Р СџР С•Р С—Р ВµРЎР‚Р ВµР Т‘Р Р…РЎвЂ“Р в„– Р С—Р ВµРЎР‚Р ВµР С–Р В»РЎРЏР Т‘" : uiLocale() === "et" ? "Eelvaade" : "Preview";
+  const desktopLabel = uiLocale() === "ru" ? "ПК" : uiLocale() === "uk" ? "ПК" : uiLocale() === "et" ? "Lauaarvuti" : "Desktop";
+  const mobileLabel = uiLocale() === "ru" ? "Телефон" : uiLocale() === "uk" ? "Телефон" : uiLocale() === "et" ? "Telefon" : "Mobile";
+  const uploadLabel = uiLocale() === "ru" ? "Загрузить файл" : uiLocale() === "uk" ? "Завантажити файл" : uiLocale() === "et" ? "Laadi fail" : "Upload file";
+  const urlLabel = uiLocale() === "ru" ? "или URL изображения" : uiLocale() === "uk" ? "або URL зображення" : uiLocale() === "et" ? "voi pildi URL" : "or image URL";
+  const zoomLabel = uiLocale() === "ru" ? "Зу" : uiLocale() === "uk" ? "Зу" : uiLocale() === "et" ? "Suum" : "Zoom";
+  const saveLabel = uiLocale() === "ru" ? "Сохранить" : uiLocale() === "uk" ? "Зберегти" : uiLocale() === "et" ? "Salvesta" : "Save";
+  const clearLabel = uiLocale() === "ru" ? "Очистить" : uiLocale() === "uk" ? "Очистити" : uiLocale() === "et" ? "Tuhjenda" : "Clear";
+  const previewLabel = uiLocale() === "ru" ? "Предпросмотр" : uiLocale() === "uk" ? "Попередній перегляд" : uiLocale() === "et" ? "Eelvaade" : "Preview";
   const dragHint = uiLocale() === "ru"
-    ? "Р СџР ВµРЎР‚Р ВµРЎвЂљР В°РЎвЂ°Р С‘РЎвЂљР Вµ Р С‘Р В·Р С•Р В±РЎР‚Р В°Р В¶Р ВµР Р…Р С‘Р Вµ, РЎвЂЎРЎвЂљР С•Р В±РЎвЂ№ Р Р†РЎвЂ№РЎРѓРЎвЂљР В°Р Р†Р С‘РЎвЂљРЎРЉ Р С”Р В°Р Т‘РЎР‚"
+    ? "Перетащите изображение, чтобы выставить кадр"
     : uiLocale() === "uk"
-      ? "Р СџР ВµРЎР‚Р ВµРЎвЂљРЎРЏР С–Р Р…РЎвЂ“РЎвЂљРЎРЉ Р В·Р С•Р В±РЎР‚Р В°Р В¶Р ВµР Р…Р Р…РЎРЏ, РЎвЂ°Р С•Р В± Р Р†Р С‘РЎРѓРЎвЂљР В°Р Р†Р С‘РЎвЂљР С‘ Р С”Р В°Р Т‘РЎР‚"
+      ? "Перетягніть зображення, щоб виставити кадр"
       : uiLocale() === "et"
         ? "Lohista pilti, et kaader paika seada"
         : "Drag image to position the frame";
-  const noImage = uiLocale() === "ru" ? "Р СњР ВµРЎвЂљ Р С‘Р В·Р С•Р В±РЎР‚Р В°Р В¶Р ВµР Р…Р С‘РЎРЏ" : uiLocale() === "uk" ? "Р СњР ВµР СР В°РЎвЂќ Р В·Р С•Р В±РЎР‚Р В°Р В¶Р ВµР Р…Р Р…РЎРЏ" : uiLocale() === "et" ? "Pilt puudub" : "No image";
-  const assetLabel = uiLocale() === "ru" ? "Р С™Р В°РЎР‚РЎвЂљР С‘Р Р…Р С”Р В°" : uiLocale() === "uk" ? "Р С™Р В°РЎР‚РЎвЂљР С‘Р Р…Р С”Р В°" : uiLocale() === "et" ? "Pilt" : "Image";
-  const screenLabel = uiLocale() === "ru" ? "Р В­Р С”РЎР‚Р В°Р Р…" : uiLocale() === "uk" ? "Р вЂўР С”РЎР‚Р В°Р Р…" : uiLocale() === "et" ? "Ekraan" : "Screen";
+  const noImage = uiLocale() === "ru" ? "Нет изображения" : uiLocale() === "uk" ? "Неає зображення" : uiLocale() === "et" ? "Pilt puudub" : "No image";
+  const assetLabel = uiLocale() === "ru" ? "Картинка" : uiLocale() === "uk" ? "Картинка" : uiLocale() === "et" ? "Pilt" : "Image";
+  const screenLabel = uiLocale() === "ru" ? "Экран" : uiLocale() === "uk" ? "Екран" : uiLocale() === "et" ? "Ekraan" : "Screen";
   const ratioText = (w, h) => {
     const gcd = (a, b) => (b ? gcd(b, a % b) : a);
     const ww = Math.max(1, Number(w) || 1);
@@ -3114,52 +3114,52 @@ function adminCountryBackgroundsUI(data) {
   const mobileAssetRatio = ratioText(mobileStd.width, mobileStd.height);
   const mobileViewportRatio = ratioText(mobileViewport.width, mobileViewport.height);
   const mapTitle = uiLocale() === "ru"
-    ? "Р СљР С‘Р Р…Р С‘-Р С”Р В°РЎР‚РЎвЂљР В° Р С—РЎР‚Р С•Р С”РЎР‚РЎС“РЎвЂљР С”Р С‘ (Р Р†РЎРѓРЎРЏ Р С”Р В°РЎР‚РЎвЂљР С‘Р Р…Р С”Р В° + Р Р†Р С‘Р Т‘Р С‘Р СР С•Р Вµ Р С•Р С”Р Р…Р С•)"
+    ? "Мини-карта прокрутки (вся картинка + видимое окно)"
     : uiLocale() === "uk"
-      ? "Р СљРЎвЂ“Р Р…РЎвЂ“-Р С”Р В°РЎР‚РЎвЂљР В° Р С—РЎР‚Р С•Р С”РЎР‚РЎС“РЎвЂљР С”Р С‘ (Р Р†РЎРѓРЎРЏ Р С”Р В°РЎР‚РЎвЂљР С‘Р Р…Р С”Р В° + Р Р†Р С‘Р Т‘Р С‘Р СР Вµ Р Р†РЎвЂ“Р С”Р Р…Р С•)"
+      ? "Міні-карта прокрутки (вся картинка + видиме вікно)"
       : uiLocale() === "et"
         ? "Kerimise minimapp (kogu pilt + nahtav aken)"
         : "Scroll minimap (full image + visible window)";
-  const scrollLabel = uiLocale() === "ru" ? "Р СџРЎР‚Р С•Р С”РЎР‚РЎС“РЎвЂљР С”Р В°" : uiLocale() === "uk" ? "Р СџРЎР‚Р С•Р С”РЎР‚РЎС“РЎвЂљР С”Р В°" : uiLocale() === "et" ? "Kerimine" : "Scroll";
+  const scrollLabel = uiLocale() === "ru" ? "Прокрутка" : uiLocale() === "uk" ? "Прокрутка" : uiLocale() === "et" ? "Kerimine" : "Scroll";
   const nudgeHint = uiLocale() === "ru"
-    ? "Р СћР С•РЎвЂЎР Р…Р В°РЎРЏ Р Р…Р В°РЎРѓРЎвЂљРЎР‚Р С•Р в„–Р С”Р В° Р С”Р В°Р Т‘РЎР‚Р В° Р С”Р Р…Р С•Р С—Р С”Р В°Р СР С‘"
+    ? "Точная настройка кадра кнопками"
     : uiLocale() === "uk"
-      ? "Р СћР С•РЎвЂЎР Р…Р Вµ Р Р…Р В°Р В»Р В°РЎв‚¬РЎвЂљРЎС“Р Р†Р В°Р Р…Р Р…РЎРЏ Р С”Р В°Р Т‘РЎР‚РЎС“ Р С”Р Р…Р С•Р С—Р С”Р В°Р СР С‘"
+      ? "Точне налаштування кадру кнопками"
       : uiLocale() === "et"
         ? "Kaadri peenhaalestus nuppudega"
         : "Fine frame tuning with buttons";
-  const centerLabel = uiLocale() === "ru" ? "Р В¦Р ВµР Р…РЎвЂљРЎР‚" : uiLocale() === "uk" ? "Р В¦Р ВµР Р…РЎвЂљРЎР‚" : uiLocale() === "et" ? "Keskele" : "Center";
-  const stepLabel = uiLocale() === "ru" ? "Р РЃР В°Р С–" : uiLocale() === "uk" ? "Р С™РЎР‚Р С•Р С”" : uiLocale() === "et" ? "Samm" : "Step";
+  const centerLabel = uiLocale() === "ru" ? "Центр" : uiLocale() === "uk" ? "Центр" : uiLocale() === "et" ? "Keskele" : "Center";
+  const stepLabel = uiLocale() === "ru" ? "Шаг" : uiLocale() === "uk" ? "Крок" : uiLocale() === "et" ? "Samm" : "Step";
   const openPreviewLabel = uiLocale() === "ru"
-    ? "Р С›РЎвЂљР С”РЎР‚РЎвЂ№РЎвЂљРЎРЉ РЎРѓРЎвЂљРЎР‚Р В°Р Р…Р С‘РЎвЂ РЎС“ Р Р† Р Р…Р С•Р Р†Р С•Р в„– Р Р†Р С”Р В»Р В°Р Т‘Р С”Р Вµ"
+    ? "Открыть страницу в новой вкладке"
     : uiLocale() === "uk"
-      ? "Р вЂ™РЎвЂ“Р Т‘Р С”РЎР‚Р С‘РЎвЂљР С‘ РЎРѓРЎвЂљР С•РЎР‚РЎвЂ“Р Р…Р С”РЎС“ РЎС“ Р Р…Р С•Р Р†РЎвЂ“Р в„– Р Р†Р С”Р В»Р В°Р Т‘РЎвЂ РЎвЂ“"
+      ? "Відкрити сторінку у новій вкладці"
       : uiLocale() === "et"
         ? "Ava leht uuel vahelehel"
         : "Open page in new tab";
   const canEditFlag = isSuperAdmin();
   const flagDesktopStd = FLAG_CARD_STANDARDS.desktopLong;
   const flagMobileStd = FLAG_CARD_STANDARDS.mobileLong;
-  const flagTitle = uiLocale() === "ru" ? "Р В¤Р В»Р В°Р С– Р Т‘Р В»РЎРЏ Р С”Р В°РЎР‚РЎвЂљР С•РЎвЂЎР ВµР С” Р С”Р В°РЎвЂљР В°Р В»Р С•Р С–Р В°" : uiLocale() === "uk" ? "Р СџРЎР‚Р В°Р С—Р С•РЎР‚ Р Т‘Р В»РЎРЏ Р С”Р В°РЎР‚РЎвЂљР С•Р С” Р С”Р В°РЎвЂљР В°Р В»Р С•Р С–РЎС“" : uiLocale() === "et" ? "Kataloogi kaartide lipp" : "Flag for catalog cards";
-  const flagDesktopInputLabel = uiLocale() === "ru" ? "Р В¤Р В°Р в„–Р В» РЎвЂћР В»Р В°Р С–Р В° (Р СџР С™)" : uiLocale() === "uk" ? "Р В¤Р В°Р в„–Р В» Р С—РЎР‚Р В°Р С—Р С•РЎР‚Р В° (Р СџР С™)" : uiLocale() === "et" ? "Lipu fail (lauaarvuti)" : "Flag file (desktop)";
-  const flagDesktopUrlLabel = uiLocale() === "ru" ? "Р С‘Р В»Р С‘ URL РЎвЂћР В»Р В°Р С–Р В° (Р СџР С™)" : uiLocale() === "uk" ? "Р В°Р В±Р С• URL Р С—РЎР‚Р В°Р С—Р С•РЎР‚Р В° (Р СџР С™)" : uiLocale() === "et" ? "voi lipu URL (lauaarvuti)" : "or flag URL (desktop)";
-  const flagMobileInputLabel = uiLocale() === "ru" ? "Р В¤Р В°Р в„–Р В» РЎвЂћР В»Р В°Р С–Р В° (РЎвЂљР ВµР В»Р ВµРЎвЂћР С•Р Р…)" : uiLocale() === "uk" ? "Р В¤Р В°Р в„–Р В» Р С—РЎР‚Р В°Р С—Р С•РЎР‚Р В° (РЎвЂљР ВµР В»Р ВµРЎвЂћР С•Р Р…)" : uiLocale() === "et" ? "Lipu fail (telefon)" : "Flag file (mobile)";
-  const flagMobileUrlLabel = uiLocale() === "ru" ? "Р С‘Р В»Р С‘ URL РЎвЂћР В»Р В°Р С–Р В° (РЎвЂљР ВµР В»Р ВµРЎвЂћР С•Р Р…)" : uiLocale() === "uk" ? "Р В°Р В±Р С• URL Р С—РЎР‚Р В°Р С—Р С•РЎР‚Р В° (РЎвЂљР ВµР В»Р ВµРЎвЂћР С•Р Р…)" : uiLocale() === "et" ? "voi lipu URL (telefon)" : "or flag URL (mobile)";
+  const flagTitle = uiLocale() === "ru" ? "Флаг для карточек каталога" : uiLocale() === "uk" ? "Прапор для карток каталогу" : uiLocale() === "et" ? "Kataloogi kaartide lipp" : "Flag for catalog cards";
+  const flagDesktopInputLabel = uiLocale() === "ru" ? "Р¤Р°Р№Р» флага (ПК)" : uiLocale() === "uk" ? "Р¤Р°Р№Р» прапора (ПК)" : uiLocale() === "et" ? "Lipu fail (lauaarvuti)" : "Flag file (desktop)";
+  const flagDesktopUrlLabel = uiLocale() === "ru" ? "или URL флага (ПК)" : uiLocale() === "uk" ? "або URL прапора (ПК)" : uiLocale() === "et" ? "voi lipu URL (lauaarvuti)" : "or flag URL (desktop)";
+  const flagMobileInputLabel = uiLocale() === "ru" ? "Р¤Р°Р№Р» флага (телефон)" : uiLocale() === "uk" ? "Р¤Р°Р№Р» прапора (телефон)" : uiLocale() === "et" ? "Lipu fail (telefon)" : "Flag file (mobile)";
+  const flagMobileUrlLabel = uiLocale() === "ru" ? "или URL флага (телефон)" : uiLocale() === "uk" ? "або URL прапора (телефон)" : uiLocale() === "et" ? "voi lipu URL (telefon)" : "or flag URL (mobile)";
   const flagSuperAdminHint = uiLocale() === "ru"
-    ? "Р В¤Р В»Р В°Р С– РЎРѓРЎвЂљРЎР‚Р В°Р Р…РЎвЂ№ Р СР С•Р В¶Р ВµРЎвЂљ Р СР ВµР Р…РЎРЏРЎвЂљРЎРЉ РЎвЂљР С•Р В»РЎРЉР С”Р С• РЎРѓРЎС“Р С—Р ВµРЎР‚-Р В°Р Т‘Р СР С‘Р Р…."
+    ? "Флаг страны может менять только супер-админ."
     : uiLocale() === "uk"
-      ? "Р СџРЎР‚Р В°Р С—Р С•РЎР‚ Р С”РЎР‚Р В°РЎвЂ”Р Р…Р С‘ Р СР С•Р В¶Р Вµ Р В·Р СРЎвЂ“Р Р…РЎР‹Р Р†Р В°РЎвЂљР С‘ Р В»Р С‘РЎв‚¬Р Вµ РЎРѓРЎС“Р С—Р ВµРЎР‚-Р В°Р Т‘Р СРЎвЂ“Р Р…."
+      ? "Прапор країни може змінювати лише супер-адмін."
       : uiLocale() === "et"
         ? "Riigi lippu saab muuta ainult superadmin."
         : "Only super admin can change country flags.";
-  const flagPreviewTitle = uiLocale() === "ru" ? "Р СџРЎР‚Р С‘Р СР ВµРЎР‚ Р С”Р В°РЎР‚РЎвЂљР С•РЎвЂЎР С”Р С‘" : uiLocale() === "uk" ? "Р СџРЎР‚Р С‘Р С”Р В»Р В°Р Т‘ Р С”Р В°РЎР‚РЎвЂљР С”Р С‘" : uiLocale() === "et" ? "Kaardi naidis" : "Card preview";
-  const flagPreviewSong = uiLocale() === "ru" ? "Р вЂќР ВµР СР С• Р С—Р ВµРЎРѓР Р…РЎРЏ" : uiLocale() === "uk" ? "Р вЂќР ВµР СР С• Р С—РЎвЂ“РЎРѓР Р…РЎРЏ" : uiLocale() === "et" ? "Demo laul" : "Demo song";
-  const flagPreviewCountry = uiLocale() === "ru" ? "Р РЋРЎвЂљРЎР‚Р В°Р Р…Р В° - РЎРЊР С—Р С•РЎвЂ¦Р В°" : uiLocale() === "uk" ? "Р С™РЎР‚Р В°РЎвЂ”Р Р…Р В° - Р ВµР С—Р С•РЎвЂ¦Р В°" : uiLocale() === "et" ? "Riik - ajastu" : "Country - period";
-  const flagCardLongDesktopLabel = uiLocale() === "ru" ? "Р С™Р В°РЎвЂљР В°Р В»Р С•Р С– Р СџР С™ (Р Т‘Р В»Р С‘Р Р…Р Р…Р В°РЎРЏ)" : uiLocale() === "uk" ? "Р С™Р В°РЎвЂљР В°Р В»Р С•Р С– Р СџР С™ (Р Т‘Р С•Р Р†Р С–Р В°)" : uiLocale() === "et" ? "Kataloog lauaarvuti (pikk)" : "Desktop catalog (long)";
-  const flagCardLongMobileLabel = uiLocale() === "ru" ? "Р С™Р В°РЎвЂљР В°Р В»Р С•Р С– РЎвЂљР ВµР В»Р ВµРЎвЂћР С•Р Р…" : uiLocale() === "uk" ? "Р С™Р В°РЎвЂљР В°Р В»Р С•Р С– РЎвЂљР ВµР В»Р ВµРЎвЂћР С•Р Р…" : uiLocale() === "et" ? "Kataloog telefon" : "Mobile catalog";
-  const flagNoImage = uiLocale() === "ru" ? "Р С™Р В°РЎР‚РЎвЂљР С‘Р Р…Р С”Р В° Р Р…Р Вµ Р Р†РЎвЂ№Р В±РЎР‚Р В°Р Р…Р В°" : uiLocale() === "uk" ? "Р вЂ”Р С•Р В±РЎР‚Р В°Р В¶Р ВµР Р…Р Р…РЎРЏ Р Р…Р Вµ Р Р†Р С‘Р В±РЎР‚Р В°Р Р…Р С•" : uiLocale() === "et" ? "Pilti pole valitud" : "Image is not selected";
-  const flagRangesTitle = uiLocale() === "ru" ? "Р В¤Р В»Р В°Р С–Р С‘ Р С—Р С• Р С–Р С•Р Т‘Р В°Р С (Р Т‘Р С• 10)" : uiLocale() === "uk" ? "Р СџРЎР‚Р В°Р С—Р С•РЎР‚Р С‘ Р В·Р В° РЎР‚Р С•Р С”Р В°Р СР С‘ (Р Т‘Р С• 10)" : uiLocale() === "et" ? "Lipud aastate kaupa (kuni 10)" : "Flags by year (up to 10)";
-  const addFlagRangeLabel = uiLocale() === "ru" ? "Р вЂќР С•Р В±Р В°Р Р†Р С‘РЎвЂљРЎРЉ РЎвЂћР В»Р В°Р С–" : uiLocale() === "uk" ? "Р вЂќР С•Р Т‘Р В°РЎвЂљР С‘ Р С—РЎР‚Р В°Р С—Р С•РЎР‚" : uiLocale() === "et" ? "Lisa lipp" : "Add flag";
+  const flagPreviewTitle = uiLocale() === "ru" ? "Пример карточки" : uiLocale() === "uk" ? "Приклад картки" : uiLocale() === "et" ? "Kaardi naidis" : "Card preview";
+  const flagPreviewSong = uiLocale() === "ru" ? "Демо песня" : uiLocale() === "uk" ? "Демо пісня" : uiLocale() === "et" ? "Demo laul" : "Demo song";
+  const flagPreviewCountry = uiLocale() === "ru" ? "Страна - эпоха" : uiLocale() === "uk" ? "Країна - епоха" : uiLocale() === "et" ? "Riik - ajastu" : "Country - period";
+  const flagCardLongDesktopLabel = uiLocale() === "ru" ? "Каталог ПК (длинная)" : uiLocale() === "uk" ? "Каталог ПК (довга)" : uiLocale() === "et" ? "Kataloog lauaarvuti (pikk)" : "Desktop catalog (long)";
+  const flagCardLongMobileLabel = uiLocale() === "ru" ? "Каталог телефон" : uiLocale() === "uk" ? "Каталог телефон" : uiLocale() === "et" ? "Kataloog telefon" : "Mobile catalog";
+  const flagNoImage = uiLocale() === "ru" ? "Картинка не выбрана" : uiLocale() === "uk" ? "Зображення не вибрано" : uiLocale() === "et" ? "Pilti pole valitud" : "Image is not selected";
+  const flagRangesTitle = uiLocale() === "ru" ? "Флаги по годам (до 10)" : uiLocale() === "uk" ? "Прапори за роками (до 10)" : uiLocale() === "et" ? "Lipud aastate kaupa (kuni 10)" : "Flags by year (up to 10)";
+  const addFlagRangeLabel = uiLocale() === "ru" ? "Добавить флаг" : uiLocale() === "uk" ? "Додати прапор" : uiLocale() === "et" ? "Lisa lipp" : "Add flag";
   const ussrPeriodOptions = USSR_PERIOD_VALUES
     .map((periodValue) => `<option value="${esc(periodValue)}">${esc(formatPeriod(periodValue))}</option>`)
     .join("");
@@ -3192,7 +3192,7 @@ function adminCountryBackgroundsUI(data) {
         </label>
         <div class="ab-variants-grid">
           <div class="songCard ab-variant" id="ab_desktop_variant">
-            <div class="h2">${esc(desktopLabel)} Р’В· ${esc(assetLabel)} ${desktopAssetRatio} (${desktopStd.width}x${desktopStd.height}) Р’В· ${esc(screenLabel)} ${desktopViewportRatio} (${desktopViewport.width}x${desktopViewport.height})</div>
+            <div class="h2">${esc(desktopLabel)} · ${esc(assetLabel)} ${desktopAssetRatio} (${desktopStd.width}x${desktopStd.height}) · ${esc(screenLabel)} ${desktopViewportRatio} (${desktopViewport.width}x${desktopViewport.height})</div>
             <label class="field">
               <div class="fieldLabel">${esc(uploadLabel)}</div>
               <input class="input" id="ab_desktop_file" type="file" accept="image/*" />
@@ -3213,7 +3213,7 @@ function adminCountryBackgroundsUI(data) {
               <div class="ab-preview-card-glass"></div>
             </div>
             <div class="ab-preview-nav-wrap">
-              <div class="muted small">${esc(nudgeHint)} Р’В· ${esc(stepLabel)} 1%</div>
+              <div class="muted small">${esc(nudgeHint)} · ${esc(stepLabel)} 1%</div>
               <div class="ab-preview-nav">
                 <button class="btn ghost ab-nav-btn" type="button" data-ab-kind="desktop" data-ab-dx="0" data-ab-dy="-1">^</button>
                 <button class="btn ghost ab-nav-btn" type="button" data-ab-kind="desktop" data-ab-dx="-1" data-ab-dy="0"><</button>
@@ -3238,7 +3238,7 @@ function adminCountryBackgroundsUI(data) {
           </div>
 
           <div class="songCard ab-variant" id="ab_mobile_variant">
-            <div class="h2">${esc(mobileLabel)} Р’В· ${esc(assetLabel)} ${mobileAssetRatio} (${mobileStd.width}x${mobileStd.height}) Р’В· ${esc(screenLabel)} ${mobileViewportRatio} (${mobileViewport.width}x${mobileViewport.height})</div>
+            <div class="h2">${esc(mobileLabel)} · ${esc(assetLabel)} ${mobileAssetRatio} (${mobileStd.width}x${mobileStd.height}) · ${esc(screenLabel)} ${mobileViewportRatio} (${mobileViewport.width}x${mobileViewport.height})</div>
             <label class="field">
               <div class="fieldLabel">${esc(uploadLabel)}</div>
               <input class="input" id="ab_mobile_file" type="file" accept="image/*" />
@@ -3259,7 +3259,7 @@ function adminCountryBackgroundsUI(data) {
               <div class="ab-preview-card-glass"></div>
             </div>
             <div class="ab-preview-nav-wrap">
-              <div class="muted small">${esc(nudgeHint)} Р’В· ${esc(stepLabel)} 1%</div>
+              <div class="muted small">${esc(nudgeHint)} · ${esc(stepLabel)} 1%</div>
               <div class="ab-preview-nav">
                 <button class="btn ghost ab-nav-btn" type="button" data-ab-kind="mobile" data-ab-dx="0" data-ab-dy="-1">^</button>
                 <button class="btn ghost ab-nav-btn" type="button" data-ab-kind="mobile" data-ab-dx="-1" data-ab-dy="0"><</button>
@@ -3287,7 +3287,7 @@ function adminCountryBackgroundsUI(data) {
           <div class="h2">${esc(flagTitle)}</div>
           ${canEditFlag ? `
             <label class="field">
-              <div class="fieldLabel">${esc(flagDesktopInputLabel)} Р’В· ${flagDesktopStd.width}x${flagDesktopStd.height}</div>
+              <div class="fieldLabel">${esc(flagDesktopInputLabel)} · ${flagDesktopStd.width}x${flagDesktopStd.height}</div>
               <input class="input" id="ab_flag_file_desktop" type="file" accept="image/*" />
             </label>
             <label class="field">
@@ -3295,7 +3295,7 @@ function adminCountryBackgroundsUI(data) {
               <input class="input" id="ab_flag_url_desktop" placeholder="https://... / /picture/..." />
             </label>
             <label class="field">
-              <div class="fieldLabel">${esc(flagMobileInputLabel)} Р’В· ${flagMobileStd.width}x${flagMobileStd.height}</div>
+              <div class="fieldLabel">${esc(flagMobileInputLabel)} · ${flagMobileStd.width}x${flagMobileStd.height}</div>
               <input class="input" id="ab_flag_file_mobile" type="file" accept="image/*" />
             </label>
             <label class="field">
@@ -3311,7 +3311,7 @@ function adminCountryBackgroundsUI(data) {
           <div class="fieldLabel">${esc(flagPreviewTitle)}</div>
           <div class="ab-flag-preview-grid">
             <div class="ab-flag-preview-wrap">
-              <div class="muted small">${esc(flagCardLongDesktopLabel)} Р’В· ${flagDesktopStd.width}x${flagDesktopStd.height}</div>
+              <div class="muted small">${esc(flagCardLongDesktopLabel)} · ${flagDesktopStd.width}x${flagDesktopStd.height}</div>
               <div class="yt-card ab-flag-preview ab-flag-preview-long-desktop" id="ab_flag_preview_long_desktop" data-empty="${esc(flagNoImage)}">
                 <div class="yt-card-content">
                   <div class="yt-card-title">${esc(flagPreviewSong)}</div>
@@ -3323,7 +3323,7 @@ function adminCountryBackgroundsUI(data) {
               </div>
             </div>
             <div class="ab-flag-preview-wrap">
-              <div class="muted small">${esc(flagCardLongMobileLabel)} Р’В· ${flagMobileStd.width}x${flagMobileStd.height}</div>
+              <div class="muted small">${esc(flagCardLongMobileLabel)} · ${flagMobileStd.width}x${flagMobileStd.height}</div>
               <div class="yt-card ab-flag-preview ab-flag-preview-long-mobile" id="ab_flag_preview_long_mobile" data-empty="${esc(flagNoImage)}">
                 <div class="yt-card-content">
                   <div class="yt-card-title">${esc(flagPreviewSong)}</div>
@@ -3836,13 +3836,13 @@ function contentDraftComparableSignature(payload = {}) {
 function contentDraftDiffBannerText(hasPublishedBase) {
   if (uiLocale() === "ru") {
     return hasPublishedBase
-      ? "Р В§Р вЂўР В Р СњР С›Р вЂ™Р ВР С™: РЎвЂљР ВµР С”РЎС“РЎвЂ°Р В°РЎРЏ Р Р†Р ВµРЎР‚РЎРѓР С‘РЎРЏ Р С•РЎвЂљР В»Р С‘РЎвЂЎР В°Р ВµРЎвЂљРЎРѓРЎРЏ Р С•РЎвЂљ Р С—РЎС“Р В±Р В»Р С‘РЎвЂЎР Р…Р С•Р в„–. Р ВР В·Р СР ВµР Р…Р ВµР Р…Р С‘РЎРЏ Р В°Р Р†РЎвЂљР С•РЎРѓР С•РЎвЂ¦РЎР‚Р В°Р Р…Р ВµР Р…РЎвЂ№ Р Т‘Р С• Р С—РЎС“Р В±Р В»Р С‘Р С”Р В°РЎвЂ Р С‘Р С‘."
-      : "Р В§Р вЂўР В Р СњР С›Р вЂ™Р ВР С™: Р Р…Р ВµР С—РЎС“Р В±Р В»Р С‘Р С”Р С•Р Р†Р В°Р Р…Р Р…Р В°РЎРЏ Р Р†Р ВµРЎР‚РЎРѓР С‘РЎРЏ Р В°Р Р†РЎвЂљР С•РЎРѓР С•РЎвЂ¦РЎР‚Р В°Р Р…Р ВµР Р…Р В° Р В»Р С•Р С”Р В°Р В»РЎРЉР Р…Р С•. Р С›Р С—РЎС“Р В±Р В»Р С‘Р С”РЎС“Р в„–РЎвЂљР Вµ, Р С”Р С•Р С–Р Т‘Р В° Р В±РЎС“Р Т‘Р ВµРЎвЂљР Вµ Р С–Р С•РЎвЂљР С•Р Р†РЎвЂ№.";
+      ? "ЧЕРНОВК: текущая версия отличается от публичной. зенения автосохранены до публикации."
+      : "ЧЕРНОВК: непубликованная версия автосохранена локально. Опубликуйте, когда будете готовы.";
   }
   if (uiLocale() === "uk") {
     return hasPublishedBase
-      ? "Р В§Р вЂўР В Р СњР вЂўР СћР С™Р С’: Р С—Р С•РЎвЂљР С•РЎвЂЎР Р…Р В° Р Р†Р ВµРЎР‚РЎРѓРЎвЂ“РЎРЏ Р Р†РЎвЂ“Р Т‘РЎР‚РЎвЂ“Р В·Р Р…РЎРЏРЎвЂќРЎвЂљРЎРЉРЎРѓРЎРЏ Р Р†РЎвЂ“Р Т‘ Р С—РЎС“Р В±Р В»РЎвЂ“РЎвЂЎР Р…Р С•РЎвЂ”. Р вЂ”Р СРЎвЂ“Р Р…Р С‘ Р В°Р Р†РЎвЂљР С•Р В·Р В±Р ВµРЎР‚Р ВµР В¶Р ВµР Р…Р С• Р Т‘Р С• Р С—РЎС“Р В±Р В»РЎвЂ“Р С”Р В°РЎвЂ РЎвЂ“РЎвЂ”."
-      : "Р В§Р вЂўР В Р СњР вЂўР СћР С™Р С’: Р Р…Р ВµР С•Р С—РЎС“Р В±Р В»РЎвЂ“Р С”Р С•Р Р†Р В°Р Р…РЎС“ Р Р†Р ВµРЎР‚РЎРѓРЎвЂ“РЎР‹ Р В°Р Р†РЎвЂљР С•Р В·Р В±Р ВµРЎР‚Р ВµР В¶Р ВµР Р…Р С• Р В»Р С•Р С”Р В°Р В»РЎРЉР Р…Р С•. Р С›Р С—РЎС“Р В±Р В»РЎвЂ“Р С”РЎС“Р в„–РЎвЂљР Вµ, Р С”Р С•Р В»Р С‘ Р В±РЎС“Р Т‘Р ВµРЎвЂљР Вµ Р С–Р С•РЎвЂљР С•Р Р†РЎвЂ“.";
+      ? "ЧЕРНЕТКА: поточна версія відрізняється від публічної. Зіни автозбережено до публікації."
+      : "ЧЕРНЕТКА: неопубліковану версію автозбережено локально. Опублікуйте, коли будете готові.";
   }
   if (uiLocale() === "et") {
     return hasPublishedBase
@@ -3855,8 +3855,8 @@ function contentDraftDiffBannerText(hasPublishedBase) {
 }
 
 function requestDraftBannerText() {
-  if (uiLocale() === "ru") return "Р В§Р вЂўР В Р СњР С›Р вЂ™Р ВР С™: Р В·Р В°РЎРЏР Р†Р С”Р В° Р В°Р Р†РЎвЂљР С•РЎРѓР С•РЎвЂ¦РЎР‚Р В°Р Р…Р ВµР Р…Р В° Р В»Р С•Р С”Р В°Р В»РЎРЉР Р…Р С•. Р С›РЎвЂљР С—РЎР‚Р В°Р Р†РЎРЉРЎвЂљР Вµ, Р С”Р С•Р С–Р Т‘Р В° Р В±РЎС“Р Т‘Р ВµРЎвЂљР Вµ Р С–Р С•РЎвЂљР С•Р Р†РЎвЂ№.";
-  if (uiLocale() === "uk") return "Р В§Р вЂўР В Р СњР вЂўР СћР С™Р С’: Р В·Р В°РЎРЏР Р†Р С”РЎС“ Р В°Р Р†РЎвЂљР С•Р В·Р В±Р ВµРЎР‚Р ВµР В¶Р ВµР Р…Р С• Р В»Р С•Р С”Р В°Р В»РЎРЉР Р…Р С•. Р СњР В°Р Т‘РЎвЂ“РЎв‚¬Р В»РЎвЂ“РЎвЂљРЎРЉ, Р С”Р С•Р В»Р С‘ Р В±РЎС“Р Т‘Р ВµРЎвЂљР Вµ Р С–Р С•РЎвЂљР С•Р Р†РЎвЂ“.";
+  if (uiLocale() === "ru") return "ЧЕРНОВК: заявка автосохранена локально. Отправьте, когда будете готовы.";
+  if (uiLocale() === "uk") return "ЧЕРНЕТКА: заявку автозбережено локально. Надішліть, коли будете готові.";
   if (uiLocale() === "et") return "MUSTAND: taotlus salvestati kohalikult automaatselt. Saada siis, kui oled valmis.";
   return "DRAFT: request is autosaved locally. Submit when ready.";
 }
@@ -4114,9 +4114,9 @@ export async function render(route) {
     if (section === "requests") {
       if (!isSuperAdmin()) {
         const deniedText = uiLocale() === "ru"
-          ? "Р СњР ВµР Т‘Р С•РЎРѓРЎвЂљР В°РЎвЂљР С•РЎвЂЎР Р…Р С• Р С—РЎР‚Р В°Р Р† Р Т‘Р В»РЎРЏ Р С—РЎР‚Р С•РЎРѓР СР С•РЎвЂљРЎР‚Р В° Р В·Р В°РЎРЏР Р†Р С•Р С”."
+          ? "Недостаточно прав для просмотра заявок."
           : uiLocale() === "uk"
-            ? "Р СњР ВµР Т‘Р С•РЎРѓРЎвЂљР В°РЎвЂљР Р…РЎРЉР С• Р С—РЎР‚Р В°Р Р† Р Т‘Р В»РЎРЏ Р С—Р ВµРЎР‚Р ВµР С–Р В»РЎРЏР Т‘РЎС“ Р В·Р В°РЎРЏР Р†Р С•Р С”."
+            ? "Недостатньо прав для перегляду заявок."
             : uiLocale() === "et"
               ? "Taotluste vaatamiseks pole piisavalt oigusi."
               : "Not enough permissions to review requests.";
@@ -4134,9 +4134,9 @@ export async function render(route) {
     if (section === "backgrounds") {
       if (!can("songs.edit")) {
         const deniedText = uiLocale() === "ru"
-          ? "Р СњР ВµР Т‘Р С•РЎРѓРЎвЂљР В°РЎвЂљР С•РЎвЂЎР Р…Р С• Р С—РЎР‚Р В°Р Р† Р Т‘Р В»РЎРЏ РЎС“Р С—РЎР‚Р В°Р Р†Р В»Р ВµР Р…Р С‘РЎРЏ РЎвЂћР С•Р Р…Р В°Р СР С‘ РЎРѓРЎвЂљРЎР‚Р В°Р Р…."
+          ? "Недостаточно прав для управления фонаи стран."
           : uiLocale() === "uk"
-            ? "Р СњР ВµР Т‘Р С•РЎРѓРЎвЂљР В°РЎвЂљР Р…РЎРЉР С• Р С—РЎР‚Р В°Р Р† Р Т‘Р В»РЎРЏ Р С”Р ВµРЎР‚РЎС“Р Р†Р В°Р Р…Р Р…РЎРЏ РЎвЂћР С•Р Р…Р В°Р СР С‘ Р С”РЎР‚Р В°РЎвЂ”Р Р…."
+            ? "Недостатньо прав для керування фонаи країн."
             : uiLocale() === "et"
               ? "Riikide taustade haldamiseks pole piisavalt oigusi."
               : "Not enough permissions to manage country backgrounds.";
@@ -4558,7 +4558,7 @@ export function bind(route, ctx) {
       const nextLabel = ctx.isFav ? t("song.delFav") : t("song.addFav");
       const icon = favBtn.querySelector(".song-header-tool-icon");
       const text = favBtn.querySelector(".song-header-tool-text");
-      if (icon) icon.textContent = ctx.isFav ? "РІВвЂ¦" : "РІВвЂ ";
+      if (icon) icon.textContent = ctx.isFav ? "в…" : "в†";
       if (text) text.textContent = nextLabel;
       favBtn.classList.toggle("is-active", !!ctx.isFav);
       favBtn.setAttribute("aria-pressed", ctx.isFav ? "true" : "false");
@@ -4672,9 +4672,9 @@ export function bind(route, ctx) {
       const versionListenLinks2 = qs("songVersionListenLinks2");
       const versionListenAdminActions = qs("songVersionListenAdminActions");
       const localizedVersionWord = uiLocale() === "ru"
-        ? "Р вЂ™Р ВµРЎР‚РЎРѓР С‘РЎРЏ"
+        ? "Версия"
         : uiLocale() === "uk"
-          ? "Р вЂ™Р ВµРЎР‚РЎРѓРЎвЂ“РЎРЏ"
+          ? "Версія"
           : uiLocale() === "et"
             ? "Versioon"
             : "Version";
@@ -4740,9 +4740,9 @@ export function bind(route, ctx) {
           if (songViewRoot) songViewRoot.classList.toggle("song-compare-open", !!isOpen);
         };
         const localizedVersionWord = uiLocale() === "ru"
-          ? "Р вЂ™Р ВµРЎР‚РЎРѓР С‘РЎРЏ"
+          ? "Версия"
           : uiLocale() === "uk"
-            ? "Р вЂ™Р ВµРЎР‚РЎРѓРЎвЂ“РЎРЏ"
+            ? "Версія"
             : uiLocale() === "et"
               ? "Versioon"
               : "Version";
@@ -4768,9 +4768,9 @@ export function bind(route, ctx) {
         let selectedCompareLeftId = activeVersionId;
         let selectedCompareRightId = compareOptions[1]?.id || compareOptions[0]?.id || "__original";
         const stanzaLabel = uiLocale() === "ru"
-          ? "Р С™РЎС“Р С—Р В»Р ВµРЎвЂљ"
+          ? "Куплет"
           : uiLocale() === "uk"
-            ? "Р С™РЎС“Р С—Р В»Р ВµРЎвЂљ"
+            ? "Куплет"
             : uiLocale() === "et"
               ? "Salm"
               : "Stanza";
@@ -5602,9 +5602,9 @@ export function bind(route, ctx) {
     if (requestFragment && !savedRequestDraft?.payload) {
       if (!isFragmentReport && qs("rq_title") && !String(qs("rq_title").value || "").trim()) {
         qs("rq_title").value = uiLocale() === "ru"
-          ? "Р В¤РЎР‚Р В°Р С–Р СР ВµР Р…РЎвЂљ РЎвЂљР ВµР С”РЎРѓРЎвЂљР В° (Р Р…Р Вµ Р Р…Р В°Р в„–Р Т‘Р ВµР Р…Р С• Р Р† Р С”Р В°РЎвЂљР В°Р В»Р С•Р С–Р Вµ)"
+          ? "Фрагмент текста (не найдено в каталоге)"
           : uiLocale() === "uk"
-            ? "Р В¤РЎР‚Р В°Р С–Р СР ВµР Р…РЎвЂљ РЎвЂљР ВµР С”РЎРѓРЎвЂљРЎС“ (Р Р…Р Вµ Р В·Р Р…Р В°Р в„–Р Т‘Р ВµР Р…Р С• Р Р† Р С”Р В°РЎвЂљР В°Р В»Р С•Р В·РЎвЂ“)"
+            ? "Фрагент тексту (не знайдено в каталозі)"
             : uiLocale() === "et"
               ? "Tekstikatkend (kataloogist ei leitud)"
               : "Text fragment (not found in catalog)";
@@ -5614,11 +5614,11 @@ export function bind(route, ctx) {
       }
       if (!isFragmentReport && qs("rq_notes") && !String(qs("rq_notes").value || "").trim()) {
         qs("rq_notes").value = uiLocale() === "ru"
-          ? "Р С’Р Р†РЎвЂљР С•РЎРѓР С•Р С•Р В±РЎвЂ°Р ВµР Р…Р С‘Р Вµ: Р С•РЎвЂљР С—РЎР‚Р В°Р Р†Р В»Р ВµР Р…Р С• Р С‘Р В· Р С”Р Р…Р С•Р С—Р С”Р С‘ Р’В«Р СњР Вµ Р Р…Р В°РЎв‚¬Р В»Р С‘? Р РЋР С•Р С•Р В±РЎвЂ°Р С‘РЎвЂљРЎРЉ РЎвЂћРЎР‚Р В°Р С–Р СР ВµР Р…РЎвЂљР’В»."
+          ? "Автосообщение: отправлено из кнопки «Не нашли? Сообщить фрагмент»."
           : uiLocale() === "uk"
-            ? "Р С’Р Р†РЎвЂљР С•Р С—Р С•Р Р†РЎвЂ“Р Т‘Р С•Р СР В»Р ВµР Р…Р Р…РЎРЏ: Р Р…Р В°Р Т‘РЎвЂ“РЎРѓР В»Р В°Р Р…Р С• Р В· Р С”Р Р…Р С•Р С—Р С”Р С‘ Р’В«Р СњР Вµ Р В·Р Р…Р В°Р в„–РЎв‚¬Р В»Р С‘? Р СџР С•Р Р†РЎвЂ“Р Т‘Р С•Р СР С‘РЎвЂљР С‘ РЎвЂћРЎР‚Р В°Р С–Р СР ВµР Р…РЎвЂљР’В»."
+            ? "Автоповідомлення: надіслано з кнопки «Не знайшли? Повідомити фрагмент»."
             : uiLocale() === "et"
-              ? "Automaatteade: saadetud nupust Р’В«Ei leidnud? Saada katkendР’В»."
+              ? "Automaatteade: saadetud nupust «Ei leidnud? Saada katkend»."
               : "Auto note: sent from 'Not found? Report fragment'.";
       }
       if (qs("rq_report_fragment")) qs("rq_report_fragment").value = "1";
@@ -5693,9 +5693,9 @@ export function bind(route, ctx) {
       if (isInvalid) {
         const message = isFragmentReport
           ? (uiLocale() === "ru"
-            ? "Р вЂ”Р В°Р С—Р С•Р В»Р Р…Р С‘РЎвЂљР Вµ РЎвЂљР ВµР С”РЎРѓРЎвЂљ РЎвЂћРЎР‚Р В°Р С–Р СР ВµР Р…РЎвЂљР В° Р С‘ Р С‘РЎРѓРЎвЂљР С•РЎвЂЎР Р…Р С‘Р С”."
+            ? "Заполните текст фрагмента и источник."
             : uiLocale() === "uk"
-              ? "Р вЂ”Р В°Р С—Р С•Р Р†Р Р…РЎвЂ“РЎвЂљРЎРЉ РЎвЂљР ВµР С”РЎРѓРЎвЂљ РЎвЂћРЎР‚Р В°Р С–Р СР ВµР Р…РЎвЂљР В° РЎвЂљР В° Р Т‘Р В¶Р ВµРЎР‚Р ВµР В»Р С•."
+              ? "Заповніть текст фрагмента та джерело."
               : uiLocale() === "et"
                 ? "Taida katkendi tekst ja allikas."
                 : "Fill fragment text and source.")
@@ -5707,7 +5707,7 @@ export function bind(route, ctx) {
         const out = await api.createRequest(payload);
         const statusText = out?.mode === "published"
           ? (uiLocale() === "ru"
-            ? `Р СџР ВµРЎРѓР Р…РЎРЏ Р С•Р С—РЎС“Р В±Р В»Р С‘Р С”Р С•Р Р†Р В°Р Р…Р В°: ${out.id}`
+            ? `Песня опубликована: ${out.id}`
             : uiLocale() === "et"
               ? `Laul avaldati: ${out.id}`
               : `Song published: ${out.id}`)
@@ -5927,7 +5927,7 @@ export function bind(route, ctx) {
         const initialSaveText = acSaveBtn?.textContent || t("common.save");
         const initialPublishText = acPublishBtn?.textContent || "";
         const progressText = options.forceStatus === "published"
-          ? (uiLocale() === "ru" ? "Р СџРЎС“Р В±Р В»Р С‘Р С”Р В°РЎвЂ Р С‘РЎРЏ..." : uiLocale() === "uk" ? "Р СџРЎС“Р В±Р В»РЎвЂ“Р С”Р В°РЎвЂ РЎвЂ“РЎРЏ..." : uiLocale() === "et" ? "Avaldamine..." : "Publishing...")
+          ? (uiLocale() === "ru" ? "Публикация..." : uiLocale() === "uk" ? "Публікація..." : uiLocale() === "et" ? "Avaldamine..." : "Publishing...")
           : `${t("common.save")}...`;
         savePending = true;
         [acSaveBtn, acPublishBtn].forEach((btn) => {
@@ -6055,25 +6055,25 @@ export function bind(route, ctx) {
     if (!countrySelect || !saveBtn || !clearBtn) return;
     const canEditFlags = isSuperAdmin();
 
-    const savedText = uiLocale() === "ru" ? "Р В¤Р С•Р Р… РЎРѓР С•РЎвЂ¦РЎР‚Р В°Р Р…РЎвЂР Р…" : uiLocale() === "uk" ? "Р В¤Р С•Р Р… Р В·Р В±Р ВµРЎР‚Р ВµР В¶Р ВµР Р…Р С•" : uiLocale() === "et" ? "Taust salvestatud" : "Background saved";
-    const clearedText = uiLocale() === "ru" ? "Р В¤Р С•Р Р… Р С•РЎвЂЎР С‘РЎвЂ°Р ВµР Р…" : uiLocale() === "uk" ? "Р В¤Р С•Р Р… Р С•РЎвЂЎР С‘РЎвЂ°Р ВµР Р…Р С•" : uiLocale() === "et" ? "Taust eemaldatud" : "Background cleared";
-    const invalidImageText = uiLocale() === "ru" ? "Р СњР ВµР Р†Р ВµРЎР‚Р Р…РЎвЂ№Р в„– РЎвЂћР С•РЎР‚Р СР В°РЎвЂљ Р С‘Р В·Р С•Р В±РЎР‚Р В°Р В¶Р ВµР Р…Р С‘РЎРЏ." : uiLocale() === "uk" ? "Р СњР ВµР Р†РЎвЂ“РЎР‚Р Р…Р С‘Р в„– РЎвЂћР С•РЎР‚Р СР В°РЎвЂљ Р В·Р С•Р В±РЎР‚Р В°Р В¶Р ВµР Р…Р Р…РЎРЏ." : uiLocale() === "et" ? "Vale pildiformaat." : "Invalid image format.";
+    const savedText = uiLocale() === "ru" ? "Фон сохранн" : uiLocale() === "uk" ? "Фон збережено" : uiLocale() === "et" ? "Taust salvestatud" : "Background saved";
+    const clearedText = uiLocale() === "ru" ? "Фон очищен" : uiLocale() === "uk" ? "Фон очищено" : uiLocale() === "et" ? "Taust eemaldatud" : "Background cleared";
+    const invalidImageText = uiLocale() === "ru" ? "Неверный формат изображения." : uiLocale() === "uk" ? "Невірний формат зображення." : uiLocale() === "et" ? "Vale pildiformaat." : "Invalid image format.";
     const invalidFlagText = uiLocale() === "ru"
-      ? "Р СњР ВµР Р†Р ВµРЎР‚Р Р…РЎвЂ№Р в„– РЎвЂћР С•РЎР‚Р СР В°РЎвЂљ РЎвЂћР В»Р В°Р С–Р В°. Р ВРЎРѓР С—Р С•Р В»РЎРЉР В·РЎС“Р в„–РЎвЂљР Вµ РЎвЂћР В°Р в„–Р В», data:image..., Р С—Р С•Р В»Р Р…РЎвЂ№Р в„– http(s) URL Р С‘Р В»Р С‘ /relative/path."
+      ? "Неверный формат флага. Используйте файл, data:image..., полный http(s) URL или /relative/path."
       : uiLocale() === "uk"
-        ? "Р СњР ВµР Р†РЎвЂ“РЎР‚Р Р…Р С‘Р в„– РЎвЂћР С•РЎР‚Р СР В°РЎвЂљ Р С—РЎР‚Р В°Р С—Р С•РЎР‚Р В°. Р вЂ™Р С‘Р С”Р С•РЎР‚Р С‘РЎРѓРЎвЂљР С•Р Р†РЎС“Р в„–РЎвЂљР Вµ РЎвЂћР В°Р в„–Р В», data:image..., Р С—Р С•Р Р†Р Р…Р С‘Р в„– http(s) URL Р В°Р В±Р С• /relative/path."
+        ? "Невірний формат прапора. Використовуйте файл, data:image..., повний http(s) URL або /relative/path."
         : uiLocale() === "et"
           ? "Vigane lipu formaat. Kasuta faili, data:image..., tais http(s) URL-i voi /relative/path."
           : "Invalid flag format. Use file, data:image..., absolute http(s) URL, or /relative/path.";
-    const flagRangeFromLabel = uiLocale() === "ru" ? "Р РЋ Р С–Р С•Р Т‘Р В°" : uiLocale() === "uk" ? "Р вЂ” РЎР‚Р С•Р С”РЎС“" : uiLocale() === "et" ? "Aastast" : "From year";
-    const flagRangeToLabel = uiLocale() === "ru" ? "Р СџР С• Р С–Р С•Р Т‘" : uiLocale() === "uk" ? "Р вЂќР С• РЎР‚Р С•Р С”РЎС“" : uiLocale() === "et" ? "Kuni aastani" : "To year";
-    const flagRangeDesktopLabel = uiLocale() === "ru" ? "URL РЎвЂћР В»Р В°Р С–Р В° (Р СџР С™)" : uiLocale() === "uk" ? "URL Р С—РЎР‚Р В°Р С—Р С•РЎР‚Р В° (Р СџР С™)" : uiLocale() === "et" ? "Lipu URL (lauaarvuti)" : "Flag URL (desktop)";
-    const flagRangeMobileLabel = uiLocale() === "ru" ? "URL РЎвЂћР В»Р В°Р С–Р В° (РЎвЂљР ВµР В»Р ВµРЎвЂћР С•Р Р…)" : uiLocale() === "uk" ? "URL Р С—РЎР‚Р В°Р С—Р С•РЎР‚Р В° (РЎвЂљР ВµР В»Р ВµРЎвЂћР С•Р Р…)" : uiLocale() === "et" ? "Lipu URL (telefon)" : "Flag URL (mobile)";
-    const flagRangeUploadDesktopLabel = uiLocale() === "ru" ? "Р В¤Р В°Р в„–Р В» (Р СџР С™)" : uiLocale() === "uk" ? "Р В¤Р В°Р в„–Р В» (Р СџР С™)" : uiLocale() === "et" ? "Fail (lauaarvuti)" : "File (desktop)";
-    const flagRangeUploadMobileLabel = uiLocale() === "ru" ? "Р В¤Р В°Р в„–Р В» (РЎвЂљР ВµР В»Р ВµРЎвЂћР С•Р Р…)" : uiLocale() === "uk" ? "Р В¤Р В°Р в„–Р В» (РЎвЂљР ВµР В»Р ВµРЎвЂћР С•Р Р…)" : uiLocale() === "et" ? "Fail (telefon)" : "File (mobile)";
-    const flagRangeRemoveLabel = uiLocale() === "ru" ? "Р Р€Р Т‘Р В°Р В»Р С‘РЎвЂљРЎРЉ" : uiLocale() === "uk" ? "Р вЂ™Р С‘Р Т‘Р В°Р В»Р С‘РЎвЂљР С‘" : uiLocale() === "et" ? "Eemalda" : "Remove";
-    const flagRangeLimitText = uiLocale() === "ru" ? "Р СљР С•Р В¶Р Р…Р С• Р Т‘Р С•Р В±Р В°Р Р†Р С‘РЎвЂљРЎРЉ Р СР В°Р С”РЎРѓР С‘Р СРЎС“Р С 10 РЎвЂћР В»Р В°Р С–Р С•Р Р† Р С—Р С• Р С–Р С•Р Т‘Р В°Р С." : uiLocale() === "uk" ? "Р СљР С•Р В¶Р Р…Р В° Р Т‘Р С•Р Т‘Р В°РЎвЂљР С‘ Р СР В°Р С”РЎРѓР С‘Р СРЎС“Р С 10 Р С—РЎР‚Р В°Р С—Р С•РЎР‚РЎвЂ“Р Р† Р В·Р В° РЎР‚Р С•Р С”Р В°Р СР С‘." : uiLocale() === "et" ? "Lisada saab kuni 10 aastavahemiku lippu." : "You can add up to 10 date-based flags.";
-    const flagRangeInvalidText = uiLocale() === "ru" ? "Р Р€Р С”Р В°Р В¶Р С‘РЎвЂљР Вµ Р С”Р С•РЎР‚РЎР‚Р ВµР С”РЎвЂљР Р…РЎвЂ№Р Вµ Р С–Р С•Р Т‘РЎвЂ№ (Р РЋ Р С–Р С•Р Т‘Р В° <= Р СџР С• Р С–Р С•Р Т‘)." : uiLocale() === "uk" ? "Р вЂ™Р С”Р В°Р В¶РЎвЂ“РЎвЂљРЎРЉ Р С”Р С•РЎР‚Р ВµР С”РЎвЂљР Р…РЎвЂ“ РЎР‚Р С•Р С”Р С‘ (Р вЂ” РЎР‚Р С•Р С”РЎС“ <= Р вЂќР С• РЎР‚Р С•Р С”РЎС“)." : uiLocale() === "et" ? "Sisesta korrektsed aastad (algus <= lopp)." : "Use valid years (from <= to).";
+    const flagRangeFromLabel = uiLocale() === "ru" ? "С года" : uiLocale() === "uk" ? "Р— року" : uiLocale() === "et" ? "Aastast" : "From year";
+    const flagRangeToLabel = uiLocale() === "ru" ? "По год" : uiLocale() === "uk" ? "До року" : uiLocale() === "et" ? "Kuni aastani" : "To year";
+    const flagRangeDesktopLabel = uiLocale() === "ru" ? "URL флага (ПК)" : uiLocale() === "uk" ? "URL прапора (ПК)" : uiLocale() === "et" ? "Lipu URL (lauaarvuti)" : "Flag URL (desktop)";
+    const flagRangeMobileLabel = uiLocale() === "ru" ? "URL флага (телефон)" : uiLocale() === "uk" ? "URL прапора (телефон)" : uiLocale() === "et" ? "Lipu URL (telefon)" : "Flag URL (mobile)";
+    const flagRangeUploadDesktopLabel = uiLocale() === "ru" ? "Файл (ПК)" : uiLocale() === "uk" ? "Файл (ПК)" : uiLocale() === "et" ? "Fail (lauaarvuti)" : "File (desktop)";
+    const flagRangeUploadMobileLabel = uiLocale() === "ru" ? "Файл (телефон)" : uiLocale() === "uk" ? "Файл (телефон)" : uiLocale() === "et" ? "Fail (telefon)" : "File (mobile)";
+    const flagRangeRemoveLabel = uiLocale() === "ru" ? "Удалить" : uiLocale() === "uk" ? "Видалити" : uiLocale() === "et" ? "Eemalda" : "Remove";
+    const flagRangeLimitText = uiLocale() === "ru" ? "Можно добавить максимум 10 флагов по годам." : uiLocale() === "uk" ? "Можна додати максимум 10 прапорів за роками." : uiLocale() === "et" ? "Lisada saab kuni 10 aastavahemiku lippu." : "You can add up to 10 date-based flags.";
+    const flagRangeInvalidText = uiLocale() === "ru" ? "Укажите корректные годы (С года <= По год)." : uiLocale() === "uk" ? "Вкажіть коректні роки (Р— року <= До року)." : uiLocale() === "et" ? "Sisesta korrektsed aastad (algus <= lopp)." : "Use valid years (from <= to).";
 
     const items = Array.isArray(ctx?.data?.items) ? ctx.data.items : [];
     const byCountry = new Map();
@@ -6536,11 +6536,11 @@ export function bind(route, ctx) {
         </div>
         <div class="ab-flag-range-upload">
           <label class="field">
-            <div class="fieldLabel">${esc(flagRangeUploadDesktopLabel)} Р’В· ${FLAG_CARD_STANDARDS.desktopLong.width}x${FLAG_CARD_STANDARDS.desktopLong.height}</div>
+            <div class="fieldLabel">${esc(flagRangeUploadDesktopLabel)} · ${FLAG_CARD_STANDARDS.desktopLong.width}x${FLAG_CARD_STANDARDS.desktopLong.height}</div>
             <input class="input" data-role="file_long" type="file" accept="image/*" />
           </label>
           <label class="field">
-            <div class="fieldLabel">${esc(flagRangeUploadMobileLabel)} Р’В· ${FLAG_CARD_STANDARDS.mobileLong.width}x${FLAG_CARD_STANDARDS.mobileLong.height}</div>
+            <div class="fieldLabel">${esc(flagRangeUploadMobileLabel)} · ${FLAG_CARD_STANDARDS.mobileLong.width}x${FLAG_CARD_STANDARDS.mobileLong.height}</div>
             <input class="input" data-role="file_long_mobile" type="file" accept="image/*" />
           </label>
         </div>
@@ -6842,7 +6842,7 @@ export function bind(route, ctx) {
           applyFlagPreview();
         } catch (e) {
           const msg = uiLocale() === "ru"
-            ? `Р СњРЎС“Р В¶Р ВµР Р… РЎвЂћР С•РЎР‚Р СР В°РЎвЂљ ${FLAG_CARD_STANDARDS.desktopLong.width}x${FLAG_CARD_STANDARDS.desktopLong.height} Р С‘Р В»Р С‘ Р В±Р С•Р В»Р ВµР Вµ РЎв‚¬Р С‘РЎР‚Р С•Р С”Р С‘Р в„– (Р С•Р В±РЎР‚Р ВµР В·Р С”Р В° РЎвЂљР С•Р В»РЎРЉР С”Р С• Р С—Р С• Р В±Р С•Р С”Р В°Р С).`
+            ? `Нужен формат ${FLAG_CARD_STANDARDS.desktopLong.width}x${FLAG_CARD_STANDARDS.desktopLong.height} или более широкий (обрезка только по бокам).`
             : invalidImageText;
           showStatusOverlay(msg, "error");
         }
@@ -6861,7 +6861,7 @@ export function bind(route, ctx) {
           applyFlagPreview();
         } catch (e) {
           const msg = uiLocale() === "ru"
-            ? `Р СњРЎС“Р В¶Р ВµР Р… РЎвЂћР С•РЎР‚Р СР В°РЎвЂљ ${FLAG_CARD_STANDARDS.mobileLong.width}x${FLAG_CARD_STANDARDS.mobileLong.height} Р С‘Р В»Р С‘ Р В±Р С•Р В»Р ВµР Вµ РЎв‚¬Р С‘РЎР‚Р С•Р С”Р С‘Р в„– (Р С•Р В±РЎР‚Р ВµР В·Р С”Р В° РЎвЂљР С•Р В»РЎРЉР С”Р С• Р С—Р С• Р В±Р С•Р С”Р В°Р С).`
+            ? `Нужен формат ${FLAG_CARD_STANDARDS.mobileLong.width}x${FLAG_CARD_STANDARDS.mobileLong.height} или более широкий (обрезка только по бокам).`
             : invalidImageText;
           showStatusOverlay(msg, "error");
         }
@@ -6876,9 +6876,9 @@ export function bind(route, ctx) {
           if (!first?.id) {
             try { popup?.close?.(); } catch {}
             const msg = uiLocale() === "ru"
-              ? "Р вЂќР В»РЎРЏ РЎРЊРЎвЂљР С•Р в„– РЎРѓРЎвЂљРЎР‚Р В°Р Р…РЎвЂ№ Р Р…Р ВµРЎвЂљ Р С•Р С—РЎС“Р В±Р В»Р С‘Р С”Р С•Р Р†Р В°Р Р…Р Р…РЎвЂ№РЎвЂ¦ Р С—Р ВµРЎРѓР ВµР Р…."
+              ? "Для этой страны нет опубликованных песен."
               : uiLocale() === "uk"
-                ? "Р вЂќР В»РЎРЏ РЎвЂ РЎвЂ“РЎвЂќРЎвЂ” Р С”РЎР‚Р В°РЎвЂ”Р Р…Р С‘ Р Р…Р ВµР СР В°РЎвЂќ Р С•Р С—РЎС“Р В±Р В»РЎвЂ“Р С”Р С•Р Р†Р В°Р Р…Р С‘РЎвЂ¦ Р С—РЎвЂ“РЎРѓР ВµР Р…РЎРЉ."
+                ? "Для С†С–С”С— країни неає опублікованих пісень."
                 : uiLocale() === "et"
                   ? "Selle riigi jaoks pole avaldatud laule."
                   : "There are no published songs for this country.";
@@ -7095,7 +7095,7 @@ export function bind(route, ctx) {
     document.querySelectorAll("button[data-act='purgeUser']").forEach((btn) => btn.addEventListener("click", async () => {
       const id = btn.getAttribute("data-user-id");
       const prompt = uiLocale() === "ru"
-        ? "Р СџР С•Р В»Р Р…Р С•РЎРѓРЎвЂљРЎРЉРЎР‹ РЎС“Р Т‘Р В°Р В»Р С‘РЎвЂљРЎРЉ Р Т‘Р В°Р Р…Р Р…РЎвЂ№Р Вµ Р С—Р С•Р В»РЎРЉР В·Р С•Р Р†Р В°РЎвЂљР ВµР В»РЎРЏ? Р С’Р С”Р С”Р В°РЎС“Р Р…РЎвЂљ Р В±РЎС“Р Т‘Р ВµРЎвЂљ Р С•РЎвЂЎР С‘РЎвЂ°Р ВµР Р… Р В±Р ВµР В· Р В±Р В»Р С•Р С”Р С‘РЎР‚Р С•Р Р†Р С”Р С‘."
+        ? "Полностью удалить данные пользователя? Аккаунт будет очищен Р±РµР· блокировки."
         : uiLocale() === "et"
           ? "Kustuta kasutaja andmed taielikult? Konto puhastatakse ilma blokeerimiseta."
           : "Delete all user data? Account will be fully cleared without blocking.";
@@ -7103,7 +7103,7 @@ export function bind(route, ctx) {
       try {
         await api.adminDeleteUserData(id);
         showStatusOverlay(uiLocale() === "ru"
-          ? `Р вЂќР В°Р Р…Р Р…РЎвЂ№Р Вµ Р С—Р С•Р В»РЎРЉР В·Р С•Р Р†Р В°РЎвЂљР ВµР В»РЎРЏ РЎС“Р Т‘Р В°Р В»Р ВµР Р…РЎвЂ№: ${id}`
+          ? `Данные пользователя удалены: ${id}`
           : uiLocale() === "et"
             ? `Kasutaja andmed kustutati: ${id}`
             : `User data deleted: ${id}`, "success");
