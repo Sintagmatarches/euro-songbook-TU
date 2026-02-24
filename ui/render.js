@@ -336,19 +336,7 @@ function selectOptions(kind, currentValue, placeholder) {
 
 function can(permission) {
   if (!state.user) return false;
-  const role = String(state.user.role || "").trim();
-  if (role === "super_admin") return true;
-  if (role !== "admin") return false;
-  if (!permission) return true;
-  const wanted = String(permission || "").trim();
-  if (!wanted) return true;
-  const permissions = Array.isArray(state.user.permissions) ? state.user.permissions.map((item) => String(item || "").trim()) : [];
-  const aliases = wanted === "songs.create" || wanted === "songs.edit"
-    ? [wanted, "songs.manage"]
-    : wanted === "songs.manage"
-      ? ["songs.manage", "songs.create", "songs.edit"]
-      : [wanted];
-  return aliases.some((candidate) => permissions.includes(candidate));
+  return state.user.role === "super_admin";
 }
 
 function normalizePlayableUrl(value) {
