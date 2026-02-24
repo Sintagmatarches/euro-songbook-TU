@@ -6670,7 +6670,8 @@ html[data-theme="light"] .admin-tab-btn:hover {
   body.home-country-preview.home-country-preview-visible.home-country-preview-layer-b:not(.song-page-country-bg)::after {
     /* Keep preview fully opaque: if this drops below 1, the base wallpaper bleeds through on hover. */
     opacity: 1;
-    filter: none;
+    /* Keep hover previews noticeably darker for readable foreground UI. */
+    filter: brightness(0.58) saturate(0.9) contrast(0.96);
     transform: none;
   }
 
