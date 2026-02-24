@@ -6,6 +6,63 @@ import { state } from "./state.js";
 const ROOT = new URL("../", import.meta.url);
 const GET_CACHE_TTL_MS = 60_000;
 const getCache = new Map();
+const UTF8_FATAL_DECODER = new TextDecoder("utf-8", { fatal: true });
+const CP1251_EXTRA_CHAR_TO_BYTE = new Map([
+  ["Ђ", 0x80], ["Ѓ", 0x81], ["‚", 0x82], ["ѓ", 0x83], ["„", 0x84], ["…", 0x85], ["†", 0x86], ["‡", 0x87],
+  ["€", 0x88], ["‰", 0x89], ["Љ", 0x8A], ["‹", 0x8B], ["Њ", 0x8C], ["Ќ", 0x8D], ["Ћ", 0x8E], ["Џ", 0x8F],
+  ["ђ", 0x90], ["‘", 0x91], ["’", 0x92], ["“", 0x93], ["”", 0x94], ["•", 0x95], ["–", 0x96], ["—", 0x97],
+  ["™", 0x99], ["љ", 0x9A], ["›", 0x9B], ["њ", 0x9C], ["ќ", 0x9D], ["ћ", 0x9E], ["џ", 0x9F], ["Ў", 0xA1],
+  ["ў", 0xA2], ["Ј", 0xA3], ["Ґ", 0xA5], ["Ё", 0xA8], ["Є", 0xAA], ["І", 0xB2], ["і", 0xB3], ["ґ", 0xB4],
+  ["ё", 0xB8], ["№", 0xB9], ["є", 0xBA], ["ј", 0xBC], ["Ѕ", 0xBD], ["ѕ", 0xBE], ["ї", 0xBF], ["Ї", 0xAF],
+]);
+
+function cp1251ByteForChar(char) {
+  if (!char) return null;
+  const code = char.charCodeAt(0);
+  if (code <= 0x7F) return code;
+  if (code >= 0x410 && code <= 0x44F) return code - 0x350;
+  return CP1251_EXTRA_CHAR_TO_BYTE.get(char) ?? null;
+}
+
+function encodeCp1251(value) {
+  const bytes = new Uint8Array(value.length);
+  let offset = 0;
+  for (const char of value) {
+    const byte = cp1251ByteForChar(char);
+    if (byte == null) return null;
+    bytes[offset++] = byte;
+  }
+  return offset === bytes.length ? bytes : bytes.slice(0, offset);
+}
+
+function repairMojibakeString(value) {
+  if (typeof value !== "string" || value.length < 2) return value;
+  if (!/[РСÐÑ]/.test(value)) return value;
+  const bytes = encodeCp1251(value);
+  if (!bytes) return value;
+  let decoded = "";
+  try {
+    decoded = UTF8_FATAL_DECODER.decode(bytes);
+  } catch {
+    return value;
+  }
+  if (!decoded || decoded === value) return value;
+  const sourceMarkers = (value.match(/[РСÐÑ]/g) || []).length;
+  const decodedMarkers = (decoded.match(/[РСÐÑ]/g) || []).length;
+  if (decodedMarkers >= sourceMarkers) return value;
+  return decoded;
+}
+
+function repairMojibakeDeep(value) {
+  if (typeof value === "string") return repairMojibakeString(value);
+  if (Array.isArray(value)) return value.map((item) => repairMojibakeDeep(item));
+  if (!value || typeof value !== "object") return value;
+  const out = {};
+  for (const [key, entry] of Object.entries(value)) {
+    out[key] = repairMojibakeDeep(entry);
+  }
+  return out;
+}
 
 function u(path){
   // accept absolute URLs
@@ -41,6 +98,7 @@ async function req(path, opts = {}) {
   const text = await res.text();
   let data = null;
   try { data = text ? JSON.parse(text) : null; } catch { data = { raw: text }; }
+  data = repairMojibakeDeep(data);
   if (!res.ok) {
     const msg = data?.error || data?.message || `HTTP ${res.status}`;
     const err = new Error(msg);

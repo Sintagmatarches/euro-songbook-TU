@@ -336,7 +336,19 @@ function selectOptions(kind, currentValue, placeholder) {
 
 function can(permission) {
   if (!state.user) return false;
-  return state.user.role === "super_admin";
+  const role = String(state.user.role || "").trim();
+  if (role === "super_admin") return true;
+  if (role !== "admin") return false;
+  if (!permission) return true;
+  const wanted = String(permission || "").trim();
+  if (!wanted) return true;
+  const permissions = Array.isArray(state.user.permissions) ? state.user.permissions.map((item) => String(item || "").trim()) : [];
+  const aliases = wanted === "songs.create" || wanted === "songs.edit"
+    ? [wanted, "songs.manage"]
+    : wanted === "songs.manage"
+      ? ["songs.manage", "songs.create", "songs.edit"]
+      : [wanted];
+  return aliases.some((candidate) => permissions.includes(candidate));
 }
 
 function normalizePlayableUrl(value) {
@@ -708,7 +720,7 @@ function listenSectionTitle() {
 
 function listenCtaText() {
   if (uiLocale() === "ru") return "Где слушать";
-  if (uiLocale() === "uk") return "Р”Рµ слухати";
+  if (uiLocale() === "uk") return "Де слухати";
   if (uiLocale() === "et") return "Kus kuulata";
   return "Where to listen";
 }
@@ -722,7 +734,7 @@ function listenCtaHint() {
 
 function versionListenSectionTitle() {
   if (uiLocale() === "ru") return "Слушать по версиям";
-  if (uiLocale() === "uk") return "Слухати Р·Р° версіяи";
+  if (uiLocale() === "uk") return "Слухати за версіями";
   if (uiLocale() === "et") return "Kuula versioonide kaupa";
   return "Listen by versions";
 }
@@ -1070,7 +1082,7 @@ function homeResultsTitle() {
 
 function homeSearchHintText() {
   if (uiLocale() === "ru") return "Результаты песен появятся после поиска или выбора страны.";
-  if (uiLocale() === "uk") return "Результати пісень Р·'являться після пошуку або вибору країни.";
+  if (uiLocale() === "uk") return "Результати пісень з'являться після пошуку або вибору країни.";
   if (uiLocale() === "et") return "Laulude tulemused ilmuvad parast otsingut voi riigi valikut.";
   return "Song results appear after search or country selection.";
 }
@@ -1430,7 +1442,7 @@ function draftUiText(key, vars = {}) {
     statusOnline: { ru: "онлайн", uk: "онлайн", et: "vorgus", en: "online" },
     statusOnlineWithNames: { ru: "онлайн: {names}", uk: "онлайн: {names}", et: "vorgus: {names}", en: "online: {names}" },
     statusReconnecting: { ru: "переподключение...", uk: "перепидключення...", et: "taasuhendamine...", en: "reconnecting..." },
-    statusConnectionError: { ru: "ошибка соединения", uk: "помилка Р·'еднання", et: "uhenduse viga", en: "connection error" },
+    statusConnectionError: { ru: "ошибка соединения", uk: "помилка з'єднання", et: "uhenduse viga", en: "connection error" },
     statusWsUnsupported: { ru: "WebSocket не поддерживается", uk: "WebSocket не пидтримуеться", et: "WebSocket pole toetatud", en: "WebSocket unsupported" },
     wsNotConnected: { ru: "WebSocket не подключен", uk: "WebSocket не пидключений", et: "WebSocket pole uhendatud", en: "WebSocket is not connected" },
     promptCopied: { ru: "Промпт скопирован", uk: "Промпт скопийовано", et: "Prompt kopeeritud", en: "Prompt copied" },
@@ -2099,8 +2111,8 @@ function lyricsComposerTitle() {
 }
 
 function lyricsComposerHint() {
-  if (uiLocale() === "ru") return "Сначала добавьте полноценный припев, пото для повторов используйте блок «Повтор припева».";
-  if (uiLocale() === "uk") return "Спочатку додайте повний приспів, поті для повторів використовуйте блок «Повтор приспіву».";
+  if (uiLocale() === "ru") return "Сначала добавьте полноценный припев, потом для повторов используйте блок «Повтор припева».";
+  if (uiLocale() === "uk") return "Спочатку додайте повний приспів, потім для повторів використовуйте блок «Повтор приспіву».";
   if (uiLocale() === "et") return "Lisa esmalt tais koor, korduste jaoks kasuta plokki \"Koori kordus\".";
   return "Add a full chorus first, then use the chorus repeat block for repeated sections.";
 }
@@ -2129,8 +2141,8 @@ function lyricsComposerSelectLabel() {
 function lyricsTemplateLabel(kind) {
   if (kind === "verse") return verseMarkerLabel();
   if (kind === "chorus-full") {
-    if (uiLocale() === "ru") return "Припев (с тексто)";
-    if (uiLocale() === "uk") return "Приспів (Р· тексто)";
+    if (uiLocale() === "ru") return "Припев (с текстом)";
+    if (uiLocale() === "uk") return "Приспів (з текстом)";
     if (uiLocale() === "et") return "Koor (tekstiga)";
     return "Chorus (with text)";
   }
@@ -2239,7 +2251,7 @@ function songDetailsUI(song, extra = {}) {
     ? `<span class="song-status-dot ${statusClass}" title="${esc(statusLabel)}" aria-label="${esc(statusLabel)}"></span>`
     : "";
   const verifiedPill = Number(song?.verified || 0) === 1
-    ? `<span class="song-verified-pill" title="${esc(verifiedLabel())}" aria-label="${esc(verifiedLabel())}">? ${esc(verifiedLabel())}</span>`
+    ? `<span class="song-verified-pill" title="${esc(verifiedLabel())}" aria-label="${esc(verifiedLabel())}">✓ ${esc(verifiedLabel())}</span>`
     : "";
   const editActionBtn = canOpenEditor
     ? `<a class="btn ghost song-edit-top" id="btnSongEditNav" href="${esc(makeHash("#/admin/editor", { id: song.id }, ["id"]))}" title="${esc(t("song.tools"))}" aria-label="${esc(t("song.tools"))}">
@@ -2248,6 +2260,15 @@ function songDetailsUI(song, extra = {}) {
         <path d="M13 7l4 4"></path>
       </svg>
     </a>`
+    : "";
+  const draftActionBtn = state.user
+    ? `<button class="btn ghost song-edit-top" id="btnSongDraftNav" type="button" title="${esc(draftUiText("openCollaborativeDraft"))}" aria-label="${esc(draftUiText("openCollaborativeDraft"))}">
+      <svg class="song-action-icon" viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+        <path d="M8.5 11a3.5 3.5 0 1 1 0-7 3.5 3.5 0 0 1 0 7zm7.5 1a2.5 2.5 0 1 0-2.2-3.7A4.8 4.8 0 0 1 14 9.5a2.5 2.5 0 0 0 2 2.5z"></path>
+        <path d="M3 20a5.5 5.5 0 0 1 11 0"></path>
+        <path d="M14 20a4.5 4.5 0 0 1 7 0"></path>
+      </svg>
+    </button>`
     : "";
   const playActionBtn = hasListenItems
     ? `<button class="btn primary song-play-now" id="btnSongListen" type="button" aria-label="${esc(listenCtaText())}"><span class="song-listen-icon-glyph" aria-hidden="true">d</span><span>${esc(listenCtaText())}</span></button>`
@@ -2269,7 +2290,7 @@ function songDetailsUI(song, extra = {}) {
       <span class="song-header-tool-text">${esc(favLabel)}</span>
     </button>`
     : "";
-  const headerActionButtons = [editActionBtn, copyActionBtn, favActionBtn].filter(Boolean).join("");
+  const headerActionButtons = [editActionBtn, draftActionBtn, copyActionBtn, favActionBtn].filter(Boolean).join("");
   const hasHeaderSide = !!(statusDot || verifiedPill || headerActionButtons);
   const aiHubTitle = uiLocale() === "ru"
     ? "ИИ-помощник по песне"
@@ -2567,9 +2588,9 @@ function requestUI(options = {}) {
         ? "Lisa"
         : "Add";
   const subtitleText = uiLocale() === "ru"
-    ? "Заполните карточку полностью: при правах публикация сразу, иначе отправка на одерацию."
+    ? "Заполните карточку полностью: при правах публикация сразу, иначе отправка на модерацию."
     : uiLocale() === "uk"
-      ? "Заповніть картку повністю: Р·Р° наявності прав публікація одразу, інакше заявка піде на одерацію."
+      ? "Заповніть картку повністю: за наявності прав публікація одразу, інакше заявка піде на модерацію."
     : uiLocale() === "et"
       ? "Taida kaart taielikult: oiguste korral avaldatakse kohe, muidu laheb modereerimisele."
       : "Fill in all fields: published immediately with permissions, otherwise sent for moderation.";
@@ -2874,7 +2895,7 @@ function adminRequestsUI(data, params) {
                   <div class="songMeta">${[
                     r.region ? `${esc(uiLocale() === "ru" ? "Регион" : uiLocale() === "uk" ? "Регіон" : uiLocale() === "et" ? "Piirkond" : "Region")}: ${esc(r.region)}` : "",
                     r.event ? `${esc(uiLocale() === "ru" ? "Событие" : uiLocale() === "uk" ? "Подія" : uiLocale() === "et" ? "Sundmus" : "Event")}: ${esc(r.event)}` : "",
-                    r.theme ? `${esc(uiLocale() === "ru" ? "Театика" : uiLocale() === "uk" ? "Театика" : uiLocale() === "et" ? "Temaatika" : "Theme")}: ${esc(r.theme)}` : "",
+                    r.theme ? `${esc(uiLocale() === "ru" ? "Тематика" : uiLocale() === "uk" ? "Тематика" : uiLocale() === "et" ? "Temaatika" : "Theme")}: ${esc(r.theme)}` : "",
                     Number(r.report_fragment || 0) === 1 ? esc(uiLocale() === "ru" ? "Сообщение фрагмента" : uiLocale() === "uk" ? "Повідомлення фрагмента" : uiLocale() === "et" ? "Katkendi teavitus" : "Fragment report") : "",
                   ].filter(Boolean).join(" · ")}</div>
                 ` : ``}
@@ -2913,7 +2934,7 @@ function adminUsersUI(data) {
   const purgeLabel = uiLocale() === "ru"
     ? "Удалить данные пользователя с сайта"
     : uiLocale() === "uk"
-      ? "Видалити дані користувача Р· сайту"
+      ? "Видалити дані користувача з сайту"
     : uiLocale() === "et"
       ? "Kustuta kasutaja andmed saidilt"
       : "Delete user data from site";
@@ -3141,9 +3162,9 @@ function adminCountryBackgroundsUI(data) {
   const flagDesktopStd = FLAG_CARD_STANDARDS.desktopLong;
   const flagMobileStd = FLAG_CARD_STANDARDS.mobileLong;
   const flagTitle = uiLocale() === "ru" ? "Флаг для карточек каталога" : uiLocale() === "uk" ? "Прапор для карток каталогу" : uiLocale() === "et" ? "Kataloogi kaartide lipp" : "Flag for catalog cards";
-  const flagDesktopInputLabel = uiLocale() === "ru" ? "Р¤Р°Р№Р» флага (ПК)" : uiLocale() === "uk" ? "Р¤Р°Р№Р» прапора (ПК)" : uiLocale() === "et" ? "Lipu fail (lauaarvuti)" : "Flag file (desktop)";
+  const flagDesktopInputLabel = uiLocale() === "ru" ? "Файл флага (ПК)" : uiLocale() === "uk" ? "Файл прапора (ПК)" : uiLocale() === "et" ? "Lipu fail (lauaarvuti)" : "Flag file (desktop)";
   const flagDesktopUrlLabel = uiLocale() === "ru" ? "или URL флага (ПК)" : uiLocale() === "uk" ? "або URL прапора (ПК)" : uiLocale() === "et" ? "voi lipu URL (lauaarvuti)" : "or flag URL (desktop)";
-  const flagMobileInputLabel = uiLocale() === "ru" ? "Р¤Р°Р№Р» флага (телефон)" : uiLocale() === "uk" ? "Р¤Р°Р№Р» прапора (телефон)" : uiLocale() === "et" ? "Lipu fail (telefon)" : "Flag file (mobile)";
+  const flagMobileInputLabel = uiLocale() === "ru" ? "Файл флага (телефон)" : uiLocale() === "uk" ? "Файл прапора (телефон)" : uiLocale() === "et" ? "Lipu fail (telefon)" : "Flag file (mobile)";
   const flagMobileUrlLabel = uiLocale() === "ru" ? "или URL флага (телефон)" : uiLocale() === "uk" ? "або URL прапора (телефон)" : uiLocale() === "et" ? "voi lipu URL (telefon)" : "or flag URL (mobile)";
   const flagSuperAdminHint = uiLocale() === "ru"
     ? "Флаг страны может менять только супер-админ."
@@ -4368,14 +4389,11 @@ export function bind(route, ctx) {
         Promise.all(preloadTasks).finally(() => {
           if (!document.body.contains(progressiveFeed)) return;
           const cardsHtml = queue
-            .map((song, index) => `<div class="home-result-item is-prepared" style="--home-result-delay:${index * 86}ms">${renderHomeSongCard(song, { backgroundsByCountry, flagDevice })}</div>`)
+            .map((song) => `<div class="home-result-item">${renderHomeSongCard(song, { backgroundsByCountry, flagDevice })}</div>`)
             .join("");
           progressiveFeed.innerHTML = cardsHtml;
           progressiveLoadingScreen?.classList.add("hidden");
-          requestAnimationFrame(() => {
-            progressiveFeed.querySelectorAll(".home-result-item").forEach((node) => node.classList.add("is-visible"));
-            progressiveFeed.classList.remove("is-chunk-loading");
-          });
+          progressiveFeed.classList.remove("is-chunk-loading");
         });
       }
     }
@@ -4558,7 +4576,7 @@ export function bind(route, ctx) {
       const nextLabel = ctx.isFav ? t("song.delFav") : t("song.addFav");
       const icon = favBtn.querySelector(".song-header-tool-icon");
       const text = favBtn.querySelector(".song-header-tool-text");
-      if (icon) icon.textContent = ctx.isFav ? "в…" : "в†";
+      if (icon) icon.textContent = ctx.isFav ? "★" : "☆";
       if (text) text.textContent = nextLabel;
       favBtn.classList.toggle("is-active", !!ctx.isFav);
       favBtn.setAttribute("aria-pressed", ctx.isFav ? "true" : "false");
@@ -4612,6 +4630,32 @@ export function bind(route, ctx) {
         copyBtn.classList.remove("is-copied", "is-failed");
         copyBtn.setAttribute("title", copyLabel);
       }, 1400);
+    });
+
+    qs("btnSongDraftNav")?.addEventListener("click", async () => {
+      const button = qs("btnSongDraftNav");
+      if (button) button.disabled = true;
+      try {
+        const songId = String(song?.id || "").trim();
+        if (!songId) throw new Error(t("common.error"));
+        const payload = await api.drafts();
+        const items = Array.isArray(payload?.items) ? payload.items : [];
+        const existing = items
+          .filter((item) => String(item?.song_id || "").trim() === songId && String(item?.status || "draft").trim() === "draft")
+          .sort((a, b) => String(b?.updated_at || "").localeCompare(String(a?.updated_at || "")))[0];
+        let draftId = String(existing?.id || "").trim();
+        if (!draftId) {
+          if (!canOpenEditor) throw new Error(t("admin.accessDenied"));
+          const created = await api.createDraft({ song_id: songId });
+          draftId = String(created?.draft_id || "").trim();
+        }
+        if (!draftId) throw new Error(draftUiText("draftNotCreated"));
+        location.hash = `#/draft/${encodeURIComponent(draftId)}`;
+      } catch (cause) {
+        showStatusOverlay(String(cause?.message || t("common.error")), "error");
+      } finally {
+        if (button) button.disabled = false;
+      }
     });
 
     qs("btnSongListen")?.addEventListener("click", () => {
@@ -5862,11 +5906,21 @@ export function bind(route, ctx) {
       if (button) button.disabled = true;
       try {
         const payload = collectContentPayload();
-        const requestPayload = payload?.id
-          ? { song_id: payload.id }
-          : { seed: payload };
-        const out = await api.createDraft(requestPayload);
-        const createdDraftId = String(out?.draft_id || "").trim();
+        let createdDraftId = "";
+        const songId = String(payload?.id || "").trim();
+        if (songId) {
+          const draftsPayload = await api.drafts();
+          const items = Array.isArray(draftsPayload?.items) ? draftsPayload.items : [];
+          const existing = items
+            .filter((item) => String(item?.song_id || "").trim() === songId && String(item?.status || "draft").trim() === "draft")
+            .sort((a, b) => String(b?.updated_at || "").localeCompare(String(a?.updated_at || "")))[0];
+          createdDraftId = String(existing?.id || "").trim();
+        }
+        if (!createdDraftId) {
+          const requestPayload = songId ? { song_id: songId } : { seed: payload };
+          const out = await api.createDraft(requestPayload);
+          createdDraftId = String(out?.draft_id || "").trim();
+        }
         if (!createdDraftId) {
           showStatusOverlay(draftUiText("draftNotCreated"), "error");
           return;
@@ -7095,7 +7149,7 @@ export function bind(route, ctx) {
     document.querySelectorAll("button[data-act='purgeUser']").forEach((btn) => btn.addEventListener("click", async () => {
       const id = btn.getAttribute("data-user-id");
       const prompt = uiLocale() === "ru"
-        ? "Полностью удалить данные пользователя? Аккаунт будет очищен Р±РµР· блокировки."
+        ? "Полностью удалить данные пользователя? Аккаунт будет очищен без блокировки."
         : uiLocale() === "et"
           ? "Kustuta kasutaja andmed taielikult? Konto puhastatakse ilma blokeerimiseta."
           : "Delete all user data? Account will be fully cleared without blocking.";
@@ -7147,9 +7201,3 @@ export function bind(route, ctx) {
     return;
   }
 }
-
-
-
-
-
-

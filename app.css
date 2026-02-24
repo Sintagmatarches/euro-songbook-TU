@@ -3268,15 +3268,12 @@ pre.lyrics {
 .home-result-item {
   opacity: 1;
   transform: translateY(0);
-  transition:
-    opacity 280ms var(--motion-ease),
-    transform 340ms var(--motion-ease-soft);
-  transition-delay: var(--home-result-delay, 0ms);
+  transition: none;
 }
 
 .home-result-item.is-prepared {
-  opacity: 0;
-  transform: translateY(14px);
+  opacity: 1;
+  transform: translateY(0);
 }
 
 .home-result-item.is-visible {
