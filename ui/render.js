@@ -1471,6 +1471,13 @@ function draftActiveVariant(line = {}) {
   return variants.find((item) => item?.is_active) || variants[0] || null;
 }
 
+function draftLinesToLyrics(lines = []) {
+  return [...(Array.isArray(lines) ? lines : [])]
+    .sort((a, b) => Number(a?.sort_order || 0) - Number(b?.sort_order || 0))
+    .map((line) => String(draftActiveVariant(line)?.text || ""))
+    .join("\n");
+}
+
 function draftOpStoreFor(draftId) {
   const key = String(draftId || "");
   if (!draftOpStatusStore.has(key)) {
@@ -2757,6 +2764,42 @@ function adminContentUI(data, params) {
   `;
 }
 
+function adminEditorCollabPanelUI() {
+  const linesTitle = uiLocale() === "ru"
+    ? "Построчная совместная редактура"
+    : uiLocale() === "uk"
+      ? "Порядкова спільна редактура"
+      : uiLocale() === "et"
+        ? "Reahaaval koostöötoimetus"
+        : "Line-by-line collaborative editing";
+  return `
+    <section class="request-section ac-collab-panel hidden" id="ac_collab_panel">
+      <div class="row wrap gap">
+        <div class="h2 request-section-title">${esc(draftUiText("openCollaborativeDraft"))}</div>
+        <div class="songMeta ac-collab-meta" id="ac_draft_meta"></div>
+      </div>
+      <div class="grid2 ac-collab-add">
+        <input class="input" id="ac_draft_collab_nickname" placeholder="${esc(draftUiText("collaboratorNicknamePlaceholder"))}" />
+        <button class="btn" id="ac_draft_collab_add" type="button">${esc(draftUiText("addCollaborator"))}</button>
+      </div>
+      <div class="list" id="ac_draft_collaborators"></div>
+      <div class="songCard draft-op-card ac-collab-presence-card">
+        <div class="songTitle">${esc(draftUiText("liveStatus"))}</div>
+        <div class="songMeta" id="ac_draft_presence">${esc(draftUiText("statusOffline"))}</div>
+      </div>
+      <div class="list" id="ac_draft_ops_list"></div>
+      <div class="actions ac-collab-actions">
+        <button class="btn" id="ac_draft_publish" type="button">${esc(draftUiText("publishDraft"))}</button>
+        <a class="btn ghost" id="ac_draft_open_page" href="#">${esc(t("common.open"))}</a>
+      </div>
+      <details class="ac-collab-lines" open>
+        <summary>${esc(linesTitle)}</summary>
+        <div class="list draft-lines-list" id="ac_draft_lines"></div>
+      </details>
+    </section>
+  `;
+}
+
 function adminEditorUI(song = {}, options = {}) {
   const isNew = !!options.isNew;
   const canToggleAdminContent = can("songs.view_admin_content");
@@ -2820,6 +2863,7 @@ function adminEditorUI(song = {}, options = {}) {
           <label class="field"><div class="fieldLabel">${esc(t("field.source"))}</div><input id="ac_source" class="input" /></label>
         </div>
         <div id="ac_draft_banner" class="ac-draft-banner hidden" role="status" aria-live="polite"></div>
+        ${adminEditorCollabPanelUI()}
         <div class="request-section">
           <label class="field"><div class="fieldLabel">${esc(t("field.lyrics"))} *</div><textarea id="ac_lyrics" class="textarea song-editor-text song-editor-text-main"></textarea></label>
           <input id="ac_chorus_marker" class="hidden" value="${esc(chorusMarkerLabel())}" />
@@ -4162,11 +4206,41 @@ export async function render(route) {
     }
 
     if (section === "editor") {
-      const editorId = (params.id || route.path?.[2] || "").trim();
+      let requestedDraftId = String(params.draft || "").trim();
+      const requestedSongId = String(params.id || route.path?.[2] || "").trim();
+      if (!requestedDraftId && requestedSongId) {
+        try {
+          const draftsPayload = await api.drafts();
+          const items = Array.isArray(draftsPayload?.items) ? draftsPayload.items : [];
+          const existing = items
+            .filter((item) => String(item?.song_id || "").trim() === requestedSongId && String(item?.status || "draft").trim() === "draft")
+            .sort((a, b) => String(b?.updated_at || "").localeCompare(String(a?.updated_at || "")))[0];
+          requestedDraftId = String(existing?.id || "").trim();
+        } catch {}
+      }
+
+      let draftData = null;
+      if (requestedDraftId) {
+        try {
+          draftData = await api.draft(requestedDraftId);
+        } catch {}
+      }
+
+      const fallbackSongId = String(draftData?.snapshot?.song_id || "").trim();
+      const editorId = requestedSongId || fallbackSongId;
       const isNew = !editorId;
-      const song = isNew
+      let song = isNew
         ? { status: "published", links: [], versions: [] }
         : await api.adminSong(editorId);
+      if (draftData) {
+        song = {
+          ...song,
+          ...(draftData?.snapshot || {}),
+          lyrics: draftLinesToLyrics(draftData?.lines || []) || song.lyrics || "",
+          links: Array.isArray(song?.links) ? song.links : [],
+          versions: Array.isArray(song?.versions) ? song.versions : [],
+        };
+      }
       return {
         html: adminEditorUI(song, {
           isNew,
@@ -4176,7 +4250,7 @@ export async function render(route) {
             ["q", "status", "recent", "page"],
           ),
         }),
-        ctx: { section, params, song, isNew },
+        ctx: { section, params: { ...params, draft: requestedDraftId || "" }, song, isNew, draftId: requestedDraftId || "", draftData },
       };
     }
 
@@ -4639,7 +4713,11 @@ export function bind(route, ctx) {
           draftId = String(created?.draft_id || "").trim();
         }
         if (!draftId) throw new Error(draftUiText("draftNotCreated"));
-        location.hash = `#/draft/${encodeURIComponent(draftId)}`;
+        if (editorAllowed) {
+          location.hash = makeHash("#/admin/editor", { id: songId, draft: draftId }, ["id", "draft"]);
+        } else {
+          location.hash = `#/draft/${encodeURIComponent(draftId)}`;
+        }
       } catch (cause) {
         showStatusOverlay(String(cause?.message || t("common.error")), "error");
       } finally {
@@ -5914,7 +5992,12 @@ export function bind(route, ctx) {
           showStatusOverlay(draftUiText("draftNotCreated"), "error");
           return;
         }
-        location.hash = `#/draft/${encodeURIComponent(createdDraftId)}`;
+        const targetHash = makeHash(
+          "#/admin/editor",
+          { id: songId || "", draft: createdDraftId },
+          ["id", "draft"],
+        );
+        location.hash = targetHash;
       } catch (cause) {
         showStatusOverlay(String(cause?.message || t("common.error")), "error");
       } finally {
@@ -5943,6 +6026,486 @@ export function bind(route, ctx) {
       qs(id)?.addEventListener("input", refreshAdminDecoding);
       qs(id)?.addEventListener("change", refreshAdminDecoding);
     });
+
+    const inlineCollabRoot = qs("ac_collab_panel");
+    let inlineDraftId = String(ctx?.draftId || route?.query?.draft || "").trim();
+    let inlineDraftPayload = ctx?.draftData || null;
+    let inlineVersion = Number(inlineDraftPayload?.version || 0);
+    let inlineWs = null;
+    let inlineLeaving = false;
+    let inlineReconnectTimer = 0;
+    let inlineMetaTimer = 0;
+    let inlineLyricsTimer = 0;
+    let inlineWarnLineCountAt = 0;
+    let inlineSyncingFromDraft = false;
+    let inlineOpStore = inlineDraftId ? draftOpStoreFor(inlineDraftId) : new Map();
+    const inlineLineTimers = new Map();
+    const splitLines = (input) => String(input || "").replace(/\r\n?/g, "\n").split("\n");
+    const collabMetaNode = qs("ac_draft_meta");
+    const collabPresenceNode = qs("ac_draft_presence");
+    const collabOpsNode = qs("ac_draft_ops_list");
+    const collabCollaboratorsNode = qs("ac_draft_collaborators");
+    const collabLinesNode = qs("ac_draft_lines");
+    const collabOpenLink = qs("ac_draft_open_page");
+    const collabPublishBtn = qs("ac_draft_publish");
+    const collabAddBtn = qs("ac_draft_collab_add");
+    const collabNicknameInput = qs("ac_draft_collab_nickname");
+
+    const inlineCanManageCollaborators = () => {
+      const ownerId = String(inlineDraftPayload?.owner?.id || "").trim();
+      const userId = String(state?.user?.id || "").trim();
+      return !!ownerId && !!userId && ownerId === userId;
+    };
+    const inlineSetPanelVisible = (visible) => {
+      if (!inlineCollabRoot) return;
+      inlineCollabRoot.classList.toggle("hidden", !visible);
+    };
+    const inlineSetPresence = (text) => {
+      if (!collabPresenceNode) return;
+      collabPresenceNode.textContent = String(text || "").trim();
+    };
+    const inlineOrderedLines = () => [...(Array.isArray(inlineDraftPayload?.lines) ? inlineDraftPayload.lines : [])]
+      .sort((a, b) => Number(a?.sort_order || 0) - Number(b?.sort_order || 0));
+    const inlineRefreshMeta = () => {
+      if (!collabMetaNode) return;
+      if (!inlineDraftId) {
+        collabMetaNode.textContent = "";
+        return;
+      }
+      collabMetaNode.textContent = draftUiText("draftMeta", {
+        draftId: inlineDraftId,
+        version: String(inlineVersion || 0),
+      });
+    };
+    const inlineRefreshOps = () => {
+      if (!collabOpsNode) return;
+      const items = [...inlineOpStore.values()]
+        .sort((a, b) => Number(b.ts || 0) - Number(a.ts || 0))
+        .slice(0, 12);
+      if (!items.length) {
+        collabOpsNode.innerHTML = "";
+        return;
+      }
+      collabOpsNode.innerHTML = items.map((item) => `
+        <div class="songCard draft-op-card">
+          <div class="songTitle">${esc(String(item?.opType || "op"))}</div>
+          <div class="songMeta">${esc(draftOpStatusLabel(item?.status || "pending"))}</div>
+        </div>
+      `).join("");
+    };
+    const inlineRefreshCollaborators = () => {
+      if (!collabCollaboratorsNode) return;
+      collabCollaboratorsNode.innerHTML = draftCollaboratorsUI(inlineDraftPayload || {}, inlineCanManageCollaborators());
+    };
+    const inlineRefreshLines = () => {
+      if (!collabLinesNode) return;
+      const lines = inlineOrderedLines();
+      collabLinesNode.innerHTML = draftLineRowsUI(lines);
+    };
+    const inlineApplyDraftLyricsToEditor = () => {
+      const composed = draftLinesToLyrics(inlineOrderedLines());
+      const parts = splitLyricsForEditor(composed || "");
+      inlineSyncingFromDraft = true;
+      const lyricsNode = qs("ac_lyrics");
+      const chorusNode = qs("ac_chorus");
+      const markerNode = qs("ac_chorus_marker");
+      if (lyricsNode) lyricsNode.value = parts.lyrics || "";
+      if (chorusNode) chorusNode.value = parts.chorus || "";
+      if (markerNode) markerNode.value = parts.marker || chorusMarkerLabel();
+      inlineSyncingFromDraft = false;
+      refreshAdminDecoding();
+    };
+    const inlineRegisterOpStatus = (clientOpId, status, opType = "") => {
+      const key = String(clientOpId || "").trim();
+      if (!key) return;
+      const prev = inlineOpStore.get(key) || { id: key, opType: String(opType || "op"), ts: Date.now() };
+      inlineOpStore.set(key, { ...prev, status: String(status || prev.status || "pending"), ts: Date.now() });
+      while (inlineOpStore.size > 80) {
+        const oldest = [...inlineOpStore.entries()].sort((a, b) => Number(a[1]?.ts || 0) - Number(b[1]?.ts || 0))[0];
+        if (!oldest) break;
+        inlineOpStore.delete(oldest[0]);
+      }
+      inlineRefreshOps();
+    };
+    const inlineSendOp = (opType, payload = {}, options = {}) => {
+      const silent = options?.silent === true;
+      if (!(inlineWs instanceof WebSocket) || inlineWs.readyState !== WebSocket.OPEN) {
+        if (!silent) showStatusOverlay(draftUiText("wsNotConnected"), "error");
+        return false;
+      }
+      const clientOpId = `cop_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`;
+      inlineRegisterOpStatus(clientOpId, "pending", opType);
+      inlineWs.send(JSON.stringify({
+        type: "op",
+        op_type: opType,
+        payload,
+        base_version: inlineVersion,
+        client_op_id: clientOpId,
+        ts: Date.now(),
+      }));
+      return true;
+    };
+    const inlineApplyState = (statePayload = {}) => {
+      const next = {
+        ...inlineDraftPayload,
+        version: Number(statePayload?.draft?.version || inlineDraftPayload?.version || 0),
+        status: String(statePayload?.draft?.status || inlineDraftPayload?.status || "draft"),
+        snapshot: statePayload?.draft?.snapshot || inlineDraftPayload?.snapshot || {},
+        collaborators: Array.isArray(statePayload?.collaborators) ? statePayload.collaborators : (inlineDraftPayload?.collaborators || []),
+        lines: Array.isArray(statePayload?.lines) ? statePayload.lines : (inlineDraftPayload?.lines || []),
+      };
+      inlineDraftPayload = next;
+      inlineVersion = Number(next.version || 0);
+      inlineRefreshMeta();
+      inlineRefreshCollaborators();
+      inlineRefreshLines();
+      inlineApplyDraftLyricsToEditor();
+      syncDraftState(collectContentPayload());
+    };
+    const inlineDraftLinePrompt = (lineId) => {
+      const lines = inlineOrderedLines();
+      const idx = lines.findIndex((line) => String(line?.id || "") === String(lineId || ""));
+      if (idx < 0) return "";
+      const before = idx > 0 ? String(draftActiveVariant(lines[idx - 1])?.text || "") : "";
+      const current = String(draftActiveVariant(lines[idx])?.text || "");
+      const after = idx + 1 < lines.length ? String(draftActiveVariant(lines[idx + 1])?.text || "") : "";
+      const title = String(inlineDraftPayload?.snapshot?.title || qs("ac_title")?.value || "");
+      return buildDraftPhoneticPrompt({ title, before, current, after });
+    };
+    const inlineCopyText = async (text) => {
+      if (navigator.clipboard?.writeText) {
+        await navigator.clipboard.writeText(text);
+        return;
+      }
+      const tmp = document.createElement("textarea");
+      tmp.value = text;
+      tmp.setAttribute("readonly", "readonly");
+      tmp.style.position = "fixed";
+      tmp.style.opacity = "0";
+      document.body.appendChild(tmp);
+      tmp.select();
+      document.execCommand("copy");
+      document.body.removeChild(tmp);
+    };
+    const inlineQueueMetaSync = () => {
+      if (!inlineDraftId) return;
+      clearTimeout(inlineMetaTimer);
+      inlineMetaTimer = setTimeout(() => {
+        const payload = collectContentPayload();
+        inlineSendOp("set_meta", {
+          song_id: String(payload.id || "").trim() || null,
+          title: payload.title || "",
+          subtitle: payload.subtitle || "",
+          lang: payload.lang || "",
+          country: payload.country || "",
+          period: payload.period || "",
+          region: payload.region || "",
+          event: payload.event || "",
+          theme: payload.theme || "",
+          verified: payload.verified ? 1 : 0,
+          year: payload.year || "",
+          source: payload.source || "",
+          notes: payload.notes || "",
+        }, { silent: true });
+      }, 260);
+    };
+    const inlineSyncEditorLyricsToDraft = () => {
+      if (!inlineDraftId || inlineSyncingFromDraft) return;
+      const lines = inlineOrderedLines();
+      if (!lines.length) return;
+      const composed = composeLyricsWithChorus(
+        qs("ac_lyrics")?.value || "",
+        qs("ac_chorus")?.value || "",
+        qs("ac_chorus_marker")?.value || chorusMarkerLabel(),
+      );
+      const nextLines = splitLines(composed);
+      if (nextLines.length !== lines.length && Date.now() - inlineWarnLineCountAt > 2400) {
+        inlineWarnLineCountAt = Date.now();
+        showStatusOverlay(uiLocale() === "ru"
+          ? "В совместном режиме количество строк фиксировано. Используйте построчные варианты ниже."
+          : uiLocale() === "uk"
+            ? "У спільному режимі кількість рядків фіксована. Використовуйте варіанти рядків нижче."
+            : uiLocale() === "et"
+              ? "Koostöörežiimis on ridade arv fikseeritud. Kasuta all reavariatsioone."
+              : "In collaborative mode line count is fixed. Use line variants below.", "info");
+      }
+      const limit = Math.min(lines.length, nextLines.length);
+      for (let index = 0; index < limit; index += 1) {
+        const line = lines[index];
+        const nextText = String(nextLines[index] || "");
+        const currentText = String(draftActiveVariant(line)?.text || "");
+        if (nextText === currentText) continue;
+        const confidence = Number(draftActiveVariant(line)?.confidence || 100);
+        inlineSendOp("set_line_text", { line_id: String(line?.id || ""), text: nextText, confidence }, { silent: true });
+      }
+    };
+    const inlineQueueLyricsSync = () => {
+      if (!inlineDraftId) return;
+      clearTimeout(inlineLyricsTimer);
+      inlineLyricsTimer = setTimeout(inlineSyncEditorLyricsToDraft, 220);
+    };
+    const inlineConnectWs = () => {
+      if (!inlineDraftId || inlineLeaving) return;
+      if (!(window.WebSocket)) {
+        inlineSetPresence(draftUiText("statusWsUnsupported"));
+        return;
+      }
+      inlineSetPresence(draftUiText("statusConnecting"));
+      inlineWs = new WebSocket(api.draftWsUrl(inlineDraftId));
+      inlineWs.addEventListener("open", () => inlineSetPresence(draftUiText("statusOnline")));
+      inlineWs.addEventListener("message", (event) => {
+        let message = null;
+        try {
+          message = JSON.parse(String(event.data || "{}"));
+        } catch {
+          return;
+        }
+        const type = String(message?.type || "").trim();
+        if (type === "presence") {
+          const users = Array.isArray(message?.users) ? message.users : [];
+          const names = users.map((u) => String(u?.nickname || u?.user_id || "").trim()).filter(Boolean);
+          inlineSetPresence(names.length ? draftUiText("statusOnlineWithNames", { names: names.join(", ") }) : draftUiText("statusOnline"));
+          return;
+        }
+        if (type === "joined") {
+          inlineVersion = Number(message?.version || inlineVersion || 0);
+          inlineRefreshMeta();
+          return;
+        }
+        if (type === "op_applied") {
+          inlineRegisterOpStatus(message?.client_op_id, "applied");
+          inlineVersion = Math.max(inlineVersion, Number(message?.version || 0));
+          inlineRefreshMeta();
+          return;
+        }
+        if (type === "op_persisted") {
+          inlineRegisterOpStatus(message?.client_op_id, "persisted");
+          inlineVersion = Math.max(inlineVersion, Number(message?.version || 0));
+          inlineRefreshMeta();
+          return;
+        }
+        if (type === "conflict_created") {
+          showStatusOverlay(draftUiText("conflictSaved"), "info");
+          return;
+        }
+        if (type === "snapshot") {
+          inlineApplyState(message?.state || {});
+          return;
+        }
+        if (type === "error") {
+          showStatusOverlay(String(message?.message || t("common.error")), "error");
+        }
+      });
+      inlineWs.addEventListener("close", () => {
+        if (inlineLeaving) return;
+        inlineSetPresence(draftUiText("statusReconnecting"));
+        inlineReconnectTimer = window.setTimeout(inlineConnectWs, 1200);
+      });
+      inlineWs.addEventListener("error", () => {
+        if (inlineLeaving) return;
+        inlineSetPresence(draftUiText("statusConnectionError"));
+      });
+    };
+    const inlineRefreshFromApi = async () => {
+      if (!inlineDraftId) return;
+      const fresh = await api.draft(inlineDraftId);
+      inlineDraftPayload = fresh;
+      inlineVersion = Number(fresh?.version || inlineVersion || 0);
+      inlineApplyState({
+        draft: { version: fresh?.version || 0, status: fresh?.status || "draft", snapshot: fresh?.snapshot || {} },
+        collaborators: fresh?.collaborators || [],
+        lines: fresh?.lines || [],
+      });
+    };
+    const inlineBootstrap = async () => {
+      if (!inlineCollabRoot || !inlineDraftId) {
+        inlineSetPanelVisible(false);
+        return;
+      }
+      inlineSetPanelVisible(true);
+      inlineOpStore = draftOpStoreFor(inlineDraftId);
+      inlineRefreshOps();
+      if (collabOpenLink) collabOpenLink.href = `#/draft/${encodeURIComponent(inlineDraftId)}`;
+      if (!inlineDraftPayload || String(inlineDraftPayload?.draft_id || "").trim() !== inlineDraftId) {
+        try {
+          inlineDraftPayload = await api.draft(inlineDraftId);
+        } catch (cause) {
+          showStatusOverlay(String(cause?.message || t("common.error")), "error");
+          inlineSetPanelVisible(false);
+          return;
+        }
+      }
+      inlineVersion = Number(inlineDraftPayload?.version || 0);
+      inlineApplyState({
+        draft: { version: inlineDraftPayload?.version || 0, status: inlineDraftPayload?.status || "draft", snapshot: inlineDraftPayload?.snapshot || {} },
+        collaborators: inlineDraftPayload?.collaborators || [],
+        lines: inlineDraftPayload?.lines || [],
+      });
+      inlineConnectWs();
+      inlineQueueMetaSync();
+    };
+
+    collabAddBtn?.addEventListener("click", async () => {
+      if (!inlineDraftId) return;
+      const nickname = String(collabNicknameInput?.value || "").trim();
+      if (!nickname) return;
+      try {
+        await api.draftAddCollaborator(inlineDraftId, nickname);
+        if (collabNicknameInput) collabNicknameInput.value = "";
+        await inlineRefreshFromApi();
+      } catch (cause) {
+        showStatusOverlay(String(cause?.message || t("common.error")), "error");
+      }
+    });
+    collabPublishBtn?.addEventListener("click", async () => {
+      if (!inlineDraftId) return;
+      try {
+        const out = await api.draftPublish(inlineDraftId);
+        if (out?.song_id) {
+          location.hash = `#/song/${encodeURIComponent(out.song_id)}`;
+        } else {
+          showStatusOverlay(draftUiText("draftPublished"), "success");
+        }
+      } catch (cause) {
+        showStatusOverlay(String(cause?.message || t("common.error")), "error");
+      }
+    });
+    inlineCollabRoot?.addEventListener("click", async (event) => {
+      const target = event.target;
+      if (!(target instanceof HTMLElement) || !inlineDraftId) return;
+      const toggle = target.closest(".draft-variants-toggle");
+      if (toggle) {
+        const lineId = String(toggle.getAttribute("data-line-id") || "").trim();
+        if (!lineId) return;
+        const panel = qs(`draft_variants_${lineId}`);
+        if (!panel) return;
+        panel.classList.toggle("hidden");
+        return;
+      }
+      const activate = target.closest(".draft-variant-activate");
+      if (activate) {
+        const lineId = String(activate.getAttribute("data-line-id") || "").trim();
+        const variantId = String(activate.getAttribute("data-variant-id") || "").trim();
+        if (!lineId || !variantId) return;
+        inlineSendOp("set_active_variant", { line_id: lineId, variant_id: variantId });
+        return;
+      }
+      const addVariant = target.closest(".draft-add-variant-btn");
+      if (addVariant) {
+        const lineId = String(addVariant.getAttribute("data-line-id") || "").trim();
+        if (!lineId) return;
+        const row = addVariant.closest(".draft-add-variant");
+        if (!row) return;
+        const textInput = row.querySelector(".draft-new-variant-text");
+        const confInput = row.querySelector(".draft-new-variant-confidence");
+        const text = String(textInput?.value || "").trim();
+        const confidence = Number.parseInt(String(confInput?.value || "80"), 10);
+        if (!text) return;
+        inlineSendOp("add_variant", { line_id: lineId, text, confidence, variant_type: "manual" });
+        if (textInput) textInput.value = "";
+        if (confInput) confInput.value = "80";
+        return;
+      }
+      const addSuggested = target.closest(".draft-add-suggested-btn");
+      if (addSuggested) {
+        const lineId = String(addSuggested.getAttribute("data-line-id") || "").trim();
+        if (!lineId) return;
+        const row = addSuggested.closest(".draft-add-variant");
+        if (!row) return;
+        const textInput = row.querySelector(".draft-new-variant-text");
+        const confInput = row.querySelector(".draft-new-variant-confidence");
+        const text = String(textInput?.value || "").trim();
+        const confidence = Number.parseInt(String(confInput?.value || "80"), 10);
+        if (!text) return;
+        inlineSendOp("add_variant", { line_id: lineId, text, confidence, variant_type: "suggested" });
+        if (textInput) textInput.value = "";
+        if (confInput) confInput.value = "80";
+        return;
+      }
+      const aiCopy = target.closest(".draft-ai-copy");
+      if (aiCopy) {
+        const lineId = String(aiCopy.getAttribute("data-line-id") || "").trim();
+        const prompt = inlineDraftLinePrompt(lineId);
+        if (!prompt) return;
+        try {
+          await inlineCopyText(prompt);
+          showStatusOverlay(draftUiText("promptCopied"), "success");
+        } catch {
+          showStatusOverlay(draftUiText("promptCopyFailed"), "error");
+        }
+        return;
+      }
+      const aiOpen = target.closest(".draft-ai-open");
+      if (aiOpen) {
+        const lineId = String(aiOpen.getAttribute("data-line-id") || "").trim();
+        const prompt = inlineDraftLinePrompt(lineId);
+        if (!prompt) return;
+        const url = `https://chatgpt.com/?q=${encodeURIComponent(prompt)}`;
+        window.open(url, "_blank", "noopener,noreferrer");
+        return;
+      }
+      const removeCollaborator = target.closest(".draft-collab-remove");
+      if (removeCollaborator) {
+        const userId = String(removeCollaborator.getAttribute("data-user-id") || "").trim();
+        if (!userId) return;
+        try {
+          await api.draftRemoveCollaborator(inlineDraftId, userId);
+          await inlineRefreshFromApi();
+        } catch (cause) {
+          showStatusOverlay(String(cause?.message || t("common.error")), "error");
+        }
+      }
+    });
+    inlineCollabRoot?.addEventListener("input", (event) => {
+      const target = event.target;
+      if (!(target instanceof HTMLElement) || !inlineDraftId) return;
+      if (!target.classList.contains("draft-line-input")) return;
+      const lineId = String(target.getAttribute("data-line-id") || "").trim();
+      if (!lineId) return;
+      if (inlineLineTimers.has(lineId)) clearTimeout(inlineLineTimers.get(lineId));
+      const timeoutId = setTimeout(() => {
+        const confidence = Number.parseInt(String(target.getAttribute("data-confidence") || "100"), 10) || 100;
+        inlineSendOp("set_line_text", { line_id: lineId, text: target.value || "", confidence });
+      }, 240);
+      inlineLineTimers.set(lineId, timeoutId);
+    });
+    inlineCollabRoot?.addEventListener("change", (event) => {
+      const target = event.target;
+      if (!(target instanceof HTMLElement) || !inlineDraftId) return;
+      if (!target.classList.contains("draft-variant-confidence")) return;
+      const variantId = String(target.getAttribute("data-variant-id") || "").trim();
+      if (!variantId) return;
+      const confidence = Number.parseInt(String(target.value || "100"), 10) || 100;
+      inlineSendOp("set_variant_confidence", { variant_id: variantId, confidence });
+    });
+
+    ["ac_title", "ac_subtitle", "ac_lang", "ac_country", "ac_period", "ac_region", "ac_event", "ac_theme", "ac_year", "ac_source", "ac_notes", "ac_verified", "ac_status_edit"]
+      .forEach((id) => {
+        qs(id)?.addEventListener("input", inlineQueueMetaSync);
+        qs(id)?.addEventListener("change", inlineQueueMetaSync);
+      });
+    ["ac_lyrics", "ac_chorus", "ac_chorus_marker"].forEach((id) => {
+      qs(id)?.addEventListener("input", inlineQueueLyricsSync);
+      qs(id)?.addEventListener("change", inlineQueueLyricsSync);
+    });
+
+    if (inlineDraftId) {
+      inlineBootstrap();
+      const onInlineLeave = () => {
+        inlineLeaving = true;
+        clearTimeout(inlineReconnectTimer);
+        clearTimeout(inlineMetaTimer);
+        clearTimeout(inlineLyricsTimer);
+        inlineLineTimers.forEach((timerId) => clearTimeout(timerId));
+        inlineLineTimers.clear();
+        try {
+          inlineWs?.close();
+        } catch {}
+      };
+      window.addEventListener("hashchange", onInlineLeave, { once: true });
+    } else {
+      inlineSetPanelVisible(false);
+    }
 
     const acSaveBtn = qs("ac_save");
     const acPublishBtn = qs("ac_publish");
@@ -6007,6 +6570,9 @@ export function bind(route, ctx) {
           clearContentDraft(oldIdentity);
           if (!payload.id) clearContentDraft("__new");
           if (qs("ac_id")) qs("ac_id").value = savedId;
+          if (inlineDraftId && savedId) {
+            inlineQueueMetaSync();
+          }
           baseSignature = contentDraftComparableSignature({ ...payload, id: savedId });
           hasDiffFromBase = false;
           setDraftBannerVisible(false);
@@ -6019,7 +6585,7 @@ export function bind(route, ctx) {
           if (acSaveBtn) acSaveBtn.textContent = initialSaveText;
           if (acPublishBtn) acPublishBtn.textContent = initialPublishText;
           if (!payload.id && savedId) {
-            const editorHash = makeHash("#/admin/editor", { id: savedId }, ["id"]);
+            const editorHash = makeHash("#/admin/editor", { id: savedId, draft: inlineDraftId || "" }, ["id", "draft"]);
             if (location.hash !== editorHash) location.hash = editorHash;
           }
         } catch (e) {

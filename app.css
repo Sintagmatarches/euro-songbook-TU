@@ -3930,6 +3930,39 @@ pre.lyrics {
   line-height: 1.35;
 }
 
+.ac-collab-panel {
+  margin-top: 8px;
+  border: 1px solid rgba(64, 120, 228, 0.56);
+  border-radius: 14px;
+  background: rgba(8, 21, 78, 0.62);
+}
+
+.ac-collab-meta {
+  font-size: 12px;
+}
+
+.ac-collab-add {
+  margin-top: 10px;
+}
+
+.ac-collab-presence-card {
+  margin-top: 10px;
+}
+
+.ac-collab-actions {
+  margin-top: 10px;
+}
+
+.ac-collab-lines {
+  margin-top: 10px;
+}
+
+.ac-collab-lines > summary {
+  cursor: pointer;
+  font-weight: 700;
+  color: #d7e7ff;
+}
+
 .draft-main {
   display: grid;
   gap: 12px;
