@@ -382,6 +382,19 @@ const SONG_PAGE_BG_STATIC_COUNTRIES = new Set([
   "russian_empire_1900_1917",
 ]);
 
+const CARD_WALLPAPER_DISABLED_COUNTRIES = new Set([
+  "ussr",
+]);
+
+const CARD_DATA_URL_MAX_LENGTH = 220_000;
+
+function sanitizeCardWallpaperUrl(value) {
+  const raw = String(value || "").trim();
+  if (!raw) return "";
+  if (raw.startsWith("data:image/") && raw.length > CARD_DATA_URL_MAX_LENGTH) return "";
+  return raw;
+}
+
 const DEFAULT_COUNTRY_BACKGROUND = {
   ussr: {
     desktop_image_url: new URL("./assets/ussr-hero.jpg", import.meta.url).toString(),
@@ -1108,13 +1121,15 @@ function renderHomeSongCard(song = {}, options = {}) {
   const countryKey = normalizeSongCountry(song?.country || "");
   const background = countryKey ? (backgroundsByCountry.get(countryKey) || {}) : {};
   const flagConfig = parseFlagPreviewConfig(String(background?.preview_flag_image_value || background?.preview_flag_image_url || "").trim());
-  const flagUrl = resolveFlagPreviewImage(flagConfig, {
+  const rawFlagUrl = resolveFlagPreviewImage(flagConfig, {
     country: song?.country || "",
     period: song?.period || "",
     year: song?.year || "",
     kind: "long",
     device: flagDevice,
   });
+  const disableWallpaper = CARD_WALLPAPER_DISABLED_COUNTRIES.has(countryKey);
+  const flagUrl = disableWallpaper ? "" : sanitizeCardWallpaperUrl(rawFlagUrl);
   const cardAttrs = [];
   if (flagUrl) cardAttrs.push(`data-card-flag="${esc(flagUrl)}"`);
   return `
@@ -1196,22 +1211,27 @@ function homeUI(data, params, homeExtras = {}) {
   const countryCards = [...countrySet]
     .map((countryKey) => {
       const background = backgroundsByCountry.get(countryKey) || {};
-      const flagUrl = resolveFlagPreviewImage(background?.preview_flag_config || null, {
+      const rawFlagUrl = resolveFlagPreviewImage(background?.preview_flag_config || null, {
         country: countryKey,
         period: countryKey === "ussr" ? period : "",
         kind: "square",
       })
         || String(background?.preview_flag_image_url || "").trim();
-      const wallpaperUrl = String(background?.desktop_image_url || background?.mobile_image_url || "").trim();
+      const rawWallpaperUrl = String(background?.desktop_image_url || background?.mobile_image_url || "").trim();
+      const disableWallpaper = CARD_WALLPAPER_DISABLED_COUNTRIES.has(countryKey);
+      const flagUrl = sanitizeCardWallpaperUrl(rawFlagUrl);
+      const wallpaperUrl = disableWallpaper ? "" : sanitizeCardWallpaperUrl(rawWallpaperUrl);
+      const previewBg = disableWallpaper ? "" : (wallpaperUrl || flagUrl);
       const href = catalogHashForSongFilter({ country: countryKey, searched: "1", adv: "0", page: "1" });
       return {
         key: countryKey,
         label: formatCountry(countryKey),
         count: countryCounts.get(countryKey) || 0,
         href,
-        previewBg: wallpaperUrl || flagUrl,
+        previewBg,
         wallBg: wallpaperUrl,
         flagBg: flagUrl,
+        previewDisabled: disableWallpaper || !previewBg,
         isActive: country === countryKey,
       };
     })
@@ -1229,6 +1249,7 @@ function homeUI(data, params, homeExtras = {}) {
         data-home-bg="${esc(item.previewBg || "")}"
         data-home-wall="${esc(item.wallBg || "")}"
         data-home-flag="${esc(item.flagBg || "")}"
+        data-home-preview-disabled="${item.previewDisabled ? "1" : "0"}"
       >
         <span class="home-country-card-label">${esc(item.label)}</span>
         <span class="home-country-card-count">${esc(homeCountrySongsCountLabel(item.count))}</span>
@@ -4031,16 +4052,18 @@ export function bind(route, ctx) {
       if (!(card instanceof HTMLElement)) return;
       if (card.classList.contains("home-country-card")) {
         if (card.dataset.bgReady === "1") return;
-        const wall = String(card.getAttribute("data-home-wall") || "").trim();
-        const flag = String(card.getAttribute("data-home-flag") || "").trim();
+        const wall = sanitizeCardWallpaperUrl(card.getAttribute("data-home-wall") || "");
+        const flag = sanitizeCardWallpaperUrl(card.getAttribute("data-home-flag") || "");
         if (wall) card.style.setProperty("--home-country-wall", toCssUrlValue(wall));
+        else card.style.removeProperty("--home-country-wall");
         if (flag) card.style.setProperty("--home-country-flag", toCssUrlValue(flag));
+        else card.style.removeProperty("--home-country-flag");
         card.dataset.bgReady = "1";
         return;
       }
       if (card.classList.contains("yt-card")) {
         if (card.dataset.bgReady === "1") return;
-        const flag = String(card.getAttribute("data-card-flag") || "").trim();
+        const flag = sanitizeCardWallpaperUrl(card.getAttribute("data-card-flag") || "");
         if (flag) {
           card.style.setProperty("--yt-card-flag-image", toCssUrlValue(flag));
           card.classList.add("yt-card-has-flag");
@@ -4287,7 +4310,9 @@ export function bind(route, ctx) {
       const homeCountryCards = Array.from(document.querySelectorAll(".home-country-card"));
       const previewUrls = new Set();
       homeCountryCards.forEach((card) => {
-        const previewUrl = String(card.getAttribute("data-home-bg") || "").trim();
+        const previewDisabled = card.getAttribute("data-home-preview-disabled") === "1";
+        if (previewDisabled) return;
+        const previewUrl = sanitizeCardWallpaperUrl(card.getAttribute("data-home-bg") || "");
         if (!previewUrl) return;
         previewUrls.add(previewUrl);
         card.addEventListener("mouseenter", () => setHomeCountryPreview(previewUrl));
