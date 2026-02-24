@@ -39,6 +39,10 @@ function canDirectPublish(access, payloadLang, body) {
   return access.role === "super_admin";
 }
 
+function toIntBool(value) {
+  return value === true || value === 1 || String(value || "").trim() === "1" ? 1 : 0;
+}
+
 async function upsertFTS(env, songId, title, lyrics) {
   await dbRun(env, `INSERT OR REPLACE INTO songs_fts(song_id, title, lyrics) VALUES (?,?,?)`, [songId, title || "", lyrics || ""]);
 }
@@ -93,9 +97,9 @@ export async function onRequestPost({ env, request }) {
     await dbRun(
       env,
       `INSERT INTO songs (
-        id,title,subtitle,lang,country,period,year,source,notes,lyrics,tags_json,
+        id,title,subtitle,lang,country,period,region,event,theme,verified,year,source,notes,lyrics,lyrics_meta_json,tags_json,
         created_by,updated_by,lang_locked,status,created_at,updated_at
-      ) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,datetime('now'),datetime('now'))`,
+      ) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,datetime('now'),datetime('now'))`,
       [
         id,
         normStr(body.title),
@@ -103,10 +107,15 @@ export async function onRequestPost({ env, request }) {
         catalog.value.lang,
         catalog.value.country,
         catalog.value.period,
+        normStr(body.region),
+        normStr(body.event),
+        normStr(body.theme),
+        toIntBool(body.verified),
         normStr(body.year),
         normStr(body.source),
         normStr(body.notes),
         String(body.lyrics ?? ""),
+        JSON.stringify(body.lyrics_meta_json || body.lyrics_meta || {}),
         JSON.stringify(normArray(body.tags)),
         access.id,
         access.id,
@@ -124,9 +133,9 @@ export async function onRequestPost({ env, request }) {
   await dbRun(
     env,
     `INSERT INTO song_requests (
-      id,user_id,title,subtitle,lang,country,period,year,source,notes,lyrics,
+      id,user_id,title,subtitle,lang,country,period,region,event,theme,report_fragment,year,source,notes,lyrics,
       tags_json,links_json,versions_json,status,review_comment,reviewed_by,reviewed_at,created_at,updated_at
-    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'new', NULL, NULL, NULL, datetime('now'), datetime('now'))`,
+    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'new', NULL, NULL, NULL, datetime('now'), datetime('now'))`,
     [
       requestId,
       auth.sub,
@@ -135,6 +144,10 @@ export async function onRequestPost({ env, request }) {
       catalog.value.lang,
       catalog.value.country,
       catalog.value.period,
+      normStr(body.region),
+      normStr(body.event),
+      normStr(body.theme),
+      toIntBool(body.report_fragment ?? body.reportFragment),
       normStr(body.year),
       normStr(body.source),
       normStr(body.notes),

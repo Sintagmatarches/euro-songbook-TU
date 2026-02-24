@@ -7,6 +7,17 @@ import { enforceRateLimit } from "../../_lib/rate-limit.js";
 import { getUsersTableProfile, buildUserInsertStatement } from "../../_lib/user-password-store.js";
 import { isSafeJwtSecret } from "../../_lib/security-config.js";
 
+function normalizeNickname(value) {
+  return String(value || "")
+    .trim()
+    .toLowerCase()
+    .replace(/\s+/g, "_")
+    .replace(/[^a-z0-9._-]/g, "_")
+    .replace(/_+/g, "_")
+    .replace(/^[_\-.]+|[_\-.]+$/g, "")
+    .slice(0, 28);
+}
+
 export async function onRequestPost({ env, request }){
   try {
     try {
@@ -25,9 +36,13 @@ export async function onRequestPost({ env, request }){
     if (ipRate) return ipRate;
 
     const body = await readJSON(request);
-    if(!body?.email || !body?.password) return err("email and password required", 400);
+    if(!body?.email || !body?.password || !body?.nickname) return err("nickname, email and password required", 400);
     const email = String(body.email).trim().toLowerCase();
     const password = String(body.password);
+    const nickname = normalizeNickname(body.nickname);
+    if (!nickname || !/^[a-z0-9._-]{3,28}$/.test(nickname)) {
+      return err("invalid nickname (3-28 chars: a-z 0-9 . _ -)", 400);
+    }
     if(password.length < 8) return err("password too short (min 8)", 400);
 
     const emailRate = await enforceRateLimit(env, request, {
@@ -46,11 +61,17 @@ export async function onRequestPost({ env, request }){
 
     const exists = await dbGet(env, `SELECT * FROM users WHERE lower(email)=lower(?) LIMIT 1`, [email]);
     if(exists) return err("email already registered", 409);
+    const nicknameExists = await dbGet(
+      env,
+      `SELECT id FROM users WHERE lower(trim(coalesce(nickname,'')))=lower(trim(?)) LIMIT 1`,
+      [nickname]
+    );
+    if (nicknameExists) return err("nickname already registered", 409);
 
     const id = makeId("u");
     const passHash = await hashPassword(password);
     const role = "user";
-    const insert = buildUserInsertStatement(tableProfile, { id, email, role, passHash });
+    const insert = buildUserInsertStatement(tableProfile, { id, email, role, passHash, nickname });
     try {
       await dbRun(env, insert.sql, insert.params);
     } catch (cause) {
@@ -67,8 +88,8 @@ export async function onRequestPost({ env, request }){
     const userId = createdUser?.id ?? createdUser?.user_id ?? id;
     const userRole = createdUser?.role ?? role;
 
-    const token = await signJWT(env.JWT_SECRET, { sub: userId, email, role: userRole }, 60*60*24*14);
-    return json({ token, role: userRole });
+    const token = await signJWT(env.JWT_SECRET, { sub: userId, email, nickname, role: userRole }, 60*60*24*14);
+    return json({ token, role: userRole, nickname });
   } catch (cause) {
     console.error("[auth/register] failed:", cause);
     return err("registration temporarily unavailable", 500, { code: "auth_internal" });

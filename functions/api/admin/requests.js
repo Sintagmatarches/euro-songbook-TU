@@ -70,8 +70,9 @@ export async function onRequestGet({ env, request }) {
 
   const items = await dbAll(
     env,
-    `SELECT
-      r.id, r.user_id, r.title, r.subtitle, r.lang, r.country, r.period, r.year, r.source, r.notes, r.lyrics,
+      `SELECT
+      r.id, r.user_id, r.title, r.subtitle, r.lang, r.country, r.period, r.region, r.event, r.theme, r.report_fragment,
+      r.year, r.source, r.notes, r.lyrics,
       r.tags_json, r.links_json, r.versions_json, r.status, r.review_comment, r.reviewed_by, r.reviewed_at,
       r.created_at, r.updated_at,
       u.email AS user_email,

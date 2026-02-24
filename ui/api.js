@@ -146,4 +146,36 @@ export const api = {
       method: "POST",
     });
   },
+  async drafts() { return req("api/drafts", { noCache: true }); },
+  async createDraft(payload = {}) {
+    return req("api/drafts", { method: "POST", body: JSON.stringify(payload || {}) });
+  },
+  async draft(id) {
+    return req(`api/drafts/${encodeURIComponent(id)}`, { noCache: true });
+  },
+  async draftAddCollaborator(id, nickname) {
+    return req(`api/drafts/${encodeURIComponent(id)}/collaborators`, {
+      method: "POST",
+      body: JSON.stringify({ nickname: String(nickname || "") }),
+    });
+  },
+  async draftRemoveCollaborator(id, userId) {
+    return req(`api/drafts/${encodeURIComponent(id)}/collaborators/${encodeURIComponent(userId)}`, {
+      method: "DELETE",
+    });
+  },
+  async draftPublish(id) {
+    return req(`api/drafts/${encodeURIComponent(id)}/publish`, {
+      method: "POST",
+    });
+  },
+  async draftHistory(id) {
+    return req(`api/drafts/${encodeURIComponent(id)}/history`, { noCache: true });
+  },
+  draftWsUrl(id) {
+    const token = localStorage.getItem("token") || "";
+    const relative = `api/drafts/${encodeURIComponent(id)}/ws?token=${encodeURIComponent(token)}`;
+    const absolute = u(relative);
+    return absolute.replace(/^http:/i, "ws:").replace(/^https:/i, "wss:");
+  },
 };

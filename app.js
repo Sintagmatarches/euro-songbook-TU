@@ -629,23 +629,10 @@ function setTopSearchState(route) {
 
 function runTopSearch() {
   const q = (topSearchInput?.value || "").trim();
-  const current = getHashQuery();
   const next = new URLSearchParams();
   if (q) next.set("q", q);
-  const rawLang = current.get("lang") || "";
-  const lang = normalizeSongLanguage(rawLang) || rawLang;
-  const rawCountry = current.get("country") || "";
-  const country = normalizeSongCountry(rawCountry) || rawCountry;
-  const period = (current.get("period") || "").trim();
-  const performer = (current.get("performer") || "").trim();
-  const year = (current.get("year") || "").trim();
-  if (lang) next.set("lang", lang);
-  if (country) next.set("country", country);
-  if (period) next.set("period", period);
-  if (performer) next.set("performer", performer);
-  if (year) next.set("year", year);
   next.set("searched", "1");
-  next.set("adv", current.get("adv") || "0");
+  next.set("adv", "0");
   next.set("page", "1");
   const nextHash = `#/${next.toString() ? `?${next.toString()}` : ""}`;
   if (location.hash === nextHash) {

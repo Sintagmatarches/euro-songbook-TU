@@ -96,9 +96,9 @@ export async function onRequestPost({ env, request, params }) {
     await dbRun(
       env,
       `INSERT INTO songs (
-        id,title,subtitle,lang,country,period,year,source,notes,lyrics,tags_json,
+        id,title,subtitle,lang,country,period,region,event,theme,verified,year,source,notes,lyrics,lyrics_meta_json,tags_json,
         created_by,updated_by,lang_locked,status,created_at,updated_at
-      ) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,1,'published',datetime('now'),datetime('now'))`,
+      ) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,1,'published',datetime('now'),datetime('now'))`,
       [
         songId,
         normStr(item.title),
@@ -106,10 +106,15 @@ export async function onRequestPost({ env, request, params }) {
         normalizedLang,
         normStr(normalizedCountry),
         normStr(normalizedPeriod),
+        normStr(item.region),
+        normStr(item.event),
+        normStr(item.theme),
+        0,
         normStr(item.year),
         normStr(item.source),
         normStr(item.notes),
         String(item.lyrics ?? ""),
+        "{}",
         JSON.stringify(Array.isArray(tags) ? tags : []),
         access.id,
         access.id,

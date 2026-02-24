@@ -158,7 +158,7 @@ function ensureWritableHashColumns(profile) {
   return hashColumns;
 }
 
-export function buildUserInsertStatement(profile, { id, email, role, passHash }) {
+export function buildUserInsertStatement(profile, { id, email, role, passHash, nickname }) {
   const hashColumns = ensureWritableHashColumns(profile);
   const nowIso = new Date().toISOString();
   const values = new Map();
@@ -166,6 +166,7 @@ export function buildUserInsertStatement(profile, { id, email, role, passHash })
 
   if (profile.columns.includes("id") && !isAutoIntegerPrimaryKey(idColumn)) values.set("id", id);
   if (profile.columns.includes("email")) values.set("email", email);
+  if (profile.columns.includes("nickname")) values.set("nickname", String(nickname || "").trim() || null);
   if (profile.columns.includes("role")) values.set("role", role);
   if (profile.columns.includes("created_at")) values.set("created_at", nowIso);
   if (profile.columns.includes("updated_at")) values.set("updated_at", nowIso);

@@ -24,19 +24,26 @@ export async function onRequestPost({ env, request }) {
   if (ipRate) return ipRate;
 
   const body = await readJSON(request);
-  if (!body?.email || !body?.password) return err("email and password required", 400);
+  if (!body?.password) return err("login and password required", 400);
 
-  const email = String(body.email).trim().toLowerCase();
+  const login = String(body.login || body.nickname || body.email || "").trim().toLowerCase();
+  if (!login) return err("login and password required", 400);
   const password = String(body.password);
   const emailRate = await enforceRateLimit(env, request, {
     scope: "auth_login_email",
-    identity: email,
+    identity: login,
     limit: 10,
     windowSec: 600,
   });
   if (emailRate) return emailRate;
 
-  const user = await dbGet(env, `SELECT * FROM users WHERE lower(email)=lower(?) LIMIT 1`, [email]);
+  const user = await dbGet(
+    env,
+    `SELECT * FROM users
+     WHERE lower(email)=lower(?) OR lower(trim(coalesce(nickname,'')))=lower(trim(?))
+     LIMIT 1`,
+    [login, login]
+  );
   if (!user) return err("invalid credentials", 401);
 
   const candidates = extractPasswordHashCandidates(user);
@@ -51,9 +58,14 @@ export async function onRequestPost({ env, request }) {
 
   if (!ok) return err("invalid credentials", 401);
 
-  const sub = user.id ?? user.user_id ?? email;
+  const sub = user.id ?? user.user_id ?? login;
   const role = user.role ?? "user";
-  const token = await signJWT(env.JWT_SECRET, { sub, email: user.email ?? email, role }, 60 * 60 * 24 * 14);
+  const token = await signJWT(env.JWT_SECRET, {
+    sub,
+    email: user.email ?? "",
+    nickname: String(user.nickname || ""),
+    role,
+  }, 60 * 60 * 24 * 14);
 
-  return json({ token, role });
+  return json({ token, role, nickname: String(user.nickname || "") });
 }

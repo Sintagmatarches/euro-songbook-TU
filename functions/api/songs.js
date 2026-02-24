@@ -4,7 +4,7 @@ import { ensureSchemaAndSeed } from "../_lib/schema.js";
 import { normalizeSongCountry, normalizeSongLanguage, normalizeSongPeriod } from "../../shared/song-catalogs.js";
 
 const GERMAN_COLLABORATORS_FILTER_VALUES = ["german_collaborators", "latvian_ss_legion", "estonian_ss_division"];
-const SONGS_PAGE_SIZE = 10;
+const SONGS_PAGE_SIZE = 5;
 
 function clamp(n, a, b) {
   n = parseInt(n || "1", 10);
@@ -44,6 +44,24 @@ function buildSqlFilters(filters = {}, options = {}) {
     where.push("lower(trim(coalesce(s.subtitle, ''))) = ?");
     params.push(filters.performer.toLowerCase());
   }
+  if (filters.region) {
+    where.push("lower(trim(coalesce(s.region, ''))) LIKE ?");
+    params.push(`%${filters.region.toLowerCase()}%`);
+  }
+  if (filters.event) {
+    where.push("lower(trim(coalesce(s.event, ''))) LIKE ?");
+    params.push(`%${filters.event.toLowerCase()}%`);
+  }
+  if (filters.theme) {
+    where.push("lower(trim(coalesce(s.theme, ''))) LIKE ?");
+    params.push(`%${filters.theme.toLowerCase()}%`);
+  }
+  if (filters.verified) {
+    where.push("coalesce(s.verified, 0)=1");
+  }
+  if (filters.recent) {
+    where.push("datetime(s.created_at) >= datetime('now','-30 day')");
+  }
 
   return { where, params };
 }
@@ -59,11 +77,21 @@ export async function onRequestGet({ env, request }) {
   const rawPeriod = (url.searchParams.get("period") || "").trim();
   const rawPerformer = (url.searchParams.get("performer") || "").trim();
   const rawYear = (url.searchParams.get("year") || "").trim();
+  const rawRegion = (url.searchParams.get("region") || "").trim();
+  const rawEvent = (url.searchParams.get("event") || "").trim();
+  const rawTheme = (url.searchParams.get("theme") || "").trim();
+  const rawVerified = (url.searchParams.get("verified") || "").trim();
+  const rawRecent = (url.searchParams.get("recent") || "").trim();
   const lang = rawLang ? (normalizeSongLanguage(rawLang) || "") : "";
   const country = rawCountry ? (normalizeSongCountry(rawCountry) || "") : "";
   const period = rawPeriod ? (normalizeSongPeriod(rawPeriod) || "") : "";
   const performer = rawPerformer;
   const year = rawYear;
+  const region = rawRegion;
+  const event = rawEvent;
+  const theme = rawTheme;
+  const verified = rawVerified === "1";
+  const recent = rawRecent === "1";
   const page = clamp(url.searchParams.get("page"), 1, 9999);
   const per = SONGS_PAGE_SIZE;
 
@@ -71,7 +99,7 @@ export async function onRequestGet({ env, request }) {
     return json({ items: [], total: 0, page, pages: 1 });
   }
 
-  const filters = { lang, country, period, performer, year };
+  const filters = { lang, country, period, performer, year, region, event, theme, verified, recent };
 
   if (q) {
     const tokens = q
@@ -120,22 +148,27 @@ export async function onRequestGet({ env, request }) {
            ${fromSql}
            ${titleWhereSql}
          )
-         SELECT
-           s.id,
-           s.title,
-           s.subtitle,
-           s.lang,
-           s.country,
-           s.period,
-           s.year,
-           snippet(songs_fts, 1, '', '', '...', 12) AS snippet,
-           CASE WHEN title_hits.song_id IS NULL THEN 0 ELSE 1 END AS title_match
-         FROM matched
-         JOIN songs s ON s.id = matched.song_id
-         JOIN songs_fts ON songs_fts.rowid = matched.pick_rowid
-         LEFT JOIN title_hits ON title_hits.song_id = s.id
-         ORDER BY title_match DESC, s.title ASC
-         LIMIT ? OFFSET ?`,
+          SELECT
+            s.id,
+            s.title,
+            s.subtitle,
+            s.lang,
+            s.country,
+            s.period,
+            s.region,
+            s.event,
+            s.theme,
+            coalesce(s.verified, 0) AS verified,
+            s.year,
+            s.created_at,
+            snippet(songs_fts, 1, '', '', '...', 12) AS snippet,
+            CASE WHEN title_hits.song_id IS NULL THEN 0 ELSE 1 END AS title_match
+          FROM matched
+          JOIN songs s ON s.id = matched.song_id
+          JOIN songs_fts ON songs_fts.rowid = matched.pick_rowid
+          LEFT JOIN title_hits ON title_hits.song_id = s.id
+          ORDER BY title_match DESC, datetime(s.created_at) DESC, s.title ASC
+          LIMIT ? OFFSET ?`,
         [...fullParams, ...titleParams, per, offset]
       );
       return { items, total, page: safePage, pages, mode };
@@ -193,11 +226,11 @@ export async function onRequestGet({ env, request }) {
 
   const items = await dbAll(
     env,
-    `SELECT s.id, s.title, s.subtitle, s.lang, s.country, s.period, s.year,
+    `SELECT s.id, s.title, s.subtitle, s.lang, s.country, s.period, s.region, s.event, s.theme, coalesce(s.verified, 0) AS verified, s.year, s.created_at,
             '' AS snippet
      FROM songs s
      ${whereSql}
-     ORDER BY s.title ASC
+     ORDER BY ${recent ? "datetime(s.created_at) DESC, s.title ASC" : "s.title ASC"}
      LIMIT ? OFFSET ?`,
     [...params, per, offset]
   );

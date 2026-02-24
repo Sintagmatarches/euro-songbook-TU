@@ -1,7 +1,8 @@
 {
   "scripts": {
+    "i18n:check": "node scripts/check-i18n.mjs",
     "build": "npx wrangler pages functions build functions --outdir .wrangler-build",
-    "check": "npm run build"
+    "check": "npm run i18n:check && npm run build"
   },
   "dependencies": {
     "@libsql/client": "^0.17.0"

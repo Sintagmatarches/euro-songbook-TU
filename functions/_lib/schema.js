@@ -314,6 +314,190 @@ async function ensureUsersNicknameData(env) {
   );
 }
 
+function normalizeNicknameCandidate(value, fallback = "user") {
+  const raw = String(value || "").trim();
+  const base = raw || String(fallback || "user").trim() || "user";
+  const cleaned = base
+    .toLowerCase()
+    .replace(/\s+/g, "_")
+    .replace(/[^a-z0-9._-]/g, "_")
+    .replace(/_+/g, "_")
+    .replace(/^[_\-.]+|[_\-.]+$/g, "");
+  const short = cleaned.slice(0, 28);
+  return short || "user";
+}
+
+async function ensureUsersNicknameUniqueness(env) {
+  const users = await dbAll(
+    env,
+    `SELECT id, email, nickname, created_at
+     FROM users
+     ORDER BY datetime(coalesce(created_at, '1970-01-01T00:00:00Z')) ASC, id ASC`
+  );
+  const used = new Map();
+  for (const user of users) {
+    const emailPart = String(user?.email || "").split("@")[0] || "user";
+    const base = normalizeNicknameCandidate(user?.nickname, emailPart);
+    let candidate = base;
+    let suffix = 2;
+    while (used.has(candidate)) {
+      candidate = `${base}_${suffix}`;
+      suffix += 1;
+    }
+    used.set(candidate, String(user?.id || ""));
+    if (String(user?.nickname || "") !== candidate) {
+      await dbRun(env, `UPDATE users SET nickname=? WHERE id=?`, [candidate, user.id]);
+    }
+  }
+
+  await dbRun(
+    env,
+    `CREATE UNIQUE INDEX IF NOT EXISTS idx_users_nickname_nocase
+     ON users(lower(trim(nickname)))`
+  );
+}
+
+async function ensureSongsExtendedColumns(env) {
+  try {
+    const columns = await dbAll(env, `PRAGMA table_info(songs)`);
+    if (!Array.isArray(columns) || !columns.length) return;
+    const has = new Set(columns.map((col) => String(col?.name || "").trim()));
+    const addColumn = async (name, definition) => {
+      if (has.has(name)) return;
+      await dbRun(env, `ALTER TABLE songs ADD COLUMN ${definition}`);
+      has.add(name);
+    };
+    await addColumn("region", "region TEXT");
+    await addColumn("event", "event TEXT");
+    await addColumn("theme", "theme TEXT");
+    await addColumn("verified", "verified INTEGER NOT NULL DEFAULT 0");
+    await addColumn("lyrics_meta_json", "lyrics_meta_json TEXT NOT NULL DEFAULT '{}'");
+  } catch (cause) {
+    const message = String(cause?.message || cause || "");
+    if (message.includes("duplicate column name")) return;
+    if (message.includes("no such table: songs")) return;
+    throw cause;
+  }
+}
+
+async function ensureSongRequestsExtendedColumns(env) {
+  try {
+    const columns = await dbAll(env, `PRAGMA table_info(song_requests)`);
+    if (!Array.isArray(columns) || !columns.length) return;
+    const has = new Set(columns.map((col) => String(col?.name || "").trim()));
+    const addColumn = async (name, definition) => {
+      if (has.has(name)) return;
+      await dbRun(env, `ALTER TABLE song_requests ADD COLUMN ${definition}`);
+      has.add(name);
+    };
+    await addColumn("region", "region TEXT");
+    await addColumn("event", "event TEXT");
+    await addColumn("theme", "theme TEXT");
+    await addColumn("report_fragment", "report_fragment INTEGER NOT NULL DEFAULT 0");
+  } catch (cause) {
+    const message = String(cause?.message || cause || "");
+    if (message.includes("duplicate column name")) return;
+    if (message.includes("no such table: song_requests")) return;
+    throw cause;
+  }
+}
+
+async function ensureDraftTables(env) {
+  await dbRun(
+    env,
+    `CREATE TABLE IF NOT EXISTS drafts (
+      id TEXT PRIMARY KEY,
+      song_id TEXT REFERENCES songs(id) ON DELETE SET NULL,
+      owner_user_id TEXT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+      status TEXT NOT NULL CHECK(status IN ('draft','published','archived')) DEFAULT 'draft',
+      version INTEGER NOT NULL DEFAULT 0,
+      snapshot_json TEXT NOT NULL DEFAULT '{}',
+      created_at TEXT NOT NULL,
+      updated_at TEXT NOT NULL
+    )`
+  );
+
+  await dbRun(
+    env,
+    `CREATE TABLE IF NOT EXISTS draft_collaborators (
+      draft_id TEXT NOT NULL REFERENCES drafts(id) ON DELETE CASCADE,
+      user_id TEXT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+      can_publish INTEGER NOT NULL DEFAULT 1,
+      added_by TEXT REFERENCES users(id) ON DELETE SET NULL,
+      created_at TEXT NOT NULL DEFAULT (datetime('now')),
+      PRIMARY KEY(draft_id, user_id)
+    )`
+  );
+
+  await dbRun(
+    env,
+    `CREATE TABLE IF NOT EXISTS draft_lines (
+      id TEXT PRIMARY KEY,
+      draft_id TEXT NOT NULL REFERENCES drafts(id) ON DELETE CASCADE,
+      line_key TEXT NOT NULL,
+      sort_order INTEGER NOT NULL DEFAULT 0,
+      active_variant_id TEXT,
+      created_at TEXT NOT NULL,
+      updated_at TEXT NOT NULL
+    )`
+  );
+
+  await dbRun(
+    env,
+    `CREATE TABLE IF NOT EXISTS draft_line_variants (
+      id TEXT PRIMARY KEY,
+      draft_id TEXT NOT NULL REFERENCES drafts(id) ON DELETE CASCADE,
+      line_id TEXT NOT NULL REFERENCES draft_lines(id) ON DELETE CASCADE,
+      text TEXT NOT NULL,
+      confidence INTEGER NOT NULL DEFAULT 100,
+      variant_type TEXT NOT NULL CHECK(variant_type IN ('manual','suggested','conflict')) DEFAULT 'manual',
+      is_active INTEGER NOT NULL DEFAULT 0,
+      created_by TEXT REFERENCES users(id) ON DELETE SET NULL,
+      created_at TEXT NOT NULL,
+      updated_at TEXT NOT NULL
+    )`
+  );
+
+  await dbRun(
+    env,
+    `CREATE TABLE IF NOT EXISTS draft_ops (
+      id TEXT PRIMARY KEY,
+      draft_id TEXT NOT NULL REFERENCES drafts(id) ON DELETE CASCADE,
+      seq INTEGER NOT NULL,
+      client_op_id TEXT,
+      base_version INTEGER NOT NULL DEFAULT 0,
+      op_type TEXT NOT NULL,
+      payload_json TEXT NOT NULL,
+      status TEXT NOT NULL CHECK(status IN ('accepted','persisted','rejected')) DEFAULT 'accepted',
+      created_by TEXT REFERENCES users(id) ON DELETE SET NULL,
+      created_at TEXT NOT NULL
+    )`
+  );
+
+  await dbRun(
+    env,
+    `CREATE TABLE IF NOT EXISTS draft_snapshots (
+      id TEXT PRIMARY KEY,
+      draft_id TEXT NOT NULL REFERENCES drafts(id) ON DELETE CASCADE,
+      version INTEGER NOT NULL,
+      snapshot_json TEXT NOT NULL,
+      created_by TEXT REFERENCES users(id) ON DELETE SET NULL,
+      created_at TEXT NOT NULL
+    )`
+  );
+
+  await dbRun(env, `CREATE INDEX IF NOT EXISTS idx_draft_owner_updated ON drafts(owner_user_id, updated_at DESC)`);
+  await dbRun(env, `CREATE INDEX IF NOT EXISTS idx_draft_song ON drafts(song_id)`);
+  await dbRun(env, `CREATE INDEX IF NOT EXISTS idx_draft_collaborators_user ON draft_collaborators(user_id, created_at DESC)`);
+  await dbRun(env, `CREATE UNIQUE INDEX IF NOT EXISTS idx_draft_lines_key ON draft_lines(draft_id, line_key)`);
+  await dbRun(env, `CREATE INDEX IF NOT EXISTS idx_draft_lines_sort ON draft_lines(draft_id, sort_order ASC)`);
+  await dbRun(env, `CREATE INDEX IF NOT EXISTS idx_draft_variants_line ON draft_line_variants(line_id, created_at DESC)`);
+  await dbRun(env, `CREATE INDEX IF NOT EXISTS idx_draft_variants_draft ON draft_line_variants(draft_id, created_at DESC)`);
+  await dbRun(env, `CREATE UNIQUE INDEX IF NOT EXISTS idx_draft_ops_seq ON draft_ops(draft_id, seq)`);
+  await dbRun(env, `CREATE INDEX IF NOT EXISTS idx_draft_ops_created ON draft_ops(draft_id, created_at DESC)`);
+  await dbRun(env, `CREATE INDEX IF NOT EXISTS idx_draft_snapshots_version ON draft_snapshots(draft_id, version DESC)`);
+}
+
 export async function ensureSchema(env) {
   await dbRun(env, "PRAGMA foreign_keys = ON");
 
@@ -322,6 +506,7 @@ export async function ensureSchema(env) {
     `CREATE TABLE IF NOT EXISTS users (
       id TEXT PRIMARY KEY,
       email TEXT NOT NULL UNIQUE,
+      nickname TEXT,
       pass_hash TEXT NOT NULL,
       role TEXT NOT NULL CHECK(role IN ('user','admin','super_admin')),
       created_at TEXT NOT NULL
@@ -340,10 +525,15 @@ export async function ensureSchema(env) {
       lang TEXT NOT NULL,
       country TEXT,
       period TEXT,
+      region TEXT,
+      event TEXT,
+      theme TEXT,
+      verified INTEGER NOT NULL DEFAULT 0,
       year TEXT,
       source TEXT,
       notes TEXT,
       lyrics TEXT NOT NULL,
+      lyrics_meta_json TEXT NOT NULL DEFAULT '{}',
       tags_json TEXT NOT NULL DEFAULT '[]',
       is_admin_content INTEGER NOT NULL DEFAULT 0,
       created_by TEXT REFERENCES users(id) ON DELETE SET NULL,
@@ -356,6 +546,7 @@ export async function ensureSchema(env) {
   );
   await ensureSongsAdminContentColumn(env);
   await ensureSongsAuditColumns(env);
+  await ensureSongsExtendedColumns(env);
 
   await dbRun(
     env,
@@ -404,6 +595,10 @@ export async function ensureSchema(env) {
       lang TEXT NOT NULL,
       country TEXT,
       period TEXT,
+      region TEXT,
+      event TEXT,
+      theme TEXT,
+      report_fragment INTEGER NOT NULL DEFAULT 0,
       year TEXT,
       source TEXT,
       notes TEXT,
@@ -419,6 +614,7 @@ export async function ensureSchema(env) {
       updated_at TEXT NOT NULL
     )`
   );
+  await ensureSongRequestsExtendedColumns(env);
 
   await dbRun(
     env,
@@ -457,12 +653,18 @@ export async function ensureSchema(env) {
     )`
   );
   await ensureCountryBackgroundColumns(env);
+  await ensureDraftTables(env);
 
   await dbRun(env, `CREATE INDEX IF NOT EXISTS idx_songs_status_title ON songs(status, title)`);
   await dbRun(env, `CREATE INDEX IF NOT EXISTS idx_songs_lang ON songs(lang)`);
   await dbRun(env, `CREATE INDEX IF NOT EXISTS idx_songs_admin_content ON songs(is_admin_content)`);
   await dbRun(env, `CREATE INDEX IF NOT EXISTS idx_songs_country ON songs(country)`);
   await dbRun(env, `CREATE INDEX IF NOT EXISTS idx_songs_period ON songs(period)`);
+  await dbRun(env, `CREATE INDEX IF NOT EXISTS idx_songs_created_at ON songs(created_at DESC)`);
+  await dbRun(env, `CREATE INDEX IF NOT EXISTS idx_songs_verified ON songs(verified)`);
+  await dbRun(env, `CREATE INDEX IF NOT EXISTS idx_songs_region ON songs(region)`);
+  await dbRun(env, `CREATE INDEX IF NOT EXISTS idx_songs_event ON songs(event)`);
+  await dbRun(env, `CREATE INDEX IF NOT EXISTS idx_songs_theme ON songs(theme)`);
   try {
     await dbRun(env, `CREATE INDEX IF NOT EXISTS idx_song_links_song_version_sort ON song_links(song_id, version_id, sort_order)`);
   } catch (cause) {
@@ -473,6 +675,7 @@ export async function ensureSchema(env) {
   await dbRun(env, `CREATE INDEX IF NOT EXISTS idx_country_backgrounds_updated_at ON country_backgrounds(updated_at DESC)`);
   await dbRun(env, `CREATE INDEX IF NOT EXISTS idx_song_requests_status_created ON song_requests(status, created_at DESC)`);
   await dbRun(env, `CREATE INDEX IF NOT EXISTS idx_song_requests_user_created ON song_requests(user_id, created_at DESC)`);
+  await ensureUsersNicknameUniqueness(env);
 
   await ensureRBACArtifacts(env);
   await normalizeRBACPermissions(env);
@@ -486,6 +689,7 @@ export async function ensureAuthSchema(env) {
     `CREATE TABLE IF NOT EXISTS users (
       id TEXT PRIMARY KEY,
       email TEXT NOT NULL UNIQUE,
+      nickname TEXT,
       pass_hash TEXT NOT NULL,
       role TEXT NOT NULL CHECK(role IN ('user','admin','super_admin')),
       created_at TEXT NOT NULL
@@ -493,6 +697,7 @@ export async function ensureAuthSchema(env) {
   );
   await ensurePassHashCompatibility(env);
   await ensureUsersNicknameData(env);
+  await ensureUsersNicknameUniqueness(env);
 
   await dbRun(
     env,

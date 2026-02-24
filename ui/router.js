@@ -15,6 +15,7 @@ export const router = {
       query: Object.fromEntries(new URLSearchParams(queryPart || "")),
     };
     if (route.name === "song") route.id = parts[1];
+    if (route.name === "draft") route.id = parts[1];
     if (route.name === "admin") route.section = parts[1] || "content";
     if (this._handler) this._handler(route);
   }

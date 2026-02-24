@@ -6,6 +6,7 @@ import { normalizeSongCatalogInput } from "../../../shared/song-catalogs.js";
 function normStr(v){ v = (v ?? "").toString().trim(); return v || null; }
 function normLinkVersion(v){ v = (v ?? "").toString().trim(); return v || null; }
 function toAdminContentFlag(v){ return v === true || v === 1 || String(v || "").trim().toLowerCase() === "1" || String(v || "").trim().toLowerCase() === "true"; }
+function toIntBool(v){ return v === true || v === 1 || String(v || "").trim().toLowerCase() === "1" || String(v || "").trim().toLowerCase() === "true" ? 1 : 0; }
 function isSuperAdminRole(role){ return role === "super_admin"; }
 async function upsertFTS(env, songId, title, lyrics){
   await dbRun(env, `INSERT OR REPLACE INTO songs_fts(song_id, title, lyrics) VALUES (?,?,?)`, [songId, title || "", lyrics || ""]);
@@ -43,8 +44,8 @@ export async function onRequestPost({ env, request }){
       }
       await dbRun(env, `
         UPDATE songs SET
-          title=?, subtitle=?, lang=?, country=?, period=?, year=?,
-          source=?, notes=?, lyrics=?, tags_json=?, is_admin_content=?, status=?, lang_locked=?, updated_by=?, updated_at=datetime('now')
+          title=?, subtitle=?, lang=?, country=?, period=?, region=?, event=?, theme=?, verified=?, year=?,
+          source=?, notes=?, lyrics=?, lyrics_meta_json=?, tags_json=?, is_admin_content=?, status=?, lang_locked=?, updated_by=?, updated_at=datetime('now')
         WHERE id=?
       `, [
         normStr(it.title),
@@ -52,10 +53,15 @@ export async function onRequestPost({ env, request }){
         catalog.value.lang,
         catalog.value.country,
         catalog.value.period,
+        normStr(it.region),
+        normStr(it.event),
+        normStr(it.theme),
+        toIntBool(it.verified),
         normStr(it.year),
         normStr(it.source),
         normStr(it.notes),
         (it.lyrics ?? "").toString(),
+        JSON.stringify(it.lyrics_meta_json || it.lyrics_meta || {}),
         tags_json,
         isAdminContent ? 1 : 0,
         status,
@@ -66,10 +72,10 @@ export async function onRequestPost({ env, request }){
     }else{
       await dbRun(env, `
         INSERT INTO songs (
-          id,title,subtitle,lang,country,period,year,source,notes,lyrics,tags_json,is_admin_content,
+          id,title,subtitle,lang,country,period,region,event,theme,verified,year,source,notes,lyrics,lyrics_meta_json,tags_json,is_admin_content,
           created_by,updated_by,lang_locked,status,created_at,updated_at
         )
-        VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,datetime('now'),datetime('now'))
+        VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,datetime('now'),datetime('now'))
       `, [
         id,
         normStr(it.title),
@@ -77,10 +83,15 @@ export async function onRequestPost({ env, request }){
         catalog.value.lang,
         catalog.value.country,
         catalog.value.period,
+        normStr(it.region),
+        normStr(it.event),
+        normStr(it.theme),
+        toIntBool(it.verified),
         normStr(it.year),
         normStr(it.source),
         normStr(it.notes),
         (it.lyrics ?? "").toString(),
+        JSON.stringify(it.lyrics_meta_json || it.lyrics_meta || {}),
         tags_json,
         isAdminContent ? 1 : 0,
         access.id,

@@ -6,6 +6,7 @@ import { normalizeSongCatalogInput, normalizeSongCountry } from "../../../shared
 function normStr(v){ v = (v ?? "").toString().trim(); return v || null; }
 function normLinkVersion(v){ v = (v ?? "").toString().trim(); return v || null; }
 function toAdminContentFlag(v){ return v === true || v === 1 || String(v || "").trim().toLowerCase() === "1" || String(v || "").trim().toLowerCase() === "true"; }
+function toIntBool(v){ return v === true || v === 1 || String(v || "").trim().toLowerCase() === "1" || String(v || "").trim().toLowerCase() === "true" ? 1 : 0; }
 function clamp(n, a, b){ n = parseInt(n||"1",10); if(Number.isNaN(n)) n=1; return Math.max(a, Math.min(b, n)); }
 const GERMAN_COLLABORATORS_FILTER_VALUES = ["german_collaborators", "latvian_ss_legion", "estonian_ss_division"];
 
@@ -52,6 +53,11 @@ export async function onRequestGet({ env, request }){
   const rawCountry = (url.searchParams.get("country") || "").trim();
   const country = rawCountry ? (normalizeSongCountry(rawCountry) || rawCountry) : "";
   const period = (url.searchParams.get("period") || "").trim();
+  const region = (url.searchParams.get("region") || "").trim();
+  const event = (url.searchParams.get("event") || "").trim();
+  const theme = (url.searchParams.get("theme") || "").trim();
+  const verified = (url.searchParams.get("verified") || "").trim();
+  const recent = (url.searchParams.get("recent") || "").trim();
   const page = clamp(url.searchParams.get("page"), 1, 9999);
   const per = 20;
   const offset = (page - 1) * per;
@@ -81,6 +87,11 @@ export async function onRequestGet({ env, request }){
     }
   }
   if(period){ where.push("period=?"); params.push(period); }
+  if (region) { where.push("lower(trim(coalesce(region,''))) LIKE ?"); params.push(`%${region.toLowerCase()}%`); }
+  if (event) { where.push("lower(trim(coalesce(event,''))) LIKE ?"); params.push(`%${event.toLowerCase()}%`); }
+  if (theme) { where.push("lower(trim(coalesce(theme,''))) LIKE ?"); params.push(`%${theme.toLowerCase()}%`); }
+  if (verified === "1") { where.push("coalesce(verified,0)=1"); }
+  if (recent === "1") { where.push("datetime(created_at) >= datetime('now','-30 day')"); }
   if(!allowAdminContent){ where.push("coalesce(is_admin_content,0)=0"); }
   if(q){
     where.push("(title LIKE ? OR lyrics LIKE ?)");
@@ -94,10 +105,11 @@ export async function onRequestGet({ env, request }){
 
   const items = await dbAll(
     env,
-    `SELECT id,title,subtitle,lang,country,period,year,status,is_admin_content,updated_at
+    `SELECT id,title,subtitle,lang,country,period,region,event,theme,verified,year,status,is_admin_content,created_at,updated_at,
+            CASE WHEN datetime(created_at) >= datetime('now','-30 day') THEN 1 ELSE 0 END AS is_recent
      FROM songs
      WHERE ${where.join(" AND ")}
-     ORDER BY updated_at DESC, title ASC
+     ORDER BY datetime(created_at) DESC, title ASC
      LIMIT ? OFFSET ?`,
     [...params, per, offset]
   );
@@ -137,10 +149,10 @@ export async function onRequestPost({ env, request }){
 
   await dbRun(env, `
     INSERT INTO songs (
-      id,title,subtitle,lang,country,period,year,source,notes,lyrics,tags_json,is_admin_content,
+      id,title,subtitle,lang,country,period,region,event,theme,verified,year,source,notes,lyrics,lyrics_meta_json,tags_json,is_admin_content,
       created_by,updated_by,lang_locked,status,created_at,updated_at
     )
-    VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,datetime('now'),datetime('now'))
+    VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,datetime('now'),datetime('now'))
   `, [
     id,
     normStr(body.title),
@@ -148,10 +160,15 @@ export async function onRequestPost({ env, request }){
     catalog.value.lang,
     catalog.value.country,
     catalog.value.period,
+    normStr(body.region),
+    normStr(body.event),
+    normStr(body.theme),
+    toIntBool(body.verified),
     normStr(body.year),
     normStr(body.source),
     normStr(body.notes),
     (body.lyrics ?? "").toString(),
+    JSON.stringify(body.lyrics_meta_json || body.lyrics_meta || {}),
     tags_json,
     isAdminContent ? 1 : 0,
     access.id,

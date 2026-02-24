@@ -6,6 +6,7 @@ import { normalizeSongCatalogInput } from "../../../../shared/song-catalogs.js";
 function normStr(v){ v = (v ?? "").toString().trim(); return v || null; }
 function normLinkVersion(v){ v = (v ?? "").toString().trim(); return v || null; }
 function toAdminContentFlag(v){ return v === true || v === 1 || String(v || "").trim().toLowerCase() === "1" || String(v || "").trim().toLowerCase() === "true"; }
+function toIntBool(v){ return v === true || v === 1 || String(v || "").trim().toLowerCase() === "1" || String(v || "").trim().toLowerCase() === "true" ? 1 : 0; }
 function isSuperAdminRole(role){ return role === "super_admin"; }
 function parseJSON(text, fallback){
   try {
@@ -133,6 +134,10 @@ export async function onRequestGet({ env, request, params }){
       lang: song.lang,
       country: song.country,
       period: song.period,
+      region: song.region,
+      event: song.event,
+      theme: song.theme,
+      verified: Number(song.verified || 0) === 1,
       year: song.year,
       source: song.source,
       notes: song.notes,
@@ -140,6 +145,7 @@ export async function onRequestGet({ env, request, params }){
       status: song.status,
       tags,
       lyrics: song.lyrics,
+      lyrics_meta_json: parseJSON(song.lyrics_meta_json, {}),
       versions,
       links,
       created_by: isSuperAdmin ? normStr(song.created_by) : undefined,
@@ -208,9 +214,16 @@ export async function onRequestPut({ env, request, params }){
   const title = hasOwn("title") ? normStr(body.title) : currentSong.title;
   const subtitle = hasOwn("subtitle") ? normStr(body.subtitle) : currentSong.subtitle;
   const year = hasOwn("year") ? normStr(body.year) : currentSong.year;
+  const region = hasOwn("region") ? normStr(body.region) : currentSong.region;
+  const event = hasOwn("event") ? normStr(body.event) : currentSong.event;
+  const theme = hasOwn("theme") ? normStr(body.theme) : currentSong.theme;
+  const verified = hasOwn("verified") ? toIntBool(body.verified) : Number(currentSong.verified || 0);
   const source = hasOwn("source") ? normStr(body.source) : currentSong.source;
   const notes = hasOwn("notes") ? normStr(body.notes) : currentSong.notes;
   const lyrics = hasOwn("lyrics") ? String(body.lyrics ?? "") : currentSong.lyrics;
+  const lyricsMetaJson = hasOwn("lyrics_meta_json") || hasOwn("lyrics_meta")
+    ? JSON.stringify(body.lyrics_meta_json || body.lyrics_meta || {})
+    : String(currentSong.lyrics_meta_json || "{}");
   const tags_json = hasOwn("tags")
     ? JSON.stringify(Array.isArray(body.tags) ? body.tags : [])
     : currentSong.tags_json;
@@ -219,8 +232,8 @@ export async function onRequestPut({ env, request, params }){
 
   await dbRun(env, `
     UPDATE songs SET
-      title=?, subtitle=?, lang=?, country=?, period=?, year=?,
-      source=?, notes=?, lyrics=?, tags_json=?, is_admin_content=?, status=?, lang_locked=?, updated_by=?, updated_at=datetime('now')
+      title=?, subtitle=?, lang=?, country=?, period=?, region=?, event=?, theme=?, verified=?, year=?,
+      source=?, notes=?, lyrics=?, lyrics_meta_json=?, tags_json=?, is_admin_content=?, status=?, lang_locked=?, updated_by=?, updated_at=datetime('now')
     WHERE id=?
   `, [
     title,
@@ -228,10 +241,15 @@ export async function onRequestPut({ env, request, params }){
     normalizedCatalog.value.lang,
     normalizedCatalog.value.country,
     normalizedCatalog.value.period,
+    region,
+    event,
+    theme,
+    verified ? 1 : 0,
     year,
     source,
     notes,
     lyrics,
+    lyricsMetaJson,
     tags_json,
     nextAdminContent ? 1 : 0,
     status,
