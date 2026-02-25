@@ -17,6 +17,7 @@ const btnThemeToggle = document.getElementById("btnThemeToggle");
 const btnInstallApp = document.getElementById("btnInstallApp");
 const themeToggleLabel = document.getElementById("themeToggleLabel");
 const userChip = document.getElementById("userChip");
+const menuUserChip = document.getElementById("menuUserChip");
 const topSearchWrap = document.getElementById("topSearchWrap");
 const topSearchInput = document.getElementById("topSearchInput");
 const topSearchBtn = document.getElementById("topSearchBtn");
@@ -665,19 +666,23 @@ function deriveUserDisplayName(user) {
 }
 
 function updateUserChip() {
-  if (!userChip) return;
   const displayName = deriveUserDisplayName(state.user);
-  if (!state.user || !displayName) {
-    userChip.textContent = "";
-    userChip.classList.add("hidden");
-    userChip.removeAttribute("title");
-    return;
-  }
-  const email = String(state.user.email || "").trim();
-  userChip.textContent = displayName;
-  userChip.classList.remove("hidden");
-  if (email) userChip.title = email;
-  else userChip.removeAttribute("title");
+  const email = String(state.user?.email || "").trim();
+  const applyChip = (chipNode) => {
+    if (!chipNode) return;
+    if (!state.user || !displayName) {
+      chipNode.textContent = "";
+      chipNode.classList.add("hidden");
+      chipNode.removeAttribute("title");
+      return;
+    }
+    chipNode.textContent = displayName;
+    chipNode.classList.remove("hidden");
+    if (email) chipNode.title = email;
+    else chipNode.removeAttribute("title");
+  };
+  applyChip(userChip);
+  applyChip(menuUserChip);
 }
 
 function canReviewAdminRequests() {
@@ -766,15 +771,18 @@ function applyStaticTexts() {
   setNavLabel("navCatalog", t("nav.catalog"));
   setNavLabel("navRequest", addSongNavText());
   setNavLabel("navFav", t("nav.favorites"));
+  setNavLabel("navDrafts", t("nav.drafts"));
 
   setNavLabel("mNavCatalog", t("nav.catalog"));
   setNavLabel("mNavRequest", addSongNavText());
   setNavLabel("mNavFav", t("nav.favorites"));
+  setNavLabel("mNavDrafts", t("nav.drafts"));
   setNavLabel("mNavMenu", t("menu.title"));
 
   setNavLabel("dNavCatalog", t("nav.catalog"));
   setNavLabel("dNavRequest", addSongNavText());
   setNavLabel("dNavFav", t("nav.favorites"));
+  setNavLabel("dNavDrafts", t("nav.drafts"));
   setNavLabel("dNavAdminContent", t("admin.tab.content"));
   setNavLabel("dNavAdminUsers", t("admin.tab.users"));
 
@@ -926,7 +934,7 @@ function setActiveNav() {
   const isAdmin = !!(state.user && state.user.role === "super_admin");
   const isSuperAdmin = !!(state.user && state.user.role === "super_admin");
 
-  ["navFav", "mNavFav", "dNavFav"].forEach((id) => document.getElementById(id)?.classList.toggle("hidden", !canSeeUser));
+  ["navFav", "mNavFav", "dNavFav", "navDrafts", "mNavDrafts", "dNavDrafts"].forEach((id) => document.getElementById(id)?.classList.toggle("hidden", !canSeeUser));
   ["navAdmin", "mNavAdmin", "dNavAdmin", "menuAdminGroup", "dNavAdminContent", "dNavAdminRequests"].forEach((id) => document.getElementById(id)?.classList.toggle("hidden", !isAdmin));
   document.getElementById("dNavAdminUsers")?.classList.toggle("hidden", !isSuperAdmin);
 
@@ -1106,12 +1114,17 @@ doRegister.addEventListener("click", async (e) => {
   }
 });
 
+function shouldUseFastSearchMotion(route) {
+  return route?.name === "home" && String(route?.query?.searched || "") === "1";
+}
+
 router.on(async (route) => {
   setTopSearchState(route);
   setActiveNav();
   const app = document.getElementById("app");
   app.classList.toggle("song-layout", route?.name === "song");
   const isAdminMobile = route?.name === "admin" && window.matchMedia("(max-width: 980px)").matches;
+  const useReducedRouteMotion = isAdminMobile || shouldUseFastSearchMotion(route);
   app.innerHTML = `<div class="card"><div class="skeleton"></div></div>`;
   try {
     const out = await render(route);
@@ -1120,7 +1133,7 @@ router.on(async (route) => {
     if (route?.name === "admin" && route?.section === "editor") {
       window.scrollTo({ top: 0, left: 0, behavior: "auto" });
     }
-    if (isAdminMobile) {
+    if (useReducedRouteMotion) {
       clearStagedReveal(app);
       app.classList.remove("page-enter", "page-enter-active");
     } else {
@@ -1130,7 +1143,7 @@ router.on(async (route) => {
   } catch (error) {
     const msg = error?.message || t("app.unexpectedError");
     app.innerHTML = `<div class="card"><div class="h1">${t("common.error")}</div><div class="sep"></div><div class="muted">${msg}</div></div>`;
-    if (isAdminMobile) {
+    if (useReducedRouteMotion) {
       clearStagedReveal(app);
       app.classList.remove("page-enter", "page-enter-active");
     } else {

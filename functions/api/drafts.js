@@ -11,8 +11,11 @@ export async function onRequestGet({ env, request }) {
   const items = await dbAll(
     env,
     `SELECT d.id, d.song_id, d.owner_user_id, d.status, d.version, d.created_at, d.updated_at,
+            json_extract(d.snapshot_json,'$.title') AS snapshot_title,
+            u.nickname AS owner_nickname,
             CASE WHEN d.owner_user_id=? THEN 1 ELSE 0 END AS is_owner
      FROM drafts d
+     LEFT JOIN users u ON u.id=d.owner_user_id
      LEFT JOIN draft_collaborators c ON c.draft_id=d.id AND c.user_id=?
      WHERE d.owner_user_id=? OR c.user_id=?
      GROUP BY d.id

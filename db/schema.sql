@@ -118,6 +118,17 @@ CREATE TABLE IF NOT EXISTS draft_collaborators (
   PRIMARY KEY(draft_id, user_id)
 );
 
+CREATE TABLE IF NOT EXISTS draft_invitations (
+  id TEXT PRIMARY KEY,
+  draft_id TEXT NOT NULL REFERENCES drafts(id) ON DELETE CASCADE,
+  inviter_user_id TEXT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+  invitee_user_id TEXT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+  status TEXT NOT NULL CHECK(status IN ('pending','accepted','declined','cancelled')) DEFAULT 'pending',
+  created_at TEXT NOT NULL,
+  responded_at TEXT,
+  updated_at TEXT NOT NULL
+);
+
 CREATE TABLE IF NOT EXISTS draft_lines (
   id TEXT PRIMARY KEY,
   draft_id TEXT NOT NULL REFERENCES drafts(id) ON DELETE CASCADE,
@@ -179,6 +190,9 @@ CREATE INDEX IF NOT EXISTS idx_song_requests_user_created ON song_requests(user_
 CREATE INDEX IF NOT EXISTS idx_draft_owner_updated ON drafts(owner_user_id, updated_at DESC);
 CREATE INDEX IF NOT EXISTS idx_draft_song ON drafts(song_id);
 CREATE INDEX IF NOT EXISTS idx_draft_collaborators_user ON draft_collaborators(user_id, created_at DESC);
+CREATE INDEX IF NOT EXISTS idx_draft_invite_invitee_status ON draft_invitations(invitee_user_id, status, created_at DESC);
+CREATE INDEX IF NOT EXISTS idx_draft_invite_draft_status ON draft_invitations(draft_id, status, created_at DESC);
+CREATE UNIQUE INDEX IF NOT EXISTS idx_draft_invite_pending_unique ON draft_invitations(draft_id, invitee_user_id) WHERE status='pending';
 CREATE UNIQUE INDEX IF NOT EXISTS idx_draft_lines_key ON draft_lines(draft_id, line_key);
 CREATE INDEX IF NOT EXISTS idx_draft_lines_sort ON draft_lines(draft_id, sort_order ASC);
 CREATE INDEX IF NOT EXISTS idx_draft_variants_line ON draft_line_variants(line_id, created_at DESC);

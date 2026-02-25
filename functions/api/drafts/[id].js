@@ -1,6 +1,6 @@
 import { json } from "../../_lib/utils.js";
 import { ensureSchemaAndSeed } from "../../_lib/schema.js";
-import { requireDraftAccess, getDraftState } from "../../_lib/drafts.js";
+import { requireDraftAccess, getDraftState, listDraftPendingInvitations } from "../../_lib/drafts.js";
 import { dbGet } from "../../_lib/db.js";
 
 export async function onRequestGet({ env, request, params }) {
@@ -11,6 +11,7 @@ export async function onRequestGet({ env, request, params }) {
 
   const ownerUser = await dbGet(env, `SELECT id, nickname, email FROM users WHERE id=?`, [access.draft.owner_user_id]);
   const state = await getDraftState(env, draftId);
+  const pendingInvitations = access.owner ? await listDraftPendingInvitations(env, draftId) : [];
   return json({
     draft_id: draftId,
     version: state?.draft?.version ?? 0,
@@ -19,6 +20,7 @@ export async function onRequestGet({ env, request, params }) {
       ? { id: ownerUser.id, nickname: String(ownerUser.nickname || ""), email: String(ownerUser.email || "") }
       : null,
     collaborators: state?.collaborators || [],
+    pending_invitations: pendingInvitations,
     snapshot: state?.draft?.snapshot || {},
     lines: state?.lines || [],
   });

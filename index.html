@@ -75,6 +75,11 @@
     <a class="ig-link js-route-link" href="#/favorites" id="navFav">
       <span class="ig-icon">★</span><span class="ig-text">Избранное</span>
     </a>
+    <a class="ig-link js-route-link" href="#/drafts" id="navDrafts">
+      <span class="ig-icon" aria-hidden="true">
+        <img class="nav-icon-img nav-icon-img-drafts" src="./ui/assets/drafts-stack-icon.png" alt="" loading="lazy" decoding="async" />
+      </span><span class="ig-text">Мои черновики</span>
+    </a>
     <a class="ig-link js-route-link hidden" href="#/admin" id="navAdmin">
       <span class="ig-icon" aria-hidden="true">
         <svg class="nav-icon-svg" viewBox="0 0 24 24" focusable="false">
@@ -87,6 +92,7 @@
 
   <div class="ig-drawer-backdrop hidden" id="menuBackdrop"></div>
   <aside class="ig-drawer hidden" id="menuDrawer" aria-hidden="true">
+    <div class="user-chip user-chip-drawer hidden" id="menuUserChip"></div>
     <div class="ig-drawer-header">
       <div class="ig-drawer-title" id="menuTitle">Управление</div>
       <button class="btn ghost" id="btnMenuClose" type="button" aria-label="Закрыть меню">✕</button>
@@ -97,6 +103,7 @@
       <a class="ig-drawer-link js-route-link" href="#/" id="dNavCatalog">Каталог</a>
       <a class="ig-drawer-link js-route-link" href="#/request" id="dNavRequest">Добавить песню</a>
       <a class="ig-drawer-link js-route-link" href="#/favorites" id="dNavFav">Избранное</a>
+      <a class="ig-drawer-link js-route-link" href="#/drafts" id="dNavDrafts">Мои черновики</a>
       <a class="ig-drawer-link js-route-link hidden" href="#/admin" id="dNavAdmin">Админка</a>
     </div>
 
@@ -216,6 +223,11 @@
     <a class="yt-bottom-link js-route-link" href="#/favorites" id="mNavFav">
       <span class="yt-bottom-icon">★</span><span class="yt-bottom-text">Избранное</span>
     </a>
+    <a class="yt-bottom-link js-route-link" href="#/drafts" id="mNavDrafts">
+      <span class="yt-bottom-icon" aria-hidden="true">
+        <img class="nav-icon-img nav-icon-img-drafts" src="./ui/assets/drafts-stack-icon.png" alt="" loading="lazy" decoding="async" />
+      </span><span class="yt-bottom-text">Черновики</span>
+    </a>
     <a class="yt-bottom-link js-route-link hidden" href="#/admin" id="mNavAdmin">
       <span class="yt-bottom-icon" aria-hidden="true">
         <svg class="nav-icon-svg" viewBox="0 0 24 24" focusable="false">
@@ -241,7 +253,7 @@
       }, 7000);
     }());
   </script>
-  <script type="module" src="./app.js"></script>
+  <script type="module" src="./app.js?v=20260225-utf8fix2"></script>
 </body>
 </html>
 

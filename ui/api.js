@@ -212,15 +212,65 @@ export const api = {
     return req(`api/drafts/${encodeURIComponent(id)}`, { noCache: true });
   },
   async draftAddCollaborator(id, nickname) {
-    return req(`api/drafts/${encodeURIComponent(id)}/collaborators`, {
+    return req(`api/drafts/${encodeURIComponent(id)}/invitations`, {
       method: "POST",
       body: JSON.stringify({ nickname: String(nickname || "") }),
+    });
+  },
+  async draftInvitations(params = {}) {
+    const q = new URLSearchParams(params || {});
+    return req(`api/drafts/invitations?${q.toString()}`, { noCache: true });
+  },
+  async draftInvitationAccept(inviteId) {
+    return req(`api/drafts/invitations/${encodeURIComponent(inviteId)}/accept`, {
+      method: "POST",
+    });
+  },
+  async draftInvitationDecline(inviteId) {
+    return req(`api/drafts/invitations/${encodeURIComponent(inviteId)}/decline`, {
+      method: "POST",
+    });
+  },
+  async draftInvitationCancel(inviteId) {
+    return req(`api/drafts/invitations/${encodeURIComponent(inviteId)}`, {
+      method: "DELETE",
     });
   },
   async draftRemoveCollaborator(id, userId) {
     return req(`api/drafts/${encodeURIComponent(id)}/collaborators/${encodeURIComponent(userId)}`, {
       method: "DELETE",
     });
+  },
+  async draftAutosave(id, payload = {}, options = {}) {
+    const method = (options?.method || "POST").toUpperCase();
+    const keepalive = options?.keepalive === true;
+    if (!keepalive) {
+      return req(`api/drafts/${encodeURIComponent(id)}/autosave`, {
+        method,
+        body: JSON.stringify(payload || {}),
+      });
+    }
+    const token = localStorage.getItem("token") || "";
+    const headers = new Headers({ Accept: "application/json", "Content-Type": "application/json" });
+    if (token) headers.set("Authorization", `Bearer ${token}`);
+    const res = await fetch(u(`api/drafts/${encodeURIComponent(id)}/autosave`), {
+      method,
+      headers,
+      body: JSON.stringify(payload || {}),
+      keepalive: true,
+    });
+    const text = await res.text();
+    let data = null;
+    try { data = text ? JSON.parse(text) : null; } catch { data = { raw: text }; }
+    data = repairMojibakeDeep(data);
+    if (!res.ok) {
+      const msg = data?.error || data?.message || `HTTP ${res.status}`;
+      const error = new Error(msg);
+      error.status = res.status;
+      error.data = data;
+      throw error;
+    }
+    return data;
   },
   async draftPublish(id) {
     return req(`api/drafts/${encodeURIComponent(id)}/publish`, {

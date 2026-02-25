@@ -508,6 +508,297 @@ const LABELS = {
   },
 };
 
+function escapeRegExp(value) {
+  return String(value || "").replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+}
+
+function applyLiteralReplacements(value, replacements = []) {
+  let out = String(value || "");
+  for (const [from, to] of replacements) {
+    if (!from) continue;
+    out = out.split(from).join(to);
+  }
+  return out;
+}
+
+function applyWordReplacements(value, replacements = []) {
+  let out = String(value || "");
+  for (const [from, to] of replacements) {
+    if (!from) continue;
+    const re = new RegExp(`\\b${escapeRegExp(from)}\\b`, "g");
+    out = out.replace(re, to);
+  }
+  return out;
+}
+
+const COUNTRY_LABEL_OVERRIDES = {
+  uk: {
+    narodnaya_volya: "Народна воля",
+    armia_krajowa: "Армія Крайова",
+    armia_ludowa: "Армія Людова",
+    forest_brothers: "Лісові брати",
+    chetniks: "Четники",
+    ira: "ІРА",
+    ukrainian_insurgent_army: "Українська повстанська армія",
+    organization_of_ukrainian_nationalists: "Організація українських націоналістів",
+    russian_liberation_army: "Російська визвольна армія",
+    german_collaborators: "Німецькі колаборанти",
+    white_emigration: "Біла еміграція",
+    protectorate_bohemia_moravia_1939_1945: "Протекторат Богемії і Моравії - 1939-1945",
+    russian_federation_1991: "Російська Федерація - 1991",
+    bssr_1919_1991: "Білоруська РСР - 1919-1991",
+    slovak_republic_first_1939_1945: "Словацька Республіка (перша) - 1939-1945",
+    first_austrian_republic_1919_1934: "Перша Австрійська Республіка - 1919-1934",
+    federal_state_of_austria_1934_1938: "Федеративна держава Австрія - 1934-1938",
+    austria_in_nazi_germany_1938_1945: "Австрія у складі нацистської Німеччини - 1938-1945",
+    weimar_republic_1918_1933: "Веймарська Республіка - 1918-1933",
+    kingdom_of_hungary_regency_1920_1946: "Королівство Угорщина (період регентства) - 1920-1946",
+    tsardom_of_bulgaria_1908_1946: "Царство Болгарія - 1908-1946",
+    kingdom_serbs_croats_slovenes_1918_1929: "Королівство сербів, хорватів і словенців - 1918-1929",
+    yugoslavia_socialist_1945_1992: "Югославія (соціалістичний період) - 1945-1992",
+    serbia_and_montenegro_2003_2006: "Сербія і Чорногорія - 2003-2006",
+    hellenic_republic_1974: "Грецька Республіка - 1974",
+    tsfsr_1922_1936: "Закавказька СФРР - 1922-1936",
+  },
+  et: {
+    narodnaya_volya: "Narodnaja Volja",
+    armia_krajowa: "Armia Krajowa",
+    armia_ludowa: "Armia Ludowa",
+    forest_brothers: "Metsavennad",
+    chetniks: "Tšetnikud",
+    ira: "IRA",
+    ukrainian_insurgent_army: "Ukraina ülestõusuarmee",
+    organization_of_ukrainian_nationalists: "Ukraina natsionalistide organisatsioon",
+    russian_liberation_army: "Vene vabastusarmee",
+    german_collaborators: "Saksa kollaborandid",
+    white_emigration: "Valge emigratsioon",
+    protectorate_bohemia_moravia_1939_1945: "Böömimaa ja Määrimaa protektoraat - 1939-1945",
+    serbia_and_montenegro_2003_2006: "Serbia ja Montenegro - 2003-2006",
+  },
+};
+
+const COUNTRY_LABEL_REPLACEMENTS = {
+  uk: {
+    literals: [
+      ["People's Socialist Republic of ", "Народна Соціалістична Республіка "],
+      ["People's Republic of ", "Народна Республіка "],
+      ["Socialist Republic of ", "Соціалістична Республіка "],
+      ["Democratic Republic of ", "Демократична Республіка "],
+      ["Federal Republic of ", "Федеративна Республіка "],
+      ["First Republic of ", "Перша Республіка "],
+      ["Kingdom of ", "Королівство "],
+      ["Republic of ", "Республіка "],
+      ["Second Republic", "Друга Республіка"],
+      ["First Republic", "Перша Республіка"],
+      ["Third Reich", "Третій рейх"],
+      ["White Emigration", "Біла еміграція"],
+    ],
+    words: [
+      ["USSR", "СРСР"],
+      ["RSFSR", "РРФСР"],
+      ["BSSR", "БРСР"],
+      ["SSR", "РСР"],
+      ["Ukrainian SSR", "Українська РСР"],
+      ["Moldavian SSR", "Молдавська РСР"],
+      ["Latvian SSR", "Латвійська РСР"],
+      ["Lithuanian SSR", "Литовська РСР"],
+      ["Estonian SSR", "Естонська РСР"],
+      ["Armenian SSR", "Вірменська РСР"],
+      ["Azerbaijan SSR", "Азербайджанська РСР"],
+      ["Georgian SSR", "Грузинська РСР"],
+      ["Kazakh SSR", "Казахська РСР"],
+      ["GDR", "НДР"],
+      ["FRG", "ФРН"],
+      ["Empire", "імперія"],
+      ["Republic", "Республіка"],
+      ["Kingdom", "Королівство"],
+      ["State", "Держава"],
+      ["Federal", "Федеративна"],
+      ["Federative", "Федеративна"],
+      ["Democratic", "Демократична"],
+      ["Socialist", "Соціалістична"],
+      ["People's", "Народна"],
+      ["First", "Перша"],
+      ["Second", "Друга"],
+      ["Third", "Третій"],
+      ["Russian", "Російська"],
+      ["Finland", "Фінляндія"],
+      ["Estonia", "Естонія"],
+      ["Latvia", "Латвія"],
+      ["Lithuania", "Литва"],
+      ["Belarusian", "Білоруська"],
+      ["Belarus", "Білорусь"],
+      ["Byelorussian", "Білоруська"],
+      ["Ukrainian", "Українська"],
+      ["Ukraine", "Україна"],
+      ["Moldavian", "Молдавська"],
+      ["Moldova", "Молдова"],
+      ["Estonian", "Естонська"],
+      ["Latvian", "Латвійська"],
+      ["Lithuanian", "Литовська"],
+      ["Armenian", "Вірменська"],
+      ["Azerbaijani", "Азербайджанська"],
+      ["Georgian", "Грузинська"],
+      ["Kazakh", "Казахська"],
+      ["Polish", "Польська"],
+      ["Poland", "Польща"],
+      ["Czechoslovakia", "Чехословаччина"],
+      ["Czecho-Slovakia", "Чехо-Словаччина"],
+      ["Czechia", "Чехія"],
+      ["Slovakia", "Словаччина"],
+      ["Austria", "Австрія"],
+      ["German", "Німецька"],
+      ["Germany", "Німеччина"],
+      ["Hungarian", "Угорська"],
+      ["Hungary", "Угорщина"],
+      ["Romanian", "Румунська"],
+      ["Romania", "Румунія"],
+      ["Bulgarian", "Болгарська"],
+      ["Bulgaria", "Болгарія"],
+      ["Yugoslavia", "Югославія"],
+      ["Serbia", "Сербія"],
+      ["Montenegro", "Чорногорія"],
+      ["Slovenia", "Словенія"],
+      ["Croatia", "Хорватія"],
+      ["Bosnia and Herzegovina", "Боснія і Герцеговина"],
+      ["North Macedonia", "Північна Македонія"],
+      ["Albania", "Албанія"],
+      ["Greece", "Греція"],
+      ["Ottoman", "Османська"],
+      ["Turkey", "Туреччина"],
+      ["Transcaucasian", "Закавказька"],
+      ["Armenia", "Вірменія"],
+      ["Azerbaijan", "Азербайджан"],
+      ["Georgia", "Грузія"],
+      ["Kazakhstan", "Казахстан"],
+      ["reunified", "об'єднана"],
+      ["Reunified", "Об'єднана"],
+      ["within", "у складі"],
+    ],
+  },
+  et: {
+    literals: [
+      ["People's Socialist Republic of ", "Rahva Sotsialistlik Vabariik "],
+      ["People's Republic of ", "Rahvavabariik "],
+      ["Socialist Republic of ", "Sotsialistlik Vabariik "],
+      ["Democratic Republic of ", "Demokraatlik Vabariik "],
+      ["Federal Republic of ", "Föderaalne Vabariik "],
+      ["First Republic of ", "Esimene Vabariik "],
+      ["Kingdom of ", "Kuningriik "],
+      ["Republic of ", "Vabariik "],
+      ["Third Reich", "Kolmas Reich"],
+      ["White Emigration", "Valge emigratsioon"],
+    ],
+    words: [
+      ["USSR", "NSVL"],
+      ["RSFSR", "VNFSV"],
+      ["BSSR", "VNSV"],
+      ["SSR", "NSV"],
+      ["GDR", "SDV"],
+      ["FRG", "SLV"],
+      ["Empire", "impeerium"],
+      ["Republic", "Vabariik"],
+      ["Kingdom", "Kuningriik"],
+      ["State", "Riik"],
+      ["Federal", "Föderaalne"],
+      ["Federative", "Föderatiivne"],
+      ["Democratic", "Demokraatlik"],
+      ["Socialist", "Sotsialistlik"],
+      ["People's", "Rahva"],
+      ["First", "Esimene"],
+      ["Second", "Teine"],
+      ["Third", "Kolmas"],
+      ["Russian", "Vene"],
+      ["Finland", "Soome"],
+      ["Estonia", "Eesti"],
+      ["Latvia", "Läti"],
+      ["Lithuania", "Leedu"],
+      ["Belarusian", "Valgevene"],
+      ["Belarus", "Valgevene"],
+      ["Byelorussian", "Valgevene"],
+      ["Ukrainian", "Ukraina"],
+      ["Ukraine", "Ukraina"],
+      ["Moldavian", "Moldaavia"],
+      ["Moldova", "Moldova"],
+      ["Estonian", "Eesti"],
+      ["Latvian", "Läti"],
+      ["Lithuanian", "Leedu"],
+      ["Armenian", "Armeenia"],
+      ["Azerbaijani", "Aserbaidžaani"],
+      ["Georgian", "Gruusia"],
+      ["Kazakh", "Kasahhi"],
+      ["Polish", "Poola"],
+      ["Poland", "Poola"],
+      ["Czechoslovakia", "Tšehhoslovakkia"],
+      ["Czecho-Slovakia", "Tšehho-Slovakkia"],
+      ["Czechia", "Tšehhi"],
+      ["Slovakia", "Slovakkia"],
+      ["Austria", "Austria"],
+      ["German", "Saksa"],
+      ["Germany", "Saksamaa"],
+      ["Hungarian", "Ungari"],
+      ["Hungary", "Ungari"],
+      ["Romanian", "Rumeenia"],
+      ["Romania", "Rumeenia"],
+      ["Bulgarian", "Bulgaaria"],
+      ["Bulgaria", "Bulgaaria"],
+      ["Yugoslavia", "Jugoslaavia"],
+      ["Serbia", "Serbia"],
+      ["Montenegro", "Montenegro"],
+      ["Slovenia", "Sloveenia"],
+      ["Croatia", "Horvaatia"],
+      ["Bosnia and Herzegovina", "Bosnia ja Hertsegoviina"],
+      ["North Macedonia", "Põhja-Makedoonia"],
+      ["Albania", "Albaania"],
+      ["Greece", "Kreeka"],
+      ["Ottoman", "Osmani"],
+      ["Turkey", "Türgi"],
+      ["Transcaucasian", "Taga-Kaukaasia"],
+      ["Armenia", "Armeenia"],
+      ["Azerbaijan", "Aserbaidžaan"],
+      ["Georgia", "Gruusia"],
+      ["Kazakhstan", "Kasahstan"],
+      ["reunified", "taasühinenud"],
+      ["Reunified", "Taasühinenud"],
+      ["within", "koosseisus"],
+    ],
+  },
+};
+
+function tidyCountryLabel(value) {
+  return String(value || "")
+    .replace(/\s+-\s+/g, " - ")
+    .replace(/\s{2,}/g, " ")
+    .trim();
+}
+
+function translateCountryLabelFromEnglish(key, englishLabel, locale) {
+  const direct = COUNTRY_LABEL_OVERRIDES?.[locale]?.[key];
+  if (direct) return direct;
+  const cfg = COUNTRY_LABEL_REPLACEMENTS?.[locale];
+  if (!cfg) return englishLabel;
+  let out = String(englishLabel || "");
+  out = applyLiteralReplacements(out, cfg.literals);
+  out = applyWordReplacements(out, cfg.words);
+  return tidyCountryLabel(out);
+}
+
+function ensureCountryLocaleLabels(locale) {
+  const base = LABELS?.country?.en || {};
+  const current = (LABELS?.country?.[locale] && typeof LABELS.country[locale] === "object")
+    ? LABELS.country[locale]
+    : {};
+  const next = { ...current };
+  for (const [key, value] of Object.entries(base)) {
+    if (clean(next[key])) continue;
+    next[key] = translateCountryLabelFromEnglish(key, value, locale);
+  }
+  LABELS.country[locale] = next;
+}
+
+ensureCountryLocaleLabels("uk");
+ensureCountryLocaleLabels("et");
+
 const FIELD_LABELS = {
   performer: {
     ru: "Исполнитель",
@@ -775,7 +1066,7 @@ function labelFor(kind, value, locale) {
   const lc = pickLocale(locale);
   const table = LABELS[kind];
   if (lc === "uk" || lc === "et") {
-    return table?.[lc]?.[value] || table?.ru?.[value] || table?.en?.[value] || value;
+    return table?.[lc]?.[value] || table?.en?.[value] || table?.ru?.[value] || value;
   }
   return table?.[lc]?.[value] || table?.en?.[value] || table?.ru?.[value] || value;
 }

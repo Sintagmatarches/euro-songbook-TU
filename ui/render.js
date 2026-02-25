@@ -16,63 +16,87 @@ import { ADMIN_PERMISSION_VALUES } from "../shared/admin-permissions.js";
 const ADMIN_PERMISSIONS = ADMIN_PERMISSION_VALUES;
 
 const PERMISSION_LABELS = {
-  "songs.create": { ru: "????????? ??????", en: "Create songs", et: "Laulude loomine" },
-  "songs.edit": { ru: "?????????????????? ??????", en: "Edit songs", et: "Laulude muutmine" },
-  "songs.delete": { ru: "????????? ??????", en: "Delete songs", et: "Laulude kustutamine" },
-  "songs.view_admin_content": { ru: "?????? ? admin-only ????????", en: "View admin-only content", et: "Admin-only sisu vaatamine" },
+  "songs.create": { ru: "Создание песен", en: "Create songs", et: "Laulude loomine" },
+  "songs.edit": { ru: "Редактирование песен", en: "Edit songs", et: "Laulude muutmine" },
+  "songs.delete": { ru: "Удаление песен", en: "Delete songs", et: "Laulude kustutamine" },
+  "songs.view_admin_content": { ru: "Просмотр admin-only контента", en: "View admin-only content", et: "Admin-only sisu vaatamine" },
   "variants.manage": { ru: "Управление версиями текста", en: "Manage text variants", et: "Tekstiversioonide haldus" },
   "links.manage": { ru: "Управление ссылками", en: "Manage links", et: "Linkide haldus" },
-  "proposals.review": { ru: "Просмотр заявок", en: "Review requests", et: "Taotluste ulevaatus" },
-  "proposals.approve": { ru: "????????????? ??????????", en: "Approve requests", et: "Taotluste kinnitamine" },
-  "proposals.reject": { ru: "?????????????? ??????????", en: "Reject requests", et: "Taotluste tagasilukkamine" },
+  "proposals.review": { ru: "Просмотр заявок", en: "Review requests", et: "Taotluste ülevaatus" },
+  "proposals.approve": { ru: "Одобрение заявок", en: "Approve requests", et: "Taotluste kinnitamine" },
+  "proposals.reject": { ru: "Отклонение заявок", en: "Reject requests", et: "Taotluste tagasilükkamine" },
 };
 
 const PERMISSION_DESCRIPTIONS = {
   "songs.create": {
-    ru: "?????????????? ???????????????? ??????? ????????? ??????.",
+    ru: "Разрешает создавать новые записи песен.",
     en: "Allows creating new song entries.",
     et: "Lubab luua uusi laulukirjeid.",
   },
   "songs.edit": {
     ru: "Разрешает менять поля существующих песен.",
     en: "Allows editing existing song fields.",
-    et: "Lubab muuta olemasolevate laulude valju.",
+    et: "Lubab muuta olemasolevate laulude välju.",
   },
   "songs.delete": {
-    ru: "????????????? ???????????? ????? ? ????????????? ??????????.",
+    ru: "Разрешает удалять песни и связанные данные.",
     en: "Allows deleting songs and related data.",
     et: "Lubab kustutada laule ja nendega seotud andmeid.",
   },
   "songs.view_admin_content": {
     ru: "Разрешает видеть и помечать песни как admin-only.",
     en: "Allows viewing and marking songs as admin-only.",
-    et: "Lubab naha ja markida laule admin-only sisuks.",
+    et: "Lubab näha ja märkida laule admin-only sisuks.",
   },
   "variants.manage": {
-    ru: "?????????????? ??????????????? ? ??????????????????? ?????????? ??????.",
+    ru: "Разрешает добавлять и редактировать текстовые версии.",
     en: "Allows adding and editing lyric versions.",
     et: "Lubab lisada ja muuta tekstiversioone.",
   },
   "links.manage": {
     ru: "Разрешает управлять внешними ссылками для прослушивания.",
     en: "Allows managing external listening links.",
-    et: "Lubab hallata valiseid kuulamislinke.",
+    et: "Lubab hallata väliseid kuulamislinke.",
   },
   "proposals.review": {
     ru: "Открывает доступ к просмотру заявок пользователей.",
     en: "Grants access to view user requests.",
-    et: "Annab ligipaasu kasutajate taotluste vaatamiseks.",
+    et: "Annab ligipääsu kasutajate taotluste vaatamiseks.",
   },
   "proposals.approve": {
-    ru: "?????????????? ?????????????? ?????? ? ?????????????? ?? ???? ?????.",
+    ru: "Разрешает одобрять заявки и публиковать их как песни.",
     en: "Allows approving requests and publishing them as songs.",
     et: "Lubab taotlusi kinnitada ja avaldada lauludena.",
   },
   "proposals.reject": {
-    ru: "?????????????? ???????????????? ???????? ???????????????.",
+    ru: "Разрешает отклонять заявки пользователей.",
     en: "Allows rejecting user requests.",
     et: "Lubab kasutajate taotlusi tagasi lukata.",
   },
+};
+
+const PERMISSION_LABELS_UK = {
+  "songs.create": "Створення пісень",
+  "songs.edit": "Редагування пісень",
+  "songs.delete": "Видалення пісень",
+  "songs.view_admin_content": "Перегляд admin-only контенту",
+  "variants.manage": "Керування текстовими версіями",
+  "links.manage": "Керування посиланнями",
+  "proposals.review": "Перегляд заявок",
+  "proposals.approve": "Схвалення заявок",
+  "proposals.reject": "Відхилення заявок",
+};
+
+const PERMISSION_DESCRIPTIONS_UK = {
+  "songs.create": "Дозволяє створювати нові записи пісень.",
+  "songs.edit": "Дозволяє змінювати поля існуючих пісень.",
+  "songs.delete": "Дозволяє видаляти пісні та пов'язані дані.",
+  "songs.view_admin_content": "Дозволяє бачити й позначати пісні як admin-only.",
+  "variants.manage": "Дозволяє додавати й редагувати текстові версії.",
+  "links.manage": "Дозволяє керувати зовнішніми посиланнями для прослуховування.",
+  "proposals.review": "Відкриває доступ до перегляду заявок користувачів.",
+  "proposals.approve": "Дозволяє схвалювати заявки та публікувати їх як пісні.",
+  "proposals.reject": "Дозволяє відхиляти заявки користувачів.",
 };
 
 const esc = (s = "") => String(s).replace(/[&<>\"']/g, (m) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", "\"": "&quot;", "'": "&#39;" }[m]));
@@ -275,7 +299,7 @@ function showStatusOverlay(message, tone = "success") {
 function requiredFieldsErrorText() {
   if (uiLocale() === "ru") return "Не заполнены обязательные поля";
   if (uiLocale() === "uk") return "Не заповнені обов'язкові поля";
-  if (uiLocale() === "et") return "Kohustuslikud valjad on taitmata";
+  if (uiLocale() === "et") return "Kohustuslikud väljad on täitmata";
   return "Required fields are missing";
 }
 
@@ -295,6 +319,17 @@ function songVersionsSummaryText(count) {
       else if (mod10 >= 2 && mod10 <= 4) word = "версии";
     }
     return `Эта песня имеет ${safeCount} ${word}`;
+  }
+  if (uiLocale() === "uk") {
+    const abs = Math.abs(safeCount);
+    const mod100 = abs % 100;
+    const mod10 = abs % 10;
+    let word = "версій";
+    if (mod100 < 11 || mod100 > 14) {
+      if (mod10 === 1) word = "версію";
+      else if (mod10 >= 2 && mod10 <= 4) word = "версії";
+    }
+    return `Ця пісня має ${safeCount} ${word}`;
   }
   if (uiLocale() === "et") {
     const word = safeCount === 1 ? "versioon" : "versiooni";
@@ -934,7 +969,7 @@ function renderPager(prefix, page, pages) {
     : uiLocale() === "uk"
       ? "Вперед"
       : uiLocale() === "et"
-        ? "Jargmine"
+        ? "Järgmine"
         : "Next";
   return     `
     <div class="yt-pager pager-shell" data-pager="${esc(prefix)}">
@@ -947,12 +982,14 @@ function renderPager(prefix, page, pages) {
 
 function permissionLabel(permission) {
   const locale = uiLocale();
+  if (locale === "uk" && PERMISSION_LABELS_UK[permission]) return PERMISSION_LABELS_UK[permission];
   const labels = PERMISSION_LABELS[permission];
   return labels?.[locale] || labels?.en || permission;
 }
 
 function permissionDescription(permission) {
   const locale = uiLocale();
+  if (locale === "uk" && PERMISSION_DESCRIPTIONS_UK[permission]) return PERMISSION_DESCRIPTIONS_UK[permission];
   const descriptions = PERMISSION_DESCRIPTIONS[permission];
   return descriptions?.[locale] || descriptions?.en || permission;
 }
@@ -1026,7 +1063,7 @@ function homeCountrySectionTitle() {
 
 function homeCountrySectionHint() {
   if (uiLocale() === "ru") return "Выберите страну, чтобы открыть песни этой категории";
-  if (uiLocale() === "uk") return "Оберіть країну, щоб відкрити пісні С†С–С”С— категорії";
+  if (uiLocale() === "uk") return "Оберіть країну, щоб відкрити пісні цієї категорії";
   if (uiLocale() === "et") return "Vali riik, et avada selle kategooria laulud";
   return "Pick a country to open songs in this category";
 }
@@ -1243,7 +1280,8 @@ function homeUI(data, params, homeExtras = {}) {
     .sort((a, b) => {
       const byCount = (Number(b.count) || 0) - (Number(a.count) || 0);
       if (byCount !== 0) return byCount;
-      return a.label.localeCompare(b.label, uiLocale() === "ru" ? "ru" : "en");
+      const localeForSort = uiLocale() === "ru" ? "ru" : uiLocale() === "uk" ? "uk" : "en";
+      return a.label.localeCompare(b.label, localeForSort);
     });
 
   const countryCardsHtml = countryCards.length
@@ -1333,7 +1371,7 @@ function homeUI(data, params, homeExtras = {}) {
           <input class="input" id="yt_region" value="${esc(region)}" />
         </label>
         <label class="yt-chip-input">
-          <span>${esc(uiLocale() === "ru" ? "Событие" : uiLocale() === "uk" ? "Подія" : uiLocale() === "et" ? "Sundmus" : "Event")}</span>
+          <span>${esc(uiLocale() === "ru" ? "Событие" : uiLocale() === "uk" ? "Подія" : uiLocale() === "et" ? "Sündmus" : "Event")}</span>
           <input class="input" id="yt_event" value="${esc(event)}" />
         </label>
         <label class="yt-chip-input">
@@ -1409,47 +1447,122 @@ globalThis.__songbookDraftOpStatusStore = draftOpStatusStore;
 
 function draftUiText(key, vars = {}) {
   const locale = uiLocale();
-  const pack = {
-    variantBadgeManual: { ru: "Ручной", uk: "Ручний", et: "Kasitsi", en: "Manual" },
-    variantBadgeSuggested: { ru: "Подсказка", uk: "Пидказка", et: "Soovitus", en: "Suggested" },
-    variantBadgeConflict: { ru: "Конфликт", uk: "Конфликт", et: "Konflikt", en: "Conflict" },
-    variantsToggle: { ru: "Варианты", uk: "Варианты", et: "Variandid", en: "Variants" },
-    useVariant: { ru: "Выбрать", uk: "Обрати", et: "Kasuta", en: "Use" },
-    newVariantPlaceholder: { ru: "Текст варианта", uk: "Текст варианту", et: "Variandi tekst", en: "Variant text" },
-    addVariantManual: { ru: "Добавить вариант", uk: "Додати вариант", et: "Lisa variant", en: "Add variant" },
-    addVariantSuggested: { ru: "Добавить подсказку", uk: "Додати пидказку", et: "Lisa soovitus", en: "Add suggested" },
-    owner: { ru: "владелец", uk: "власник", et: "omanik", en: "owner" },
-    draftFallbackTitle: { ru: "Черновик", uk: "Чернетка", et: "Mustand", en: "Draft" },
-    draftMeta: { ru: "Черновик: {draftId} · v{version}", uk: "Чернетка: {draftId} · v{version}", et: "Mustand: {draftId} · v{version}", en: "Draft: {draftId} · v{version}" },
-    collaboratorNicknamePlaceholder: { ru: "Никнейм", uk: "Никнейм", et: "Kasutajanimi", en: "Nickname" },
-    addCollaborator: { ru: "Добавить соавтора", uk: "Додати спивавтора", et: "Lisa kaasautor", en: "Add collaborator" },
-    publishDraft: { ru: "Опубликовать черновик", uk: "Опубликувати чернетку", et: "Avalda mustand", en: "Publish draft" },
-    liveStatus: { ru: "Live-статус", uk: "Live-статус", et: "Live olek", en: "Live status" },
-    statusOffline: { ru: "оффлайн", uk: "офлайн", et: "vorgust maas", en: "offline" },
-    statusConnecting: { ru: "подключение...", uk: "пидключення...", et: "uhendamine...", en: "connecting..." },
-    statusOnline: { ru: "онлайн", uk: "онлайн", et: "vorgus", en: "online" },
-    statusOnlineWithNames: { ru: "онлайн: {names}", uk: "онлайн: {names}", et: "vorgus: {names}", en: "online: {names}" },
-    statusReconnecting: { ru: "переподключение...", uk: "перепидключення...", et: "taasuhendamine...", en: "reconnecting..." },
-    statusConnectionError: { ru: "ошибка соединения", uk: "помилка з'єднання", et: "uhenduse viga", en: "connection error" },
-    statusWsUnsupported: { ru: "WebSocket не поддерживается", uk: "WebSocket не пидтримуеться", et: "WebSocket pole toetatud", en: "WebSocket unsupported" },
-    wsNotConnected: { ru: "WebSocket не подключен", uk: "WebSocket не пидключений", et: "WebSocket pole uhendatud", en: "WebSocket is not connected" },
-    promptCopied: { ru: "Промпт скопирован", uk: "Промпт скопийовано", et: "Prompt kopeeritud", en: "Prompt copied" },
-    promptCopyFailed: { ru: "Не удалось скопировать", uk: "Не вдалося скопиювати", et: "Kopeerimine ebaonnestus", en: "Copy failed" },
-    conflictSaved: { ru: "Конфликт сохранен как отдельный вариант", uk: "Конфликт збережено як окремий вариант", et: "Konflikt salvestati eraldi variandina", en: "Conflict saved as extra variant" },
-    draftPublished: { ru: "Черновик опубликован", uk: "Чернетку опубликовано", et: "Mustand avaldati", en: "Draft published" },
-    openCollaborativeDraft: { ru: "Совместный черновик", uk: "Спильна чернетка", et: "Koostoo mustand", en: "Collaborative draft" },
-    draftNotCreated: { ru: "Черновик не создан", uk: "Чернетку не створено", et: "Mustandit ei loodud", en: "Draft was not created" },
-    opStatusPending: { ru: "ожидает", uk: "очикуе", et: "ootel", en: "pending" },
-    opStatusApplied: { ru: "применено", uk: "застосовано", et: "rakendatud", en: "applied" },
-    opStatusPersisted: { ru: "сохранено", uk: "збережено", et: "salvestatud", en: "persisted" },
-    aiCopy: { ru: "Копировать AI-промпт", uk: "Копиювати AI-промпт", et: "Kopeeri AI prompt", en: "AI copy" },
-    aiOpen: { ru: "Открыть ChatGPT", uk: "Видкрити ChatGPT", et: "Ava ChatGPT", en: "Open ChatGPT" },
+  const en = {
+    variantBadgeManual: "Manual",
+    variantBadgeSuggested: "Suggested",
+    variantBadgeConflict: "Conflict",
+    variantsToggle: "Variants",
+    useVariant: "Use",
+    newVariantPlaceholder: "Variant text",
+    addVariantManual: "Add variant",
+    addVariantSuggested: "Add suggested",
+    owner: "owner",
+    draftFallbackTitle: "Draft",
+    draftMeta: "Draft: {draftId} · v{version}",
+    collaboratorNicknamePlaceholder: "Nickname",
+    addCollaborator: "Add collaborator",
+    sendCollaboratorInvite: "Send invitation",
+    writeCollaboratively: "Write collaboratively",
+    myDrafts: "My drafts",
+    incomingInvitations: "Incoming invitations",
+    invitationPending: "Pending",
+    invitationAccepted: "Accepted",
+    invitationDeclined: "Declined",
+    invitationCancelled: "Cancelled",
+    invitationAccept: "Accept",
+    invitationDecline: "Decline",
+    invitationCancel: "Cancel",
+    invitationSent: "Invitation sent",
+    invitationAcceptedMsg: "Invitation accepted",
+    invitationDeclinedMsg: "Invitation declined",
+    invitationCancelledMsg: "Invitation cancelled",
+    invitationFrom: "From: {name}",
+    invitationTo: "To: {name}",
+    invitedCollaborators: "Invited",
+    openDraft: "Open draft",
+    publishDraft: "Publish draft",
+    confidenceTool: "Confidence tool",
+    linePickerTool: "Line picker",
+    copyPromptTool: "Copy prompt",
+    liveStatus: "Live status",
+    accessMembersEmpty: "Access: no members yet",
+    accessMembersWithNames: "Access: {names}",
+    statusOffline: "offline",
+    statusConnecting: "connecting...",
+    statusOnline: "online",
+    statusOnlineWithNames: "online: {names}",
+    statusReconnecting: "reconnecting...",
+    statusConnectionError: "connection error",
+    statusWsUnsupported: "WebSocket unsupported",
+    wsNotConnected: "WebSocket is not connected",
+    promptCopied: "Prompt copied",
+    promptCopyFailed: "Copy failed",
+    conflictSaved: "Conflict saved as extra variant",
+    draftPublished: "Draft published",
+    openCollaborativeDraft: "Collaborative draft",
+    draftNotCreated: "Draft was not created",
+    opStatusPending: "pending",
+    opStatusApplied: "applied",
+    opStatusPersisted: "persisted",
+    aiCopy: "Copy AI prompt",
+    aiOpen: "Open ChatGPT",
   };
-  const fallback = pack[key]?.en || key;
-  const template = pack[key]?.[locale] || fallback;
+  const ru = {
+    variantsToggle: "\u0412\u0430\u0440\u0438\u0430\u043d\u0442\u044b",
+    useVariant: "\u0412\u044b\u0431\u0440\u0430\u0442\u044c",
+    newVariantPlaceholder: "\u0422\u0435\u043a\u0441\u0442 \u0432\u0430\u0440\u0438\u0430\u043d\u0442\u0430",
+    addVariantManual: "\u0414\u043e\u0431\u0430\u0432\u0438\u0442\u044c \u0432\u0430\u0440\u0438\u0430\u043d\u0442",
+    addVariantSuggested: "\u0414\u043e\u0431\u0430\u0432\u0438\u0442\u044c \u043f\u043e\u0434\u0441\u043a\u0430\u0437\u043a\u0443",
+    confidenceTool: "\u0418\u043d\u0441\u0442\u0440\u0443\u043c\u0435\u043d\u0442 \u0443\u0432\u0435\u0440\u0435\u043d\u043d\u043e\u0441\u0442\u0438",
+    linePickerTool: "\u041f\u043e\u0434\u0431\u043e\u0440 \u0441\u0442\u0440\u043e\u043a",
+    copyPromptTool: "\u041a\u043e\u043f\u0438\u0440\u043e\u0432\u0430\u0442\u044c \u043f\u0440\u043e\u043c\u043f\u0442",
+    openCollaborativeDraft: "\u0421\u043e\u0432\u043c\u0435\u0441\u0442\u043d\u044b\u0439 \u0447\u0435\u0440\u043d\u043e\u0432\u0438\u043a",
+    addCollaborator: "\u0414\u043e\u0431\u0430\u0432\u0438\u0442\u044c \u0441\u043e\u0430\u0432\u0442\u043e\u0440\u0430",
+    sendCollaboratorInvite: "\u041e\u0442\u043f\u0440\u0430\u0432\u0438\u0442\u044c \u043f\u0440\u0438\u0433\u043b\u0430\u0448\u0435\u043d\u0438\u0435",
+    publishDraft: "\u041e\u043f\u0443\u0431\u043b\u0438\u043a\u043e\u0432\u0430\u0442\u044c \u0447\u0435\u0440\u043d\u043e\u0432\u0438\u043a",
+    accessMembersEmpty: "\u0414\u043e\u0441\u0442\u0443\u043f: \u0443\u0447\u0430\u0441\u0442\u043d\u0438\u043a\u043e\u0432 \u043f\u043e\u043a\u0430 \u043d\u0435\u0442",
+    accessMembersWithNames: "\u0414\u043e\u0441\u0442\u0443\u043f: {names}",
+    statusOffline: "\u043e\u0444\u0444\u043b\u0430\u0439\u043d",
+    statusOnline: "\u043e\u043d\u043b\u0430\u0439\u043d",
+    statusConnecting: "\u043f\u043e\u0434\u043a\u043b\u044e\u0447\u0435\u043d\u0438\u0435...",
+    statusReconnecting: "\u043f\u0435\u0440\u0435\u043f\u043e\u0434\u043a\u043b\u044e\u0447\u0435\u043d\u0438\u0435...",
+    aiCopy: "\u041a\u043e\u043f\u0438\u0440\u043e\u0432\u0430\u0442\u044c AI-\u043f\u0440\u043e\u043c\u043f\u0442",
+    aiOpen: "\u041e\u0442\u043a\u0440\u044b\u0442\u044c ChatGPT",
+    promptCopied: "\u041f\u0440\u043e\u043c\u043f\u0442 \u0441\u043a\u043e\u043f\u0438\u0440\u043e\u0432\u0430\u043d",
+    promptCopyFailed: "\u041d\u0435 \u0443\u0434\u0430\u043b\u043e\u0441\u044c \u0441\u043a\u043e\u043f\u0438\u0440\u043e\u0432\u0430\u0442\u044c",
+    draftPublished: "\u0427\u0435\u0440\u043d\u043e\u0432\u0438\u043a \u043e\u043f\u0443\u0431\u043b\u0438\u043a\u043e\u0432\u0430\u043d",
+  };
+  const uk = {
+    variantsToggle: "\u0412\u0430\u0440\u0456\u0430\u043d\u0442\u0438",
+    useVariant: "\u041e\u0431\u0440\u0430\u0442\u0438",
+    newVariantPlaceholder: "\u0422\u0435\u043a\u0441\u0442 \u0432\u0430\u0440\u0456\u0430\u043d\u0442\u0443",
+    addVariantManual: "\u0414\u043e\u0434\u0430\u0442\u0438 \u0432\u0430\u0440\u0456\u0430\u043d\u0442",
+    addVariantSuggested: "\u0414\u043e\u0434\u0430\u0442\u0438 \u043f\u0456\u0434\u043a\u0430\u0437\u043a\u0443",
+    confidenceTool: "\u0406\u043d\u0441\u0442\u0440\u0443\u043c\u0435\u043d\u0442 \u0432\u043f\u0435\u0432\u043d\u0435\u043d\u043e\u0441\u0442\u0456",
+    linePickerTool: "\u041f\u0456\u0434\u0431\u0456\u0440 \u0440\u044f\u0434\u043a\u0456\u0432",
+    copyPromptTool: "\u041a\u043e\u043f\u0456\u044e\u0432\u0430\u0442\u0438 \u043f\u0440\u043e\u043c\u043f\u0442",
+    openCollaborativeDraft: "\u0421\u043f\u0456\u043b\u044c\u043d\u0430 \u0447\u0435\u0440\u043d\u0435\u0442\u043a\u0430",
+    addCollaborator: "\u0414\u043e\u0434\u0430\u0442\u0438 \u0441\u043f\u0456\u0432\u0430\u0432\u0442\u043e\u0440\u0430",
+    sendCollaboratorInvite: "\u041d\u0430\u0434\u0456\u0441\u043b\u0430\u0442\u0438 \u0437\u0430\u043f\u0440\u043e\u0448\u0435\u043d\u043d\u044f",
+    publishDraft: "\u041e\u043f\u0443\u0431\u043b\u0456\u043a\u0443\u0432\u0430\u0442\u0438 \u0447\u0435\u0440\u043d\u0435\u0442\u043a\u0443",
+    accessMembersEmpty: "\u0414\u043e\u0441\u0442\u0443\u043f: \u0443\u0447\u0430\u0441\u043d\u0438\u043a\u0456\u0432 \u043f\u043e\u043a\u0438 \u043d\u0435\u043c\u0430\u0454",
+    accessMembersWithNames: "\u0414\u043e\u0441\u0442\u0443\u043f: {names}",
+    statusOffline: "\u043e\u0444\u043b\u0430\u0439\u043d",
+    statusOnline: "\u043e\u043d\u043b\u0430\u0439\u043d",
+    statusConnecting: "\u043f\u0456\u0434\u043a\u043b\u044e\u0447\u0435\u043d\u043d\u044f...",
+    statusReconnecting: "\u043f\u0435\u0440\u0435\u043f\u0456\u0434\u043a\u043b\u044e\u0447\u0435\u043d\u043d\u044f...",
+    aiCopy: "\u041a\u043e\u043f\u0456\u044e\u0432\u0430\u0442\u0438 AI-\u043f\u0440\u043e\u043c\u043f\u0442",
+    aiOpen: "\u0412\u0456\u0434\u043a\u0440\u0438\u0442\u0438 ChatGPT",
+  };
+  const fallback = en[key] || key;
+  const localized = locale === "ru"
+    ? (ru[key] || fallback)
+    : locale === "uk"
+      ? (uk[key] || fallback)
+      : fallback;
   return Object.entries(vars || {}).reduce((acc, [name, value]) => (
     acc.replaceAll(`{${name}}`, String(value ?? ""))
-  ), template);
+  ), localized);
 }
 
 function draftVariantTypeLabel(value = "") {
@@ -1466,16 +1579,25 @@ function draftConfidenceBand(confidence) {
   return "is-low";
 }
 
+function draftClampConfidence(value, fallback = 100) {
+  const n = Number.parseInt(String(value ?? fallback), 10);
+  if (!Number.isFinite(n)) return fallback;
+  return Math.max(0, Math.min(100, n));
+}
+
 function draftActiveVariant(line = {}) {
   const variants = Array.isArray(line?.variants) ? line.variants : [];
   return variants.find((item) => item?.is_active) || variants[0] || null;
 }
 
 function draftLinesToLyrics(lines = []) {
-  return [...(Array.isArray(lines) ? lines : [])]
+  const composed = [...(Array.isArray(lines) ? lines : [])]
     .sort((a, b) => Number(a?.sort_order || 0) - Number(b?.sort_order || 0))
-    .map((line) => String(draftActiveVariant(line)?.text || ""))
+    .map((line) => String(draftActiveVariant(line)?.text || "").replace(/\r\n?/g, "\n").replace(/^\n+|\n+$/g, ""))
     .join("\n");
+  return composed
+    .replace(/^(?:[ \t]*\n)+/g, "")
+    .replace(/(?:\n[ \t]*)+$/g, "");
 }
 
 function draftOpStoreFor(draftId) {
@@ -1540,7 +1662,106 @@ function draftLineRowsUI(lines = []) {
   }).join("");
 }
 
-function draftCollaboratorsUI(payload = {}, canManage = false) {
+function draftLineActionsPanelUI(line = null, index = -1) {
+  if (!line) {
+    const emptyText = uiLocale() === "ru"
+      ? "Выберите строку кнопкой ≡ рядом с текстом."
+      : uiLocale() === "uk"
+        ? "Оберіть рядок кнопкою ≡ поруч із текстом."
+        : uiLocale() === "et"
+          ? "Vali rida nupuga ≡ teksti kõrval."
+          : "Pick a line using the ≡ button next to the text.";
+    return `<div class="muted small">${esc(emptyText)}</div>`;
+  }
+  const active = draftActiveVariant(line);
+  const activeText = String(active?.text || "");
+  const activeConfidence = Number(active?.confidence || 100);
+  const variants = Array.isArray(line?.variants) ? line.variants : [];
+  const safeIndex = Math.max(0, Number(index || 0));
+  return `
+    <div class="songCard draft-line-actions ${draftConfidenceBand(activeConfidence)}" data-line-id="${esc(line.id)}">
+      <div class="draft-line-header">
+        <div class="draft-line-meta">
+          <span class="badge">${safeIndex + 1}</span>
+          <span class="draft-line-confidence">${Math.max(0, Math.min(100, Math.round(activeConfidence)))}%</span>
+        </div>
+      </div>
+      <div class="draft-line-current">${esc(activeText || " ")}</div>
+      <div class="actions draft-line-ai-actions">
+        <button class="btn ghost draft-ai-copy" type="button" data-line-id="${esc(line.id)}">${esc(draftUiText("aiCopy"))}</button>
+        <button class="btn ghost draft-ai-open" type="button" data-line-id="${esc(line.id)}">${esc(draftUiText("aiOpen"))}</button>
+      </div>
+      <div class="draft-variants-panel">
+        ${variants.map((variant) => `
+          <div class="draft-variant-row ${variant?.is_active ? "is-active" : ""}">
+            <div class="draft-variant-text">${esc(String(variant?.text || ""))}</div>
+            <div class="draft-variant-controls">
+              <span class="badge">${esc(draftVariantTypeLabel(variant?.variant_type || "manual"))}</span>
+              <input class="input draft-variant-confidence" type="number" min="0" max="100" value="${Math.max(0, Math.min(100, Math.round(Number(variant?.confidence || 0))))}" data-line-id="${esc(line.id)}" data-variant-id="${esc(variant?.id || "")}" />
+              <button class="btn ghost draft-variant-activate" type="button" data-line-id="${esc(line.id)}" data-variant-id="${esc(variant?.id || "")}" ${variant?.is_active ? "disabled" : ""}>${esc(draftUiText("useVariant"))}</button>
+            </div>
+          </div>
+        `).join("")}
+        <div class="draft-add-variant">
+          <input class="input draft-new-variant-text" type="text" placeholder="${esc(draftUiText("newVariantPlaceholder"))}" data-line-id="${esc(line.id)}" />
+          <input class="input draft-new-variant-confidence" type="number" min="0" max="100" value="80" data-line-id="${esc(line.id)}" />
+          <div class="draft-add-variant-actions">
+            <button class="btn ghost draft-add-variant-btn" type="button" data-line-id="${esc(line.id)}">${esc(draftUiText("addVariantManual"))}</button>
+            <button class="btn ghost draft-add-suggested-btn" type="button" data-line-id="${esc(line.id)}">${esc(draftUiText("addVariantSuggested"))}</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  `;
+}
+
+function draftLinePopoverUI(line = null, index = -1) {
+  if (!line) return "";
+  const active = draftActiveVariant(line);
+  const activeText = String(active?.text || "");
+  const activeConfidence = Number(active?.confidence || 100);
+  const variants = Array.isArray(line?.variants) ? line.variants : [];
+  const safeIndex = Math.max(0, Number(index || 0));
+  const closeLabel = t("common.close");
+  return `
+    <div class="ac-line-popover-card ${draftConfidenceBand(activeConfidence)}" data-line-id="${esc(line.id)}">
+      <div class="draft-line-header">
+        <div class="draft-line-meta">
+          <span class="badge">${safeIndex + 1}</span>
+          <span class="draft-line-confidence">${Math.max(0, Math.min(100, Math.round(activeConfidence)))}%</span>
+        </div>
+        <button class="btn ghost ac-line-popover-close" type="button" aria-label="${esc(closeLabel)}" title="${esc(closeLabel)}">&#10005;</button>
+      </div>
+      <div class="draft-line-current">${esc(activeText || " ")}</div>
+      <div class="actions draft-line-ai-actions">
+        <button class="btn ghost draft-ai-copy" type="button" data-line-id="${esc(line.id)}">${esc(draftUiText("aiCopy"))}</button>
+        <button class="btn ghost draft-ai-open" type="button" data-line-id="${esc(line.id)}">${esc(draftUiText("aiOpen"))}</button>
+      </div>
+      <div class="draft-variants-panel">
+        ${variants.map((variant) => `
+          <div class="draft-variant-row ${variant?.is_active ? "is-active" : ""}">
+            <div class="draft-variant-text">${esc(String(variant?.text || ""))}</div>
+            <div class="draft-variant-controls">
+              <span class="badge">${esc(draftVariantTypeLabel(variant?.variant_type || "manual"))}</span>
+              <input class="input draft-variant-confidence" type="number" min="0" max="100" value="${Math.max(0, Math.min(100, Math.round(Number(variant?.confidence || 0))))}" data-line-id="${esc(line.id)}" data-variant-id="${esc(variant?.id || "")}" />
+              <button class="btn ghost draft-variant-activate" type="button" data-line-id="${esc(line.id)}" data-variant-id="${esc(variant?.id || "")}" ${variant?.is_active ? "disabled" : ""}>${esc(draftUiText("useVariant"))}</button>
+            </div>
+          </div>
+        `).join("")}
+        <div class="draft-add-variant">
+          <input class="input draft-new-variant-text" type="text" placeholder="${esc(draftUiText("newVariantPlaceholder"))}" data-line-id="${esc(line.id)}" />
+          <input class="input draft-new-variant-confidence" type="number" min="0" max="100" value="80" data-line-id="${esc(line.id)}" />
+          <div class="draft-add-variant-actions">
+            <button class="btn ghost draft-add-variant-btn" type="button" data-line-id="${esc(line.id)}">${esc(draftUiText("addVariantManual"))}</button>
+            <button class="btn ghost draft-add-suggested-btn" type="button" data-line-id="${esc(line.id)}">${esc(draftUiText("addVariantSuggested"))}</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  `;
+}
+
+function draftCollaboratorsUI(payload = {}) {
   const owner = payload?.owner || null;
   const list = Array.isArray(payload?.collaborators) ? payload.collaborators : [];
   const ownerName = owner ? (owner.nickname || owner.email || owner.id || "") : "";
@@ -1558,11 +1779,81 @@ function draftCollaboratorsUI(payload = {}, canManage = false) {
           <div class="songTitle">${esc(name)}</div>
           <div class="songMeta">${esc(String(user?.email || ""))}</div>
         </div>
-        ${canManage ? `<button class="btn danger draft-collab-remove" type="button" data-user-id="${esc(user?.user_id || "")}">${esc(t("common.delete"))}</button>` : ``}
       </div>
     `;
   }).join("");
   return `${ownerMarkup}${collaboratorMarkup}`;
+}
+
+function draftInvitationStatusLabel(status = "") {
+  const normalized = String(status || "").trim().toLowerCase();
+  if (normalized === "accepted") return draftUiText("invitationAccepted");
+  if (normalized === "declined") return draftUiText("invitationDeclined");
+  if (normalized === "cancelled") return draftUiText("invitationCancelled");
+  return draftUiText("invitationPending");
+}
+
+function draftsHubUI(draftsPayload = {}, invitationsPayload = {}) {
+  const drafts = Array.isArray(draftsPayload?.items) ? draftsPayload.items : [];
+  const incoming = Array.isArray(invitationsPayload?.items) ? invitationsPayload.items : [];
+  const draftsMarkup = drafts.length
+    ? drafts.map((item) => {
+      const draftId = String(item?.id || "").trim();
+      const title = String(item?.snapshot_title || "").trim()
+        || draftUiText("draftFallbackTitle");
+      const ownerLabel = Number(item?.is_owner || 0) === 1
+        ? draftUiText("owner")
+        : String(item?.owner_nickname || "").trim();
+      return `
+        <a class="songCard" href="#/draft/${encodeURIComponent(draftId)}">
+          <div>
+            <div class="songTitle">${esc(title)}</div>
+            <div class="songMeta">${esc(ownerLabel || "")}</div>
+          </div>
+          <span class="badge">${esc(draftInvitationStatusLabel("accepted"))}</span>
+        </a>
+      `;
+    }).join("")
+    : `<div class="muted">${esc(t("common.empty"))}</div>`;
+
+  const incomingMarkup = incoming.length
+    ? incoming.map((invite) => {
+      const inviteId = String(invite?.id || "").trim();
+      const draftId = String(invite?.draft_id || "").trim();
+      const draftTitle = String(invite?.draft?.snapshot_title || "").trim()
+        || draftUiText("draftFallbackTitle");
+      const inviterName = String(invite?.inviter?.nickname || invite?.inviter?.email || invite?.inviter?.user_id || "").trim();
+      return `
+        <div class="songCard draft-invitation-card" data-invite-id="${esc(inviteId)}">
+          <div style="width:100%">
+            <div class="songTitle">${esc(draftTitle)}</div>
+            <div class="songMeta">${esc(draftUiText("invitationFrom", { name: inviterName || "-" }))}</div>
+            <div class="songMeta">${esc(draftInvitationStatusLabel(invite?.status || "pending"))}</div>
+          </div>
+          <div class="actions">
+            <button class="btn" type="button" data-action="accept" data-invite-id="${esc(inviteId)}" data-draft-id="${esc(draftId)}">${esc(draftUiText("invitationAccept"))}</button>
+            <button class="btn ghost" type="button" data-action="decline" data-invite-id="${esc(inviteId)}">${esc(draftUiText("invitationDecline"))}</button>
+          </div>
+        </div>
+      `;
+    }).join("")
+    : `<div class="muted">${esc(t("common.empty"))}</div>`;
+
+  return `
+    <section class="yt-main">
+      <div class="card">
+        <div class="h2">${esc(draftUiText("myDrafts"))}</div>
+        <div class="sep"></div>
+        <div class="list">${draftsMarkup}</div>
+      </div>
+      <div class="card" style="margin-top:12px">
+        <div class="h2">${esc(draftUiText("incomingInvitations"))}</div>
+        <div class="sep"></div>
+        <div class="list">${incomingMarkup}</div>
+      </div>
+    </section>
+    <div class="yt-mobile-spacer"></div>
+  `;
 }
 
 function draftEditorUI(payload = {}, options = {}) {
@@ -1585,7 +1876,7 @@ function draftEditorUI(payload = {}, options = {}) {
           <button class="btn" id="draft_collab_add" type="button">${esc(draftUiText("addCollaborator"))}</button>
         </div>
         <div class="list" id="draft_collaborators_list">
-          ${draftCollaboratorsUI(payload, canManageCollaborators)}
+          ${draftCollaboratorsUI(payload)}
         </div>
         <div class="actions" style="margin-top:10px">
           <button class="btn" id="draft_publish_btn" type="button">${esc(draftUiText("publishDraft"))}</button>
@@ -2256,15 +2547,6 @@ function songDetailsUI(song, extra = {}) {
       </svg>
     </a>`
     : "";
-  const draftActionBtn = state.user
-    ? `<button class="btn ghost song-edit-top" id="btnSongDraftNav" type="button" title="${esc(draftUiText("openCollaborativeDraft"))}" aria-label="${esc(draftUiText("openCollaborativeDraft"))}">
-      <svg class="song-action-icon" viewBox="0 0 24 24" aria-hidden="true" focusable="false">
-        <path d="M8.5 11a3.5 3.5 0 1 1 0-7 3.5 3.5 0 0 1 0 7zm7.5 1a2.5 2.5 0 1 0-2.2-3.7A4.8 4.8 0 0 1 14 9.5a2.5 2.5 0 0 0 2 2.5z"></path>
-        <path d="M3 20a5.5 5.5 0 0 1 11 0"></path>
-        <path d="M14 20a4.5 4.5 0 0 1 7 0"></path>
-      </svg>
-    </button>`
-    : "";
   const playActionBtn = hasListenItems
     ? `<button class="btn primary song-play-now" id="btnSongListen" type="button" aria-label="${esc(listenCtaText())}"><span class="song-listen-icon-glyph" aria-hidden="true">d</span><span>${esc(listenCtaText())}</span></button>`
     : "";
@@ -2285,7 +2567,7 @@ function songDetailsUI(song, extra = {}) {
       <span class="song-header-tool-text">${esc(favLabel)}</span>
     </button>`
     : "";
-  const headerActionButtons = [editActionBtn, draftActionBtn, copyActionBtn, favActionBtn].filter(Boolean).join("");
+  const headerActionButtons = [editActionBtn, copyActionBtn, favActionBtn].filter(Boolean).join("");
   const hasHeaderSide = !!(statusDot || verifiedPill || headerActionButtons);
   const aiHubTitle = uiLocale() === "ru"
     ? "ИИ-помощник по песне"
@@ -2393,7 +2675,7 @@ function songDetailsUI(song, extra = {}) {
   const compareListenMissing = uiLocale() === "ru"
     ? "ссылок нет"
     : uiLocale() === "uk"
-      ? "посилань неає"
+      ? "посилань немає"
       : uiLocale() === "et"
         ? "linke pole"
         : "no links";
@@ -2587,7 +2869,7 @@ function requestUI(options = {}) {
     : uiLocale() === "uk"
       ? "Заповніть картку повністю: за наявності прав публікація одразу, інакше заявка піде на модерацію."
     : uiLocale() === "et"
-      ? "Taida kaart taielikult: oiguste korral avaldatakse kohe, muidu laheb modereerimisele."
+      ? "Täida kaart täielikult: õiguste korral avaldatakse kohe, muidu läheb modereerimisele."
       : "Fill in all fields: published immediately with permissions, otherwise sent for moderation.";
   const fragmentTitleText = uiLocale() === "ru"
     ? "Не нашли песню? Отправьте фрагмент"
@@ -2601,7 +2883,7 @@ function requestUI(options = {}) {
     : uiLocale() === "uk"
       ? "Вкажіть лише текст фрагмента та джерело. Заявку отримає супер-адміністратор."
       : uiLocale() === "et"
-        ? "Lisa ainult tekstikatkend ja allikas. Taotlus laheb ainult super-adminile."
+        ? "Lisa ainult tekstikatkend ja allikas. Taotlus läheb ainult super-adminile."
         : "Provide only fragment text and source. The request is sent to super admin only.";
   const submitFragmentText = uiLocale() === "ru"
     ? "Отправить фрагмент"
@@ -2655,7 +2937,7 @@ function requestUI(options = {}) {
           <label class="field" id="rq_period_wrap"><div class="fieldLabel">${esc(t("field.period"))}</div><select class="select" id="rq_period">${selectOptions("period", "", uiText("selectPeriod"))}</select></label>
           <label class="field"><div class="fieldLabel">${esc(t("field.year"))}</div><input class="input" id="rq_year" /></label>
           <label class="field"><div class="fieldLabel">${esc(uiLocale() === "ru" ? "Регион" : uiLocale() === "uk" ? "Регіон" : uiLocale() === "et" ? "Piirkond" : "Region")}</div><input class="input" id="rq_region" /></label>
-          <label class="field"><div class="fieldLabel">${esc(uiLocale() === "ru" ? "Событие" : uiLocale() === "uk" ? "Подія" : uiLocale() === "et" ? "Sundmus" : "Event")}</div><input class="input" id="rq_event" /></label>
+          <label class="field"><div class="fieldLabel">${esc(uiLocale() === "ru" ? "Событие" : uiLocale() === "uk" ? "Подія" : uiLocale() === "et" ? "Sündmus" : "Event")}</div><input class="input" id="rq_event" /></label>
           <label class="field"><div class="fieldLabel">${esc(uiLocale() === "ru" ? "Театика" : uiLocale() === "uk" ? "Театика" : uiLocale() === "et" ? "Temaatika" : "Theme")}</div><input class="input" id="rq_theme" /></label>
           <label class="field"><div class="fieldLabel">${esc(t("field.source"))}</div><input class="input" id="rq_source" /></label>
         </div>
@@ -2764,37 +3046,30 @@ function adminContentUI(data, params) {
   `;
 }
 
-function adminEditorCollabPanelUI() {
-  const linesTitle = uiLocale() === "ru"
-    ? "Построчная совместная редактура"
+function adminEditorCollabPanelUI(options = {}) {
+  const controlsTitle = uiLocale() === "ru"
+    ? "\u0421\u043e\u0432\u043c\u0435\u0441\u0442\u043d\u0430\u044f \u0440\u0430\u0431\u043e\u0442\u0430"
     : uiLocale() === "uk"
-      ? "Порядкова спільна редактура"
+      ? "\u0421\u043f\u0456\u043b\u044c\u043d\u0430 \u0440\u043e\u0431\u043e\u0442\u0430"
       : uiLocale() === "et"
-        ? "Reahaaval koostöötoimetus"
-        : "Line-by-line collaborative editing";
+        ? "Koostoimetamine"
+        : "Collaboration";
   return `
-    <section class="request-section ac-collab-panel hidden" id="ac_collab_panel">
-      <div class="row wrap gap">
-        <div class="h2 request-section-title">${esc(draftUiText("openCollaborativeDraft"))}</div>
-        <div class="songMeta ac-collab-meta" id="ac_draft_meta"></div>
-      </div>
-      <div class="grid2 ac-collab-add">
-        <input class="input" id="ac_draft_collab_nickname" placeholder="${esc(draftUiText("collaboratorNicknamePlaceholder"))}" />
-        <button class="btn" id="ac_draft_collab_add" type="button">${esc(draftUiText("addCollaborator"))}</button>
-      </div>
-      <div class="list" id="ac_draft_collaborators"></div>
-      <div class="songCard draft-op-card ac-collab-presence-card">
-        <div class="songTitle">${esc(draftUiText("liveStatus"))}</div>
-        <div class="songMeta" id="ac_draft_presence">${esc(draftUiText("statusOffline"))}</div>
-      </div>
-      <div class="list" id="ac_draft_ops_list"></div>
-      <div class="actions ac-collab-actions">
-        <button class="btn" id="ac_draft_publish" type="button">${esc(draftUiText("publishDraft"))}</button>
-        <a class="btn ghost" id="ac_draft_open_page" href="#">${esc(t("common.open"))}</a>
-      </div>
-      <details class="ac-collab-lines" open>
-        <summary>${esc(linesTitle)}</summary>
-        <div class="list draft-lines-list" id="ac_draft_lines"></div>
+    <section class="request-section ac-collab-panel hidden" id="ac_collab_panel" data-mode="collab">
+      <details class="ac-collab-controls" id="ac_collab_controls">
+        <summary>${esc(controlsTitle)}</summary>
+        <div class="ac-collab-controls-body">
+          <div class="row wrap gap">
+            <div class="h2 request-section-title">${esc(draftUiText("openCollaborativeDraft"))}</div>
+            <div class="songMeta ac-collab-meta" id="ac_draft_meta"></div>
+          </div>
+          <div class="grid2 ac-collab-add">
+            <input class="input" id="ac_draft_collab_nickname" placeholder="${esc(draftUiText("collaboratorNicknamePlaceholder"))}" />
+            <button class="btn" id="ac_draft_collab_add" type="button">${esc(draftUiText("sendCollaboratorInvite"))}</button>
+          </div>
+          <div class="songMeta ac-collab-meta" id="ac_draft_presence">${esc(draftUiText("accessMembersEmpty"))}</div>
+          <div class="list" id="ac_draft_collaborators"></div>
+        </div>
       </details>
     </section>
   `;
@@ -2802,25 +3077,29 @@ function adminEditorCollabPanelUI() {
 
 function adminEditorUI(song = {}, options = {}) {
   const isNew = !!options.isNew;
+  const hideAdminTabs = options.hideAdminTabs === true;
+  const hideSongActions = options.hideSongActions === true;
+  const canPublishDraft = options.canPublishDraft !== false;
+  const forceDraftId = String(options.forceDraftId || "").trim();
   const canToggleAdminContent = can("songs.view_admin_content");
   const canMarkVerified = isSuperAdmin();
   const backHash = options.backHash || "#/admin/content";
   const deleteBtn = isNew ? "" : `<button class="btn danger" id="ac_delete" type="button">${esc(t("common.delete"))}</button>`;
-  const publishBtnLabel = uiLocale() === "ru"
-    ? "Опубликовать"
-    : uiLocale() === "uk"
-      ? "Опублікувати"
-      : uiLocale() === "et"
-        ? "Avalda"
-        : "Publish";
-  const publishBtn = `<button class="btn" id="ac_publish" type="button">${esc(publishBtnLabel)}</button>`;
-  const draftBtn = `<button class="btn ghost" id="ac_open_draft" type="button">${esc(draftUiText("openCollaborativeDraft"))}</button>`;
-  const title = isNew
-    ? (uiLocale() === "ru" ? "Новая песня" : uiLocale() === "uk" ? "Нова пісня" : uiLocale() === "et" ? "Uus laul" : "New song")
-    : (uiLocale() === "ru" ? "Редактирование песни" : uiLocale() === "uk" ? "Редагування пісні" : uiLocale() === "et" ? "Laulu muutmine" : "Edit song");
+  const publishBtn = `<button class="btn" id="ac_publish" type="button">${esc(t("status.published"))}</button>`;
+  const title = String(options.titleOverride || "").trim() || (isNew ? t("admin.newSong") : t("admin.editor"));
+  const footerActions = hideSongActions
+    ? ""
+    : `
+        <div class="actions request-actions" style="margin-top:12px">
+          <button class="btn primary" id="ac_save" type="button">${esc(t("common.save"))}</button>
+          ${publishBtn}
+          ${deleteBtn}
+        </div>
+      `;
+
   return `
     <div>
-      ${adminTabs("content")}
+      ${hideAdminTabs ? "" : adminTabs("content")}
       <div class="card ac-editor-card ac-editor-page request-card song-edit-unified" id="ac_editor">
         <div class="row wrap gap">
           <div class="h2">${esc(title)}</div>
@@ -2828,6 +3107,7 @@ function adminEditorUI(song = {}, options = {}) {
         </div>
         <div class="sep"></div>
         <input id="ac_id" class="hidden" value="${esc(song.id || "")}" />
+        <input id="ac_force_draft_id" class="hidden" value="${esc(forceDraftId)}" />
         <div class="request-section">
           <div class="grid2">
             <label class="field"><div class="fieldLabel">${esc(t("field.title"))} *</div><input id="ac_title" class="input" /></label>
@@ -2843,9 +3123,9 @@ function adminEditorUI(song = {}, options = {}) {
           </div>
           <div class="grid2">
             <label class="field"><div class="fieldLabel">${esc(uiLocale() === "ru" ? "Регион" : uiLocale() === "uk" ? "Регіон" : uiLocale() === "et" ? "Piirkond" : "Region")}</div><input id="ac_region" class="input" /></label>
-            <label class="field"><div class="fieldLabel">${esc(uiLocale() === "ru" ? "Событие" : uiLocale() === "uk" ? "Подія" : uiLocale() === "et" ? "Sundmus" : "Event")}</div><input id="ac_event" class="input" /></label>
+            <label class="field"><div class="fieldLabel">${esc(uiLocale() === "ru" ? "Событие" : uiLocale() === "uk" ? "Подія" : uiLocale() === "et" ? "Sündmus" : "Event")}</div><input id="ac_event" class="input" /></label>
           </div>
-          <label class="field"><div class="fieldLabel">${esc(uiLocale() === "ru" ? "Театика" : uiLocale() === "uk" ? "Театика" : uiLocale() === "et" ? "Temaatika" : "Theme")}</div><input id="ac_theme" class="input" /></label>
+          <label class="field"><div class="fieldLabel">${esc(uiLocale() === "ru" ? "Тематика" : uiLocale() === "uk" ? "Тематика" : uiLocale() === "et" ? "Temaatika" : "Theme")}</div><input id="ac_theme" class="input" /></label>
           ${canMarkVerified ? `
             <label class="field admin-only-toggle admin-only-toggle-inline">
               <input id="ac_verified" type="checkbox" />
@@ -2863,9 +3143,23 @@ function adminEditorUI(song = {}, options = {}) {
           <label class="field"><div class="fieldLabel">${esc(t("field.source"))}</div><input id="ac_source" class="input" /></label>
         </div>
         <div id="ac_draft_banner" class="ac-draft-banner hidden" role="status" aria-live="polite"></div>
-        ${adminEditorCollabPanelUI()}
+        <div class="actions ac-editor-tools" style="margin-top:8px">
+          <button class="btn ghost" id="ac_tool_confidence" type="button">${esc(draftUiText("confidenceTool"))}</button>
+          <button class="btn ghost" id="ac_tool_line_picker" type="button">${esc(draftUiText("linePickerTool"))}</button>
+          <button class="btn ghost" id="ac_tool_copy_prompt" type="button">${esc(draftUiText("copyPromptTool"))}</button>
+        </div>
+        ${adminEditorCollabPanelUI({ canPublishDraft })}
         <div class="request-section">
-          <label class="field"><div class="fieldLabel">${esc(t("field.lyrics"))} *</div><textarea id="ac_lyrics" class="textarea song-editor-text song-editor-text-main"></textarea></label>
+          <label class="field">
+            <div class="fieldLabel">${esc(t("field.lyrics"))} *</div>
+            <div class="ac-lyrics-editor" id="ac_lyrics_editor">
+              <div class="ac-lyrics-rail" id="ac_lyrics_line_rail" aria-hidden="true">
+                <div class="ac-lyrics-rail-list" id="ac_lyrics_line_rail_list"></div>
+              </div>
+              <textarea id="ac_lyrics" class="textarea song-editor-text song-editor-text-main" wrap="off"></textarea>
+              <div id="ac_line_actions_popover" class="ac-line-popover hidden" aria-live="polite"></div>
+            </div>
+          </label>
           <input id="ac_chorus_marker" class="hidden" value="${esc(chorusMarkerLabel())}" />
           <label class="field"><div class="fieldLabel">${esc(chorusFieldLabel())}</div><textarea id="ac_chorus" class="textarea song-editor-text song-editor-chorus"></textarea></label>
           <label class="field"><div class="fieldLabel">${esc(uiText("description"))}</div><textarea id="ac_notes" class="textarea song-editor-text"></textarea></label>
@@ -2890,12 +3184,7 @@ function adminEditorUI(song = {}, options = {}) {
         </section>
 
         <div id="ac_inline_error" class="ac-inline-error hidden" role="alert" aria-live="polite"></div>
-        <div class="actions request-actions" style="margin-top:12px">
-          <button class="btn primary" id="ac_save" type="button">${esc(t("common.save"))}</button>
-          ${draftBtn}
-          ${publishBtn}
-          ${deleteBtn}
-        </div>
+        ${footerActions}
 
       </div>
     </div>
@@ -2926,7 +3215,7 @@ function adminRequestsUI(data, params) {
                 ${(r.region || r.event || r.theme || Number(r.report_fragment || 0) === 1) ? `
                   <div class="songMeta">${[
                     r.region ? `${esc(uiLocale() === "ru" ? "Регион" : uiLocale() === "uk" ? "Регіон" : uiLocale() === "et" ? "Piirkond" : "Region")}: ${esc(r.region)}` : "",
-                    r.event ? `${esc(uiLocale() === "ru" ? "Событие" : uiLocale() === "uk" ? "Подія" : uiLocale() === "et" ? "Sundmus" : "Event")}: ${esc(r.event)}` : "",
+                    r.event ? `${esc(uiLocale() === "ru" ? "Событие" : uiLocale() === "uk" ? "Подія" : uiLocale() === "et" ? "Sündmus" : "Event")}: ${esc(r.event)}` : "",
                     r.theme ? `${esc(uiLocale() === "ru" ? "Тематика" : uiLocale() === "uk" ? "Тематика" : uiLocale() === "et" ? "Temaatika" : "Theme")}: ${esc(r.theme)}` : "",
                     Number(r.report_fragment || 0) === 1 ? esc(uiLocale() === "ru" ? "Сообщение фрагмента" : uiLocale() === "uk" ? "Повідомлення фрагмента" : uiLocale() === "et" ? "Katkendi teavitus" : "Fragment report") : "",
                   ].filter(Boolean).join(" · ")}</div>
@@ -3477,7 +3766,9 @@ function autoGrowTextarea(textarea, options = {}) {
   const preserveViewport = options.preserveViewport !== false;
   const isFocused = document.activeElement === textarea;
   const isSongEditorTextarea = !!textarea.closest("#ac_editor, #songToolsPanel");
-  const extraBottomSpace = isSongEditorTextarea ? 28 : 8;
+  const extraBottomSpace = Number.isFinite(Number(options.extraBottomSpace))
+    ? Number(options.extraBottomSpace)
+    : (isSongEditorTextarea ? 28 : 8);
   const shouldPreserve = preserveViewport && isFocused && !isSongEditorTextarea;
   const prevScrollY = shouldPreserve ? (window.scrollY || window.pageYOffset || 0) : 0;
   const prevTop = shouldPreserve ? textarea.getBoundingClientRect().top : 0;
@@ -4134,10 +4425,54 @@ export async function render(route) {
     }
     try {
       const data = await api.draft(draftId);
-      return { html: draftEditorUI(data, { draftId }), ctx: { draftId, data } };
+      const fallbackSongId = String(data?.snapshot?.song_id || "").trim();
+      const editorSongId = fallbackSongId;
+      const canLoadAdminSong = can("songs.edit");
+      let song = editorSongId && canLoadAdminSong
+        ? await api.adminSong(editorSongId).catch(() => ({ status: "published", links: [], versions: [] }))
+        : { status: "published", links: [], versions: [] };
+      song = {
+        ...song,
+        ...(data?.snapshot || {}),
+        lyrics: draftLinesToLyrics(data?.lines || []) || song.lyrics || "",
+        links: Array.isArray(song?.links) ? song.links : [],
+        versions: Array.isArray(song?.versions) ? song.versions : [],
+      };
+      return {
+        html: adminEditorUI(song, {
+          isNew: !editorSongId,
+          backHash: "#/drafts",
+          hideAdminTabs: true,
+          hideSongActions: true,
+          showCollabActivateTop: false,
+          forceDraftId: draftId,
+          canPublishDraft: String(data?.owner?.id || "") === String(state?.user?.id || ""),
+          titleOverride: draftUiText("openCollaborativeDraft"),
+        }),
+        ctx: {
+          section: "editor",
+          params: { ...params, draft: draftId || "" },
+          song,
+          isNew: !editorSongId,
+          draftId,
+          draftData: data,
+          isDraftRoute: true,
+        },
+      };
     } catch (cause) {
       return { html: `<div class="card"><div class="muted">${esc(String(cause?.message || t("common.error")))}</div></div>`, ctx: { draftId } };
     }
+  }
+
+  if (route.name === "drafts") {
+    if (!state.user) {
+      return { html: draftsHubUI({ items: [] }, { items: [] }), ctx: { drafts: { items: [] }, invitations: { items: [] } } };
+    }
+    const [drafts, invitations] = await Promise.all([
+      api.drafts(),
+      api.draftInvitations({ scope: "incoming", status: "pending" }).catch(() => ({ items: [] })),
+    ]);
+    return { html: draftsHubUI(drafts, invitations), ctx: { drafts, invitations } };
   }
 
   if (route.name === "favorites") {
@@ -4171,7 +4506,7 @@ export async function render(route) {
           : uiLocale() === "uk"
             ? "Недостатньо прав для перегляду заявок."
             : uiLocale() === "et"
-              ? "Taotluste vaatamiseks pole piisavalt oigusi."
+              ? "Taotluste vaatamiseks pole piisavalt õigusi."
               : "Not enough permissions to review requests.";
         return { html: `${adminTabs("requests")}<div class="card"><div class="muted">${esc(deniedText)}</div></div>`, ctx: { section } };
       }
@@ -4191,7 +4526,7 @@ export async function render(route) {
           : uiLocale() === "uk"
             ? "Недостатньо прав для керування фонаи країн."
             : uiLocale() === "et"
-              ? "Riikide taustade haldamiseks pole piisavalt oigusi."
+              ? "Riikide taustade haldamiseks pole piisavalt õigusi."
               : "Not enough permissions to manage country backgrounds.";
         return { html: `${adminTabs("backgrounds")}<div class="card"><div class="muted">${esc(deniedText)}</div></div>`, ctx: { section } };
       }
@@ -4244,6 +4579,10 @@ export async function render(route) {
       return {
         html: adminEditorUI(song, {
           isNew,
+          forceDraftId: requestedDraftId || "",
+          canPublishDraft: requestedDraftId
+            ? String(draftData?.owner?.id || "") === String(state?.user?.id || "")
+            : true,
           backHash: makeHash(
             "#/admin/content",
             { q: params.q || "", status: params.status || "", recent: params.recent || "1", page: Number(params.page || 1) || 1 },
@@ -4423,7 +4762,7 @@ export function bind(route, ctx) {
               settled = true;
               resolve();
             };
-            const timeoutId = setTimeout(done, 1200);
+            const timeoutId = setTimeout(done, 260);
             img.onload = () => {
               clearTimeout(timeoutId);
               done();
@@ -4448,15 +4787,17 @@ export function bind(route, ctx) {
           });
           return preloadImage(flagUrl);
         });
-        Promise.all(preloadTasks).finally(() => {
+        const cardsHtml = queue
+          .map((song, index) => `<div class="home-result-item" style="--result-index:${Math.min(index, 6)}">${renderHomeSongCard(song, { backgroundsByCountry, flagDevice })}</div>`)
+          .join("");
+        progressiveFeed.innerHTML = cardsHtml;
+        progressiveLoadingScreen?.classList.add("hidden");
+        window.requestAnimationFrame(() => {
           if (!document.body.contains(progressiveFeed)) return;
-          const cardsHtml = queue
-            .map((song) => `<div class="home-result-item">${renderHomeSongCard(song, { backgroundsByCountry, flagDevice })}</div>`)
-            .join("");
-          progressiveFeed.innerHTML = cardsHtml;
-          progressiveLoadingScreen?.classList.add("hidden");
           progressiveFeed.classList.remove("is-chunk-loading");
         });
+        // Keep flag images warm without blocking first paint.
+        Promise.allSettled(preloadTasks).catch(() => {});
       }
     }
 
@@ -4692,37 +5033,6 @@ export function bind(route, ctx) {
         copyBtn.classList.remove("is-copied", "is-failed");
         copyBtn.setAttribute("title", copyLabel);
       }, 1400);
-    });
-
-    qs("btnSongDraftNav")?.addEventListener("click", async () => {
-      const button = qs("btnSongDraftNav");
-      const editorAllowed = can("songs.edit");
-      if (button) button.disabled = true;
-      try {
-        const songId = String(song?.id || "").trim();
-        if (!songId) throw new Error(t("common.error"));
-        const payload = await api.drafts();
-        const items = Array.isArray(payload?.items) ? payload.items : [];
-        const existing = items
-          .filter((item) => String(item?.song_id || "").trim() === songId && String(item?.status || "draft").trim() === "draft")
-          .sort((a, b) => String(b?.updated_at || "").localeCompare(String(a?.updated_at || "")))[0];
-        let draftId = String(existing?.id || "").trim();
-        if (!draftId) {
-          if (!editorAllowed) throw new Error(t("admin.accessDenied"));
-          const created = await api.createDraft({ song_id: songId });
-          draftId = String(created?.draft_id || "").trim();
-        }
-        if (!draftId) throw new Error(draftUiText("draftNotCreated"));
-        if (editorAllowed) {
-          location.hash = makeHash("#/admin/editor", { id: songId, draft: draftId }, ["id", "draft"]);
-        } else {
-          location.hash = `#/draft/${encodeURIComponent(draftId)}`;
-        }
-      } catch (cause) {
-        showStatusOverlay(String(cause?.message || t("common.error")), "error");
-      } finally {
-        if (button) button.disabled = false;
-      }
     });
 
     qs("btnSongListen")?.addEventListener("click", () => {
@@ -5299,7 +5609,7 @@ export function bind(route, ctx) {
     return;
   }
 
-  if (route.name === "draft") {
+  if (route.name === "draft_legacy") {
     const draftId = String(ctx?.draftId || route?.id || "").trim();
     const draftRoot = document.querySelector(".draft-main");
     if (!draftRoot || !draftId) return;
@@ -5340,7 +5650,7 @@ export function bind(route, ctx) {
     const renderCollaborators = () => {
       const listNode = qs("draft_collaborators_list");
       if (!listNode) return;
-      listNode.innerHTML = draftCollaboratorsUI(draftPayload, canManageCollaborators());
+      listNode.innerHTML = draftCollaboratorsUI(draftPayload);
     };
     const renderLines = () => {
       const listNode = qs("draft_lines_list");
@@ -5657,6 +5967,35 @@ export function bind(route, ctx) {
     return;
   }
 
+  if (route.name === "drafts") {
+    const root = document.querySelector(".yt-main");
+    if (!root) return;
+    root.addEventListener("click", async (event) => {
+      const target = event.target;
+      if (!(target instanceof HTMLElement)) return;
+      const actionBtn = target.closest("[data-action]");
+      if (!actionBtn) return;
+      const action = String(actionBtn.getAttribute("data-action") || "").trim();
+      const inviteId = String(actionBtn.getAttribute("data-invite-id") || "").trim();
+      if (!inviteId) return;
+      try {
+        if (action === "accept") {
+          await api.draftInvitationAccept(inviteId);
+          showStatusOverlay(draftUiText("invitationAcceptedMsg"), "success");
+        } else if (action === "decline") {
+          await api.draftInvitationDecline(inviteId);
+          showStatusOverlay(draftUiText("invitationDeclinedMsg"), "success");
+        } else {
+          return;
+        }
+        location.hash = makeHash("#/drafts", { refresh: String(Date.now()) }, ["refresh"]);
+      } catch (cause) {
+        showStatusOverlay(String(cause?.message || t("common.error")), "error");
+      }
+    });
+    return;
+  }
+
   if (route.name === "request") {
     const form = qs("requestForm");
     if (!form) return;
@@ -5808,7 +6147,7 @@ export function bind(route, ctx) {
             : uiLocale() === "uk"
               ? "Заповніть текст фрагмента та джерело."
               : uiLocale() === "et"
-                ? "Taida katkendi tekst ja allikas."
+                ? "Täida katkendi tekst ja allikas."
                 : "Fill fragment text and source.")
           : t("request.required");
         showStatusOverlay(message, "error");
@@ -5819,9 +6158,11 @@ export function bind(route, ctx) {
         const statusText = out?.mode === "published"
           ? (uiLocale() === "ru"
             ? `Песня опубликована: ${out.id}`
-            : uiLocale() === "et"
-              ? `Laul avaldati: ${out.id}`
-              : `Song published: ${out.id}`)
+            : uiLocale() === "uk"
+              ? `Пісню опубліковано: ${out.id}`
+              : uiLocale() === "et"
+                ? `Laul avaldati: ${out.id}`
+                : `Song published: ${out.id}`)
           : t("request.sent", { id: out.id });
         showStatusOverlay(statusText, "success");
         form.reset();
@@ -5860,7 +6201,7 @@ export function bind(route, ctx) {
     return;
   }
 
-  if (route.name === "admin" && ctx.section === "editor") {
+  if ((route.name === "admin" && ctx.section === "editor") || route.name === "draft") {
     const editorRoot = qs("ac_editor");
     if (!editorRoot) return;
 
@@ -5968,42 +6309,6 @@ export function bind(route, ctx) {
       syncDraftState(collectContentPayload());
       scheduleDraftSave();
     });
-    qs("ac_open_draft")?.addEventListener("click", async () => {
-      const button = qs("ac_open_draft");
-      if (button) button.disabled = true;
-      try {
-        const payload = collectContentPayload();
-        let createdDraftId = "";
-        const songId = String(payload?.id || "").trim();
-        if (songId) {
-          const draftsPayload = await api.drafts();
-          const items = Array.isArray(draftsPayload?.items) ? draftsPayload.items : [];
-          const existing = items
-            .filter((item) => String(item?.song_id || "").trim() === songId && String(item?.status || "draft").trim() === "draft")
-            .sort((a, b) => String(b?.updated_at || "").localeCompare(String(a?.updated_at || "")))[0];
-          createdDraftId = String(existing?.id || "").trim();
-        }
-        if (!createdDraftId) {
-          const requestPayload = songId ? { song_id: songId } : { seed: payload };
-          const out = await api.createDraft(requestPayload);
-          createdDraftId = String(out?.draft_id || "").trim();
-        }
-        if (!createdDraftId) {
-          showStatusOverlay(draftUiText("draftNotCreated"), "error");
-          return;
-        }
-        const targetHash = makeHash(
-          "#/admin/editor",
-          { id: songId || "", draft: createdDraftId },
-          ["id", "draft"],
-        );
-        location.hash = targetHash;
-      } catch (cause) {
-        showStatusOverlay(String(cause?.message || t("common.error")), "error");
-      } finally {
-        if (button) button.disabled = false;
-      }
-    });
     wireDynamicRows(editorRoot);
     const shouldFocusLinks = String(route?.query?.focus || "").trim().toLowerCase() === "links";
     const shouldAddLinkByQuery = String(route?.query?.addLink || "").trim() === "1";
@@ -6028,7 +6333,7 @@ export function bind(route, ctx) {
     });
 
     const inlineCollabRoot = qs("ac_collab_panel");
-    let inlineDraftId = String(ctx?.draftId || route?.query?.draft || "").trim();
+    let inlineDraftId = String(ctx?.draftId || route?.query?.draft || qs("ac_force_draft_id")?.value || "").trim();
     let inlineDraftPayload = ctx?.draftData || null;
     let inlineVersion = Number(inlineDraftPayload?.version || 0);
     let inlineWs = null;
@@ -6036,36 +6341,89 @@ export function bind(route, ctx) {
     let inlineReconnectTimer = 0;
     let inlineMetaTimer = 0;
     let inlineLyricsTimer = 0;
-    let inlineWarnLineCountAt = 0;
+    let inlineStructureSyncTimer = 0;
+    let inlineStructureSyncInFlight = false;
     let inlineSyncingFromDraft = false;
+    const inlineSyncOnSaveOnly = true;
     let inlineOpStore = inlineDraftId ? draftOpStoreFor(inlineDraftId) : new Map();
-    const inlineLineTimers = new Map();
     const splitLines = (input) => String(input || "").replace(/\r\n?/g, "\n").split("\n");
     const collabMetaNode = qs("ac_draft_meta");
     const collabPresenceNode = qs("ac_draft_presence");
-    const collabOpsNode = qs("ac_draft_ops_list");
     const collabCollaboratorsNode = qs("ac_draft_collaborators");
-    const collabLinesNode = qs("ac_draft_lines");
-    const collabOpenLink = qs("ac_draft_open_page");
-    const collabPublishBtn = qs("ac_draft_publish");
+    const collabControlsNode = qs("ac_collab_controls");
+    const lyricsEditorNode = qs("ac_lyrics_editor");
+    const lyricsTextareaNode = qs("ac_lyrics");
+    const lyricsLineRailListNode = qs("ac_lyrics_line_rail_list");
+    const lineActionsPopoverNode = qs("ac_line_actions_popover");
     const collabAddBtn = qs("ac_draft_collab_add");
     const collabNicknameInput = qs("ac_draft_collab_nickname");
+    const toolConfidenceBtn = qs("ac_tool_confidence");
+    const toolLinePickerBtn = qs("ac_tool_line_picker");
+    const toolCopyPromptBtn = qs("ac_tool_copy_prompt");
+    let inlineSelectedLineId = "";
+    let inlinePopoverOpen = false;
 
-    const inlineCanManageCollaborators = () => {
-      const ownerId = String(inlineDraftPayload?.owner?.id || "").trim();
-      const userId = String(state?.user?.id || "").trim();
-      return !!ownerId && !!userId && ownerId === userId;
+    const inlineBuildStandalonePayload = () => {
+      const composed = composeLyricsWithChorus(
+        qs("ac_lyrics")?.value || "",
+        qs("ac_chorus")?.value || "",
+        qs("ac_chorus_marker")?.value || chorusMarkerLabel(),
+      );
+      const lines = splitLines(composed).map((text, index) => {
+        const lineId = `loc_line_${index + 1}`;
+        const variantId = `loc_variant_${index + 1}`;
+        return {
+          id: lineId,
+          line_key: `line_${index + 1}`,
+          sort_order: index,
+          active_variant_id: variantId,
+          variants: [{
+            id: variantId,
+            text: String(text || ""),
+            confidence: 100,
+            variant_type: "manual",
+            is_active: true,
+          }],
+        };
+      });
+      return {
+        draft_id: "",
+        snapshot: { title: String(qs("ac_title")?.value || "").trim() || draftUiText("draftFallbackTitle") },
+        collaborators: [],
+        pending_invitations: [],
+        lines,
+      };
+    };
+    const inlineEnsureStandalonePayload = () => {
+      if (inlineDraftId) return;
+      inlineDraftPayload = inlineBuildStandalonePayload();
+      inlineVersion = 0;
+    };
+    const inlineSetStandaloneMode = () => {
+      if (!inlineCollabRoot) return;
+      inlineCollabRoot.classList.toggle("is-standalone", !inlineDraftId);
     };
     const inlineSetPanelVisible = (visible) => {
       if (!inlineCollabRoot) return;
+      inlineSetStandaloneMode();
       inlineCollabRoot.classList.toggle("hidden", !visible);
+      if (!visible) inlineClosePopover();
+      if (lyricsEditorNode) window.requestAnimationFrame(() => {
+        try { inlineRenderLineRail(); } catch {}
+      });
     };
     const inlineSetPresence = (text) => {
       if (!collabPresenceNode) return;
       collabPresenceNode.textContent = String(text || "").trim();
     };
-    const inlineOrderedLines = () => [...(Array.isArray(inlineDraftPayload?.lines) ? inlineDraftPayload.lines : [])]
-      .sort((a, b) => Number(a?.sort_order || 0) - Number(b?.sort_order || 0));
+    const inlineOrderedLines = () => {
+      if (!inlineDraftId && !Array.isArray(inlineDraftPayload?.lines)) {
+        inlineEnsureStandalonePayload();
+      }
+      return [...(Array.isArray(inlineDraftPayload?.lines) ? inlineDraftPayload.lines : [])]
+        .sort((a, b) => Number(a?.sort_order || 0) - Number(b?.sort_order || 0));
+    };
+    const inlineIsVirtualLineId = (lineId) => String(lineId || "").trim().startsWith("virtual_line_");
     const inlineRefreshMeta = () => {
       if (!collabMetaNode) return;
       if (!inlineDraftId) {
@@ -6077,30 +6435,314 @@ export function bind(route, ctx) {
         version: String(inlineVersion || 0),
       });
     };
-    const inlineRefreshOps = () => {
-      if (!collabOpsNode) return;
-      const items = [...inlineOpStore.values()]
-        .sort((a, b) => Number(b.ts || 0) - Number(a.ts || 0))
-        .slice(0, 12);
-      if (!items.length) {
-        collabOpsNode.innerHTML = "";
-        return;
-      }
-      collabOpsNode.innerHTML = items.map((item) => `
-        <div class="songCard draft-op-card">
-          <div class="songTitle">${esc(String(item?.opType || "op"))}</div>
-          <div class="songMeta">${esc(draftOpStatusLabel(item?.status || "pending"))}</div>
-        </div>
-      `).join("");
-    };
+    const inlineRefreshOps = () => {};
     const inlineRefreshCollaborators = () => {
       if (!collabCollaboratorsNode) return;
-      collabCollaboratorsNode.innerHTML = draftCollaboratorsUI(inlineDraftPayload || {}, inlineCanManageCollaborators());
+      const addWrap = inlineCollabRoot?.querySelector(".ac-collab-add");
+      if (addWrap) addWrap.classList.remove("hidden");
+      if (collabNicknameInput) collabNicknameInput.disabled = false;
+      if (collabAddBtn) collabAddBtn.disabled = false;
+      collabCollaboratorsNode.innerHTML = draftCollaboratorsUI(inlineDraftPayload || {});
+      const ownerName = String(
+        inlineDraftPayload?.owner?.nickname
+          || inlineDraftPayload?.owner?.email
+          || inlineDraftPayload?.owner?.id
+          || "",
+      ).trim();
+      const collaboratorNames = (Array.isArray(inlineDraftPayload?.collaborators) ? inlineDraftPayload.collaborators : [])
+        .map((user) => String(user?.nickname || user?.email || user?.user_id || "").trim())
+        .filter(Boolean);
+      const names = [ownerName, ...collaboratorNames].filter(Boolean);
+      if (collabPresenceNode) {
+        collabPresenceNode.textContent = names.length
+          ? draftUiText("accessMembersWithNames", { names: names.join(", ") })
+          : draftUiText("accessMembersEmpty");
+      }
+    };
+    const inlineMainEditorLines = () => {
+      let lines = inlineOrderedLines();
+      const textLines = splitLines(lyricsTextareaNode?.value || "");
+      if (inlineDraftId && Array.isArray(inlineDraftPayload?.lines) && textLines.length > lines.length) {
+        const knownLineKeys = new Set(lines.map((line) => String(line?.line_key || "").trim()).filter(Boolean));
+        for (let index = lines.length; index < textLines.length; index += 1) {
+          const lineKey = `line_${index + 1}`;
+          if (knownLineKeys.has(lineKey)) continue;
+          knownLineKeys.add(lineKey);
+          inlineDraftPayload.lines.push({
+            id: `virtual_line_${index + 1}`,
+            line_key: lineKey,
+            sort_order: index,
+            active_variant_id: `virtual_variant_${index + 1}`,
+            variants: [{
+              id: `virtual_variant_${index + 1}`,
+              text: String(textLines[index] ?? ""),
+              confidence: 100,
+              variant_type: "manual",
+              is_active: true,
+            }],
+          });
+        }
+        lines = inlineOrderedLines();
+      }
+      const safeCount = Math.max(0, Math.min(lines.length, textLines.length || lines.length));
+      const base = lines.slice(0, safeCount || lines.length);
+      if (textLines.length <= base.length) return base;
+      const extra = [];
+      for (let index = base.length; index < textLines.length; index += 1) {
+        extra.push({
+          id: `virtual_line_${index + 1}`,
+          line_key: `virtual_${index + 1}`,
+          sort_order: index,
+          active_variant_id: `virtual_variant_${index + 1}`,
+          variants: [{
+            id: `virtual_variant_${index + 1}`,
+            text: String(textLines[index] ?? ""),
+            confidence: 100,
+            variant_type: "manual",
+            is_active: true,
+          }],
+        });
+      }
+      return [...base, ...extra];
+    };
+    const inlineAutoSizeLyrics = () => {
+      if (!(lyricsTextareaNode instanceof HTMLTextAreaElement)) return;
+      autoGrowTextarea(lyricsTextareaNode, {
+        preserveViewport: false,
+        extraBottomSpace: 0,
+      });
+    };
+    const inlineResolveLineHeightPx = (style) => {
+      const fontSize = Number.parseFloat(String(style?.fontSize || ""));
+      const safeFontSize = Number.isFinite(fontSize) && fontSize > 0 ? fontSize : 16;
+      const rawLineHeight = String(style?.lineHeight || "").trim().toLowerCase();
+      if (!rawLineHeight || rawLineHeight === "normal") {
+        return Math.max(18, safeFontSize * 1.35);
+      }
+      if (rawLineHeight.endsWith("px")) {
+        const px = Number.parseFloat(rawLineHeight);
+        return Math.max(18, Number.isFinite(px) ? px : safeFontSize * 1.35);
+      }
+      const numeric = Number.parseFloat(rawLineHeight);
+      if (!Number.isFinite(numeric)) {
+        return Math.max(18, safeFontSize * 1.35);
+      }
+      if (/^[0-9]*\.?[0-9]+$/.test(rawLineHeight)) {
+        return Math.max(18, safeFontSize * numeric);
+      }
+      return Math.max(18, numeric);
+    };
+    const inlineResolvePaddingPx = (raw, fallback = 0) => {
+      const value = Number.parseFloat(String(raw || ""));
+      if (!Number.isFinite(value)) return Math.max(0, fallback);
+      return Math.max(0, value);
+    };
+    const inlineLineVisualSpan = (line, options = {}) => {
+      const fallbackText = String(draftActiveVariant(line)?.text || "");
+      const text = String(options?.text ?? fallbackText)
+        .replace(/\r\n?/g, "\n")
+        .replace(/^\n+|\n+$/g, "");
+      if (!text) return 1;
+      const rows = text.split("\n").length;
+      return Math.max(1, rows);
+    };
+    const inlineHasLineText = (line, sourceText = null) => {
+      const baseText = sourceText ?? draftActiveVariant(line)?.text ?? "";
+      const text = String(baseText)
+        .replace(/\r\n?/g, "\n")
+        .replace(/^\n+|\n+$/g, "")
+        .trim();
+      return text.length > 0;
+    };
+    const inlineIsCollabVisible = () => !!inlineCollabRoot && !inlineCollabRoot.classList.contains("hidden");
+    const inlineSelectableLines = (lines = inlineMainEditorLines(), sourceTextLines = null) => lines.filter((line, index) => (
+      String(line?.id || "").trim().length > 0 && inlineHasLineText(line, Array.isArray(sourceTextLines) ? sourceTextLines[index] : null)
+    ));
+    const inlineClosePopover = ({ clearSelection = false, animate = true } = {}) => {
+      inlinePopoverOpen = false;
+      if (clearSelection) inlineSelectedLineId = "";
+      if (!lineActionsPopoverNode) return;
+      const finalize = () => {
+        if (!lineActionsPopoverNode || inlinePopoverOpen) return;
+        lineActionsPopoverNode.classList.remove("is-open", "is-closing");
+        lineActionsPopoverNode.classList.add("hidden");
+        lineActionsPopoverNode.innerHTML = "";
+        lineActionsPopoverNode.style.removeProperty("top");
+        lineActionsPopoverNode.style.removeProperty("left");
+        lineActionsPopoverNode.style.removeProperty("width");
+        lineActionsPopoverNode.style.removeProperty("--ac-line-popover-open-height");
+      };
+      if (!animate || lineActionsPopoverNode.classList.contains("hidden")) {
+        finalize();
+        return;
+      }
+      closeAnimatedElement(lineActionsPopoverNode, {
+        duration: 980,
+        transitionProperty: "max-height",
+        onClosed: finalize,
+      });
+    };
+    const inlineSyncLineRailScroll = () => {
+      if (!lyricsLineRailListNode || !lyricsTextareaNode) return;
+      const top = Math.max(0, Number(lyricsTextareaNode.scrollTop || 0));
+      lyricsLineRailListNode.style.transform = `translateY(${-Math.round(top)}px)`;
+    };
+    const inlinePositionPopover = () => {
+      if (!inlinePopoverOpen || !lineActionsPopoverNode || lineActionsPopoverNode.classList.contains("hidden")) return;
+      if (!lyricsLineRailListNode || !lyricsEditorNode || !lyricsTextareaNode) return;
+      const rawLineId = String(inlineSelectedLineId || "").trim();
+      if (!rawLineId) return;
+      const safeLineId = window.CSS?.escape
+        ? window.CSS.escape(rawLineId)
+        : rawLineId.replace(/["\\]/g, "\\$&");
+      const anchor = lyricsLineRailListNode.querySelector(`.ac-lyrics-rail-slot[data-line-id="${safeLineId}"]:not(.is-empty)`);
+      if (!(anchor instanceof HTMLElement)) return;
+      const editorRect = lyricsEditorNode.getBoundingClientRect();
+      const textRect = lyricsTextareaNode.getBoundingClientRect();
+      const anchorRect = anchor.getBoundingClientRect();
+      const openHeight = Math.max(1, Math.ceil(lineActionsPopoverNode.scrollHeight || 0) + 2);
+      lineActionsPopoverNode.style.setProperty("--ac-line-popover-open-height", `${openHeight}px`);
+      lineActionsPopoverNode.style.left = `${Math.max(0, Math.round(textRect.left - editorRect.left))}px`;
+      lineActionsPopoverNode.style.width = `${Math.max(220, Math.round(textRect.width))}px`;
+      lineActionsPopoverNode.style.top = `${Math.max(0, Math.round(anchorRect.bottom - editorRect.top + 2))}px`;
+    };
+    const inlineRenderPopover = () => {
+      if (!lineActionsPopoverNode || !inlineIsCollabVisible()) {
+        inlineClosePopover({ animate: false });
+        return;
+      }
+      const lines = inlineMainEditorLines();
+      const selectedIndex = lines.findIndex((line) => String(line?.id || "") === String(inlineSelectedLineId || ""));
+      const selectedLine = selectedIndex >= 0 ? lines[selectedIndex] : null;
+      if (!inlinePopoverOpen || !selectedLine) {
+        inlineClosePopover();
+        return;
+      }
+      lineActionsPopoverNode.innerHTML = draftLinePopoverUI(selectedLine, selectedIndex);
+      if (!isAnimatedElementOpen(lineActionsPopoverNode)) {
+        openAnimatedElement(lineActionsPopoverNode);
+      } else {
+        lineActionsPopoverNode.classList.remove("hidden", "is-closing");
+        lineActionsPopoverNode.classList.add("is-open");
+      }
+      inlinePositionPopover();
+      window.requestAnimationFrame(inlinePositionPopover);
+    };
+    const inlineRenderLineRail = () => {
+      if (!lyricsEditorNode || !lyricsLineRailListNode || !lyricsTextareaNode) return;
+      const lines = inlineMainEditorLines();
+      const sourceTextLines = splitLines(lyricsTextareaNode?.value || "");
+      const textareaStyle = window.getComputedStyle(lyricsTextareaNode);
+      const lineHeightPx = Math.round(inlineResolveLineHeightPx(textareaStyle));
+      const padTopPx = Math.round(inlineResolvePaddingPx(textareaStyle.paddingTop, 12));
+      const padBottomPx = Math.round(inlineResolvePaddingPx(textareaStyle.paddingBottom, 12));
+      const contentHeightPx = Math.max(
+        Math.round(Number(lyricsTextareaNode.scrollHeight || 0)),
+        Math.round(Number(lyricsTextareaNode.offsetHeight || lyricsTextareaNode.clientHeight || 0)),
+        Math.round(lineHeightPx * 2),
+      );
+      lyricsEditorNode.style.setProperty("--ac-collab-line-height", `${lineHeightPx}px`);
+      lyricsEditorNode.style.setProperty("--ac-collab-pad-top", `${padTopPx}px`);
+      lyricsEditorNode.style.setProperty("--ac-collab-pad-bottom", `${padBottomPx}px`);
+      lyricsEditorNode.style.setProperty("--ac-collab-viewport-height", `${contentHeightPx}px`);
+
+      const isCollabVisible = inlineIsCollabVisible();
+      lyricsEditorNode.classList.toggle("is-collab-active", isCollabVisible && lines.length > 0);
+      if (!isCollabVisible || !lines.length) {
+        lyricsLineRailListNode.innerHTML = "";
+        inlineClosePopover();
+        return;
+      }
+      const selectable = inlineSelectableLines(lines, sourceTextLines);
+      if (!selectable.length) {
+        inlineSelectedLineId = "";
+        inlineClosePopover();
+      } else if (!selectable.some((line) => String(line?.id || "") === String(inlineSelectedLineId || ""))) {
+        inlineSelectedLineId = "";
+        if (inlinePopoverOpen) inlineClosePopover();
+      }
+      let visibleLineNumber = 0;
+      lyricsLineRailListNode.innerHTML = lines.map((line, index) => {
+        const lineId = String(line?.id || "").trim();
+        const sourceText = String(sourceTextLines[index] ?? draftActiveVariant(line)?.text ?? "");
+        const hasText = inlineHasLineText(line, sourceText);
+        if (hasText) visibleLineNumber += 1;
+        const confidence = Number(draftActiveVariant(line)?.confidence || 100);
+        const isActive = lineId && lineId === String(inlineSelectedLineId || "");
+        const span = inlineLineVisualSpan(line, { text: sourceText });
+        const slots = [];
+        for (let slotIndex = 0; slotIndex < span; slotIndex += 1) {
+          if (slotIndex > 0 || !hasText) {
+            slots.push(`<div class="ac-lyrics-rail-slot is-empty" data-line-index="${index}" data-slot-index="${slotIndex}" aria-hidden="true"></div>`);
+            continue;
+          }
+          const buttonMarkup = hasText
+            ? (
+              lineId
+                ? `<button class="draft-line-rail-btn ${draftConfidenceBand(confidence)} ${isActive ? "is-active" : ""}" type="button" data-line-id="${esc(lineId)}" data-line-index="${index}" aria-expanded="${isActive ? "true" : "false"}" aria-label="${esc(draftUiText("variantsToggle"))}" title="${esc(draftUiText("variantsToggle"))}"><span class="draft-line-rail-triangle ${isActive ? "is-open" : "is-closed"}" aria-hidden="true"></span><span class="draft-line-rail-mini">${visibleLineNumber}</span></button>`
+                : `<button class="draft-line-rail-btn ${draftConfidenceBand(confidence)}" type="button" data-line-id="" data-line-index="${index}" aria-expanded="false" aria-label="${esc(draftUiText("variantsToggle"))}" title="${esc(draftUiText("variantsToggle"))}"><span class="draft-line-rail-triangle is-closed" aria-hidden="true"></span><span class="draft-line-rail-mini">${visibleLineNumber}</span></button>`
+            )
+            : `<span class="draft-line-rail-btn-placeholder" aria-hidden="true"></span>`;
+          slots.push(`
+            <div class="ac-lyrics-rail-slot" data-line-id="${esc(lineId)}" data-line-index="${index}" data-slot-index="${slotIndex}">
+              <div class="ac-lyrics-rail-row ${isActive ? "is-active" : ""}">
+                ${buttonMarkup}
+              </div>
+            </div>
+          `);
+        }
+        return slots.join("");
+      }).join("");
+      inlineSyncLineRailScroll();
+      inlinePositionPopover();
     };
     const inlineRefreshLines = () => {
-      if (!collabLinesNode) return;
-      const lines = inlineOrderedLines();
-      collabLinesNode.innerHTML = draftLineRowsUI(lines);
+      const editorLines = inlineMainEditorLines();
+      const sourceTextLines = splitLines(lyricsTextareaNode?.value || "");
+      const selectable = inlineSelectableLines(editorLines, sourceTextLines);
+      if (!selectable.length) {
+        inlineSelectedLineId = "";
+        if (inlinePopoverOpen) inlineClosePopover();
+      } else if (!selectable.some((line) => String(line?.id || "") === String(inlineSelectedLineId || ""))) {
+        inlineSelectedLineId = "";
+        if (inlinePopoverOpen) inlineClosePopover();
+      }
+      inlineRenderLineRail();
+      inlineRenderPopover();
+    };
+    const inlineOpenPopover = () => {
+      inlinePopoverOpen = true;
+      inlineRenderPopover();
+    };
+    const inlineHandleRailLineId = (lineIdRaw) => {
+      const lineId = String(lineIdRaw || "").trim();
+      if (!lineId) return false;
+      const isSameLine = String(inlineSelectedLineId || "") === lineId;
+      if (isSameLine && inlinePopoverOpen) {
+        inlineClosePopover({ clearSelection: true });
+        inlineRefreshLines();
+        return true;
+      }
+      inlineSelectedLineId = lineId;
+      inlineSetPanelVisible(true);
+      inlineOpenPopover();
+      inlineRefreshLines();
+      window.requestAnimationFrame(() => {
+        lineActionsPopoverNode?.scrollIntoView({ behavior: "smooth", block: "nearest" });
+      });
+      return true;
+    };
+    const inlineHandleRailButton = (buttonNode) => {
+      if (!(buttonNode instanceof HTMLElement)) return false;
+      let lineId = String(buttonNode.getAttribute("data-line-id") || "").trim();
+      if (!lineId) {
+        const lineIndex = Number.parseInt(String(buttonNode.getAttribute("data-line-index") || ""), 10);
+        if (Number.isFinite(lineIndex) && lineIndex >= 0) {
+          const lines = inlineMainEditorLines();
+          lineId = String(lines[lineIndex]?.id || "").trim();
+        }
+      }
+      return inlineHandleRailLineId(lineId);
     };
     const inlineApplyDraftLyricsToEditor = () => {
       const composed = draftLinesToLyrics(inlineOrderedLines());
@@ -6112,8 +6754,10 @@ export function bind(route, ctx) {
       if (lyricsNode) lyricsNode.value = parts.lyrics || "";
       if (chorusNode) chorusNode.value = parts.chorus || "";
       if (markerNode) markerNode.value = parts.marker || chorusMarkerLabel();
+      inlineAutoSizeLyrics();
       inlineSyncingFromDraft = false;
       refreshAdminDecoding();
+      inlineRefreshLines();
     };
     const inlineRegisterOpStatus = (clientOpId, status, opType = "") => {
       const key = String(clientOpId || "").trim();
@@ -6152,6 +6796,7 @@ export function bind(route, ctx) {
         status: String(statePayload?.draft?.status || inlineDraftPayload?.status || "draft"),
         snapshot: statePayload?.draft?.snapshot || inlineDraftPayload?.snapshot || {},
         collaborators: Array.isArray(statePayload?.collaborators) ? statePayload.collaborators : (inlineDraftPayload?.collaborators || []),
+        pending_invitations: Array.isArray(statePayload?.pending_invitations) ? statePayload.pending_invitations : (inlineDraftPayload?.pending_invitations || []),
         lines: Array.isArray(statePayload?.lines) ? statePayload.lines : (inlineDraftPayload?.lines || []),
       };
       inlineDraftPayload = next;
@@ -6163,7 +6808,7 @@ export function bind(route, ctx) {
       syncDraftState(collectContentPayload());
     };
     const inlineDraftLinePrompt = (lineId) => {
-      const lines = inlineOrderedLines();
+      const lines = inlineMainEditorLines();
       const idx = lines.findIndex((line) => String(line?.id || "") === String(lineId || ""));
       if (idx < 0) return "";
       const before = idx > 0 ? String(draftActiveVariant(lines[idx - 1])?.text || "") : "";
@@ -6187,27 +6832,149 @@ export function bind(route, ctx) {
       document.execCommand("copy");
       document.body.removeChild(tmp);
     };
+    const inlineLocalFindLine = (lineId) => {
+      const lines = Array.isArray(inlineDraftPayload?.lines) ? inlineDraftPayload.lines : [];
+      return lines.find((line) => String(line?.id || "") === String(lineId || "")) || null;
+    };
+    const inlineLocalCommit = ({ syncEditor = false } = {}) => {
+      inlineRefreshLines();
+      if (syncEditor) inlineApplyDraftLyricsToEditor();
+      syncDraftState(collectContentPayload());
+    };
+    const inlineLocalSetLineText = (lineId, text, confidence = 100) => {
+      inlineEnsureStandalonePayload();
+      const line = inlineLocalFindLine(lineId);
+      if (!line) return;
+      const variants = Array.isArray(line?.variants) ? line.variants : [];
+      const active = variants.find((item) => item?.is_active) || variants[0];
+      if (!active) return;
+      active.text = String(text || "");
+      active.confidence = draftClampConfidence(confidence, 100);
+      inlineLocalCommit({ syncEditor: true });
+    };
+    const inlineLocalAddVariant = (lineId, text, confidence = 80, variantType = "manual") => {
+      inlineEnsureStandalonePayload();
+      const line = inlineLocalFindLine(lineId);
+      if (!line) return;
+      const variants = Array.isArray(line?.variants) ? line.variants : [];
+      variants.push({
+        id: `loc_variant_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`,
+        text: String(text || ""),
+        confidence: draftClampConfidence(confidence, 80),
+        variant_type: variantType === "suggested" ? "suggested" : "manual",
+        is_active: false,
+      });
+      line.variants = variants;
+      inlineLocalCommit();
+    };
+    const inlineLocalActivateVariant = (lineId, variantId) => {
+      inlineEnsureStandalonePayload();
+      const line = inlineLocalFindLine(lineId);
+      if (!line) return;
+      const variants = Array.isArray(line?.variants) ? line.variants : [];
+      variants.forEach((item) => {
+        item.is_active = String(item?.id || "") === String(variantId || "");
+      });
+      line.active_variant_id = String(variantId || "");
+      inlineLocalCommit({ syncEditor: true });
+    };
+    const inlineLocalSetVariantConfidence = (variantId, confidence) => {
+      inlineEnsureStandalonePayload();
+      const lines = Array.isArray(inlineDraftPayload?.lines) ? inlineDraftPayload.lines : [];
+      for (const line of lines) {
+        const variants = Array.isArray(line?.variants) ? line.variants : [];
+        const variant = variants.find((item) => String(item?.id || "") === String(variantId || ""));
+        if (variant) {
+          variant.confidence = draftClampConfidence(confidence, 100);
+          inlineLocalCommit();
+          return;
+        }
+      }
+    };
     const inlineQueueMetaSync = () => {
       if (!inlineDraftId) return;
+      if (inlineSyncOnSaveOnly) return;
       clearTimeout(inlineMetaTimer);
       inlineMetaTimer = setTimeout(() => {
-        const payload = collectContentPayload();
-        inlineSendOp("set_meta", {
-          song_id: String(payload.id || "").trim() || null,
-          title: payload.title || "",
-          subtitle: payload.subtitle || "",
-          lang: payload.lang || "",
-          country: payload.country || "",
-          period: payload.period || "",
-          region: payload.region || "",
-          event: payload.event || "",
-          theme: payload.theme || "",
-          verified: payload.verified ? 1 : 0,
-          year: payload.year || "",
-          source: payload.source || "",
-          notes: payload.notes || "",
-        }, { silent: true });
+        inlineSendOp("set_meta", inlineCurrentMetaPayload(), { silent: true });
       }, 260);
+    };
+    const inlineCurrentMetaPayload = () => {
+      const payload = collectContentPayload();
+      return {
+        song_id: String(payload.id || "").trim() || null,
+        title: payload.title || "",
+        subtitle: payload.subtitle || "",
+        lang: payload.lang || "",
+        country: payload.country || "",
+        period: payload.period || "",
+        region: payload.region || "",
+        event: payload.event || "",
+        theme: payload.theme || "",
+        verified: payload.verified ? 1 : 0,
+        year: payload.year || "",
+        source: payload.source || "",
+        notes: payload.notes || "",
+      };
+    };
+    const inlineCurrentLyricsPayload = () => composeLyricsWithChorus(
+      qs("ac_lyrics")?.value || "",
+      qs("ac_chorus")?.value || "",
+      qs("ac_chorus_marker")?.value || chorusMarkerLabel(),
+    );
+    const inlineEnsureDraftForCollab = async () => {
+      if (inlineDraftId) return inlineDraftId;
+      const payload = collectContentPayload();
+      let createdDraftId = String(qs("ac_force_draft_id")?.value || "").trim();
+      const songId = String(payload?.id || "").trim();
+      if (!createdDraftId && songId) {
+        const draftsPayload = await api.drafts();
+        const items = Array.isArray(draftsPayload?.items) ? draftsPayload.items : [];
+        const existing = items
+          .filter((item) => String(item?.song_id || "").trim() === songId && String(item?.status || "draft").trim() === "draft")
+          .sort((a, b) => String(b?.updated_at || "").localeCompare(String(a?.updated_at || "")))[0];
+        createdDraftId = String(existing?.id || "").trim();
+      }
+      if (!createdDraftId) {
+        const requestPayload = songId ? { song_id: songId } : { seed: payload };
+        const out = await api.createDraft(requestPayload);
+        createdDraftId = String(out?.draft_id || "").trim();
+      }
+      if (!createdDraftId) throw new Error(draftUiText("draftNotCreated"));
+      inlineDraftId = createdDraftId;
+      inlineOpStore = draftOpStoreFor(inlineDraftId);
+      const forceDraftNode = qs("ac_force_draft_id");
+      if (forceDraftNode) forceDraftNode.value = inlineDraftId;
+      return inlineDraftId;
+    };
+    const inlineFlushAutosave = async (options = {}) => {
+      if (!inlineDraftId) return;
+      try {
+        const out = await api.draftAutosave(inlineDraftId, {
+          meta: inlineCurrentMetaPayload(),
+          lyrics: inlineCurrentLyricsPayload(),
+          client_op_id: `flush_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`,
+        }, { keepalive: options.keepalive === true });
+        const nextVersion = Number(out?.version || 0);
+        if (nextVersion > 0) inlineVersion = Math.max(inlineVersion, nextVersion);
+      } catch {}
+    };
+    const inlineQueueStructureSync = () => {
+      if (!inlineDraftId) return;
+      if (inlineSyncOnSaveOnly) return;
+      clearTimeout(inlineStructureSyncTimer);
+      inlineStructureSyncTimer = setTimeout(async () => {
+        if (inlineStructureSyncInFlight) {
+          inlineQueueStructureSync();
+          return;
+        }
+        inlineStructureSyncInFlight = true;
+        try {
+          await inlineFlushAutosave({ keepalive: false });
+          await inlineRefreshFromApi();
+        } catch {}
+        inlineStructureSyncInFlight = false;
+      }, 280);
     };
     const inlineSyncEditorLyricsToDraft = () => {
       if (!inlineDraftId || inlineSyncingFromDraft) return;
@@ -6219,15 +6986,8 @@ export function bind(route, ctx) {
         qs("ac_chorus_marker")?.value || chorusMarkerLabel(),
       );
       const nextLines = splitLines(composed);
-      if (nextLines.length !== lines.length && Date.now() - inlineWarnLineCountAt > 2400) {
-        inlineWarnLineCountAt = Date.now();
-        showStatusOverlay(uiLocale() === "ru"
-          ? "В совместном режиме количество строк фиксировано. Используйте построчные варианты ниже."
-          : uiLocale() === "uk"
-            ? "У спільному режимі кількість рядків фіксована. Використовуйте варіанти рядків нижче."
-            : uiLocale() === "et"
-              ? "Koostöörežiimis on ridade arv fikseeritud. Kasuta all reavariatsioone."
-              : "In collaborative mode line count is fixed. Use line variants below.", "info");
+      if (nextLines.length !== lines.length) {
+        inlineQueueStructureSync();
       }
       const limit = Math.min(lines.length, nextLines.length);
       for (let index = 0; index < limit; index += 1) {
@@ -6241,18 +7001,15 @@ export function bind(route, ctx) {
     };
     const inlineQueueLyricsSync = () => {
       if (!inlineDraftId) return;
+      if (inlineSyncOnSaveOnly) return;
       clearTimeout(inlineLyricsTimer);
       inlineLyricsTimer = setTimeout(inlineSyncEditorLyricsToDraft, 220);
     };
     const inlineConnectWs = () => {
       if (!inlineDraftId || inlineLeaving) return;
-      if (!(window.WebSocket)) {
-        inlineSetPresence(draftUiText("statusWsUnsupported"));
-        return;
-      }
-      inlineSetPresence(draftUiText("statusConnecting"));
+      if (!(window.WebSocket)) return;
       inlineWs = new WebSocket(api.draftWsUrl(inlineDraftId));
-      inlineWs.addEventListener("open", () => inlineSetPresence(draftUiText("statusOnline")));
+      inlineWs.addEventListener("open", () => {});
       inlineWs.addEventListener("message", (event) => {
         let message = null;
         try {
@@ -6262,9 +7019,6 @@ export function bind(route, ctx) {
         }
         const type = String(message?.type || "").trim();
         if (type === "presence") {
-          const users = Array.isArray(message?.users) ? message.users : [];
-          const names = users.map((u) => String(u?.nickname || u?.user_id || "").trim()).filter(Boolean);
-          inlineSetPresence(names.length ? draftUiText("statusOnlineWithNames", { names: names.join(", ") }) : draftUiText("statusOnline"));
           return;
         }
         if (type === "joined") {
@@ -6298,13 +7052,9 @@ export function bind(route, ctx) {
       });
       inlineWs.addEventListener("close", () => {
         if (inlineLeaving) return;
-        inlineSetPresence(draftUiText("statusReconnecting"));
         inlineReconnectTimer = window.setTimeout(inlineConnectWs, 1200);
       });
-      inlineWs.addEventListener("error", () => {
-        if (inlineLeaving) return;
-        inlineSetPresence(draftUiText("statusConnectionError"));
-      });
+      inlineWs.addEventListener("error", () => {});
     };
     const inlineRefreshFromApi = async () => {
       if (!inlineDraftId) return;
@@ -6314,18 +7064,21 @@ export function bind(route, ctx) {
       inlineApplyState({
         draft: { version: fresh?.version || 0, status: fresh?.status || "draft", snapshot: fresh?.snapshot || {} },
         collaborators: fresh?.collaborators || [],
+        pending_invitations: fresh?.pending_invitations || [],
         lines: fresh?.lines || [],
       });
     };
     const inlineBootstrap = async () => {
-      if (!inlineCollabRoot || !inlineDraftId) {
-        inlineSetPanelVisible(false);
+      if (!inlineCollabRoot) return;
+      inlineSetPanelVisible(true);
+      if (!inlineDraftId) {
+        inlineEnsureStandalonePayload();
+        inlineRefreshMeta();
+        inlineRefreshCollaborators();
         return;
       }
-      inlineSetPanelVisible(true);
       inlineOpStore = draftOpStoreFor(inlineDraftId);
       inlineRefreshOps();
-      if (collabOpenLink) collabOpenLink.href = `#/draft/${encodeURIComponent(inlineDraftId)}`;
       if (!inlineDraftPayload || String(inlineDraftPayload?.draft_id || "").trim() !== inlineDraftId) {
         try {
           inlineDraftPayload = await api.draft(inlineDraftId);
@@ -6339,55 +7092,74 @@ export function bind(route, ctx) {
       inlineApplyState({
         draft: { version: inlineDraftPayload?.version || 0, status: inlineDraftPayload?.status || "draft", snapshot: inlineDraftPayload?.snapshot || {} },
         collaborators: inlineDraftPayload?.collaborators || [],
+        pending_invitations: inlineDraftPayload?.pending_invitations || [],
         lines: inlineDraftPayload?.lines || [],
       });
       inlineConnectWs();
-      inlineQueueMetaSync();
+      if (!inlineSyncOnSaveOnly) inlineQueueMetaSync();
     };
 
     collabAddBtn?.addEventListener("click", async () => {
-      if (!inlineDraftId) return;
       const nickname = String(collabNicknameInput?.value || "").trim();
       if (!nickname) return;
       try {
+        await inlineEnsureDraftForCollab();
+        if (!inlineDraftPayload || String(inlineDraftPayload?.draft_id || "").trim() !== inlineDraftId) {
+          inlineDraftPayload = await api.draft(inlineDraftId);
+          inlineVersion = Number(inlineDraftPayload?.version || 0);
+        }
+        inlineSetPanelVisible(true);
+        inlineConnectWs();
         await api.draftAddCollaborator(inlineDraftId, nickname);
         if (collabNicknameInput) collabNicknameInput.value = "";
+        showStatusOverlay(draftUiText("invitationSent"), "success");
         await inlineRefreshFromApi();
       } catch (cause) {
         showStatusOverlay(String(cause?.message || t("common.error")), "error");
       }
     });
-    collabPublishBtn?.addEventListener("click", async () => {
-      if (!inlineDraftId) return;
-      try {
-        const out = await api.draftPublish(inlineDraftId);
-        if (out?.song_id) {
-          location.hash = `#/song/${encodeURIComponent(out.song_id)}`;
-        } else {
-          showStatusOverlay(draftUiText("draftPublished"), "success");
-        }
-      } catch (cause) {
-        showStatusOverlay(String(cause?.message || t("common.error")), "error");
-      }
-    });
-    inlineCollabRoot?.addEventListener("click", async (event) => {
+    editorRoot?.addEventListener("pointerdown", (event) => {
       const target = event.target;
-      if (!(target instanceof HTMLElement) || !inlineDraftId) return;
-      const toggle = target.closest(".draft-variants-toggle");
-      if (toggle) {
-        const lineId = String(toggle.getAttribute("data-line-id") || "").trim();
-        if (!lineId) return;
-        const panel = qs(`draft_variants_${lineId}`);
-        if (!panel) return;
-        panel.classList.toggle("hidden");
+      if (!(target instanceof HTMLElement)) return;
+      const railHit = target.closest(".draft-line-rail-btn, .ac-lyrics-rail-slot, .ac-lyrics-rail-row, .draft-line-rail-triangle, .draft-line-rail-mini");
+      if (!railHit) return;
+      const railSlot = railHit.closest(".ac-lyrics-rail-slot");
+      if (!(railSlot instanceof HTMLElement) || railSlot.classList.contains("is-empty")) return;
+      event.preventDefault();
+      event.stopPropagation();
+      const railBtn = railHit.closest(".draft-line-rail-btn");
+      if (railBtn instanceof HTMLElement && inlineHandleRailButton(railBtn)) return;
+      let lineId = String(railSlot.getAttribute("data-line-id") || "").trim();
+      if (!lineId) {
+        const lineIndex = Number.parseInt(String(railSlot.getAttribute("data-line-index") || ""), 10);
+        if (Number.isFinite(lineIndex) && lineIndex >= 0) {
+          const lines = inlineMainEditorLines();
+          lineId = String(lines[lineIndex]?.id || "").trim();
+        }
+      }
+      if (lineId) inlineHandleRailLineId(lineId);
+    }, { capture: true });
+    editorRoot?.addEventListener("click", async (event) => {
+      const target = event.target;
+      if (!(target instanceof HTMLElement)) return;
+      const closePopoverBtn = target.closest(".ac-line-popover-close");
+      if (closePopoverBtn) {
+        inlineClosePopover({ clearSelection: true });
+        inlineRefreshLines();
         return;
       }
+      if (target.closest(".draft-line-rail-btn")) return;
       const activate = target.closest(".draft-variant-activate");
       if (activate) {
         const lineId = String(activate.getAttribute("data-line-id") || "").trim();
         const variantId = String(activate.getAttribute("data-variant-id") || "").trim();
         if (!lineId || !variantId) return;
-        inlineSendOp("set_active_variant", { line_id: lineId, variant_id: variantId });
+        if (inlineDraftId && !inlineIsVirtualLineId(lineId)) {
+          inlineSendOp("set_active_variant", { line_id: lineId, variant_id: variantId });
+        } else {
+          inlineLocalActivateVariant(lineId, variantId);
+        }
+        inlineRefreshLines();
         return;
       }
       const addVariant = target.closest(".draft-add-variant-btn");
@@ -6401,9 +7173,14 @@ export function bind(route, ctx) {
         const text = String(textInput?.value || "").trim();
         const confidence = Number.parseInt(String(confInput?.value || "80"), 10);
         if (!text) return;
-        inlineSendOp("add_variant", { line_id: lineId, text, confidence, variant_type: "manual" });
+        if (inlineDraftId && !inlineIsVirtualLineId(lineId)) {
+          inlineSendOp("add_variant", { line_id: lineId, text, confidence, variant_type: "manual" });
+        } else {
+          inlineLocalAddVariant(lineId, text, confidence, "manual");
+        }
         if (textInput) textInput.value = "";
         if (confInput) confInput.value = "80";
+        inlineRefreshLines();
         return;
       }
       const addSuggested = target.closest(".draft-add-suggested-btn");
@@ -6417,9 +7194,14 @@ export function bind(route, ctx) {
         const text = String(textInput?.value || "").trim();
         const confidence = Number.parseInt(String(confInput?.value || "80"), 10);
         if (!text) return;
-        inlineSendOp("add_variant", { line_id: lineId, text, confidence, variant_type: "suggested" });
+        if (inlineDraftId && !inlineIsVirtualLineId(lineId)) {
+          inlineSendOp("add_variant", { line_id: lineId, text, confidence, variant_type: "suggested" });
+        } else {
+          inlineLocalAddVariant(lineId, text, confidence, "suggested");
+        }
         if (textInput) textInput.value = "";
         if (confInput) confInput.value = "80";
+        inlineRefreshLines();
         return;
       }
       const aiCopy = target.closest(".draft-ai-copy");
@@ -6444,8 +7226,25 @@ export function bind(route, ctx) {
         window.open(url, "_blank", "noopener,noreferrer");
         return;
       }
+    });
+    inlineCollabRoot?.addEventListener("click", async (event) => {
+      const target = event.target;
+      if (!(target instanceof HTMLElement)) return;
+      const cancelInvitation = target.closest(".draft-invite-cancel");
+      if (cancelInvitation && inlineDraftId) {
+        const inviteId = String(cancelInvitation.getAttribute("data-invite-id") || "").trim();
+        if (!inviteId) return;
+        try {
+          await api.draftInvitationCancel(inviteId);
+          showStatusOverlay(draftUiText("invitationCancelledMsg"), "success");
+          await inlineRefreshFromApi();
+        } catch (cause) {
+          showStatusOverlay(String(cause?.message || t("common.error")), "error");
+        }
+        return;
+      }
       const removeCollaborator = target.closest(".draft-collab-remove");
-      if (removeCollaborator) {
+      if (removeCollaborator && inlineDraftId) {
         const userId = String(removeCollaborator.getAttribute("data-user-id") || "").trim();
         if (!userId) return;
         try {
@@ -6456,55 +7255,191 @@ export function bind(route, ctx) {
         }
       }
     });
-    inlineCollabRoot?.addEventListener("input", (event) => {
+    editorRoot?.addEventListener("change", (event) => {
       const target = event.target;
-      if (!(target instanceof HTMLElement) || !inlineDraftId) return;
-      if (!target.classList.contains("draft-line-input")) return;
-      const lineId = String(target.getAttribute("data-line-id") || "").trim();
-      if (!lineId) return;
-      if (inlineLineTimers.has(lineId)) clearTimeout(inlineLineTimers.get(lineId));
-      const timeoutId = setTimeout(() => {
-        const confidence = Number.parseInt(String(target.getAttribute("data-confidence") || "100"), 10) || 100;
-        inlineSendOp("set_line_text", { line_id: lineId, text: target.value || "", confidence });
-      }, 240);
-      inlineLineTimers.set(lineId, timeoutId);
-    });
-    inlineCollabRoot?.addEventListener("change", (event) => {
-      const target = event.target;
-      if (!(target instanceof HTMLElement) || !inlineDraftId) return;
+      if (!(target instanceof HTMLElement)) return;
       if (!target.classList.contains("draft-variant-confidence")) return;
+      const lineId = String(target.getAttribute("data-line-id") || "").trim();
       const variantId = String(target.getAttribute("data-variant-id") || "").trim();
       if (!variantId) return;
       const confidence = Number.parseInt(String(target.value || "100"), 10) || 100;
-      inlineSendOp("set_variant_confidence", { variant_id: variantId, confidence });
+      if (inlineDraftId && lineId && !inlineIsVirtualLineId(lineId)) {
+        inlineSendOp("set_variant_confidence", { variant_id: variantId, confidence });
+      } else {
+        inlineLocalSetVariantConfidence(variantId, confidence);
+      }
+      inlineRefreshLines();
     });
 
-    ["ac_title", "ac_subtitle", "ac_lang", "ac_country", "ac_period", "ac_region", "ac_event", "ac_theme", "ac_year", "ac_source", "ac_notes", "ac_verified", "ac_status_edit"]
-      .forEach((id) => {
-        qs(id)?.addEventListener("input", inlineQueueMetaSync);
-        qs(id)?.addEventListener("change", inlineQueueMetaSync);
+    if (!inlineSyncOnSaveOnly) {
+      ["ac_title", "ac_subtitle", "ac_lang", "ac_country", "ac_period", "ac_region", "ac_event", "ac_theme", "ac_year", "ac_source", "ac_notes", "ac_verified", "ac_status_edit"]
+        .forEach((id) => {
+          qs(id)?.addEventListener("input", inlineQueueMetaSync);
+          qs(id)?.addEventListener("change", inlineQueueMetaSync);
+        });
+      ["ac_lyrics", "ac_chorus", "ac_chorus_marker"].forEach((id) => {
+        qs(id)?.addEventListener("input", inlineQueueLyricsSync);
+        qs(id)?.addEventListener("change", inlineQueueLyricsSync);
       });
-    ["ac_lyrics", "ac_chorus", "ac_chorus_marker"].forEach((id) => {
-      qs(id)?.addEventListener("input", inlineQueueLyricsSync);
-      qs(id)?.addEventListener("change", inlineQueueLyricsSync);
+    }
+    const inlineOnResize = () => {
+      inlineAutoSizeLyrics();
+      inlineRenderLineRail();
+      inlineRenderPopover();
+    };
+    window.addEventListener("resize", inlineOnResize);
+    let inlineTextareaResizeObserver = null;
+    if (window.ResizeObserver && lyricsTextareaNode) {
+      inlineTextareaResizeObserver = new window.ResizeObserver(() => {
+        inlineRenderLineRail();
+        inlineRenderPopover();
+      });
+      inlineTextareaResizeObserver.observe(lyricsTextareaNode);
+    }
+    lyricsTextareaNode?.addEventListener("scroll", () => {
+      inlineSyncLineRailScroll();
+      inlinePositionPopover();
     });
+    lyricsTextareaNode?.addEventListener("input", () => {
+      window.requestAnimationFrame(() => {
+        inlineAutoSizeLyrics();
+        inlineRenderLineRail();
+        inlineRenderPopover();
+      });
+    });
+    lyricsTextareaNode?.addEventListener("change", () => {
+      window.requestAnimationFrame(() => {
+        inlineAutoSizeLyrics();
+        inlineRenderLineRail();
+        inlineRenderPopover();
+      });
+    });
+    const inlineOnDocumentPointerDown = (event) => {
+      if (!inlinePopoverOpen || !lineActionsPopoverNode) return;
+      const target = event.target;
+      if (!(target instanceof HTMLElement)) return;
+      if (target.closest("#ac_line_actions_popover")) return;
+      if (target.closest(".draft-line-rail-btn")) return;
+      if (target.closest(".ac-lyrics-rail-slot")) return;
+      inlineClosePopover({ clearSelection: true });
+      inlineRefreshLines();
+    };
+    const inlineOnDocumentKeyDown = (event) => {
+      if (!inlinePopoverOpen) return;
+      if (String(event?.key || "") !== "Escape") return;
+      inlineClosePopover({ clearSelection: true });
+      inlineRefreshLines();
+    };
+    document.addEventListener("pointerdown", inlineOnDocumentPointerDown, true);
+    document.addEventListener("keydown", inlineOnDocumentKeyDown);
+    const inlineEditorPromptAtCaret = () => {
+      const title = String(qs("ac_title")?.value || "").trim();
+      const lyricsNode = qs("ac_lyrics");
+      const source = String(lyricsNode?.value || "");
+      const lines = splitLines(source);
+      const caret = Number(lyricsNode?.selectionStart || 0);
+      const beforeText = source.slice(0, Math.max(0, caret));
+      const currentIndex = Math.max(0, Math.min(lines.length - 1, beforeText.split("\n").length - 1));
+      const before = currentIndex > 0 ? String(lines[currentIndex - 1] || "") : "";
+      const current = String(lines[currentIndex] || "");
+      const after = currentIndex + 1 < lines.length ? String(lines[currentIndex + 1] || "") : "";
+      if (!current && !before && !after) return "";
+      return buildDraftPhoneticPrompt({ title, before, current, after });
+    };
+    const inlineOpenLinesPanel = () => {
+      if (!inlineDraftId) {
+        inlineEnsureStandalonePayload();
+      }
+      inlineSetPanelVisible(true);
+      if (collabControlsNode) collabControlsNode.open = true;
+      inlineRefreshMeta();
+      inlineRefreshCollaborators();
+      inlineRefreshLines();
+      window.requestAnimationFrame(() => {
+        inlineRenderLineRail();
+        inlineRenderPopover();
+      });
+      qs("ac_lyrics_editor")?.scrollIntoView({ behavior: "smooth", block: "nearest" });
+    };
+    const inlineCopyPromptFromEditor = async () => {
+      const prompt = inlineEditorPromptAtCaret();
+      if (!prompt) {
+        showStatusOverlay(draftUiText("promptCopyFailed"), "error");
+        return;
+      }
+      try {
+        await inlineCopyText(prompt);
+        showStatusOverlay(draftUiText("promptCopied"), "success");
+      } catch {
+        showStatusOverlay(draftUiText("promptCopyFailed"), "error");
+      }
+    };
+    toolConfidenceBtn?.addEventListener("click", inlineOpenLinesPanel);
+    toolLinePickerBtn?.addEventListener("click", inlineOpenLinesPanel);
+    toolCopyPromptBtn?.addEventListener("click", inlineCopyPromptFromEditor);
+    ["ac_lyrics", "ac_chorus", "ac_chorus_marker", "ac_title"].forEach((id) => {
+      qs(id)?.addEventListener("input", () => {
+        if (inlineDraftId || !inlineCollabRoot || inlineCollabRoot.classList.contains("hidden")) return;
+        inlineEnsureStandalonePayload();
+        inlineRefreshMeta();
+        inlineRefreshLines();
+      });
+      qs(id)?.addEventListener("change", () => {
+        if (inlineDraftId || !inlineCollabRoot || inlineCollabRoot.classList.contains("hidden")) return;
+        inlineEnsureStandalonePayload();
+        inlineRefreshMeta();
+        inlineRefreshLines();
+      });
+    });
+    window.addEventListener("hashchange", () => {
+      window.removeEventListener("resize", inlineOnResize);
+      document.removeEventListener("pointerdown", inlineOnDocumentPointerDown, true);
+      document.removeEventListener("keydown", inlineOnDocumentKeyDown);
+      clearTimeout(inlineStructureSyncTimer);
+      inlineTextareaResizeObserver?.disconnect();
+      inlineTextareaResizeObserver = null;
+    }, { once: true });
 
     if (inlineDraftId) {
       inlineBootstrap();
+      const onInlineBeforeUnload = () => {
+        if (inlineSyncOnSaveOnly) return;
+        void inlineFlushAutosave({ keepalive: true });
+      };
+      const onInlineVisibilityChange = () => {
+        if (inlineSyncOnSaveOnly) return;
+        if (document.visibilityState === "hidden") {
+          void inlineFlushAutosave({ keepalive: true });
+        }
+      };
       const onInlineLeave = () => {
+        if (!inlineSyncOnSaveOnly) {
+          void inlineFlushAutosave({ keepalive: false });
+        }
         inlineLeaving = true;
         clearTimeout(inlineReconnectTimer);
         clearTimeout(inlineMetaTimer);
         clearTimeout(inlineLyricsTimer);
-        inlineLineTimers.forEach((timerId) => clearTimeout(timerId));
-        inlineLineTimers.clear();
+        clearTimeout(inlineStructureSyncTimer);
+        window.removeEventListener("beforeunload", onInlineBeforeUnload);
+        document.removeEventListener("visibilitychange", onInlineVisibilityChange);
+        window.removeEventListener("resize", inlineOnResize);
+        document.removeEventListener("pointerdown", inlineOnDocumentPointerDown, true);
+        document.removeEventListener("keydown", inlineOnDocumentKeyDown);
+        inlineTextareaResizeObserver?.disconnect();
+        inlineTextareaResizeObserver = null;
         try {
           inlineWs?.close();
         } catch {}
       };
+      if (!inlineSyncOnSaveOnly) {
+        window.addEventListener("beforeunload", onInlineBeforeUnload);
+        document.addEventListener("visibilitychange", onInlineVisibilityChange);
+      }
       window.addEventListener("hashchange", onInlineLeave, { once: true });
     } else {
       inlineSetPanelVisible(false);
+      inlineRenderLineRail();
     }
 
     const acSaveBtn = qs("ac_save");
@@ -6570,8 +7505,11 @@ export function bind(route, ctx) {
           clearContentDraft(oldIdentity);
           if (!payload.id) clearContentDraft("__new");
           if (qs("ac_id")) qs("ac_id").value = savedId;
-          if (inlineDraftId && savedId) {
-            inlineQueueMetaSync();
+          if (inlineDraftId) {
+            try {
+              await inlineFlushAutosave({ keepalive: false });
+              await inlineRefreshFromApi();
+            } catch {}
           }
           baseSignature = contentDraftComparableSignature({ ...payload, id: savedId });
           hasDiffFromBase = false;
@@ -7452,6 +8390,8 @@ export function bind(route, ctx) {
         } catch (e) {
           const msg = uiLocale() === "ru"
             ? `Нужен формат ${FLAG_CARD_STANDARDS.desktopLong.width}x${FLAG_CARD_STANDARDS.desktopLong.height} или более широкий (обрезка только по бокам).`
+            : uiLocale() === "uk"
+              ? `Потрібен формат ${FLAG_CARD_STANDARDS.desktopLong.width}x${FLAG_CARD_STANDARDS.desktopLong.height} або ширший (обрізка лише по боках).`
             : invalidImageText;
           showStatusOverlay(msg, "error");
         }
@@ -7471,6 +8411,8 @@ export function bind(route, ctx) {
         } catch (e) {
           const msg = uiLocale() === "ru"
             ? `Нужен формат ${FLAG_CARD_STANDARDS.mobileLong.width}x${FLAG_CARD_STANDARDS.mobileLong.height} или более широкий (обрезка только по бокам).`
+            : uiLocale() === "uk"
+              ? `Потрібен формат ${FLAG_CARD_STANDARDS.mobileLong.width}x${FLAG_CARD_STANDARDS.mobileLong.height} або ширший (обрізка лише по боках).`
             : invalidImageText;
           showStatusOverlay(msg, "error");
         }
@@ -7487,7 +8429,7 @@ export function bind(route, ctx) {
             const msg = uiLocale() === "ru"
               ? "Для этой страны нет опубликованных песен."
               : uiLocale() === "uk"
-                ? "Для С†С–С”С— країни неає опублікованих пісень."
+                ? "Для цієї країни немає опублікованих пісень."
                 : uiLocale() === "et"
                   ? "Selle riigi jaoks pole avaldatud laule."
                   : "There are no published songs for this country.";
@@ -7705,17 +8647,21 @@ export function bind(route, ctx) {
       const id = btn.getAttribute("data-user-id");
       const prompt = uiLocale() === "ru"
         ? "Полностью удалить данные пользователя? Аккаунт будет очищен без блокировки."
-        : uiLocale() === "et"
-          ? "Kustuta kasutaja andmed taielikult? Konto puhastatakse ilma blokeerimiseta."
-          : "Delete all user data? Account will be fully cleared without blocking.";
+        : uiLocale() === "uk"
+          ? "Повністю видалити дані користувача? Акаунт буде очищено без блокування."
+          : uiLocale() === "et"
+            ? "Kustuta kasutaja andmed täielikult? Konto puhastatakse ilma blokeerimiseta."
+            : "Delete all user data? Account will be fully cleared without blocking.";
       if (!confirm(prompt)) return;
       try {
         await api.adminDeleteUserData(id);
         showStatusOverlay(uiLocale() === "ru"
           ? `Данные пользователя удалены: ${id}`
-          : uiLocale() === "et"
-            ? `Kasutaja andmed kustutati: ${id}`
-            : `User data deleted: ${id}`, "success");
+          : uiLocale() === "uk"
+            ? `Дані користувача видалено: ${id}`
+            : uiLocale() === "et"
+              ? `Kasutaja andmed kustutati: ${id}`
+              : `User data deleted: ${id}`, "success");
         location.hash = "#/admin/users";
       } catch (e) {
         showStatusOverlay(`${t("common.error")}: ${e?.message || t("common.error")}`, "error");
@@ -7756,3 +8702,5 @@ export function bind(route, ctx) {
     return;
   }
 }
+
+

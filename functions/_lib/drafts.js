@@ -16,6 +16,7 @@ const META_FIELDS = new Set([
   "notes",
   "song_id",
 ]);
+const INVITATION_STATUSES = new Set(["pending", "accepted", "declined", "cancelled"]);
 
 function nowIso() {
   return new Date().toISOString();
@@ -73,8 +74,8 @@ export async function requireDraftAccess(env, request, draftId, options = {}) {
     if (!collaborator) return err("Forbidden", 403);
   }
 
-  if (options.publish && !owner && Number(collaborator?.can_publish || 0) !== 1) {
-    return err("Forbidden: publish permission required", 403);
+  if (options.publish && !owner) {
+    return err("Forbidden: only owner can publish", 403);
   }
   return { auth, userId, draft, owner, collaborator };
 }
@@ -160,6 +161,237 @@ export async function listDraftCollaborators(env, draftId) {
   );
 }
 
+function normalizeInvitationStatus(value, fallback = "pending") {
+  const normalized = String(value || "").trim().toLowerCase();
+  if (INVITATION_STATUSES.has(normalized)) return normalized;
+  return fallback;
+}
+
+function mapInvitationRow(row = {}) {
+  return {
+    id: String(row.id || ""),
+    draft_id: String(row.draft_id || ""),
+    status: normalizeInvitationStatus(row.status, "pending"),
+    created_at: row.created_at || null,
+    responded_at: row.responded_at || null,
+    updated_at: row.updated_at || null,
+    inviter: {
+      user_id: String(row.inviter_user_id || ""),
+      nickname: String(row.inviter_nickname || ""),
+      email: String(row.inviter_email || ""),
+    },
+    invitee: {
+      user_id: String(row.invitee_user_id || ""),
+      nickname: String(row.invitee_nickname || ""),
+      email: String(row.invitee_email || ""),
+    },
+    draft: {
+      owner_user_id: String(row.owner_user_id || ""),
+      song_id: row.song_id || null,
+      snapshot_title: String(row.snapshot_title || ""),
+      status: String(row.draft_status || "draft"),
+    },
+  };
+}
+
+export async function listDraftPendingInvitations(env, draftId) {
+  const rows = await dbAll(
+    env,
+    `SELECT i.id, i.draft_id, i.status, i.created_at, i.responded_at, i.updated_at,
+            i.inviter_user_id, i.invitee_user_id,
+            inv.nickname AS inviter_nickname, inv.email AS inviter_email,
+            ie.nickname AS invitee_nickname, ie.email AS invitee_email,
+            d.owner_user_id, d.song_id, d.status AS draft_status,
+            json_extract(d.snapshot_json,'$.title') AS snapshot_title
+     FROM draft_invitations i
+     JOIN drafts d ON d.id=i.draft_id
+     LEFT JOIN users inv ON inv.id=i.inviter_user_id
+     LEFT JOIN users ie ON ie.id=i.invitee_user_id
+     WHERE i.draft_id=? AND i.status='pending'
+     ORDER BY datetime(i.created_at) DESC, i.id DESC`,
+    [draftId]
+  );
+  return rows.map((row) => mapInvitationRow(row));
+}
+
+export async function createDraftInvitation(env, { draftId, inviterUserId, inviteeUserId }) {
+  if (!draftId || !inviterUserId || !inviteeUserId) throw new Error("draftId, inviterUserId and inviteeUserId are required");
+  if (String(inviterUserId) === String(inviteeUserId)) throw new Error("Owner is already a collaborator");
+
+  const draft = await dbGet(env, `SELECT id, owner_user_id FROM drafts WHERE id=?`, [draftId]);
+  if (!draft) throw new Error("Draft not found");
+  if (String(draft.owner_user_id || "") !== String(inviterUserId || "")) throw new Error("Only owner can invite collaborators");
+
+  const alreadyCollaborator = await dbGet(
+    env,
+    `SELECT user_id FROM draft_collaborators WHERE draft_id=? AND user_id=?`,
+    [draftId, inviteeUserId]
+  );
+  if (alreadyCollaborator) throw new Error("User is already a collaborator");
+
+  const now = nowIso();
+  const existingPending = await dbGet(
+    env,
+    `SELECT id
+     FROM draft_invitations
+     WHERE draft_id=? AND invitee_user_id=? AND status='pending'
+     LIMIT 1`,
+    [draftId, inviteeUserId]
+  );
+  if (existingPending?.id) {
+    await dbRun(
+      env,
+      `UPDATE draft_invitations
+       SET inviter_user_id=?, updated_at=?
+       WHERE id=?`,
+      [inviterUserId, now, existingPending.id]
+    );
+    await dbRun(env, `UPDATE drafts SET updated_at=? WHERE id=?`, [now, draftId]);
+    return String(existingPending.id || "");
+  }
+
+  const invitationId = makeId("dinv");
+  await dbRun(
+    env,
+    `INSERT INTO draft_invitations (id,draft_id,inviter_user_id,invitee_user_id,status,created_at,responded_at,updated_at)
+     VALUES (?, ?, ?, ?, 'pending', ?, NULL, ?)`,
+    [invitationId, draftId, inviterUserId, inviteeUserId, now, now]
+  );
+  await dbRun(env, `UPDATE drafts SET updated_at=? WHERE id=?`, [now, draftId]);
+  return invitationId;
+}
+
+export async function listDraftInvitationsForUser(env, { userId, scope = "incoming", status = "" }) {
+  const normalizedScope = String(scope || "").trim().toLowerCase() === "outgoing" ? "outgoing" : "incoming";
+  const normalizedStatus = String(status || "").trim().toLowerCase();
+  const where = [];
+  const params = [];
+  if (normalizedScope === "incoming") {
+    where.push("i.invitee_user_id=?");
+    params.push(userId);
+  } else {
+    where.push("i.inviter_user_id=?");
+    params.push(userId);
+  }
+  if (INVITATION_STATUSES.has(normalizedStatus)) {
+    where.push("i.status=?");
+    params.push(normalizedStatus);
+  }
+
+  const rows = await dbAll(
+    env,
+    `SELECT i.id, i.draft_id, i.status, i.created_at, i.responded_at, i.updated_at,
+            i.inviter_user_id, i.invitee_user_id,
+            inv.nickname AS inviter_nickname, inv.email AS inviter_email,
+            ie.nickname AS invitee_nickname, ie.email AS invitee_email,
+            d.owner_user_id, d.song_id, d.status AS draft_status,
+            json_extract(d.snapshot_json,'$.title') AS snapshot_title
+     FROM draft_invitations i
+     JOIN drafts d ON d.id=i.draft_id
+     LEFT JOIN users inv ON inv.id=i.inviter_user_id
+     LEFT JOIN users ie ON ie.id=i.invitee_user_id
+     WHERE ${where.join(" AND ")}
+     ORDER BY datetime(i.created_at) DESC, i.id DESC`,
+    params
+  );
+  return rows.map((row) => mapInvitationRow(row));
+}
+
+export async function getDraftInvitationForUser(env, { invitationId, userId }) {
+  const row = await dbGet(
+    env,
+    `SELECT i.id, i.draft_id, i.status, i.created_at, i.responded_at, i.updated_at,
+            i.inviter_user_id, i.invitee_user_id,
+            inv.nickname AS inviter_nickname, inv.email AS inviter_email,
+            ie.nickname AS invitee_nickname, ie.email AS invitee_email,
+            d.owner_user_id, d.song_id, d.status AS draft_status,
+            json_extract(d.snapshot_json,'$.title') AS snapshot_title
+     FROM draft_invitations i
+     JOIN drafts d ON d.id=i.draft_id
+     LEFT JOIN users inv ON inv.id=i.inviter_user_id
+     LEFT JOIN users ie ON ie.id=i.invitee_user_id
+     WHERE i.id=?
+       AND (i.invitee_user_id=? OR i.inviter_user_id=? OR d.owner_user_id=?)`,
+    [invitationId, userId, userId, userId]
+  );
+  return row ? mapInvitationRow(row) : null;
+}
+
+export async function acceptDraftInvitation(env, { invitationId, userId }) {
+  const invite = await dbGet(
+    env,
+    `SELECT i.id, i.draft_id, i.status, i.inviter_user_id, i.invitee_user_id, d.owner_user_id
+     FROM draft_invitations i
+     JOIN drafts d ON d.id=i.draft_id
+     WHERE i.id=?`,
+    [invitationId]
+  );
+  if (!invite) throw new Error("Invitation not found");
+  if (String(invite.invitee_user_id || "") !== String(userId || "")) throw new Error("Forbidden");
+  const status = normalizeInvitationStatus(invite.status, "pending");
+  if (status === "declined" || status === "cancelled") throw new Error("Invitation is not active");
+
+  const now = nowIso();
+  await dbRun(
+    env,
+    `INSERT INTO draft_collaborators (draft_id,user_id,can_publish,added_by,created_at)
+     VALUES (?,?,?,?,?)
+     ON CONFLICT(draft_id,user_id) DO UPDATE SET
+       can_publish=excluded.can_publish,
+       added_by=excluded.added_by`,
+    [invite.draft_id, userId, 1, invite.inviter_user_id || invite.owner_user_id, now]
+  );
+  await dbRun(
+    env,
+    `UPDATE draft_invitations
+     SET status='accepted', responded_at=?, updated_at=?
+     WHERE id=?`,
+    [now, now, invitationId]
+  );
+  await dbRun(env, `UPDATE drafts SET updated_at=? WHERE id=?`, [now, invite.draft_id]);
+}
+
+export async function declineDraftInvitation(env, { invitationId, userId }) {
+  const invite = await dbGet(env, `SELECT id, draft_id, invitee_user_id, status FROM draft_invitations WHERE id=?`, [invitationId]);
+  if (!invite) throw new Error("Invitation not found");
+  if (String(invite.invitee_user_id || "") !== String(userId || "")) throw new Error("Forbidden");
+  const status = normalizeInvitationStatus(invite.status, "pending");
+  if (status !== "pending") return;
+  const now = nowIso();
+  await dbRun(
+    env,
+    `UPDATE draft_invitations
+     SET status='declined', responded_at=?, updated_at=?
+     WHERE id=?`,
+    [now, now, invitationId]
+  );
+  await dbRun(env, `UPDATE drafts SET updated_at=? WHERE id=?`, [now, invite.draft_id]);
+}
+
+export async function cancelDraftInvitation(env, { invitationId, ownerUserId }) {
+  const invite = await dbGet(
+    env,
+    `SELECT i.id, i.draft_id, i.status, d.owner_user_id
+     FROM draft_invitations i
+     JOIN drafts d ON d.id=i.draft_id
+     WHERE i.id=?`,
+    [invitationId]
+  );
+  if (!invite) throw new Error("Invitation not found");
+  if (String(invite.owner_user_id || "") !== String(ownerUserId || "")) throw new Error("Forbidden");
+  const status = normalizeInvitationStatus(invite.status, "pending");
+  if (status !== "pending") return;
+  const now = nowIso();
+  await dbRun(
+    env,
+    `UPDATE draft_invitations
+     SET status='cancelled', responded_at=?, updated_at=?
+     WHERE id=?`,
+    [now, now, invitationId]
+  );
+  await dbRun(env, `UPDATE drafts SET updated_at=? WHERE id=?`, [now, invite.draft_id]);
+}
+
 export async function getDraftState(env, draftId) {
   const draft = await dbGet(env, `SELECT * FROM drafts WHERE id=?`, [draftId]);
   if (!draft) return null;
@@ -230,7 +462,15 @@ export async function getDraftState(env, draftId) {
 
 async function updateDraftVersion(env, draftId, nextVersion) {
   const now = nowIso();
-  await dbRun(env, `UPDATE drafts SET version=?, updated_at=? WHERE id=?`, [nextVersion, now, draftId]);
+  const normalizedVersion = Math.max(0, Number(nextVersion || 0));
+  await dbRun(
+    env,
+    `UPDATE drafts
+     SET version = CASE WHEN version < ? THEN ? ELSE version END,
+         updated_at=?
+     WHERE id=?`,
+    [normalizedVersion, normalizedVersion, now, draftId]
+  );
   return now;
 }
 
@@ -241,6 +481,74 @@ async function persistDraftOp(env, { draftId, seq, clientOpId, baseVersion, opTy
      VALUES (?,?,?,?,?,?,?,?,?,?)`,
     [makeId("dop"), draftId, seq, clientOpId || null, Number(baseVersion || 0), opType, JSON.stringify(payload || {}), status || "persisted", createdBy || null, nowIso()]
   );
+}
+
+function isDraftOpSeqConflict(cause) {
+  const message = String(cause?.message || cause || "");
+  return /draft_ops\.draft_id,\s*draft_ops\.seq|idx_draft_ops_seq/i.test(message);
+}
+
+async function findDraftOpByClientOpId(env, { draftId, clientOpId }) {
+  const normalizedClientOpId = String(clientOpId || "").trim();
+  if (!normalizedClientOpId) return null;
+  const row = await dbGet(
+    env,
+    `SELECT seq
+     FROM draft_ops
+     WHERE draft_id=? AND client_op_id=?
+     ORDER BY seq DESC
+     LIMIT 1`,
+    [draftId, normalizedClientOpId]
+  );
+  if (!row) return null;
+  return { seq: Number(row.seq || 0) };
+}
+
+async function allocateDraftOpSeq(env, draftId) {
+  const row = await dbGet(env, `SELECT COALESCE(MAX(seq), 0) AS max_seq FROM draft_ops WHERE draft_id=?`, [draftId]);
+  return Math.max(1, Number(row?.max_seq || 0) + 1);
+}
+
+async function persistDraftOpWithRetry(env, {
+  draftId,
+  clientOpId,
+  baseVersion,
+  opType,
+  payload,
+  status,
+  createdBy,
+}) {
+  const normalizedClientOpId = String(clientOpId || "").trim();
+  if (normalizedClientOpId) {
+    const existing = await findDraftOpByClientOpId(env, { draftId, clientOpId: normalizedClientOpId });
+    if (existing) return existing.seq;
+  }
+
+  let lastConflict = null;
+  for (let attempt = 0; attempt < 8; attempt += 1) {
+    const seq = await allocateDraftOpSeq(env, draftId);
+    try {
+      await persistDraftOp(env, {
+        draftId,
+        seq,
+        clientOpId: normalizedClientOpId || null,
+        baseVersion,
+        opType,
+        payload,
+        status,
+        createdBy,
+      });
+      return seq;
+    } catch (cause) {
+      if (isDraftOpSeqConflict(cause)) {
+        lastConflict = cause;
+        continue;
+      }
+      throw cause;
+    }
+  }
+
+  throw lastConflict || new Error("Failed to persist draft operation");
 }
 
 async function maybePersistSnapshot(env, { draftId, version, userId }) {
@@ -264,8 +572,10 @@ export async function applyDraftOperation(env, { draftId, userId, op }) {
   const payload = op?.payload && typeof op.payload === "object" ? op.payload : {};
   const clientOpId = String(op?.client_op_id || "").trim() || makeId("cop");
   const baseVersion = Number.parseInt(String(op?.base_version ?? current.version ?? 0), 10) || 0;
-  const nextVersion = Number(current.version || 0) + 1;
-  let conflict = null;
+  const existingOp = await findDraftOpByClientOpId(env, { draftId, clientOpId });
+  if (existingOp) {
+    return { version: Number(existingOp.seq || 0), client_op_id: clientOpId, conflict: null };
+  }
 
   if (type === "set_meta") {
     const prev = parseJSON(current.snapshot_json, {});
@@ -279,27 +589,15 @@ export async function applyDraftOperation(env, { draftId, userId, op }) {
     if (!line) throw new Error("line not found");
     const text = String(payload.text ?? "");
     const confidence = clampConfidence(payload.confidence, 100);
-    const hasConcurrent = baseVersion < Number(current.version || 0);
-    if (hasConcurrent) {
-      const variantId = makeId("dv");
-      await dbRun(
-        env,
-        `INSERT INTO draft_line_variants (id,draft_id,line_id,text,confidence,variant_type,is_active,created_by,created_at,updated_at)
-         VALUES (?,?,?,?,?,'conflict',0,?,?,?)`,
-        [variantId, draftId, lineId, text, confidence, userId, nowIso(), nowIso()]
-      );
-      conflict = { line_id: lineId, incoming_variant_id: variantId };
-    } else {
-      const variantId = makeId("dv");
-      await dbRun(env, `UPDATE draft_line_variants SET is_active=0, updated_at=? WHERE line_id=? AND draft_id=?`, [nowIso(), lineId, draftId]);
-      await dbRun(
-        env,
-        `INSERT INTO draft_line_variants (id,draft_id,line_id,text,confidence,variant_type,is_active,created_by,created_at,updated_at)
-         VALUES (?,?,?,?,?,?,1,?,?,?)`,
-        [variantId, draftId, lineId, text, confidence, allowVariantType(payload.variant_type), userId, nowIso(), nowIso()]
-      );
-      await dbRun(env, `UPDATE draft_lines SET active_variant_id=?, updated_at=? WHERE id=?`, [variantId, nowIso(), lineId]);
-    }
+    const variantId = makeId("dv");
+    await dbRun(env, `UPDATE draft_line_variants SET is_active=0, updated_at=? WHERE line_id=? AND draft_id=?`, [nowIso(), lineId, draftId]);
+    await dbRun(
+      env,
+      `INSERT INTO draft_line_variants (id,draft_id,line_id,text,confidence,variant_type,is_active,created_by,created_at,updated_at)
+       VALUES (?,?,?,?,?,?,1,?,?,?)`,
+      [variantId, draftId, lineId, text, confidence, allowVariantType(payload.variant_type), userId, nowIso(), nowIso()]
+    );
+    await dbRun(env, `UPDATE draft_lines SET active_variant_id=?, updated_at=? WHERE id=?`, [variantId, nowIso(), lineId]);
   } else if (type === "add_variant") {
     const lineId = String(payload.line_id || "").trim();
     if (!lineId) throw new Error("line_id is required");
@@ -334,10 +632,8 @@ export async function applyDraftOperation(env, { draftId, userId, op }) {
     throw new Error(`Unsupported operation type: ${type}`);
   }
 
-  await updateDraftVersion(env, draftId, nextVersion);
-  await persistDraftOp(env, {
+  const nextVersion = await persistDraftOpWithRetry(env, {
     draftId,
-    seq: nextVersion,
     clientOpId,
     baseVersion,
     opType: type,
@@ -345,8 +641,103 @@ export async function applyDraftOperation(env, { draftId, userId, op }) {
     status: "persisted",
     createdBy: userId,
   });
+  await updateDraftVersion(env, draftId, nextVersion);
   await maybePersistSnapshot(env, { draftId, version: nextVersion, userId });
-  return { version: nextVersion, client_op_id: clientOpId, conflict };
+  return { version: nextVersion, client_op_id: clientOpId, conflict: null };
+}
+
+export async function autosaveDraftFromEditor(env, { draftId, userId, payload = {} }) {
+  const current = await dbGet(env, `SELECT id,version,snapshot_json FROM drafts WHERE id=?`, [draftId]);
+  if (!current) throw new Error("Draft not found");
+  const metaPatch = await normalizeDraftSnapshot(payload?.meta && typeof payload.meta === "object" ? payload.meta : {});
+  const lyrics = String(payload?.lyrics ?? "");
+  const incomingLines = splitLyricsLines(lyrics);
+
+  const lines = await dbAll(
+    env,
+    `SELECT l.id, l.sort_order, l.active_variant_id, coalesce(v.text,'') AS active_text, coalesce(v.confidence,100) AS active_confidence
+     FROM draft_lines l
+     LEFT JOIN draft_line_variants v ON v.id=l.active_variant_id
+     WHERE l.draft_id=?
+     ORDER BY l.sort_order ASC, datetime(l.created_at) ASC`,
+    [draftId]
+  );
+
+  const previousSnapshot = parseJSON(current.snapshot_json, {});
+  const nextSnapshot = { ...previousSnapshot, ...metaPatch };
+  const metaChanged = JSON.stringify(previousSnapshot) !== JSON.stringify(nextSnapshot);
+  let changedLines = 0;
+  const now = nowIso();
+  for (let index = 0; index < lines.length; index += 1) {
+    const line = lines[index];
+    const nextText = String(incomingLines[index] ?? "");
+    const activeText = String(line?.active_text ?? "");
+    if (nextText === activeText) continue;
+    const lineId = String(line?.id || "").trim();
+    if (!lineId) continue;
+    const confidence = clampConfidence(line?.active_confidence, 100);
+    const variantId = makeId("dv");
+    await dbRun(env, `UPDATE draft_line_variants SET is_active=0, updated_at=? WHERE line_id=? AND draft_id=?`, [now, lineId, draftId]);
+    await dbRun(
+      env,
+      `INSERT INTO draft_line_variants (id,draft_id,line_id,text,confidence,variant_type,is_active,created_by,created_at,updated_at)
+       VALUES (?,?,?,?,?,'manual',1,?,?,?)`,
+      [variantId, draftId, lineId, nextText, confidence, userId, now, now]
+    );
+    await dbRun(env, `UPDATE draft_lines SET active_variant_id=?, updated_at=? WHERE id=?`, [variantId, now, lineId]);
+    changedLines += 1;
+  }
+
+  if (incomingLines.length > lines.length) {
+    for (let index = lines.length; index < incomingLines.length; index += 1) {
+      const lineText = String(incomingLines[index] ?? "");
+      const lineId = makeId("dl");
+      const variantId = makeId("dv");
+      await dbRun(
+        env,
+        `INSERT INTO draft_lines (id,draft_id,line_key,sort_order,active_variant_id,created_at,updated_at)
+         VALUES (?,?,?,?,?,?,?)`,
+        [lineId, draftId, `line_${index + 1}`, index, variantId, now, now]
+      );
+      await dbRun(
+        env,
+        `INSERT INTO draft_line_variants (id,draft_id,line_id,text,confidence,variant_type,is_active,created_by,created_at,updated_at)
+         VALUES (?,?,?,?,?,'manual',1,?,?,?)`,
+        [variantId, draftId, lineId, lineText, 100, userId, now, now]
+      );
+      changedLines += 1;
+    }
+  }
+
+  if (!metaChanged && changedLines === 0) {
+    return { changed: false, version: Number(current.version || 0) };
+  }
+
+  if (metaChanged) {
+    await dbRun(env, `UPDATE drafts SET snapshot_json=? WHERE id=?`, [JSON.stringify(nextSnapshot), draftId]);
+  }
+
+  const clientOpId = String(payload?.client_op_id || "").trim() || makeId("cop");
+  const existingOp = await findDraftOpByClientOpId(env, { draftId, clientOpId });
+  if (existingOp) {
+    return { changed: true, version: Number(existingOp.seq || 0) };
+  }
+
+  const nextVersion = await persistDraftOpWithRetry(env, {
+    draftId,
+    clientOpId,
+    baseVersion: Number(current.version || 0),
+    opType: "autosave_flush",
+    payload: {
+      meta_changed: metaChanged,
+      changed_lines: changedLines,
+    },
+    status: "persisted",
+    createdBy: userId,
+  });
+  await updateDraftVersion(env, draftId, nextVersion);
+  await maybePersistSnapshot(env, { draftId, version: nextVersion, userId });
+  return { changed: true, version: nextVersion };
 }
 
 export async function publishDraftToSong(env, { draftId, userId }) {

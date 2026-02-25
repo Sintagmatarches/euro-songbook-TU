@@ -12,7 +12,7 @@ export async function onRequestPost({ env, request, params }) {
   const draftId = String(params.id || "").trim();
   const access = await requireDraftAccess(env, request, draftId);
   if (access instanceof Response) return access;
-  if (!access.owner) return err("Only owner can add collaborators", 403);
+  if (!access.owner) return err("Only owner can invite collaborators", 403);
 
   const body = await readJSON(request);
   const nickname = normalizeNickname(body?.nickname);
@@ -43,3 +43,4 @@ export async function onRequestPost({ env, request, params }) {
     return err(String(cause?.message || "Invitation failed"), 400);
   }
 }
+
