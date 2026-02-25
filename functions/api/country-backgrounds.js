@@ -3,19 +3,42 @@ import { dbAll, dbGet } from "../_lib/db.js";
 import { ensureSchemaAndSeed } from "../_lib/schema.js";
 import { normalizeSongCountry } from "../../shared/song-catalogs.js";
 
+const CHUNK_MARKER_PREFIX = "__chunked__:country_background:";
+
+function chunkMarker(field) {
+  return `${CHUNK_MARKER_PREFIX}${field}`;
+}
+
+async function resolveChunkedValue(env, country, field, storedValue) {
+  const raw = String(storedValue || "").trim();
+  if (!raw) return "";
+  if (raw !== chunkMarker(field)) return raw;
+
+  const rows = await dbAll(
+    env,
+    `SELECT chunk_value
+     FROM country_background_chunks
+     WHERE lower(country)=? AND field=?
+     ORDER BY chunk_index ASC`,
+    [country, field]
+  );
+  return rows.map((row) => String(row?.chunk_value || "")).join("");
+}
+
 function clampFocus(value) {
   const n = Number(value);
   if (!Number.isFinite(n)) return 50;
   return Math.max(0, Math.min(100, n));
 }
 
-function normalizeRow(row) {
+async function normalizeRow(env, row) {
   if (!row) return null;
-  const desktopImageUrl = String(row.desktop_image_url || row.image_url || "").trim();
-  const mobileImageUrl = String(row.mobile_image_url || "").trim();
-  const previewFlagImageUrl = String(row.preview_flag_image_url || "").trim();
+  const country = String(row.country || "").trim();
+  const desktopImageUrl = await resolveChunkedValue(env, country, "desktop_image_url", row.desktop_image_url || row.image_url || "");
+  const mobileImageUrl = await resolveChunkedValue(env, country, "mobile_image_url", row.mobile_image_url || "");
+  const previewFlagImageUrl = await resolveChunkedValue(env, country, "preview_flag_image_url", row.preview_flag_image_url || "");
   return {
-    country: String(row.country || "").trim(),
+    country,
     desktop_image_url: desktopImageUrl,
     mobile_image_url: mobileImageUrl,
     preview_flag_image_url: previewFlagImageUrl,
@@ -47,7 +70,8 @@ export async function onRequestGet({ env, request }) {
        LIMIT 1`,
       [country]
     );
-    return json({ item: normalizeRow(row) });
+    const item = await normalizeRow(env, row);
+    return json({ item });
   }
 
   const items = await dbAll(
@@ -57,5 +81,6 @@ export async function onRequestGet({ env, request }) {
      ORDER BY country ASC`,
     []
   );
-  return json({ items: items.map(normalizeRow).filter(Boolean) });
+  const normalized = await Promise.all(items.map((item) => normalizeRow(env, item)));
+  return json({ items: normalized.filter(Boolean) });
 }

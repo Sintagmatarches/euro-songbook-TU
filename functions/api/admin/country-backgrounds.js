@@ -3,9 +3,64 @@ import { requireSuperAdmin, dbAll, dbGet, dbRun } from "../../_lib/db.js";
 import { ensureSchemaAndSeed } from "../../_lib/schema.js";
 import { normalizeSongCountry, normalizeSongPeriod } from "../../../shared/song-catalogs.js";
 
-const MAX_IMAGE_VALUE_LENGTH = 1_800_000;
-const MAX_FLAG_VALUE_LENGTH = 8_000_000;
-const MAX_BACKGROUND_VALUE_LENGTH = 8_000_000;
+const CHUNK_MARKER_PREFIX = "__chunked__:country_background:";
+const CHUNK_SIZE = 350_000;
+
+function chunkMarker(field) {
+  return `${CHUNK_MARKER_PREFIX}${field}`;
+}
+
+function splitChunks(value, size = CHUNK_SIZE) {
+  const raw = String(value || "");
+  const out = [];
+  for (let idx = 0; idx < raw.length; idx += size) {
+    out.push(raw.slice(idx, idx + size));
+  }
+  return out;
+}
+
+async function clearChunks(env, country, field) {
+  await dbRun(
+    env,
+    `DELETE FROM country_background_chunks
+     WHERE lower(country)=? AND field=?`,
+    [country, field]
+  );
+}
+
+async function writeChunkedValue(env, country, field, value) {
+  const raw = String(value || "").trim();
+  await clearChunks(env, country, field);
+  if (!raw) return "";
+  if (raw.length <= CHUNK_SIZE) return raw;
+
+  const chunks = splitChunks(raw, CHUNK_SIZE);
+  for (let i = 0; i < chunks.length; i += 1) {
+    await dbRun(
+      env,
+      `INSERT INTO country_background_chunks (country, field, chunk_index, chunk_value, updated_at)
+       VALUES (?, ?, ?, ?, datetime('now'))`,
+      [country, field, i, chunks[i]]
+    );
+  }
+  return chunkMarker(field);
+}
+
+async function resolveChunkedValue(env, country, field, storedValue) {
+  const raw = String(storedValue || "").trim();
+  if (!raw) return "";
+  if (raw !== chunkMarker(field)) return raw;
+
+  const rows = await dbAll(
+    env,
+    `SELECT chunk_value
+     FROM country_background_chunks
+     WHERE lower(country)=? AND field=?
+     ORDER BY chunk_index ASC`,
+    [country, field]
+  );
+  return rows.map((row) => String(row?.chunk_value || "")).join("");
+}
 
 function clampFocus(value) {
   const n = Number(value);
@@ -16,7 +71,6 @@ function clampFocus(value) {
 function normalizeImageValue(value) {
   const raw = String(value || "").trim();
   if (!raw) return "";
-  if (raw.length > MAX_IMAGE_VALUE_LENGTH) return null;
   if (raw.startsWith("/")) return raw;
   if (raw.startsWith("data:image/")) {
     if (!raw.includes(";base64,")) return null;
@@ -64,7 +118,6 @@ function normalizeFlagConfigRange(entry = {}) {
 function normalizeFlagImageValue(value) {
   const raw = String(value || "").trim();
   if (!raw) return "";
-  if (raw.length > MAX_FLAG_VALUE_LENGTH) return null;
   if (!raw.startsWith("{")) return normalizeImageValue(raw);
   try {
     const parsed = JSON.parse(raw);
@@ -93,7 +146,6 @@ function normalizeFlagImageValue(value) {
 function normalizePeriodImageValue(value) {
   const raw = String(value || "").trim();
   if (!raw) return "";
-  if (raw.length > MAX_BACKGROUND_VALUE_LENGTH) return null;
   if (!raw.startsWith("{")) return normalizeImageValue(raw);
   try {
     const parsed = JSON.parse(raw);
@@ -119,13 +171,14 @@ function normalizePeriodImageValue(value) {
   }
 }
 
-function normalizeRow(row) {
+async function normalizeRow(env, row) {
   if (!row) return null;
-  const desktopImageUrl = String(row.desktop_image_url || row.image_url || "").trim();
-  const mobileImageUrl = String(row.mobile_image_url || "").trim();
-  const previewFlagImageUrl = String(row.preview_flag_image_url || "").trim();
+  const country = String(row.country || "").trim();
+  const desktopImageUrl = await resolveChunkedValue(env, country, "desktop_image_url", row.desktop_image_url || row.image_url || "");
+  const mobileImageUrl = await resolveChunkedValue(env, country, "mobile_image_url", row.mobile_image_url || "");
+  const previewFlagImageUrl = await resolveChunkedValue(env, country, "preview_flag_image_url", row.preview_flag_image_url || "");
   return {
-    country: String(row.country || "").trim(),
+    country,
     desktop_image_url: desktopImageUrl,
     mobile_image_url: mobileImageUrl,
     preview_flag_image_url: previewFlagImageUrl,
@@ -147,7 +200,7 @@ async function fetchCountryBackground(env, country) {
      LIMIT 1`,
     [country]
   );
-  return normalizeRow(row);
+  return normalizeRow(env, row);
 }
 
 export async function onRequestGet({ env, request }) {
@@ -161,7 +214,8 @@ export async function onRequestGet({ env, request }) {
      ORDER BY country ASC`,
     []
   );
-  return json({ items: items.map(normalizeRow).filter(Boolean) });
+  const normalized = await Promise.all(items.map((item) => normalizeRow(env, item)));
+  return json({ items: normalized.filter(Boolean) });
 }
 
 export async function onRequestPut({ env, request }) {
@@ -183,6 +237,7 @@ export async function onRequestPut({ env, request }) {
   const mobileFocusX = clampFocus(body?.mobile_focus_x ?? body?.mobileFocusX);
   const mobileFocusY = clampFocus(body?.mobile_focus_y ?? body?.mobileFocusY);
   const current = await fetchCountryBackground(env, country);
+
   let previewFlagImageUrl = String(current?.preview_flag_image_url || "").trim();
   const hasFlagPayload = (
     Object.prototype.hasOwnProperty.call(body || {}, "preview_flag_image_url")
@@ -205,10 +260,17 @@ export async function onRequestPut({ env, request }) {
 
   if (!desktopImageUrl && !mobileImageUrl && !previewFlagImageUrl) {
     await dbRun(env, `DELETE FROM country_backgrounds WHERE lower(country)=?`, [country]);
+    await clearChunks(env, country, "desktop_image_url");
+    await clearChunks(env, country, "mobile_image_url");
+    await clearChunks(env, country, "preview_flag_image_url");
     return json({ ok: true, deleted: true, country });
   }
 
-  const legacyImageUrl = desktopImageUrl || mobileImageUrl;
+  const storedDesktopImageUrl = await writeChunkedValue(env, country, "desktop_image_url", desktopImageUrl);
+  const storedMobileImageUrl = await writeChunkedValue(env, country, "mobile_image_url", mobileImageUrl);
+  const storedPreviewFlagImageUrl = await writeChunkedValue(env, country, "preview_flag_image_url", previewFlagImageUrl);
+  const legacyImageUrl = storedDesktopImageUrl || storedMobileImageUrl;
+
   await dbRun(
     env,
     `INSERT INTO country_backgrounds (
@@ -227,9 +289,9 @@ export async function onRequestPut({ env, request }) {
        updated_by = excluded.updated_by`,
     [
       country,
-      desktopImageUrl,
-      mobileImageUrl,
-      previewFlagImageUrl,
+      storedDesktopImageUrl,
+      storedMobileImageUrl,
+      storedPreviewFlagImageUrl,
       desktopFocusX,
       desktopFocusY,
       mobileFocusX,
@@ -251,5 +313,8 @@ export async function onRequestDelete({ env, request }) {
   const country = normalizeSongCountry(body?.country || "");
   if (!country) return err("Invalid country value", 400);
   await dbRun(env, `DELETE FROM country_backgrounds WHERE lower(country)=?`, [country]);
+  await clearChunks(env, country, "desktop_image_url");
+  await clearChunks(env, country, "mobile_image_url");
+  await clearChunks(env, country, "preview_flag_image_url");
   return json({ ok: true, deleted: true, country });
 }
