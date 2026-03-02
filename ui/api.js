@@ -77,10 +77,48 @@ function cloneJsonLike(value) {
   return JSON.parse(JSON.stringify(value));
 }
 
+function safeStorageGet(key) {
+  try {
+    return localStorage.getItem(key);
+  } catch {
+    return null;
+  }
+}
+
+function safeStorageSet(key, value) {
+  try {
+    localStorage.setItem(key, value);
+  } catch {}
+}
+
+function safeStorageRemove(key) {
+  try {
+    localStorage.removeItem(key);
+  } catch {}
+}
+
+let volatileAuthToken = safeStorageGet("token") || "";
+
+function readAuthToken() {
+  const persisted = safeStorageGet("token") || "";
+  if (persisted) {
+    volatileAuthToken = persisted;
+    return persisted;
+  }
+  return volatileAuthToken || "";
+}
+
+function writeAuthToken(token) {
+  const value = String(token || "").trim();
+  volatileAuthToken = value;
+  if (value) safeStorageSet("token", value);
+  else safeStorageRemove("token");
+}
+
 async function req(path, opts = {}) {
   const method = (opts.method || "GET").toUpperCase();
   const absoluteUrl = u(path);
-  const token = localStorage.getItem("token") || "";
+  const token = readAuthToken();
   const canUseCache = method === "GET" && !opts.noCache;
   const key = canUseCache ? `${token}:${absoluteUrl}` : "";
   if (canUseCache) {
@@ -141,7 +179,7 @@ export const api = {
         password,
       }),
     });
-    localStorage.setItem("token", data.token);
+    writeAuthToken(data.token);
     return data;
   },
   async register(nickname, email, password, passwordConfirm) {
@@ -149,10 +187,11 @@ export const api = {
       method: "POST",
       body: JSON.stringify({ nickname, email, password, password_confirm: passwordConfirm }),
     });
-    localStorage.setItem("token", data.token);
+    writeAuthToken(data.token);
     return data;
   },
-  async logout() { localStorage.removeItem("token"); getCache.clear(); state.user = null; },
+  async logout() { writeAuthToken(""); getCache.clear(); state.user = null; },
+  getToken() { return readAuthToken(); },
   async me() { return req("api/me"); },
 
   async favorites() { return req("api/favorites"); },
@@ -254,7 +293,7 @@ export const api = {
         body: JSON.stringify(payload || {}),
       });
     }
-    const token = localStorage.getItem("token") || "";
+    const token = readAuthToken();
     const headers = new Headers({ Accept: "application/json", "Content-Type": "application/json" });
     if (token) headers.set("Authorization", `Bearer ${token}`);
     const res = await fetch(u(`api/drafts/${encodeURIComponent(id)}/autosave`), {
@@ -285,7 +324,7 @@ export const api = {
     return req(`api/drafts/${encodeURIComponent(id)}/history`, { noCache: true });
   },
   draftWsUrl(id) {
-    const token = localStorage.getItem("token") || "";
+    const token = readAuthToken();
     const relative = `api/drafts/${encodeURIComponent(id)}/ws?token=${encodeURIComponent(token)}`;
     const absolute = u(relative);
     return absolute.replace(/^http:/i, "ws:").replace(/^https:/i, "wss:");

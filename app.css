@@ -214,7 +214,15 @@ body {
   background-repeat: no-repeat;
   background-size: cover;
   overflow-x: hidden;
+  /* Hide accidental caret rendering on non-editable text (Safari/Caret Browsing edge cases). */
+  caret-color: transparent;
   transition: background var(--motion-theme) var(--motion-ease-soft), color var(--motion-medium) var(--motion-ease);
+}
+
+input,
+textarea,
+[contenteditable="true"] {
+  caret-color: auto;
 }
 
 body::before {
@@ -9131,7 +9139,7 @@ html[data-theme="white"] #btnMenuClose {
   background: #1900FF !important;
   background-color: #1900FF !important;
   color: #FFFFFF !important;
-  border-color: rgba(255, 255, 255, 0.55) !important;
+  border-color: rgba(22, 33, 130, 0.64) !important;
   text-shadow: none !important;
   box-shadow: none !important;
 }
@@ -9155,7 +9163,7 @@ html[data-theme="white"] #localeSwitch:hover,
 html[data-theme="white"] #btnMenuClose:hover {
   background: #1300CC !important;
   background-color: #1300CC !important;
-  border-color: rgba(255, 255, 255, 0.62) !important;
+  border-color: rgba(22, 33, 130, 0.74) !important;
   filter: none !important;
 }
 
@@ -9164,7 +9172,7 @@ html[data-theme="white"] #localeSwitch:active,
 html[data-theme="white"] #btnMenuClose:active {
   background: #0F00A8 !important;
   background-color: #0F00A8 !important;
-  border-color: rgba(255, 255, 255, 0.74) !important;
+  border-color: rgba(22, 33, 130, 0.82) !important;
 }
 
 html[data-theme="white"] .btn,
@@ -9174,7 +9182,7 @@ html[data-theme="white"] .ig-drawer-button,
 html[data-theme="white"] .catalog-top-search-btn,
 html[data-theme="white"] .admin-tab-btn,
 html[data-theme="white"] .song-version-btn {
-  border-color: rgba(255, 255, 255, 0.48) !important;
+  border-color: rgba(22, 33, 130, 0.62) !important;
 }
 
 html[data-theme="white"] .btn:hover,
@@ -9184,7 +9192,7 @@ html[data-theme="white"] .ig-drawer-button:hover,
 html[data-theme="white"] .catalog-top-search-btn:hover,
 html[data-theme="white"] .admin-tab-btn:hover,
 html[data-theme="white"] .song-version-btn:hover {
-  border-color: rgba(255, 255, 255, 0.62) !important;
+  border-color: rgba(22, 33, 130, 0.74) !important;
 }
 
 html[data-theme="white"] .btn:active,
@@ -9195,7 +9203,7 @@ html[data-theme="white"] .ig-drawer-button.active,
 html[data-theme="white"] .catalog-top-search-btn:active,
 html[data-theme="white"] .admin-tab-btn.active,
 html[data-theme="white"] .song-version-btn.is-active {
-  border-color: rgba(255, 255, 255, 0.74) !important;
+  border-color: rgba(22, 33, 130, 0.82) !important;
 }
 
 html[data-theme="white"] .btn:focus-visible,
@@ -9240,7 +9248,6 @@ html[data-theme="white"] .song-title {
 html[data-theme="white"] .yt-card .yt-card-title,
 html[data-theme="white"] .yt-card .yt-card-performer,
 html[data-theme="white"] .yt-card .yt-card-line,
-html[data-theme="white"] .song-view .song-title,
 html[data-theme="white"] .songCard .songTitle,
 html[data-theme="white"] .songCard .songMeta {
   color: #000000 !important;
@@ -9281,6 +9288,141 @@ html[data-theme="white"] .song-version-pane {
 html[data-theme="white"] .home-country-card-label,
 html[data-theme="white"] .home-country-card-count,
 html[data-theme="white"] .home-country-card-cta {
+  color: #FFFFFF !important;
+  -webkit-text-fill-color: #FFFFFF !important;
+}
+
+/* White theme: party-standard border color for windows/panels */
+html[data-theme="white"] .card,
+html[data-theme="white"] .songCard,
+html[data-theme="white"] .ac-list-card,
+html[data-theme="white"] .ac_item,
+html[data-theme="white"] .dlgBody,
+html[data-theme="white"] .request-section,
+html[data-theme="white"] .admin-section,
+html[data-theme="white"] .song-version-pane {
+  border-color: rgba(22, 33, 130, 0.64) !important;
+}
+
+/* White theme: ensure search button label is white in all forced legacy rules */
+html[data-theme="white"] #topSearchBtn,
+html[data-theme="white"] #topSearchBtn > * {
+  color: #FFFFFF !important;
+  -webkit-text-fill-color: #FFFFFF !important;
+}
+
+/* White theme: opened song card title is white */
+html[data-theme="white"] .song-view .song-title,
+html[data-theme="white"] .song-card-shell .song-title {
+  color: #FFFFFF !important;
+  -webkit-text-fill-color: #FFFFFF !important;
+}
+
+/* White theme: brighter and bolder draft notice text */
+html[data-theme="white"] .ac-draft-banner {
+  color: #fff48f !important;
+  font-weight: 700 !important;
+}
+
+/* White theme splash overrides for refresh/loading stage */
+html[data-theme="white"] .app-boot-splash {
+  background: #ffffff !important;
+}
+
+html[data-theme="white"] .app-boot-splash-card {
+  background: rgba(7, 151, 242, 0.86) !important;
+  border-color: rgba(22, 33, 130, 0.52) !important;
+  box-shadow: 0 16px 34px rgba(7, 151, 242, 0.22) !important;
+}
+
+html[data-theme="white"] .app-boot-splash-title {
+  color: #000000 !important;
+}
+
+html[data-theme="white"] .app-boot-splash-subtitle {
+  color: #162182 !important;
+}
+
+/* White theme polish: auth dialog frame, admin cards, and unified control borders */
+html[data-theme="white"] #dlgAuth::backdrop {
+  background: rgba(9, 18, 48, 0.58) !important;
+}
+
+html[data-theme="white"] #dlgAuth .dlgBody,
+html[data-theme="white"] #authForm.dlgBody {
+  border-color: rgba(255, 255, 255, 0.78) !important;
+  box-shadow: 0 14px 34px rgba(22, 33, 130, 0.18) !important;
+}
+
+html[data-theme="white"] #dlgAuth .auth-mode-btn,
+html[data-theme="white"] #dlgAuth #doLogin,
+html[data-theme="white"] #dlgAuth #doRegister,
+html[data-theme="white"] .admin-tabs .admin-tab-btn,
+html[data-theme="white"] #topSearchBtn,
+html[data-theme="white"] #localeSwitch,
+html[data-theme="white"] #btnMenuClose,
+html[data-theme="white"] .btn,
+html[data-theme="white"] .ig-link,
+html[data-theme="white"] .ig-drawer-link,
+html[data-theme="white"] .ig-drawer-button,
+html[data-theme="white"] .catalog-top-search-btn,
+html[data-theme="white"] .song-version-btn {
+  border-color: rgba(255, 255, 255, 0.56) !important;
+}
+
+html[data-theme="white"] #dlgAuth .auth-mode-btn:hover,
+html[data-theme="white"] #dlgAuth #doLogin:hover,
+html[data-theme="white"] #dlgAuth #doRegister:hover,
+html[data-theme="white"] .admin-tabs .admin-tab-btn:hover,
+html[data-theme="white"] #topSearchBtn:hover,
+html[data-theme="white"] #localeSwitch:hover,
+html[data-theme="white"] #btnMenuClose:hover,
+html[data-theme="white"] .btn:hover,
+html[data-theme="white"] .ig-link:hover,
+html[data-theme="white"] .ig-drawer-link:hover,
+html[data-theme="white"] .ig-drawer-button:hover,
+html[data-theme="white"] .catalog-top-search-btn:hover,
+html[data-theme="white"] .song-version-btn:hover {
+  border-color: rgba(255, 255, 255, 0.66) !important;
+}
+
+html[data-theme="white"] #dlgAuth .auth-mode-btn:active,
+html[data-theme="white"] #dlgAuth #doLogin:active,
+html[data-theme="white"] #dlgAuth #doRegister:active,
+html[data-theme="white"] .admin-tabs .admin-tab-btn:active,
+html[data-theme="white"] .admin-tabs .admin-tab-btn.active,
+html[data-theme="white"] #topSearchBtn:active,
+html[data-theme="white"] #localeSwitch:active,
+html[data-theme="white"] #btnMenuClose:active,
+html[data-theme="white"] .btn:active,
+html[data-theme="white"] .btn.is-active,
+html[data-theme="white"] .ig-link.active,
+html[data-theme="white"] .ig-drawer-link.active,
+html[data-theme="white"] .ig-drawer-button.active,
+html[data-theme="white"] .catalog-top-search-btn:active,
+html[data-theme="white"] .song-version-btn.is-active {
+  border-color: rgba(255, 255, 255, 0.74) !important;
+}
+
+html[data-theme="white"] .admin-tabs .admin-tab-btn,
+html[data-theme="white"] .admin-tabs .admin-tab-btn > * {
+  color: #FFFFFF !important;
+  -webkit-text-fill-color: #FFFFFF !important;
+}
+
+html[data-theme="white"] .admin-section .songCard,
+html[data-theme="white"] .admin-section .ac_item,
+html[data-theme="white"] .ac-list .songCard.ac_item {
+  background: #1900FF !important;
+  background-color: #1900FF !important;
+  border-color: rgba(255, 255, 255, 0.52) !important;
+}
+
+html[data-theme="white"] .admin-section .songCard .songTitle,
+html[data-theme="white"] .admin-section .songCard .songMeta,
+html[data-theme="white"] .admin-section .ac_item .songTitle,
+html[data-theme="white"] .admin-section .ac_item .songMeta,
+html[data-theme="white"] .admin-section .ac_item .badge {
   color: #FFFFFF !important;
   -webkit-text-fill-color: #FFFFFF !important;
 }

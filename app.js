@@ -27,6 +27,7 @@ const appBootSplashSubtitle = document.getElementById("appBootSplashSubtitle");
 const metaThemeColor = document.getElementById("metaThemeColor");
 
 const dlgAuth = document.getElementById("dlgAuth");
+const authForm = document.getElementById("authForm");
 const btnAuthClose = document.getElementById("btnAuthClose");
 const authModeLogin = document.getElementById("authModeLogin");
 const authModeRegister = document.getElementById("authModeRegister");
@@ -95,6 +96,25 @@ const GLOBAL_WALLPAPER_ASSET_URLS = [
 ];
 let globalWallpaperAssetsPreloaded = false;
 const STAGED_REVEAL_SELECTOR = ".card, .songCard, .yt-card, .pill, .badge, .song-version-btn, .pager-shell .btn";
+
+function safeStorageGet(key) {
+  try {
+    return localStorage.getItem(key);
+  } catch {
+    return null;
+  }
+}
+
+function safeStorageSet(key, value) {
+  try {
+    localStorage.setItem(key, value);
+  } catch {}
+}
+
+function readAuthToken() {
+  if (typeof api?.getToken === "function") return api.getToken();
+  return safeStorageGet("token");
+}
 
 function hideAppBootSplash() {
   if (!appBootSplash || appBootSplashHidden) return;
@@ -788,10 +808,10 @@ function syncThemeColorMeta() {
 }
 
 function getInitialTheme() {
-  const stored = String(localStorage.getItem(THEME_KEY) || "").trim().toLowerCase();
+  const stored = String(safeStorageGet(THEME_KEY) || "").trim().toLowerCase();
   const normalized = normalizeThemeName(stored || "dark");
   if (stored && stored !== normalized) {
-    localStorage.setItem(THEME_KEY, normalized);
+    safeStorageSet(THEME_KEY, normalized);
   }
   return normalized || "dark";
 }
@@ -800,7 +820,7 @@ function applyTheme(theme = activeTheme, options = {}) {
   const persist = options.persist !== false;
   activeTheme = normalizeThemeName(theme);
   document.documentElement.setAttribute("data-theme", activeTheme);
-  if (persist) localStorage.setItem(THEME_KEY, activeTheme);
+  if (persist) safeStorageSet(THEME_KEY, activeTheme);
   syncThemeColorMeta();
   syncThemeToggleButton();
 }
@@ -1002,7 +1022,7 @@ function setActiveNav() {
 }
 
 async function refreshMe() {
-  const token = localStorage.getItem("token");
+  const token = readAuthToken();
   if (!token) {
     state.user = null;
     setActiveNav();
@@ -1090,6 +1110,11 @@ btnLogin.addEventListener("click", () => {
 });
 authModeLogin?.addEventListener("click", () => setAuthDialogMode("login"));
 authModeRegister?.addEventListener("click", () => setAuthDialogMode("register"));
+authForm?.addEventListener("submit", (e) => {
+  e.preventDefault();
+  if (authDialogMode === "register") doRegister?.click();
+  else doLogin?.click();
+});
 btnAuthClose?.addEventListener("click", () => closeDialogAnimated(dlgAuth));
 dlgAuth?.addEventListener("click", (e) => {
   const rect = dlgAuth.getBoundingClientRect();
@@ -1182,8 +1207,8 @@ router.on(async (route) => {
   setActiveNav();
   const app = document.getElementById("app");
   app.classList.toggle("song-layout", route?.name === "song");
+  app.setAttribute("aria-busy", "true");
   const useReducedRouteMotion = shouldUseFastSearchMotion(route);
-  app.innerHTML = `<div class="card"><div class="skeleton"></div></div>`;
   try {
     const out = await render(route);
     app.innerHTML = out.html;
@@ -1209,6 +1234,7 @@ router.on(async (route) => {
       animateStagedReveal(app);
     }
   }
+  app.setAttribute("aria-busy", "false");
   setMenuOpen(false);
   setActiveNav();
   setTopSearchState(route);

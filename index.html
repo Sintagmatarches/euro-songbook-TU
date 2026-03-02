@@ -16,10 +16,30 @@
   <link rel="preload" as="image" href="./ui/assets/logo-sticker-20260221.png" />
   <link rel="preload" as="image" href="./ui/assets/pwa-icon-192-20260221.png" />
   <link rel="preload" as="image" href="./ui/assets/ussr-hero.jpg" />
+  <script>
+    (function () {
+      try {
+        var raw = String(localStorage.getItem("ui_theme") || "").trim().toLowerCase();
+        if (raw === "light") raw = "white";
+        if (raw !== "white") raw = "dark";
+        document.documentElement.setAttribute("data-theme", raw);
+      } catch (e) {
+        document.documentElement.setAttribute("data-theme", "dark");
+      }
+    }());
+  </script>
   <style>
     html, body { background: #000000; }
+    html[data-theme="white"], html[data-theme="white"] body { background: #ffffff; }
     .app-boot-splash { position: fixed; inset: 0; z-index: 1200; display: grid; place-items: center; }
     .app-boot-splash-card img { border-radius: 0; background: transparent; }
+    html[data-theme="white"] .app-boot-splash { background: #ffffff; }
+    html[data-theme="white"] .app-boot-splash-card {
+      background: rgba(7, 151, 242, 0.86);
+      border: 1px solid rgba(22, 33, 130, 0.52);
+    }
+    html[data-theme="white"] .app-boot-splash-title { color: #000000; }
+    html[data-theme="white"] .app-boot-splash-subtitle { color: #162182; }
   </style>
   <link rel="stylesheet" href="./app.css?v=20260302-hotfix2" />
 </head>
@@ -159,7 +179,7 @@
           <input class="input" type="password" id="authLoginPassword" autocomplete="current-password" required />
         </label>
         <div class="row gap">
-          <button class="btn" id="doLogin" value="ok">Войти</button>
+          <button class="btn" id="doLogin" type="button" value="ok">Войти</button>
         </div>
       </div>
 
@@ -181,7 +201,7 @@
           <input class="input" type="password" id="authRegisterPasswordConfirm" autocomplete="new-password" required />
         </label>
         <div class="row gap">
-          <button class="btn" id="doRegister" value="ok">Регистрация</button>
+          <button class="btn" id="doRegister" type="button" value="ok">Регистрация</button>
         </div>
       </div>
       <div class="muted small" id="authMsg"></div>

@@ -2,6 +2,21 @@ import { state } from "./state.js";
 
 export const LOCALES = ["ru", "uk", "en", "et"];
 const DEFAULT_LOCALE = "ru";
+const LOCALE_STORAGE_KEY = "ui_locale";
+
+function readStoredLocale() {
+  try {
+    return localStorage.getItem(LOCALE_STORAGE_KEY);
+  } catch {
+    return null;
+  }
+}
+
+function persistLocale(locale) {
+  try {
+    localStorage.setItem(LOCALE_STORAGE_KEY, locale);
+  } catch {}
+}
 
 const dict = {
   ru: {
@@ -623,14 +638,14 @@ const dict = {
 };
 
 export function getInitialLocale() {
-  const raw = localStorage.getItem("ui_locale") || DEFAULT_LOCALE;
+  const raw = readStoredLocale() || DEFAULT_LOCALE;
   return LOCALES.includes(raw) ? raw : DEFAULT_LOCALE;
 }
 
 export function setLocale(locale) {
   const next = LOCALES.includes(locale) ? locale : DEFAULT_LOCALE;
   state.locale = next;
-  localStorage.setItem("ui_locale", next);
+  persistLocale(next);
   document.documentElement.lang = next;
 }
 
