@@ -9123,3 +9123,164 @@ html[data-theme="white"] body.song-page-country-bg .song-card-shell.song-card-sh
   background: rgba(255, 255, 255, 0.72) !important;
   border-color: rgba(22, 33, 130, 0.44) !important;
 }
+
+/* White theme final tune: controls, cards, and readability */
+html[data-theme="white"] #topSearchBtn,
+html[data-theme="white"] #localeSwitch,
+html[data-theme="white"] #btnMenuClose {
+  background: #1900FF !important;
+  background-color: #1900FF !important;
+  color: #FFFFFF !important;
+  border-color: rgba(255, 255, 255, 0.55) !important;
+  text-shadow: none !important;
+  box-shadow: none !important;
+}
+
+html[data-theme="white"] #localeSwitch {
+  background-image:
+    none,
+    url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='14' height='9' viewBox='0 0 14 9'%3E%3Cpath fill='%23FFFFFF' d='M1.2 1.2a1 1 0 0 1 1.4 0L7 5.6l4.4-4.4a1 1 0 1 1 1.4 1.4L7.7 7.7a1 1 0 0 1-1.4 0L1.2 2.6a1 1 0 0 1 0-1.4z'/%3E%3C/svg%3E") !important;
+  background-repeat: no-repeat, no-repeat !important;
+  background-size: 100% 100%, 12px 8px !important;
+  background-position: center, right 10px center !important;
+}
+
+html[data-theme="white"] #localeSwitch option {
+  background: #1900FF !important;
+  color: #FFFFFF !important;
+}
+
+html[data-theme="white"] #topSearchBtn:hover,
+html[data-theme="white"] #localeSwitch:hover,
+html[data-theme="white"] #btnMenuClose:hover {
+  background: #1300CC !important;
+  background-color: #1300CC !important;
+  border-color: rgba(255, 255, 255, 0.62) !important;
+  filter: none !important;
+}
+
+html[data-theme="white"] #topSearchBtn:active,
+html[data-theme="white"] #localeSwitch:active,
+html[data-theme="white"] #btnMenuClose:active {
+  background: #0F00A8 !important;
+  background-color: #0F00A8 !important;
+  border-color: rgba(255, 255, 255, 0.74) !important;
+}
+
+html[data-theme="white"] .btn,
+html[data-theme="white"] .ig-link,
+html[data-theme="white"] .ig-drawer-link,
+html[data-theme="white"] .ig-drawer-button,
+html[data-theme="white"] .catalog-top-search-btn,
+html[data-theme="white"] .admin-tab-btn,
+html[data-theme="white"] .song-version-btn {
+  border-color: rgba(255, 255, 255, 0.48) !important;
+}
+
+html[data-theme="white"] .btn:hover,
+html[data-theme="white"] .ig-link:hover,
+html[data-theme="white"] .ig-drawer-link:hover,
+html[data-theme="white"] .ig-drawer-button:hover,
+html[data-theme="white"] .catalog-top-search-btn:hover,
+html[data-theme="white"] .admin-tab-btn:hover,
+html[data-theme="white"] .song-version-btn:hover {
+  border-color: rgba(255, 255, 255, 0.62) !important;
+}
+
+html[data-theme="white"] .btn:active,
+html[data-theme="white"] .btn.is-active,
+html[data-theme="white"] .ig-link.active,
+html[data-theme="white"] .ig-drawer-link.active,
+html[data-theme="white"] .ig-drawer-button.active,
+html[data-theme="white"] .catalog-top-search-btn:active,
+html[data-theme="white"] .admin-tab-btn.active,
+html[data-theme="white"] .song-version-btn.is-active {
+  border-color: rgba(255, 255, 255, 0.74) !important;
+}
+
+html[data-theme="white"] .btn:focus-visible,
+html[data-theme="white"] .ig-link:focus-visible,
+html[data-theme="white"] .ig-drawer-link:focus-visible,
+html[data-theme="white"] .ig-drawer-button:focus-visible,
+html[data-theme="white"] .catalog-top-search-btn:focus-visible,
+html[data-theme="white"] .admin-tab-btn:focus-visible,
+html[data-theme="white"] .song-version-btn:focus-visible,
+html[data-theme="white"] #topSearchBtn:focus-visible,
+html[data-theme="white"] #localeSwitch:focus-visible,
+html[data-theme="white"] #btnMenuClose:focus-visible {
+  box-shadow: 0 0 0 3px rgba(25, 0, 255, 0.24) !important;
+  text-shadow: none !important;
+}
+
+html[data-theme="white"] .ig-drawer .user-chip-drawer,
+html[data-theme="white"] .topbar .user-chip {
+  background: transparent !important;
+  border: 0 !important;
+  box-shadow: none !important;
+  color: #000000 !important;
+}
+
+html[data-theme="white"] .home-search-hint.home-search-hint-flat,
+html[data-theme="white"] .card.home-search-hint.home-search-hint-flat {
+  background: transparent !important;
+  background-color: transparent !important;
+  border: 0 !important;
+  box-shadow: none !important;
+}
+
+html[data-theme="white"] .yt-card-title,
+html[data-theme="white"] .yt-card-performer,
+html[data-theme="white"] .yt-card-line,
+html[data-theme="white"] .song-title {
+  text-shadow: none !important;
+  -webkit-text-stroke: 0 !important;
+  paint-order: normal !important;
+}
+
+html[data-theme="white"] .yt-card .yt-card-title,
+html[data-theme="white"] .yt-card .yt-card-performer,
+html[data-theme="white"] .yt-card .yt-card-line,
+html[data-theme="white"] .song-view .song-title,
+html[data-theme="white"] .songCard .songTitle,
+html[data-theme="white"] .songCard .songMeta {
+  color: #000000 !important;
+  -webkit-text-fill-color: #000000 !important;
+}
+
+html[data-theme="white"] .draft-main .songCard,
+html[data-theme="white"] .ac-list .songCard,
+html[data-theme="white"] .ac_item,
+html[data-theme="white"] a.songCard[href^="#/draft/"],
+html[data-theme="white"] .songCard.draft-invitation-card {
+  background: #1900FF !important;
+  background-color: #1900FF !important;
+  border-color: rgba(255, 255, 255, 0.52) !important;
+}
+
+html[data-theme="white"] .draft-main .songCard .songTitle,
+html[data-theme="white"] .draft-main .songCard .songMeta,
+html[data-theme="white"] .ac-list .songCard .songTitle,
+html[data-theme="white"] .ac-list .songCard .songMeta,
+html[data-theme="white"] .ac_item .songTitle,
+html[data-theme="white"] .ac_item .songMeta,
+html[data-theme="white"] .ac_item .badge,
+html[data-theme="white"] a.songCard[href^="#/draft/"] .songTitle,
+html[data-theme="white"] a.songCard[href^="#/draft/"] .songMeta,
+html[data-theme="white"] .songCard.draft-invitation-card .songTitle,
+html[data-theme="white"] .songCard.draft-invitation-card .songMeta {
+  color: #FFFFFF !important;
+  -webkit-text-fill-color: #FFFFFF !important;
+}
+
+html[data-theme="white"] body.song-page-country-bg .song-card-shell.song-card-shell-has-bg,
+html[data-theme="white"] .song-version-pane {
+  background: rgba(7, 151, 242, 0.65) !important;
+  border-color: rgba(22, 33, 130, 0.44) !important;
+}
+
+html[data-theme="white"] .home-country-card-label,
+html[data-theme="white"] .home-country-card-count,
+html[data-theme="white"] .home-country-card-cta {
+  color: #FFFFFF !important;
+  -webkit-text-fill-color: #FFFFFF !important;
+}
