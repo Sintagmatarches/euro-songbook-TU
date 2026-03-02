@@ -204,7 +204,11 @@ export const api = {
       method: "POST",
     });
   },
-  async drafts() { return req("api/drafts", { noCache: true }); },
+  async drafts(params = {}) {
+    const q = new URLSearchParams(params || {});
+    const query = q.toString();
+    return req(query ? `api/drafts?${query}` : "api/drafts", { noCache: true });
+  },
   async createDraft(payload = {}) {
     return req("api/drafts", { method: "POST", body: JSON.stringify(payload || {}) });
   },

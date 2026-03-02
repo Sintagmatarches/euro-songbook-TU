@@ -183,10 +183,13 @@ export async function onRequestPut({ env, request, params }){
   const nextAdminContent = hasOwn("is_admin_content") || hasOwn("isAdminContent")
     ? toAdminContentFlag(body?.is_admin_content ?? body?.isAdminContent)
     : Number(currentSong.is_admin_content || 0) === 1;
-  const status = hasOwn("status")
+  const requestedStatus = hasOwn("status")
     ? (body.status === "draft" ? "draft" : "published")
     : currentSong.status;
-  const nextLangLocked = currentLangLocked || status === "published";
+  const wasEverPublished = currentLangLocked
+    || String(currentSong.status || "").trim().toLowerCase() === "published";
+  const status = wasEverPublished ? "published" : requestedStatus;
+  const nextLangLocked = wasEverPublished || status === "published";
   if(nextLang !== currentSong.lang && nextLangLocked && !isSuperAdmin) {
     return err("Forbidden: cannot change song language after publication", 403);
   }
@@ -261,7 +264,11 @@ export async function onRequestPut({ env, request, params }){
   await upsertFTS(env, id, title, lyrics);
   if (hasOwn("links")) await replaceLinks(env, id, body.links);
   if (hasOwn("versions")) await replaceVersions(env, id, body.versions);
-  return json({ id });
+  return json({
+    id,
+    status,
+    lang_locked: nextLangLocked ? 1 : 0,
+  });
 }
 
 export async function onRequestDelete({ env, request, params }){

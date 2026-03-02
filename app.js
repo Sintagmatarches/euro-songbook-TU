@@ -8,10 +8,12 @@ import { normalizeSongCountry, normalizeSongLanguage } from "./shared/song-catal
 const btnLogin = document.getElementById("btnLogin");
 const btnLogout = document.getElementById("btnLogout");
 const btnMenuLogout = document.getElementById("btnMenuLogout");
+const btnThemeToggle = document.getElementById("btnThemeToggle");
 const btnSidebarToggle = document.getElementById("btnSidebarToggle");
 const btnMenuClose = document.getElementById("btnMenuClose");
 const menuDrawer = document.getElementById("menuDrawer");
 const menuBackdrop = document.getElementById("menuBackdrop");
+const menuSettingsGroup = document.getElementById("menuSettingsGroup");
 const mNavMenu = document.getElementById("mNavMenu");
 const btnInstallApp = document.getElementById("btnInstallApp");
 const userChip = document.getElementById("userChip");
@@ -22,6 +24,7 @@ const topSearchBtn = document.getElementById("topSearchBtn");
 const appBootSplash = document.getElementById("appBootSplash");
 const appBootSplashTitle = document.getElementById("appBootSplashTitle");
 const appBootSplashSubtitle = document.getElementById("appBootSplashSubtitle");
+const metaThemeColor = document.getElementById("metaThemeColor");
 
 const dlgAuth = document.getElementById("dlgAuth");
 const btnAuthClose = document.getElementById("btnAuthClose");
@@ -41,6 +44,11 @@ const doRegister = document.getElementById("doRegister");
 const localeSwitch = document.getElementById("localeSwitch");
 
 const THEME_KEY = "ui_theme";
+const SUPPORTED_THEMES = ["dark", "white"];
+const THEME_META_COLORS = {
+  dark: "#000000",
+  white: "#0797F2",
+};
 let activeTheme = "dark";
 let deferredInstallPrompt = null;
 let authViewportCleanup = null;
@@ -675,9 +683,32 @@ function updateUserChip() {
   applyChip(menuUserChip);
 }
 
-function canReviewAdminRequests() {
+function permissionAliases(permission) {
+  if (permission === "songs.create" || permission === "songs.edit") {
+    return [permission, "songs.manage"];
+  }
+  if (permission === "songs.manage") {
+    return ["songs.manage", "songs.create", "songs.edit"];
+  }
+  return [permission];
+}
+
+function hasPermission(permission) {
   if (!state.user) return false;
-  return state.user.role === "super_admin";
+  if (state.user.role === "super_admin") return true;
+  if (state.user.role !== "admin") return false;
+  const granted = new Set(Array.isArray(state.user.permissions) ? state.user.permissions : []);
+  return permissionAliases(permission).some((value) => granted.has(value));
+}
+
+function hasAnyAdminAccess() {
+  return hasPermission("songs.edit")
+    || hasPermission("proposals.review")
+    || !!(state.user && state.user.role === "super_admin");
+}
+
+function canReviewAdminRequests() {
+  return hasPermission("proposals.review");
 }
 
 function adminAttentionSuffix() {
@@ -728,16 +759,50 @@ async function refreshAdminRequestsAttention(options = {}) {
   applyAdminAttentionLabels();
 }
 
-function getInitialTheme() {
+function normalizeThemeName(raw = "") {
+  const theme = String(raw || "").trim().toLowerCase();
+  if (theme === "light") return "white";
+  if (SUPPORTED_THEMES.includes(theme)) return theme;
   return "dark";
 }
 
+function themeToggleLabel() {
+  return activeTheme === "white"
+    ? t("menu.theme.toDark")
+    : t("menu.theme.toWhite");
+}
 
-function applyTheme(options = {}) {
+function syncThemeToggleButton() {
+  if (!btnThemeToggle) return;
+  const aria = t("menu.theme.ariaToggle");
+  btnThemeToggle.textContent = themeToggleLabel();
+  btnThemeToggle.setAttribute("aria-label", aria);
+  btnThemeToggle.setAttribute("title", aria);
+  btnThemeToggle.setAttribute("aria-pressed", activeTheme === "white" ? "true" : "false");
+}
+
+function syncThemeColorMeta() {
+  if (!metaThemeColor) return;
+  const color = THEME_META_COLORS[activeTheme] || THEME_META_COLORS.dark;
+  metaThemeColor.setAttribute("content", color);
+}
+
+function getInitialTheme() {
+  const stored = String(localStorage.getItem(THEME_KEY) || "").trim().toLowerCase();
+  const normalized = normalizeThemeName(stored || "dark");
+  if (stored && stored !== normalized) {
+    localStorage.setItem(THEME_KEY, normalized);
+  }
+  return normalized || "dark";
+}
+
+function applyTheme(theme = activeTheme, options = {}) {
   const persist = options.persist !== false;
-  activeTheme = "dark";
+  activeTheme = normalizeThemeName(theme);
   document.documentElement.setAttribute("data-theme", activeTheme);
   if (persist) localStorage.setItem(THEME_KEY, activeTheme);
+  syncThemeColorMeta();
+  syncThemeToggleButton();
 }
 
 function applyStaticTexts() {
@@ -801,6 +866,7 @@ function applyStaticTexts() {
   document.getElementById("promptOpen").textContent = t("prompt.open");
   document.getElementById("promptClose").textContent = t("prompt.close");
   if (btnInstallApp) btnInstallApp.textContent = installButtonText();
+  syncThemeToggleButton();
 
   if (localeSwitch) {
     const labels = { ru: "Rus", et: "Est", en: "Eng", uk: "Ukr" };
@@ -815,7 +881,8 @@ function applyStaticTexts() {
 
 function updateInstallButtonVisibility() {
   if (!btnInstallApp) return;
-  btnInstallApp.classList.toggle("hidden", !deferredInstallPrompt);
+  const canShowInstall = !!state.user && !!deferredInstallPrompt;
+  btnInstallApp.classList.toggle("hidden", !canShowInstall);
 }
 
 function setupInstallPrompt() {
@@ -909,16 +976,27 @@ function setActiveNav() {
   });
 
   const canSeeUser = !!state.user;
-  const isAdmin = !!(state.user && state.user.role === "super_admin");
+  const canEditSongs = hasPermission("songs.edit");
+  const canReviewRequests = hasPermission("proposals.review");
   const isSuperAdmin = !!(state.user && state.user.role === "super_admin");
+  const canSeeAdmin = hasAnyAdminAccess();
 
   ["navFav", "mNavFav", "dNavFav", "navDrafts", "mNavDrafts", "dNavDrafts"].forEach((id) => document.getElementById(id)?.classList.toggle("hidden", !canSeeUser));
-  ["navAdmin", "mNavAdmin", "dNavAdmin", "menuAdminGroup", "dNavAdminContent", "dNavAdminRequests"].forEach((id) => document.getElementById(id)?.classList.toggle("hidden", !isAdmin));
+  ["navAdmin", "mNavAdmin", "dNavAdmin", "menuAdminGroup"].forEach((id) => document.getElementById(id)?.classList.toggle("hidden", !canSeeAdmin));
+  document.getElementById("dNavAdminContent")?.classList.toggle("hidden", !canEditSongs);
+  document.getElementById("dNavAdminRequests")?.classList.toggle("hidden", !canReviewRequests);
   document.getElementById("dNavAdminUsers")?.classList.toggle("hidden", !isSuperAdmin);
+  menuSettingsGroup?.classList.remove("hidden");
+  if (!canSeeUser && menuUserChip) {
+    menuUserChip.textContent = "";
+    menuUserChip.classList.add("hidden");
+    menuUserChip.removeAttribute("title");
+  }
 
   btnLogin.classList.toggle("hidden", !!state.user);
   if (btnLogout) btnLogout.classList.add("hidden");
   if (btnMenuLogout) btnMenuLogout.classList.toggle("hidden", !state.user);
+  updateInstallButtonVisibility();
   applyAdminAttentionLabels();
   updateUserChip();
 }
@@ -946,7 +1024,7 @@ async function refreshRoute() {
 state.locale = getInitialLocale();
 setLocale(state.locale);
 activeTheme = getInitialTheme();
-applyTheme();
+applyTheme(activeTheme, { persist: false });
 applyStaticTexts();
 setupInstallPrompt();
 void registerServiceWorker();
@@ -958,6 +1036,10 @@ if (localeSwitch) {
     refreshRoute();
   });
 }
+
+btnThemeToggle?.addEventListener("click", () => {
+  applyTheme(activeTheme === "white" ? "dark" : "white");
+});
 
 btnSidebarToggle?.addEventListener("click", () => setMenuOpen(true));
 btnMenuClose?.addEventListener("click", () => setMenuOpen(false));
@@ -1100,8 +1182,7 @@ router.on(async (route) => {
   setActiveNav();
   const app = document.getElementById("app");
   app.classList.toggle("song-layout", route?.name === "song");
-  const isAdminMobile = route?.name === "admin" && window.matchMedia("(max-width: 980px)").matches;
-  const useReducedRouteMotion = isAdminMobile || shouldUseFastSearchMotion(route);
+  const useReducedRouteMotion = shouldUseFastSearchMotion(route);
   app.innerHTML = `<div class="card"><div class="skeleton"></div></div>`;
   try {
     const out = await render(route);

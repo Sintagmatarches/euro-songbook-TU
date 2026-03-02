@@ -180,5 +180,9 @@ export async function onRequestPost({ env, request }){
   await upsertFTS(env, id, body.title, body.lyrics);
   await replaceLinks(env, id, body.links);
   await replaceVersions(env, id, body.versions);
-  return json({ id });
+  return json({
+    id,
+    status,
+    lang_locked: status === "published" ? 1 : 0,
+  });
 }

@@ -79,7 +79,8 @@ const SAMPLE_SONGS = [
   },
 ];
 
-const schemaSeedCache = new WeakMap();
+let schemaSeedWork = null;
+let schemaSeedReady = false;
 
 async function ensureSongLinksVersionColumn(env) {
   try {
@@ -132,6 +133,13 @@ async function ensureSongsAuditColumns(env) {
       `UPDATE songs
        SET lang_locked = 1
        WHERE status='published' AND coalesce(lang_locked, 0) = 0`
+    );
+    await dbRun(
+      env,
+      `UPDATE songs
+       SET status='published'
+       WHERE coalesce(lang_locked, 0) = 1
+         AND coalesce(status, '') <> 'published'`
     );
   } catch (cause) {
     const message = String(cause?.message || cause || "");
@@ -810,27 +818,25 @@ export async function ensureSeed(env) {
 }
 
 export async function ensureSchemaAndSeed(env) {
-  const cacheKey = env?.DB && typeof env.DB === "object" ? env.DB : null;
-  const cached = cacheKey ? schemaSeedCache.get(cacheKey) : null;
-  if (cached) {
-    await cached;
+  if (schemaSeedReady) return;
+  if (schemaSeedWork) {
+    await schemaSeedWork;
     return;
   }
 
-  const work = (async () => {
+  schemaSeedWork = (async () => {
     await ensureSchema(env);
     await ensureSuperAdmin(env);
     await ensureUsersNicknameData(env);
     await ensureSeed(env);
+    schemaSeedReady = true;
   })();
 
-  if (cacheKey) schemaSeedCache.set(cacheKey, work);
   try {
-    await work;
+    await schemaSeedWork;
   } catch (error) {
-    if (cacheKey && schemaSeedCache.get(cacheKey) === work) {
-      schemaSeedCache.delete(cacheKey);
-    }
+    schemaSeedWork = null;
+    schemaSeedReady = false;
     throw error;
   }
 }

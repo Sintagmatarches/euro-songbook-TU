@@ -4,12 +4,14 @@
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
   <meta name="robots" content="noindex, nofollow, noarchive, nosnippet, noimageindex, notranslate" />
-  <meta name="theme-color" content="#000000" />
+  <meta name="theme-color" content="#000000" id="metaThemeColor" />
   <meta name="mobile-web-app-capable" content="yes" />
   <title>European Songbook</title>
-  <link rel="icon" type="image/png" sizes="32x32" href="./ui/assets/pwa-icon-192-20260221.png" />
-  <link rel="shortcut icon" href="./ui/assets/pwa-icon-192-20260221.png" />
-  <link rel="apple-touch-icon" href="./ui/assets/pwa-icon-512-20260221.png" />
+  <link rel="icon" type="image/png" sizes="32x32" href="./ui/assets/favicon-32-20260302.png" />
+  <link rel="icon" type="image/png" sizes="192x192" href="./ui/assets/pwa-icon-192-20260221.png" />
+  <link rel="icon" type="image/png" sizes="512x512" href="./ui/assets/pwa-icon-512-20260221.png" />
+  <link rel="shortcut icon" href="./ui/assets/favicon-32-20260302.png" />
+  <link rel="apple-touch-icon" sizes="180x180" href="./ui/assets/apple-touch-icon-180-20260302.png" />
   <link rel="manifest" href="./manifest.webmanifest" />
   <link rel="preload" as="image" href="./ui/assets/logo-sticker-20260221.png" />
   <link rel="preload" as="image" href="./ui/assets/pwa-icon-192-20260221.png" />
@@ -19,7 +21,7 @@
     .app-boot-splash { position: fixed; inset: 0; z-index: 1200; display: grid; place-items: center; }
     .app-boot-splash-card img { border-radius: 0; background: transparent; }
   </style>
-  <link rel="stylesheet" href="./app.css" />
+  <link rel="stylesheet" href="./app.css?v=20260302-hotfix2" />
 </head>
 <body>
   <div class="app-boot-splash" id="appBootSplash" role="status" aria-live="polite" aria-label="Loading application">
@@ -114,8 +116,11 @@
       <a class="ig-drawer-link js-route-link" href="#/admin/users" id="dNavAdminUsers">Пользователи</a>
     </div>
 
-    <div class="ig-drawer-group">
+    <div class="ig-drawer-group" id="menuSettingsGroup">
       <div class="ig-drawer-label" id="menuSettingsLabel">Настройки</div>
+      <button class="ig-drawer-link ig-drawer-button" id="btnThemeToggle" type="button">
+        Включить белую тему
+      </button>
       <button class="ig-drawer-link ig-drawer-button hidden" id="btnInstallApp" type="button">
         Установить приложение
       </button>
@@ -250,7 +255,7 @@
       }, 7000);
     }());
   </script>
-  <script type="module" src="./app.js?v=20260225-utf8fix2"></script>
+  <script type="module" src="./app.js?v=20260302-hotfix2"></script>
 </body>
 </html>
 

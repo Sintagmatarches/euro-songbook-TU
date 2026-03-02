@@ -618,6 +618,18 @@ export async function applyDraftOperation(env, { draftId, userId, op }) {
     await dbRun(env, `UPDATE draft_line_variants SET is_active=0, updated_at=? WHERE line_id=? AND draft_id=?`, [nowIso(), lineId, draftId]);
     await dbRun(env, `UPDATE draft_line_variants SET is_active=1, updated_at=? WHERE id=?`, [nowIso(), variantId]);
     await dbRun(env, `UPDATE draft_lines SET active_variant_id=?, updated_at=? WHERE id=?`, [variantId, nowIso(), lineId]);
+  } else if (type === "set_variant_text") {
+    const variantId = String(payload.variant_id || "").trim();
+    if (!variantId) throw new Error("variant_id is required");
+    const variant = await dbGet(env, `SELECT id FROM draft_line_variants WHERE id=? AND draft_id=?`, [variantId, draftId]);
+    if (!variant) throw new Error("variant not found");
+    await dbRun(
+      env,
+      `UPDATE draft_line_variants
+       SET text=?, updated_at=?
+       WHERE id=? AND draft_id=?`,
+      [String(payload.text ?? ""), nowIso(), variantId, draftId]
+    );
   } else if (type === "set_variant_confidence") {
     const variantId = String(payload.variant_id || "").trim();
     if (!variantId) throw new Error("variant_id is required");

@@ -13,13 +13,13 @@
       "src": "./ui/assets/pwa-icon-192-20260221.png",
       "sizes": "192x192",
       "type": "image/png",
-      "purpose": "any"
+      "purpose": "any maskable"
     },
     {
       "src": "./ui/assets/pwa-icon-512-20260221.png",
       "sizes": "512x512",
       "type": "image/png",
-      "purpose": "any"
+      "purpose": "any maskable"
     }
   ]
 }
