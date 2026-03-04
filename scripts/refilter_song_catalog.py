@@ -47,7 +47,12 @@ LIFESPAN_RE = re.compile(r"\b(1[6-9]\d{2}|20\d{2})\s*[-–—]\s*(1[6-9]\d{2}|20
 BIRTH_RE = re.compile(r"(род\.?|born|умер|died)", re.IGNORECASE)
 IMPORT_META_LINE_RE = re.compile(r"^\s*(date:|message_id:|import_source:|added:|updated:|merged_versions:)", re.IGNORECASE)
 IMPORT_META_INLINE_RE = re.compile(r"(date:\s*\d{4}-\d{2}-\d{2}|message_id:\s*\d+|import_source:|merged_versions:\s*\d+)", re.IGNORECASE)
+IMPORT_META_SEGMENT_RE = re.compile(
+    r"(date:\s*[^|]+|message_id:\s*\d+|import_source:\s*[^|]+|added:\s*[^|]+|updated:\s*[^|]+|merged_versions:\s*[^|]+)",
+    re.IGNORECASE,
+)
 WORD_RE = re.compile(r"[0-9A-Za-z\u00C0-\u024F\u0400-\u052f]+")
+TOKEN_RE = re.compile(r"[0-9A-Za-z\u00C0-\u024F\u0400-\u052f']+")
 
 LAT_TO_CYR_LOOKALIKES = str.maketrans(
     {
@@ -112,6 +117,65 @@ NON_SONG_LYRICS_RE = re.compile(
     r"(в изданиях вольной русской поэзии|расположены по порядку свадебных обрядов|всего\s+\d+\s+пес)",
     re.IGNORECASE,
 )
+TITLE_CREDIT_RE = re.compile(
+    r"(?:(?:^|\b)(музыка|music)\s*:\s*.+(?:\b|$))|(?:(?:^|\b)(слова|lyrics)\s*:\s*.+(?:\b|$))",
+    re.IGNORECASE,
+)
+TITLE_SERVICE_RE = re.compile(
+    r"^\s*((музыка|music|слова|lyrics)\s*:|из\s+к/?ф|from\s+movie|исп\.)",
+    re.IGNORECASE,
+)
+TITLE_NUMBERING_RE = re.compile(r"^\s*\d+\s*[-.)]\s*")
+LYRIC_SERVICE_LINE_RE = re.compile(
+    r"^\s*((музыка|music|слова|lyrics)\s*:|date:|message_id:|import_source:|added:|updated:|merged_versions:)",
+    re.IGNORECASE,
+)
+LYRIC_STRUCTURE_LINE_RE = re.compile(
+    r"^\s*(?:[\[(])?\s*(припев|куплет|запев|chorus|verse|bridge|intro|outro|refrain)\s*(?:[\])])?\s*[:.]?\s*$",
+    re.IGNORECASE,
+)
+LYRIC_COMMENT_PREFIX_RE = re.compile(
+    r"^\s*(примеч(?:ание)?|коммент(?:арий)?|источник|source|note|notes|перевод|translation|translated\s+by|"
+    r"вариант|запис(?:ал|ано|ана)|опубл|published|publisher|edition|recorded|recording)\b",
+    re.IGNORECASE,
+)
+LYRIC_COMMENT_HINT_RE = re.compile(
+    r"\b(источник|source|перевод|translation|вариант|запис|recorded|publisher|edition|опубл|note|notes)\b",
+    re.IGNORECASE,
+)
+LYRIC_COMMENT_BLOCK_START_RE = re.compile(
+    r"^\s*(примеч(?:ание)?|коммент(?:арий)?|источник|source|note|notes)\b.*:?\s*$",
+    re.IGNORECASE,
+)
+URL_RE = re.compile(r"https?://|www\.|@\w", re.IGNORECASE)
+OLD_RU_YAT_RE = re.compile(r"[Ѣѣ]")
+OLD_RU_CHARS_RE = re.compile(r"[ѢѣѲѳѴѵ]")
+OLD_RU_FINAL_HARD_SIGN_RE = re.compile(r"\b[А-Яа-яЁёІіѢѣѲѳѴѵ]+ъ\b")
+
+UK_WORD_MARKERS = {
+    "що",
+    "це",
+    "мені",
+    "тобі",
+    "й",
+    "є",
+    "буде",
+    "мати",
+    "жито",
+    "коли",
+    "вічним",
+}
+BE_WORD_MARKERS = {
+    "дзе",
+    "няма",
+    "калі",
+    "яна",
+    "ён",
+    "гэта",
+    "твая",
+    "мая",
+    "ў",
+}
 
 MOVEMENT_PATTERNS: list[tuple[str, re.Pattern[str]]] = [
     ("russo_japanese_war_1904_1905", re.compile(r"(русско[-\s]японск\w+\s+войн|russo[-\s]japanese\s+war)", re.IGNORECASE)),
@@ -225,6 +289,45 @@ class YearCandidate:
     origin: str
 
 
+@dataclass
+class FilterPolicy:
+    country_ambiguity_policy: str = "other_countries"
+    cyr_lang_switch_policy: str = "aggressive"
+    max_scope_chars: int = 3200
+    sample_seed: int = 42
+
+
+@dataclass
+class RowSignals:
+    title_norm: str
+    subtitle_norm: str
+    lyrics_norm: str
+    lyrics_song: str
+    lyrics_comment_lines: int
+    source_norm: str
+    notes_norm: str
+    source_clean: str
+    notes_clean: str
+    source_removed_meta: int
+    notes_removed_meta: int
+    scope_short: str
+    cyr_count: int
+    lat_count: int
+    old_ru_yat_count: int
+    old_ru_char_count: int
+    old_ru_final_hard_sign_count: int
+    uk_unique_chars: int
+    be_unique_chars: int
+    uk_word_marker_count: int
+    be_word_marker_count: int
+    uk_marker_count: int
+    be_marker_count: int
+    title_is_polluted: bool
+    notes_has_meta: bool
+    geo_votes: dict[str, int]
+    geo_lyrics_votes: dict[str, int]
+
+
 def norm_text(value: str | None) -> str:
     return str(value or "")
 
@@ -239,6 +342,197 @@ def parse_year(value: str | None) -> int | None:
         return None
     y = int(raw)
     return y if YEAR_MIN <= y <= YEAR_MAX else None
+
+
+def tokenize_words(text: str) -> list[str]:
+    return [t.lower() for t in TOKEN_RE.findall(norm_text(text))]
+
+
+def count_chars(text: str, chars: str) -> int:
+    if not text:
+        return 0
+    return sum(text.count(ch) for ch in chars)
+
+
+def has_import_meta_noise(text: str) -> bool:
+    raw = normalize_newlines(text)
+    if not raw.strip():
+        return False
+    if IMPORT_META_LINE_RE.search(raw):
+        return True
+    return bool(IMPORT_META_INLINE_RE.search(raw))
+
+
+def _strip_meta_segments(line: str) -> tuple[str, int]:
+    removed = 0
+
+    def _repl(_match: re.Match[str]) -> str:
+        nonlocal removed
+        removed += 1
+        return ""
+
+    cleaned = IMPORT_META_SEGMENT_RE.sub(_repl, line)
+    cleaned = re.sub(r"\s*\|\s*", " | ", cleaned)
+    cleaned = re.sub(r"\s{2,}", " ", cleaned).strip()
+    cleaned = cleaned.strip("|").strip()
+    return cleaned, removed
+
+
+def clean_import_meta_text(text: str) -> tuple[str, int]:
+    kept: list[str] = []
+    removed_total = 0
+    for raw in normalize_newlines(text).splitlines():
+        line = raw.strip()
+        if not line:
+            if kept and kept[-1] != "":
+                kept.append("")
+            continue
+        if IMPORT_META_LINE_RE.match(line):
+            removed_total += 1
+            continue
+        cleaned, removed_inline = _strip_meta_segments(line)
+        removed_total += removed_inline
+        if not cleaned:
+            continue
+        if re.fullmatch(r"[|:;,\-\s]+", cleaned):
+            removed_total += 1
+            continue
+        kept.append(cleaned)
+    out = "\n".join(kept).strip()
+    return out, removed_total
+
+
+def is_polluted_title(title: str) -> bool:
+    t = normalize_inline(title)
+    if not t:
+        return True
+    if TITLE_NUMBERING_RE.match(t):
+        return True
+    if TITLE_SERVICE_RE.search(t):
+        return True
+    if TITLE_CREDIT_RE.search(t) and ("музыка" in t.lower() or "music" in t.lower()):
+        return True
+    return False
+
+
+def is_lyric_like_line(line: str) -> bool:
+    s = norm_text(line).strip()
+    if not s or len(s) > 100:
+        return False
+    if URL_RE.search(s):
+        return False
+    if s.endswith(":"):
+        return False
+    words = tokenize_words(s)
+    if not words or len(words) > 8:
+        return False
+    if LYRIC_SERVICE_LINE_RE.search(s):
+        return False
+    return True
+
+
+def split_leading_service_lines(lyrics: str) -> tuple[str, list[str]]:
+    lines = normalize_newlines(lyrics).splitlines()
+    moved: list[str] = []
+    idx = 0
+    while idx < len(lines):
+        line = lines[idx].strip()
+        if not line:
+            idx += 1
+            continue
+        if LYRIC_SERVICE_LINE_RE.match(line):
+            moved.append(line)
+            idx += 1
+            continue
+        break
+    body = "\n".join(lines[idx:]).strip()
+    return body, moved
+
+
+def is_commentary_line(line: str) -> bool:
+    s = norm_text(line).strip()
+    if not s:
+        return False
+    if LYRIC_STRUCTURE_LINE_RE.match(s):
+        return False
+    if LYRIC_SERVICE_LINE_RE.match(s):
+        return True
+    if IMPORT_META_INLINE_RE.search(s):
+        return True
+    if URL_RE.search(s):
+        return True
+    if LYRIC_COMMENT_PREFIX_RE.match(s):
+        return True
+
+    words = tokenize_words(s)
+    if not words:
+        return False
+    if s.startswith("[") and s.endswith("]") and len(words) >= 5:
+        return True
+    if s.startswith("(") and s.endswith(")") and len(words) >= 6 and LYRIC_COMMENT_HINT_RE.search(s):
+        return True
+    if len(words) >= 12 and re.search(r"[,:;]", s) and s.endswith((".", ";")):
+        return True
+    if len(words) >= 9 and YEAR_RE.search(s) and LYRIC_COMMENT_HINT_RE.search(s):
+        return True
+    return False
+
+
+def split_lyrics_commentary(lyrics: str) -> tuple[str, list[str]]:
+    lines = normalize_newlines(lyrics).splitlines()
+    kept: list[str] = []
+    comments: list[str] = []
+    in_comment_block = False
+
+    for raw in lines:
+        line = raw.strip()
+        if not line:
+            in_comment_block = False
+            if kept and kept[-1] != "":
+                kept.append("")
+            continue
+
+        if in_comment_block:
+            comments.append(line)
+            continue
+
+        if is_commentary_line(line):
+            comments.append(line)
+            if LYRIC_COMMENT_BLOCK_START_RE.match(line) and line.endswith(":"):
+                in_comment_block = True
+            continue
+
+        kept.append(raw.rstrip())
+
+    body = normalize_spaces("\n".join(kept))
+    return body, comments
+
+
+def extract_lyrics_for_classification(lyrics: str) -> tuple[str, int]:
+    src = normalize_newlines(lyrics).strip()
+    if not src:
+        return "", 0
+    body, moved_service = split_leading_service_lines(src)
+    body, moved_comments = split_lyrics_commentary(body)
+    if not body:
+        # Safety fallback for ultra-short songs: keep original text instead of empty sample.
+        return src, len(moved_service) + len(moved_comments)
+    return body, len(moved_service) + len(moved_comments)
+
+
+def extract_title_from_lyrics_head(lyrics: str) -> tuple[str | None, int]:
+    lines = normalize_newlines(lyrics).splitlines()
+    non_empty = [i for i, line in enumerate(lines) if line.strip()]
+    for idx in non_empty[:10]:
+        candidate = normalize_inline(lines[idx])
+        if not is_lyric_like_line(candidate):
+            continue
+        return candidate, idx
+    return None, -1
+
+
+def count_marker_words(tokens: list[str], markers: set[str]) -> int:
+    return sum(1 for token in tokens if token in markers)
 
 
 def parse_catalog_values(var_name: str) -> list[str]:
@@ -291,34 +585,244 @@ def count_scripts(text: str) -> tuple[int, int]:
     return len(CYR_RE.findall(s)), len(LAT_RE.findall(s))
 
 
-def classify_language(row: SongRow, lang_mod, lang_values: set[str]) -> tuple[str, float, str]:
-    old_lang = row.lang if row.lang in lang_values else "ru"
-    core = lang_mod.SongRow(row.id, row.title, row.subtitle, old_lang, row.lyrics, "", "")
-    pred, conf, reason = lang_mod.classify_song(core)
+def country_votes_from_scope(
+    title: str,
+    subtitle: str,
+    source: str,
+    notes: str,
+    lyrics: str,
+    country_values: set[str],
+) -> tuple[dict[str, int], dict[str, int]]:
+    weights = {
+        "title": 8,
+        "subtitle": 6,
+        "source": 4,
+        "notes": 3,
+        "lyrics": 1,
+    }
+    scopes = {
+        "title": title,
+        "subtitle": subtitle,
+        "source": source,
+        "notes": notes,
+        "lyrics": lyrics,
+    }
+    votes: Counter[str] = Counter()
+    lyrics_votes: Counter[str] = Counter()
+    patterns = [
+        (AUSTRIA_RE, "austria_1945"),
+        (SWISS_RE, "switzerland_1900"),
+        (LIECHTENSTEIN_RE, "liechtenstein_1900"),
+        (BELGIUM_RE, "belgium_1900"),
+        (NETHERLANDS_RE, "netherlands_1900"),
+        (LUXEMBOURG_RE, "luxembourg_1900"),
+        (MONACO_RE, "monaco_1900"),
+        (SAN_MARINO_RE, "san_marino_1900"),
+        (VATICAN_RE, "vatican_1929"),
+        (CYPRUS_RE, "cyprus_1960"),
+        (MALTA_RE, "malta_1964"),
+        (ANDORRA_RE, "andorra_1900"),
+        (IRELAND_RE, "ireland_republic_1949"),
+        (UK_RE, "uk_gb_ni_1922"),
+        (MOLDOVA_RE, "moldova_1991"),
+    ]
+    for field, text in scopes.items():
+        if not text:
+            continue
+        w = weights[field]
+        for patt, code in patterns:
+            if patt.search(text):
+                mapped = pick_existing(country_values, code)
+                votes[mapped] += w
+                if field == "lyrics":
+                    lyrics_votes[mapped] += w
+    return dict(votes), dict(lyrics_votes)
 
-    if (not pred or conf < 0.55) and len(norm_text(row.lyrics).strip()) < 220:
-        full = lang_mod.SongRow(row.id, row.title, row.subtitle, old_lang, row.lyrics, row.source, row.notes)
-        p2, c2, r2 = lang_mod.classify_song(full)
-        if c2 > conf:
-            pred, conf, reason = p2, c2, r2
+
+def is_country_ambiguous(votes: dict[str, int], lyrics_votes: dict[str, int]) -> tuple[bool, bool]:
+    if not votes:
+        # No geo-signals: keep timeline fallback, but mark as low-signal for QA.
+        return False, True
+    ranked = sorted(votes.items(), key=lambda item: item[1], reverse=True)
+    top_score = ranked[0][1]
+    second_score = ranked[1][1] if len(ranked) > 1 else 0
+    total_votes = sum(votes.values())
+    lyrics_total = sum(lyrics_votes.values())
+    low_signal = top_score < 6
+    close_top = (top_score - second_score) <= 2
+    lyrics_dominant_scatter = len(votes) >= 3 and total_votes > 0 and (lyrics_total / total_votes) > 0.7
+    return (low_signal or close_top or lyrics_dominant_scatter), low_signal
+
+
+def build_row_signals(row: SongRow, country_values: set[str], policy: FilterPolicy) -> RowSignals:
+    title_norm = normalize_inline(row.title)
+    subtitle_norm = normalize_inline(row.subtitle)
+    lyrics_norm = normalize_newlines(row.lyrics).strip()
+    lyrics_song, lyrics_comment_lines = extract_lyrics_for_classification(lyrics_norm)
+    source_norm = normalize_newlines(row.source).strip()
+    notes_norm = normalize_newlines(row.notes).strip()
+    source_clean, source_removed_meta = clean_import_meta_text(source_norm)
+    notes_clean, notes_removed_meta = clean_import_meta_text(notes_norm)
+    scope_short = "\n".join(
+        [
+            title_norm,
+            subtitle_norm,
+            source_clean[:2200],
+            notes_clean[:2200],
+            lyrics_song[: policy.max_scope_chars],
+        ]
+    )
+    cyr_count, lat_count = count_scripts("\n".join([title_norm, subtitle_norm, lyrics_song[:7000]]))
+    old_ru_sample = "\n".join([title_norm, subtitle_norm, lyrics_song[:7000]])
+    old_ru_yat_count = len(OLD_RU_YAT_RE.findall(old_ru_sample))
+    old_ru_char_count = len(OLD_RU_CHARS_RE.findall(old_ru_sample))
+    old_ru_final_hard_sign_count = len(OLD_RU_FINAL_HARD_SIGN_RE.findall(old_ru_sample))
+    tokens = tokenize_words(lyrics_song[:7000])
+    uk_unique_chars = count_chars(lyrics_song, "їєґЇЄҐ")
+    be_unique_chars = count_chars(lyrics_song, "ўЎ")
+    uk_word_marker_count = count_marker_words(tokens, UK_WORD_MARKERS)
+    be_word_marker_count = count_marker_words(tokens, BE_WORD_MARKERS)
+    uk_marker_count = uk_unique_chars + uk_word_marker_count
+    be_marker_count = be_unique_chars + be_word_marker_count
+    geo_votes, geo_lyrics_votes = country_votes_from_scope(
+        title_norm,
+        subtitle_norm,
+        source_clean,
+        notes_clean,
+        lyrics_song[: policy.max_scope_chars],
+        country_values,
+    )
+    return RowSignals(
+        title_norm=title_norm,
+        subtitle_norm=subtitle_norm,
+        lyrics_norm=lyrics_norm,
+        lyrics_song=lyrics_song,
+        lyrics_comment_lines=lyrics_comment_lines,
+        source_norm=source_norm,
+        notes_norm=notes_norm,
+        source_clean=source_clean,
+        notes_clean=notes_clean,
+        source_removed_meta=source_removed_meta,
+        notes_removed_meta=notes_removed_meta,
+        scope_short=scope_short,
+        cyr_count=cyr_count,
+        lat_count=lat_count,
+        old_ru_yat_count=old_ru_yat_count,
+        old_ru_char_count=old_ru_char_count,
+        old_ru_final_hard_sign_count=old_ru_final_hard_sign_count,
+        uk_unique_chars=uk_unique_chars,
+        be_unique_chars=be_unique_chars,
+        uk_word_marker_count=uk_word_marker_count,
+        be_word_marker_count=be_word_marker_count,
+        uk_marker_count=uk_marker_count,
+        be_marker_count=be_marker_count,
+        title_is_polluted=is_polluted_title(title_norm),
+        notes_has_meta=has_import_meta_noise(notes_norm),
+        geo_votes=geo_votes,
+        geo_lyrics_votes=geo_lyrics_votes,
+    )
+
+
+def has_strong_uk_signal(signals: RowSignals) -> bool:
+    if signals.uk_unique_chars >= 2:
+        return True
+    if signals.uk_unique_chars >= 1 and signals.uk_word_marker_count >= 1:
+        return True
+    if signals.uk_word_marker_count >= 3 and signals.cyr_count >= max(20, int(signals.lat_count * 1.1)):
+        return True
+    return False
+
+
+def has_strong_be_signal(signals: RowSignals) -> bool:
+    if signals.be_unique_chars >= 2:
+        return True
+    if signals.be_unique_chars >= 1 and signals.be_word_marker_count >= 1:
+        return True
+    if signals.be_word_marker_count >= 3 and signals.cyr_count >= max(20, int(signals.lat_count * 1.1)):
+        return True
+    return False
+
+
+def has_strong_cyr_lang_signal(signals: RowSignals) -> bool:
+    return has_strong_uk_signal(signals) or has_strong_be_signal(signals)
+
+
+def has_old_ru_orthography(signals: RowSignals) -> bool:
+    if signals.old_ru_yat_count >= 1:
+        return True
+    if signals.old_ru_char_count >= 2:
+        return True
+    if signals.old_ru_final_hard_sign_count >= 2:
+        return True
+    return False
+
+
+def force_cyr_lang_aggressive(
+    old_lang: str,
+    pred_lang: str,
+    reason: str,
+    signals: RowSignals,
+) -> tuple[str, str, bool]:
+    cyr_dominant = signals.cyr_count >= max(18, int(signals.lat_count * 1.1))
+    uk_strong = has_strong_uk_signal(signals)
+    be_strong = has_strong_be_signal(signals)
+    old_ru_guard = has_old_ru_orthography(signals)
+    if old_ru_guard and old_lang == "ru" and (uk_strong or be_strong):
+        return pred_lang, f"{reason}|old_ru_orthography_guard", False
+    if not cyr_dominant and not (uk_strong or be_strong):
+        return pred_lang, reason, False
+    if uk_strong and be_strong and abs(signals.uk_marker_count - signals.be_marker_count) <= 2:
+        return pred_lang, f"{reason}|lang_scope_conflict", False
+    if uk_strong and signals.uk_marker_count >= signals.be_marker_count:
+        return "uk", "uk_marker", True
+    if be_strong and signals.be_marker_count > signals.uk_marker_count:
+        return "be", "be_marker", True
+    return pred_lang, reason, False
+
+
+def classify_language(
+    row: SongRow,
+    signals: RowSignals,
+    lang_mod,
+    lang_values: set[str],
+    policy: FilterPolicy,
+) -> tuple[str, float, str, bool]:
+    old_lang = row.lang if row.lang in lang_values else "ru"
+    core = lang_mod.SongRow(row.id, signals.title_norm, signals.subtitle_norm, old_lang, signals.lyrics_song, "", "")
+    pred, conf, reason = lang_mod.classify_song(core)
 
     if pred not in lang_values:
         pred, conf, reason = old_lang, 0.0, "keep_old_unknown"
 
-    sample = "\n".join([row.title, row.subtitle, row.lyrics[:7000]])
-    cyr, lat = count_scripts(sample)
     cyr_langs = set(getattr(lang_mod, "CYR_LANGS", {"ru", "uk", "be", "bg", "mk", "sr", "kk"}))
-    if cyr >= max(28, int(lat * 1.2)) and pred not in cyr_langs:
-        return (old_lang if old_lang in cyr_langs else "ru"), 1.0, "script_guard_cyr"
-    if lat >= max(30, int(cyr * 1.25)) and pred in cyr_langs and old_lang not in cyr_langs:
-        return old_lang, 0.9, "script_guard_lat_keep_old"
+    if signals.cyr_count >= max(28, int(signals.lat_count * 1.2)) and pred not in cyr_langs:
+        pred, conf, reason = (old_lang if old_lang in cyr_langs else "ru"), 1.0, "script_guard_cyr"
+    elif signals.lat_count >= max(30, int(signals.cyr_count * 1.25)) and pred in cyr_langs and old_lang not in cyr_langs:
+        pred, conf, reason = old_lang, 0.9, "script_guard_lat_keep_old"
 
-    return pred, float(conf), str(reason)
+    forced = False
+    if policy.cyr_lang_switch_policy == "aggressive":
+        pred, reason, forced = force_cyr_lang_aggressive(old_lang, pred, str(reason), signals)
+        if forced:
+            conf = max(float(conf), 0.99)
+    elif policy.cyr_lang_switch_policy == "strict" and old_lang == "ru" and pred in {"uk", "be"} and "hint" not in str(reason):
+        pred, conf, reason = old_lang, float(conf), "strict_keep_ru"
+
+    if pred not in lang_values:
+        pred, conf, reason = old_lang, 0.0, "keep_old_unknown_final"
+        forced = False
+
+    return pred, float(conf), str(reason), forced
 
 
 def should_apply_language_change(old_lang: str, new_lang: str, confidence: float, reason: str, lang_mod) -> bool:
     if old_lang == new_lang:
         return False
+    if "old_ru_orthography_guard" in reason and old_lang == "ru" and new_lang in {"uk", "be"}:
+        return False
+    marker_reason = reason in {"uk_marker", "be_marker", "aggressive_uk_markers", "aggressive_be_markers"}
+    if marker_reason and new_lang in {"uk", "be"}:
+        return confidence >= 0.9
     if new_lang in {"lb", "fo", "ga", "mt", "cy", "sq", "eu", "gl", "ca", "me"} and "hint" not in reason:
         return False
     if hasattr(lang_mod, "should_apply_language_change"):
@@ -367,19 +871,8 @@ def extract_year_candidates(text: str, origin: str) -> list[YearCandidate]:
 
 
 def drop_import_meta_lines(text: str) -> str:
-    lines = []
-    for raw in normalize_newlines(text).splitlines():
-        line = raw.strip()
-        if not line:
-            lines.append(raw)
-            continue
-        if IMPORT_META_LINE_RE.match(line):
-            continue
-        # Telegram import metadata often stored in one inline line with pipes.
-        if IMPORT_META_INLINE_RE.search(line) and "|" in line:
-            continue
-        lines.append(raw)
-    return "\n".join(lines).strip()
+    cleaned, _removed = clean_import_meta_text(text)
+    return cleaned
 
 
 SCRIPT_CYR_LANGS = {"ru", "uk", "be", "bg", "mk", "sr", "kk"}
@@ -435,6 +928,69 @@ def fix_mixed_script_text(text: str, lang: str) -> tuple[str, int]:
     return fixed_text, changed
 
 
+def repair_title_from_lyrics(title: str, lyrics: str, notes: str) -> tuple[str, str, str, bool]:
+    clean_title = normalize_inline(title)
+    clean_lyrics = normalize_newlines(lyrics).strip()
+    clean_notes = normalize_newlines(notes).strip()
+    repaired = False
+
+    body, moved_service = split_leading_service_lines(clean_lyrics)
+    body, moved_comments = split_lyrics_commentary(body)
+    moved = [*moved_service, *moved_comments]
+    if moved:
+        moved_block = normalize_spaces("\n".join(moved))
+        if moved_block and moved_block not in clean_notes:
+            clean_notes = f"{clean_notes}\n\n{moved_block}".strip() if clean_notes else moved_block
+    clean_lyrics = body
+
+    if is_polluted_title(clean_title):
+        candidate, idx = extract_title_from_lyrics_head(clean_lyrics)
+        if candidate:
+            lines = normalize_newlines(clean_lyrics).splitlines()
+            clean_title = candidate
+            tail = lines[idx + 1 :]
+            while tail and not tail[0].strip():
+                tail.pop(0)
+            clean_lyrics = "\n".join(tail).strip()
+            repaired = True
+
+    return clean_title, clean_lyrics, clean_notes, repaired
+
+
+def validate_row_update(
+    *,
+    clean_title: str,
+    clean_notes: str,
+    final_lang: str,
+    signals: RowSignals,
+    validation_flags: Counter[str],
+) -> tuple[str, str, str]:
+    out_title = clean_title
+    out_notes = clean_notes
+    out_lang = final_lang
+
+    if has_import_meta_noise(out_notes):
+        out_notes = ""
+        validation_flags["notes_noise"] += 1
+
+    if is_polluted_title(out_title):
+        validation_flags["title_pollution"] += 1
+
+    if has_old_ru_orthography(signals):
+        return out_title, out_notes, out_lang
+
+    uk_strong = has_strong_uk_signal(signals)
+    be_strong = has_strong_be_signal(signals)
+    if uk_strong and not be_strong and out_lang != "uk":
+        validation_flags["lang_scope_conflict"] += 1
+    elif be_strong and not uk_strong and out_lang != "be":
+        validation_flags["lang_scope_conflict"] += 1
+    elif uk_strong and be_strong and out_lang not in {"uk", "be"}:
+        validation_flags["lang_scope_conflict"] += 1
+
+    return out_title, out_notes, out_lang
+
+
 def is_probably_non_song(title: str, lyrics: str) -> bool:
     t = norm_text(title)
     l = norm_text(lyrics)
@@ -482,17 +1038,22 @@ def duplicate_drop_ids(rows: list[SongRow]) -> dict[str, str]:
             if not title_norm or not keeper_title:
                 continue
             # Conservative: dedupe only when titles are equal or one contains the other.
+            max_len = max(len(title_norm), len(keeper_title))
+            len_gap = abs(len(title_norm) - len(keeper_title))
+            if max_len == 0 or (len_gap / max_len) > 0.35:
+                continue
             similar = difflib.SequenceMatcher(a=title_norm, b=keeper_title).ratio() >= 0.82
             if title_norm == keeper_title or title_norm in keeper_title or keeper_title in title_norm or similar:
                 drops[row.id] = keeper.id
     return drops
 
 
-def infer_song_year(row: SongRow) -> tuple[int | None, str]:
+def infer_song_year(row: SongRow, signals: RowSignals | None = None) -> tuple[int | None, str]:
     old = parse_year(row.year)
-    source_clean = drop_import_meta_lines(row.source)
-    notes_clean = drop_import_meta_lines(row.notes)
-    tail = "\n".join(normalize_newlines(row.lyrics).splitlines()[-10:])
+    source_clean = signals.source_clean if signals else drop_import_meta_lines(row.source)
+    notes_clean = signals.notes_clean if signals else drop_import_meta_lines(row.notes)
+    lyrics_base = signals.lyrics_song if signals else normalize_newlines(row.lyrics)
+    tail = "\n".join(lyrics_base.splitlines()[-10:])
     cands: list[YearCandidate] = []
     cands.extend(extract_year_candidates(row.title, "title"))
     cands.extend(extract_year_candidates(row.subtitle, "subtitle"))
@@ -980,32 +1541,49 @@ def forced_country_by_id(song_id: str, country_values: set[str]) -> str | None:
     return None
 
 
-def classify_country(row: SongRow, lang: str, year: int | None, country_values: set[str], aliases: dict[str, str]) -> tuple[str, str]:
-    scope = "\n".join([
-        norm_text(row.title),
-        norm_text(row.subtitle),
-        norm_text(row.source)[:2200],
-        norm_text(row.notes)[:2200],
-        normalize_newlines(row.lyrics)[:3200],
-    ])
+def classify_country(
+    row: SongRow,
+    signals: RowSignals,
+    lang: str,
+    year: int | None,
+    country_values: set[str],
+    aliases: dict[str, str],
+    policy: FilterPolicy,
+) -> tuple[str, str, bool, bool]:
+    scope = signals.scope_short
     old_country = aliases.get(fold_alias(row.country), "")
     if old_country not in country_values:
         old_country = ""
 
     forced = forced_country_by_id(row.id, country_values)
     if forced:
-        return forced, "country_forced_by_id"
+        return forced, "country_forced_by_id", False, False
 
     new_country = timeline_country_for_lang(lang, year, scope, country_values)
     if new_country not in country_values:
         new_country = "other_countries"
     if old_country in MOVEMENT_COUNTRIES and new_country not in MOVEMENT_COUNTRIES:
-        return old_country, "keep_old_movement"
+        return old_country, "keep_old_movement", False, False
+
+    ambiguous, low_signal = is_country_ambiguous(signals.geo_votes, signals.geo_lyrics_votes)
+    if ambiguous:
+        if policy.country_ambiguity_policy == "first_match" and signals.geo_votes:
+            ranked = sorted(signals.geo_votes.items(), key=lambda item: item[1], reverse=True)
+            voted = ranked[0][0]
+            if voted in country_values:
+                new_country = voted
+                return new_country, "country_ambiguous_first_match", True, low_signal
+        if policy.country_ambiguity_policy == "keep_old" and old_country:
+            return old_country, "country_ambiguous_keep_old", True, low_signal
+        new_country = "other_countries"
+        if new_country in country_values:
+            return new_country, "country_ambiguous_to_other", True, low_signal
+
     if not old_country:
-        return new_country, "country_recomputed_empty_old"
+        return new_country, "country_recomputed_empty_old", ambiguous, low_signal
     if old_country != new_country:
-        return new_country, "country_recomputed"
-    return new_country, "keep_old_country"
+        return new_country, "country_recomputed", ambiguous, low_signal
+    return new_country, "keep_old_country", ambiguous, low_signal
 
 
 def enforce_year_bounds(country: str, year: int | None) -> int | None:
@@ -1051,7 +1629,14 @@ def sql_str(value: str) -> str:
     return "'" + norm_text(value).replace("'", "''") + "'"
 
 
-def build_updates(rows: list[SongRow], lang_mod, lang_values: set[str], country_values: set[str], aliases: dict[str, str]) -> tuple[list[str], dict]:
+def build_updates(
+    rows: list[SongRow],
+    lang_mod,
+    lang_values: set[str],
+    country_values: set[str],
+    aliases: dict[str, str],
+    policy: FilterPolicy,
+) -> tuple[list[str], dict]:
     updates: list[str] = []
     lang_pairs: Counter[tuple[str, str]] = Counter()
     country_pairs: Counter[tuple[str, str]] = Counter()
@@ -1059,6 +1644,7 @@ def build_updates(rows: list[SongRow], lang_mod, lang_values: set[str], country_
     year_reasons: Counter[str] = Counter()
     country_reasons: Counter[str] = Counter()
     status_reasons: Counter[str] = Counter()
+    validation_flags: Counter[str] = Counter()
 
     changed = 0
     lang_changed = 0
@@ -1068,16 +1654,30 @@ def build_updates(rows: list[SongRow], lang_mod, lang_values: set[str], country_
     status_changed = 0
     notes_cleaned = 0
     mixed_tokens_fixed = 0
+    notes_meta_removed_count = 0
+    title_repaired_count = 0
+    lang_forced_count = 0
+    country_ambiguous_count = 0
+    country_ambiguous_to_other_count = 0
     examples: list[dict] = []
 
     duplicate_drops = duplicate_drop_ids(rows)
 
     for row in rows:
+        row_signals = build_row_signals(row, country_values, policy)
         old_lang = row.lang if row.lang in lang_values else "ru"
-        pred_lang, lang_conf, lang_reason = classify_language(row, lang_mod, lang_values)
+        pred_lang, lang_conf, lang_reason, lang_forced = classify_language(
+            row,
+            row_signals,
+            lang_mod,
+            lang_values,
+            policy,
+        )
         if pred_lang not in lang_values:
             pred_lang = old_lang
         final_lang = pred_lang if should_apply_language_change(old_lang, pred_lang, lang_conf, lang_reason, lang_mod) else old_lang
+        if lang_forced and final_lang != old_lang:
+            lang_forced_count += 1
 
         old_title = norm_text(row.title)
         old_subtitle = norm_text(row.subtitle)
@@ -1094,8 +1694,14 @@ def build_updates(rows: list[SongRow], lang_mod, lang_values: set[str], country_
         clean_title = normalize_inline(title_fixed)
         clean_subtitle = normalize_inline(subtitle_fixed)
         clean_lyrics = lyrics_fixed
-        clean_source = drop_import_meta_lines(old_source).strip()
-        clean_notes = drop_import_meta_lines(old_notes).strip()
+        clean_source, source_removed_meta = clean_import_meta_text(old_source)
+        clean_notes, notes_removed_meta = clean_import_meta_text(old_notes)
+        notes_meta_removed_count += source_removed_meta + notes_removed_meta
+        clean_title, clean_lyrics, clean_notes, title_repaired = repair_title_from_lyrics(clean_title, clean_lyrics, clean_notes)
+        if title_repaired:
+            title_repaired_count += 1
+        if is_polluted_title(clean_title):
+            validation_flags["title_pollution"] += 1
 
         old_year = parse_year(row.year)
         row_clean = SongRow(
@@ -1111,13 +1717,38 @@ def build_updates(rows: list[SongRow], lang_mod, lang_values: set[str], country_
             status=old_status,
             created_at=row.created_at,
         )
-        new_year, year_reason = infer_song_year(row_clean)
+        clean_signals = build_row_signals(row_clean, country_values, policy)
+        new_year, year_reason = infer_song_year(row_clean, clean_signals)
 
-        new_country, country_reason = classify_country(row_clean, final_lang, new_year, country_values, aliases)
+        new_country, country_reason, country_ambiguous, country_low_signal = classify_country(
+            row_clean,
+            clean_signals,
+            final_lang,
+            new_year,
+            country_values,
+            aliases,
+            policy,
+        )
+        if country_ambiguous:
+            country_ambiguous_count += 1
+            validation_flags["country_ambiguous"] += 1
+        if country_low_signal:
+            validation_flags["country_low_signal"] += 1
+        if country_reason == "country_ambiguous_to_other":
+            country_ambiguous_to_other_count += 1
+
         new_year = enforce_year_bounds(new_country, new_year)
         old_country = aliases.get(fold_alias(row.country), "")
         if old_country not in country_values:
             old_country = ""
+
+        clean_title, clean_notes, final_lang = validate_row_update(
+            clean_title=clean_title,
+            clean_notes=clean_notes,
+            final_lang=final_lang,
+            signals=clean_signals,
+            validation_flags=validation_flags,
+        )
 
         new_status = old_status
         status_reason = ""
@@ -1134,6 +1765,8 @@ def build_updates(rows: list[SongRow], lang_mod, lang_values: set[str], country_
             lang_changed += 1
             lang_pairs[(old_lang, final_lang)] += 1
             lang_reasons[lang_reason] += 1
+            if "lang_scope_conflict" in lang_reason:
+                validation_flags["lang_scope_conflict"] += 1
 
         if new_year != old_year:
             set_parts.append("year=NULL" if new_year is None else f"year={sql_str(str(new_year))}")
@@ -1210,9 +1843,21 @@ def build_updates(rows: list[SongRow], lang_mod, lang_values: set[str], country_
         "text_changed": text_changed,
         "status_changed": status_changed,
         "notes_cleaned": notes_cleaned,
+        "notes_meta_removed_count": notes_meta_removed_count,
         "mixed_tokens_fixed": mixed_tokens_fixed,
+        "title_repaired_count": title_repaired_count,
+        "lang_forced_count": lang_forced_count,
+        "country_ambiguous_count": country_ambiguous_count,
+        "country_ambiguous_to_other_count": country_ambiguous_to_other_count,
         "duplicates_drafted": status_reasons.get("duplicate", 0),
         "non_song_drafted": status_reasons.get("non_song", 0),
+        "validation_flags": dict(validation_flags),
+        "policy": {
+            "country_ambiguity_policy": policy.country_ambiguity_policy,
+            "cyr_lang_switch_policy": policy.cyr_lang_switch_policy,
+            "max_scope_chars": policy.max_scope_chars,
+            "sample_seed": policy.sample_seed,
+        },
         "lang_pair_counts": [{"old_lang": a, "new_lang": b, "count": c} for (a, b), c in lang_pairs.most_common()],
         "country_pair_counts": [{"old_country": a, "new_country": b, "count": c} for (a, b), c in country_pairs.most_common()],
         "lang_reason_counts": [{"reason": r, "count": c} for r, c in lang_reasons.most_common()],
@@ -1255,6 +1900,18 @@ def main() -> None:
     parser.add_argument("--db-name", default="euro-songbook-db")
     parser.add_argument("--refresh-export", action="store_true")
     parser.add_argument("--execute-remote", action="store_true")
+    parser.add_argument(
+        "--country-ambiguity-policy",
+        choices=["keep_old", "other_countries", "first_match"],
+        default="other_countries",
+    )
+    parser.add_argument(
+        "--cyr-lang-switch-policy",
+        choices=["balanced", "aggressive", "strict"],
+        default="aggressive",
+    )
+    parser.add_argument("--max-scope-chars", type=int, default=3200)
+    parser.add_argument("--sample-seed", type=int, default=42)
     args = parser.parse_args()
 
     REPORT_JSON.parent.mkdir(parents=True, exist_ok=True)
@@ -1264,10 +1921,16 @@ def main() -> None:
     country_values = set(parse_catalog_values("SONG_COUNTRY_VALUES"))
     country_values.update({"other_countries", "other_movements"})
     aliases = build_country_aliases(country_values)
+    policy = FilterPolicy(
+        country_ambiguity_policy=args.country_ambiguity_policy,
+        cyr_lang_switch_policy=args.cyr_lang_switch_policy,
+        max_scope_chars=max(600, args.max_scope_chars),
+        sample_seed=args.sample_seed,
+    )
 
     lang_mod = load_lang_module()
     rows = load_songs(EXPORT_SQL)
-    updates, report = build_updates(rows, lang_mod, lang_values, country_values, aliases)
+    updates, report = build_updates(rows, lang_mod, lang_values, country_values, aliases, policy)
 
     UPDATE_SQL.write_text("\n".join(["-- generated by refilter_song_catalog.py", *updates, ""]), encoding="utf-8")
     report["update_sql"] = str(UPDATE_SQL)
