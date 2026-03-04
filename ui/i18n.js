@@ -107,7 +107,7 @@ const dict = {
     "admin.filterStatus": "Статус",
     "admin.filterQuery": "Поиск",
     "admin.newSong": "Новая песня",
-    "admin.deleteConfirm": "Удалить песню?",
+    "admin.deleteConfirm": "Вы точно хотите удалить?",
     "admin.loadError": "Ошибка загрузки",
     "admin.saveError": "Ошибка сохранения",
     "admin.deleteError": "Ошибка удаления",

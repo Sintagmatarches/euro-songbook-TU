@@ -344,6 +344,18 @@ a {
   animation: app-boot-spin 900ms linear infinite;
 }
 
+.route-content-loading {
+  width: 100%;
+  min-height: clamp(240px, 54vh, 640px);
+  display: grid;
+  place-items: center;
+  padding: clamp(16px, 3vh, 28px) 0;
+}
+
+.route-content-loading-card {
+  width: min(88vw, 320px);
+}
+
 .save-success-overlay {
   position: fixed;
   inset: 0;
@@ -973,6 +985,16 @@ button.menu-trigger:-moz-focusring,
   margin-top: 12px;
 }
 
+.song-audit-info-title {
+  margin-bottom: 6px;
+}
+
+.song-audit-info-text {
+  white-space: pre-wrap;
+  word-break: break-word;
+  line-height: 1.5;
+}
+
 .song-head-main {
   width: var(--song-center-width);
   margin-inline: auto;
@@ -1261,6 +1283,12 @@ textarea.song-editor-chorus {
   display: block;
   background: rgba(6, 16, 60, 0.96);
   resize: vertical;
+  overflow-y: hidden !important;
+}
+
+#ac_editor #ac_notes.song-editor-text,
+#requestForm #rq_notes.song-editor-text {
+  min-height: 44px;
   overflow-y: hidden !important;
 }
 
@@ -2689,18 +2717,25 @@ textarea.song-editor-chorus {
 
 .ac-editor-prompt-row {
   display: grid;
-  gap: 6px;
+  gap: 4px;
 }
 
 .ac-editor-prompt-row .btn {
   justify-self: start;
+  min-height: 34px;
+  padding: 6px 10px;
+  font-size: 13px;
 }
 
 .ac-editor-prompt-helper {
   margin: 0;
+  font-size: 12px;
+  line-height: 1.35;
+  opacity: 0.88;
 }
 
-.ac-links-details {
+.ac-links-details,
+.ac-links-shell {
   border: 1px solid rgba(34, 90, 188, 0.56);
   border-radius: 12px;
   background: rgba(8, 25, 79, 0.52);
@@ -2727,8 +2762,18 @@ textarea.song-editor-chorus {
   color: #a8d1ff;
 }
 
+.ac-links-title {
+  font-size: 14px;
+  font-weight: 700;
+  line-height: 1.2;
+}
+
+.ac-links-heading {
+  margin: 0;
+}
+
 .ac-links-body {
-  padding: 0 12px 12px;
+  padding: 10px 12px 12px;
   display: grid;
   gap: 10px;
 }
@@ -4061,15 +4106,16 @@ pre.lyrics {
 
 .ac-draft-banner {
   margin-top: 4px;
-  margin-bottom: 2px;
-  padding: 10px 12px;
-  border-radius: 12px;
-  border: 1px solid rgba(255, 98, 122, 0.78);
-  background: rgba(111, 16, 35, 0.72);
-  color: #ffd9e2;
-  font-size: 13px;
-  line-height: 1.4;
-  font-weight: 600;
+  margin-bottom: 6px;
+  padding: 7px 10px;
+  border-radius: 10px;
+  border: 1px solid rgba(255, 196, 92, 0.5);
+  border-left: 3px solid rgba(255, 205, 106, 0.9);
+  background: rgba(43, 33, 9, 0.44);
+  color: #ffe6b1;
+  font-size: 12px;
+  line-height: 1.35;
+  font-weight: 500;
 }
 
 .ac-inline-error {
@@ -4537,6 +4583,31 @@ pre.lyrics {
   display: flex;
   align-items: center;
   gap: 6px;
+}
+
+.draft-variant-remove {
+  margin-left: 14px;
+  min-width: 30px;
+  min-height: 30px;
+  width: 30px;
+  height: 30px;
+  padding: 0 !important;
+  border-radius: 999px !important;
+  border-color: rgba(255, 118, 146, 0.72) !important;
+  color: #ffd6df !important;
+}
+
+.draft-variant-remove:hover,
+.draft-variant-remove:focus-visible {
+  border-color: rgba(255, 163, 183, 0.9) !important;
+  background: rgba(149, 20, 52, 0.54) !important;
+  color: #fff2f6 !important;
+}
+
+.draft-variant-current {
+  border-color: rgba(84, 225, 255, 0.9) !important;
+  color: #c9f7ff !important;
+  background: rgba(22, 87, 125, 0.42) !important;
 }
 
 .draft-variant-confidence {
@@ -5575,9 +5646,10 @@ html[data-theme="light"] .song-lyrics-composer-hint {
 }
 
 html[data-theme="light"] .ac-draft-banner {
-  border-color: rgba(224, 51, 80, 0.66);
-  background: rgba(255, 78, 118, 0.14);
-  color: #ffd6df;
+  border-color: rgba(255, 195, 93, 0.64);
+  border-left-color: rgba(255, 205, 109, 0.92);
+  background: rgba(169, 111, 24, 0.24);
+  color: #ffe5b8;
 }
 
 html[data-theme="light"] .ac-inline-error {
@@ -8353,6 +8425,8 @@ html[data-theme="light"] .ig-drawer-button.active {
   width: min(100%, 760px) !important;
   max-width: 760px !important;
   margin-inline: auto !important;
+  background: rgba(6, 1, 63, 0.58) !important;
+  border-color: rgba(60, 122, 224, 0.62) !important;
   padding-top: 10px;
   padding-bottom: 10px;
   padding-left: 30px;
@@ -8365,6 +8439,8 @@ html[data-theme="light"] .ig-drawer-button.active {
   width: 100% !important;
   max-width: none !important;
   margin: 0 !important;
+  background: transparent !important;
+  background-color: transparent !important;
   border: 0 !important;
   border-radius: 0 !important;
   box-shadow: none !important;
@@ -8745,6 +8821,29 @@ html[data-theme="light"] .song-version-links-link:focus-visible {
   margin-bottom: 4px;
 }
 
+.ac-version-danger-zone {
+  margin-top: 8px;
+  margin-bottom: 4px;
+  justify-content: flex-end;
+}
+
+#ac_editor #ac_remove_active_version,
+#ac_editor #ac_delete {
+  min-height: 40px;
+  border-color: rgba(255, 113, 140, 0.92) !important;
+  background: linear-gradient(135deg, rgba(185, 23, 58, 0.94), rgba(136, 8, 41, 0.94)) !important;
+  color: #fff2f6 !important;
+  font-weight: 700;
+}
+
+#ac_editor #ac_remove_active_version:hover,
+#ac_editor #ac_remove_active_version:focus-visible,
+#ac_editor #ac_delete:hover,
+#ac_editor #ac_delete:focus-visible {
+  border-color: rgba(255, 158, 179, 0.96) !important;
+  background: linear-gradient(135deg, rgba(206, 34, 74, 0.96), rgba(154, 11, 48, 0.96)) !important;
+}
+
 #ac_editor .ss_version_row .ss_version_remove {
   display: none !important;
 }
@@ -8757,6 +8856,42 @@ html[data-theme="light"] .song-version-links-link:focus-visible {
 .ac-danger-actions {
   margin-top: 8px;
   justify-content: flex-start;
+}
+
+.ac-delete-guard {
+  margin-top: 8px;
+  border: 1px dashed rgba(255, 127, 156, 0.56);
+  border-radius: 12px;
+  background: rgba(48, 9, 22, 0.22);
+  padding: 8px;
+}
+
+.ac-delete-guard-summary {
+  list-style: none;
+  min-height: 34px;
+  padding: 6px 10px;
+  font-size: 12px;
+  font-weight: 700;
+  border-color: rgba(255, 139, 166, 0.7) !important;
+  color: #ffd9e3 !important;
+  background: rgba(115, 17, 43, 0.36) !important;
+}
+
+.ac-delete-guard-summary::-webkit-details-marker {
+  display: none;
+}
+
+.ac-delete-guard-summary::marker {
+  display: none;
+}
+
+.ac-delete-guard[open] {
+  border-style: solid;
+  background: rgba(67, 11, 28, 0.28);
+}
+
+.ac-delete-guard .ac-danger-actions {
+  margin-top: 8px;
 }
 
 .draft-variant-main {
@@ -9320,8 +9455,8 @@ html[data-theme="white"] .song-card-shell .song-title {
 
 /* White theme: brighter and bolder draft notice text */
 html[data-theme="white"] .ac-draft-banner {
-  color: #fff48f !important;
-  font-weight: 700 !important;
+  color: #ffefbd !important;
+  font-weight: 500 !important;
 }
 
 /* White theme splash overrides for refresh/loading stage */
@@ -9425,4 +9560,908 @@ html[data-theme="white"] .admin-section .ac_item .songMeta,
 html[data-theme="white"] .admin-section .ac_item .badge {
   color: #FFFFFF !important;
   -webkit-text-fill-color: #FFFFFF !important;
+}
+
+/* Draft hub: match darker admin-like cards and stronger draft badge */
+.draft-hub-list .draft-hub-card {
+  background: #0a1d68 !important;
+  background-color: #0a1d68 !important;
+  border-color: rgba(27, 72, 190, 0.86) !important;
+  box-shadow: inset 0 0 0 1px rgba(7, 23, 84, 0.96), 0 10px 20px rgba(2, 8, 38, 0.24);
+}
+
+.draft-hub-list .draft-hub-card:hover {
+  border-color: rgba(44, 112, 244, 0.96) !important;
+  box-shadow: inset 0 0 0 1px rgba(14, 40, 128, 0.98), 0 12px 24px rgba(2, 8, 38, 0.34);
+}
+
+.draft-hub-list .draft-hub-card .songTitle {
+  color: #eef4ff !important;
+}
+
+.draft-hub-list .draft-hub-card .songMeta {
+  color: #68dbff !important;
+}
+
+.draft-hub-list .draft-hub-card .badge.draft {
+  color: #ffef9f !important;
+  border-color: rgba(255, 239, 159, 0.9) !important;
+  background: rgba(53, 36, 6, 0.42) !important;
+  font-weight: 800 !important;
+  letter-spacing: 0.015em;
+}
+
+/* White theme: admin tabs + admin song cards (match drafts palette) */
+html[data-theme="white"] .admin-tabs .admin-tab-btn,
+html[data-theme="white"] .admin-tabs .admin-tab-btn[href="#/admin/content"],
+html[data-theme="white"] .admin-tabs .admin-tab-btn[href^="#/admin/content?"],
+html[data-theme="white"] .admin-tabs .admin-tab-btn > * {
+  color: #ffffff !important;
+  -webkit-text-fill-color: #ffffff !important;
+}
+
+html[data-theme="white"] .admin-section .songCard,
+html[data-theme="white"] .admin-section .ac_item,
+html[data-theme="white"] .admin-section .ac_item_preview,
+html[data-theme="white"] .admin-section .ac_item_preview.is-recent,
+html[data-theme="white"] .admin-section .ac-list .songCard.ac_item {
+  background: #1900ff !important;
+  background-color: #1900ff !important;
+  border-color: rgba(255, 255, 255, 0.52) !important;
+}
+
+html[data-theme="white"] .admin-section .songCard .songTitle,
+html[data-theme="white"] .admin-section .songCard .songMeta,
+html[data-theme="white"] .admin-section .ac_item .songTitle,
+html[data-theme="white"] .admin-section .ac_item .songMeta,
+html[data-theme="white"] .admin-section .ac_item .badge {
+  color: #ffffff !important;
+  -webkit-text-fill-color: #ffffff !important;
+}
+
+/* White theme: restore dynamic country hover background in catalog */
+@media (hover: hover) and (pointer: fine) {
+  html[data-theme="white"] body.home-country-preview:not(.song-page-country-bg) #app,
+  html[data-theme="white"] body.home-country-preview:not(.song-page-country-bg) #app.container.page-main,
+  html[data-theme="white"] body.home-country-preview:not(.song-page-country-bg) .page-main,
+  html[data-theme="white"] body.home-country-preview:not(.song-page-country-bg) .page-main.song-layout,
+  html[data-theme="white"] body.home-country-preview:not(.song-page-country-bg) .home-main,
+  html[data-theme="white"] body.home-country-preview:not(.song-page-country-bg) .catalog-main {
+    background: transparent !important;
+    background-color: transparent !important;
+    background-image: none !important;
+  }
+
+  html[data-theme="white"] body.home-country-preview:not(.song-page-country-bg)::before,
+  html[data-theme="white"] body.home-country-preview:not(.song-page-country-bg)::after {
+    display: block !important;
+    content: "" !important;
+    background-repeat: no-repeat !important;
+    background-size: cover !important;
+    background-position: center center !important;
+  }
+
+  html[data-theme="white"] body.home-country-preview:not(.song-page-country-bg)::before {
+    background-image: var(--home-country-preview-image-a) !important;
+  }
+
+  html[data-theme="white"] body.home-country-preview:not(.song-page-country-bg)::after {
+    background-image: var(--home-country-preview-image-b) !important;
+  }
+}
+
+/* Editor-only final overrides: translucency, hierarchy controls, mobile variants */
+#ac_editor.ac-editor-page.ac-editor-card {
+  background: rgba(9, 25, 86, 0.72) !important;
+  border-color: rgba(64, 130, 236, 0.58) !important;
+  backdrop-filter: blur(12px) saturate(120%);
+  -webkit-backdrop-filter: blur(12px) saturate(120%);
+}
+
+#ac_editor.ac-editor-page .request-section,
+#ac_editor.ac-editor-page .request-repeater,
+#ac_editor.ac-editor-page .ac-links-details,
+#ac_editor.ac-editor-page .ac-links-shell,
+#ac_editor.ac-editor-page .ac-collab-panel,
+#ac_editor.ac-editor-page .ac-collab-controls {
+  background: rgba(10, 24, 82, 0.5) !important;
+  border-color: rgba(62, 122, 230, 0.5) !important;
+}
+
+html[data-theme="light"] #ac_editor.ac-editor-page.ac-editor-card {
+  background: rgba(0, 20, 168, 0.66) !important;
+  border-color: rgba(163, 197, 255, 0.52) !important;
+}
+
+html[data-theme="light"] #ac_editor.ac-editor-page .request-section,
+html[data-theme="light"] #ac_editor.ac-editor-page .request-repeater,
+html[data-theme="light"] #ac_editor.ac-editor-page .ac-links-details,
+html[data-theme="light"] #ac_editor.ac-editor-page .ac-links-shell,
+html[data-theme="light"] #ac_editor.ac-editor-page .ac-collab-panel,
+html[data-theme="light"] #ac_editor.ac-editor-page .ac-collab-controls {
+  background: rgba(11, 34, 138, 0.42) !important;
+  border-color: rgba(170, 204, 255, 0.42) !important;
+}
+
+html[data-theme="white"] #ac_editor.ac-editor-page.ac-editor-card {
+  background: rgba(25, 0, 255, 0.64) !important;
+  border-color: rgba(255, 255, 255, 0.56) !important;
+}
+
+html[data-theme="white"] #ac_editor.ac-editor-page .request-section,
+html[data-theme="white"] #ac_editor.ac-editor-page .request-repeater,
+html[data-theme="white"] #ac_editor.ac-editor-page .ac-links-details,
+html[data-theme="white"] #ac_editor.ac-editor-page .ac-links-shell,
+html[data-theme="white"] #ac_editor.ac-editor-page .ac-collab-panel,
+html[data-theme="white"] #ac_editor.ac-editor-page .ac-collab-controls {
+  background: rgba(25, 0, 255, 0.46) !important;
+  border-color: rgba(255, 255, 255, 0.46) !important;
+}
+
+#ac_editor .ac-gpt-toggle,
+#ac_editor .ac-collab-toggle {
+  min-width: 54px;
+  min-height: 54px;
+  width: 54px;
+  height: 54px;
+  border-color: rgba(96, 190, 255, 0.86);
+  background: rgba(14, 53, 152, 0.9);
+}
+
+#ac_editor .ac-gpt-toggle .ac-meta-icon,
+#ac_editor .ac-collab-toggle .ac-meta-icon {
+  width: 34px;
+  height: 34px;
+  color: #d9f0ff;
+}
+
+#ac_editor #ac_verified_toggle,
+#ac_editor #ac_admin_content_toggle {
+  min-width: 54px;
+  min-height: 54px;
+  width: 54px;
+  height: 54px;
+}
+
+#ac_editor #ac_verified_toggle .ac-meta-icon,
+#ac_editor #ac_admin_content_toggle .ac-meta-icon {
+  width: 34px;
+  height: 34px;
+}
+
+#ac_editor .ac-editor-variant-tabs {
+  display: flex;
+  flex-wrap: nowrap;
+  align-items: center;
+  justify-content: center;
+  overflow-x: auto;
+  overflow-y: visible;
+  -webkit-overflow-scrolling: touch;
+  scrollbar-width: thin;
+  white-space: nowrap;
+  width: auto;
+  max-width: 100%;
+  margin-left: auto;
+  margin-right: auto;
+  padding-bottom: 2px;
+}
+
+#ac_editor .ac-editor-variant-item,
+#ac_editor .ac-editor-variant-tabs .ac-editor-variant-tab,
+#ac_editor .ac-editor-variant-tabs .ac-editor-variant-tab-add {
+  flex: 0 0 auto;
+}
+
+#ac_editor .ac-editor-variant-tabs .ac-editor-variant-tab-add {
+  width: auto;
+  min-width: 36px;
+  padding: 0 10px !important;
+  gap: 6px;
+  display: inline-flex;
+  align-items: center;
+}
+
+#ac_editor .ac-editor-variant-tab-add-label {
+  font-size: 12px;
+  font-weight: 700;
+  line-height: 1;
+  white-space: nowrap;
+}
+
+#ac_editor .ac-editor-variant-tabs::-webkit-scrollbar {
+  height: 4px;
+}
+
+#ac_editor .ac-editor-variant-tabs::-webkit-scrollbar-thumb {
+  background: rgba(129, 188, 255, 0.48);
+  border-radius: 999px;
+}
+
+@media (max-width: 760px) {
+  #ac_editor.ac-editor-page {
+    overflow-x: visible !important;
+  }
+
+  #ac_editor .ac-editor-variant-tabs {
+    justify-content: flex-start;
+    gap: 5px;
+    margin-left: -2px;
+    margin-right: -2px;
+    padding-left: 2px;
+    padding-right: 2px;
+    padding-bottom: 4px;
+    width: 100%;
+  }
+
+  #ac_editor .ac-editor-variant-tabs .ac-editor-variant-tab,
+  #ac_editor .ac-editor-variant-tabs .ac-editor-variant-tab-add {
+    min-width: 36px;
+    min-height: 36px;
+    width: auto;
+    height: 36px;
+  }
+
+  #ac_editor .ac-editor-variant-tabs .ac-editor-variant-tab-add {
+    padding: 0 9px !important;
+    gap: 4px;
+  }
+
+  #ac_editor .ac-editor-variant-tab-add-label {
+    font-size: 11px;
+  }
+
+  #ac_editor #ac_verified_toggle,
+  #ac_editor #ac_admin_content_toggle {
+    min-width: 48px;
+    min-height: 48px;
+    width: 48px;
+    height: 48px;
+  }
+
+  #ac_editor #ac_verified_toggle .ac-meta-icon,
+  #ac_editor #ac_admin_content_toggle .ac-meta-icon {
+    width: 30px;
+    height: 30px;
+  }
+
+  #ac_editor .ac-gpt-toggle,
+  #ac_editor .ac-collab-toggle {
+    min-width: 48px;
+    min-height: 48px;
+    width: 48px;
+    height: 48px;
+  }
+
+  #ac_editor .ac-gpt-toggle .ac-meta-icon,
+  #ac_editor .ac-collab-toggle .ac-meta-icon {
+    width: 30px;
+    height: 30px;
+  }
+
+  #ac_editor .ac-version-danger-zone {
+    justify-content: stretch;
+  }
+
+  #ac_editor #ac_remove_active_version {
+    width: 100%;
+  }
+
+  #ac_editor .ac-meta-optional-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+/* Desktop nav rail: always compact icon mode */
+@media (min-width: 961px) {
+  :root {
+    --rail-w: 88px;
+  }
+
+  .ig-rail {
+    width: 88px !important;
+    left: 8px !important;
+    padding: 10px 8px !important;
+    gap: 8px !important;
+  }
+
+  .ig-link {
+    justify-content: center !important;
+    padding: 0 !important;
+    gap: 0 !important;
+  }
+
+  .ig-link .ig-text {
+    display: none !important;
+  }
+
+  .container {
+    padding-left: 112px !important;
+    padding-right: 112px !important;
+  }
+}
+
+/* Admin tabs: short labels in one row */
+.admin-tabs {
+  display: grid !important;
+  grid-auto-flow: column;
+  grid-auto-columns: minmax(0, 1fr);
+  grid-template-columns: none !important;
+  gap: 8px;
+}
+
+.admin-tab-btn {
+  min-height: 40px;
+  padding: 6px 8px;
+  font-size: 13px;
+  line-height: 1.1;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+@media (max-width: 760px) {
+  .admin-tabs {
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: thin;
+    padding-bottom: 2px;
+  }
+
+  .admin-tabs .admin-tab-btn {
+    min-width: 96px;
+    flex: 0 0 auto;
+  }
+}
+
+/* Editor refinements: compact metadata + status badge + larger ChatGPT prompt dialog */
+#ac_editor .ac-editor-head-row {
+  display: grid;
+  grid-template-columns: 1fr auto 1fr;
+  align-items: center;
+  gap: 10px;
+}
+
+#ac_editor .ac-editor-head-title {
+  grid-column: 2;
+  text-align: center;
+  margin: 0;
+}
+
+#ac_editor .ac-editor-head-right {
+  grid-column: 3;
+  justify-self: end;
+  display: inline-flex;
+  align-items: center;
+  gap: 12px;
+}
+
+#ac_editor .ac-status-inline {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  min-height: 28px;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: #b8d6ff;
+  font-size: 12px;
+  font-weight: 400;
+  line-height: 1.1;
+  cursor: pointer;
+}
+
+#ac_editor .ac-status-inline .ac-status-dot {
+  width: 9px;
+  height: 9px;
+  border-radius: 999px;
+  background: #50d67d;
+  box-shadow: 0 0 0 1px rgba(80, 214, 125, 0.36), 0 0 9px rgba(80, 214, 125, 0.72);
+  flex: 0 0 auto;
+}
+
+#ac_editor .ac-status-inline.is-draft .ac-status-dot {
+  background: #ffcc4d;
+  box-shadow: 0 0 0 1px rgba(255, 204, 77, 0.4), 0 0 8px rgba(255, 204, 77, 0.66);
+}
+
+#ac_editor .ac-status-inline .ac-status-inline-text {
+  letter-spacing: 0.01em;
+}
+
+#ac_editor .ac-meta-icon-gpt {
+  width: 34px;
+  height: 34px;
+  font-size: 15px;
+  font-weight: 900;
+  letter-spacing: 0.02em;
+  line-height: 1;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+#ac_editor .ac-status-inline:focus-visible {
+  outline: 2px solid rgba(127, 189, 255, 0.78);
+  outline-offset: 2px;
+  border-radius: 6px;
+}
+
+#ac_editor .ac-editor-versions-section {
+  display: grid;
+  justify-items: center;
+  gap: 6px;
+  padding-top: 8px;
+  padding-bottom: 8px;
+}
+
+#ac_editor .ac-editor-versions-label {
+  margin: 0;
+  text-align: center;
+}
+
+#ac_editor .ac-editor-decoding-top {
+  width: 100%;
+  text-align: center;
+  margin: 0 0 4px;
+  font-size: 12px;
+}
+
+#ac_editor .ac-meta-title-field {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  align-items: start;
+  gap: 8px;
+}
+
+#ac_editor .ac-status-badge {
+  color: inherit;
+  font-size: inherit;
+  font-weight: inherit;
+}
+
+#ac_editor .ac-meta-locale-grid {
+  grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+}
+
+#ac_editor .ac-meta-optional-grid {
+  display: grid;
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+  gap: 8px;
+  margin-top: 2px;
+}
+
+#ac_editor .ac-editor-meta-controls {
+  justify-content: flex-end;
+}
+
+#ac_editor .ac-editor-meta-section [data-optional-field="notes"] {
+  margin-top: 2px;
+}
+
+#ac_editor .ac-optional-field-label {
+  justify-content: flex-start;
+}
+
+#ac_editor .ac-optional-field .input {
+  min-height: 34px !important;
+  padding: 6px 10px !important;
+  font-size: 13px !important;
+}
+
+#ac_editor .ac-meta-optional-grid .fieldLabel {
+  font-size: 12px;
+}
+
+#ac_editor #ac_chorus.song-editor-chorus,
+#ac_editor #ac_notes.song-editor-text {
+  min-height: 44px !important;
+  width: min(100%, 760px) !important;
+  max-width: 760px !important;
+  margin-inline: auto !important;
+  overflow-y: hidden !important;
+  resize: none;
+}
+
+#ac_editor .ss_link_row_body {
+  gap: 6px;
+}
+
+#ac_editor .ss_link_row_meta_compact {
+  display: flex;
+  align-items: center;
+  justify-content: flex-start;
+}
+
+#ac_editor .ss_link_version_compact {
+  width: min(220px, 100%);
+  min-height: 34px !important;
+  font-size: 12px !important;
+  padding: 4px 10px !important;
+}
+
+/* Restore line-match rail controls in editor */
+#ac_editor .ac-lyrics-rail {
+  left: 2px !important;
+  width: 20px !important;
+  background: transparent !important;
+}
+
+#ac_editor .ac-lyrics-rail-slot,
+#ac_editor .ac-lyrics-rail-row {
+  background: transparent !important;
+}
+
+#ac_editor .draft-line-rail-btn,
+#ac_editor .draft-line-rail-btn-placeholder {
+  width: 20px !important;
+  min-width: 20px !important;
+  min-height: 16px !important;
+  height: 16px !important;
+}
+
+#ac_editor .draft-line-rail-triangle {
+  display: block !important;
+  border-left-width: 9px !important;
+  border-right-width: 9px !important;
+  border-top-width: 13px !important;
+}
+
+#ac_editor .draft-line-rail-mini {
+  display: block !important;
+  font-size: 8px !important;
+}
+
+.dlg-prompt {
+  width: min(980px, calc(100% - 14px));
+  max-width: calc(100% - 14px);
+  max-height: min(95dvh, 920px);
+}
+
+.dlg-prompt .dlgBody {
+  max-height: min(95dvh, 920px);
+}
+
+.dlg-prompt #promptText {
+  min-height: min(56dvh, 620px);
+  max-height: min(74dvh, 760px);
+  resize: vertical;
+}
+
+@media (max-width: 760px) {
+  #ac_editor .ac-meta-locale-grid,
+  #ac_editor .ac-meta-title-field {
+    grid-template-columns: minmax(0, 1fr) !important;
+  }
+
+  #ac_editor .ac-editor-head-right {
+    grid-column: 1;
+    width: 100%;
+    justify-content: space-between;
+    margin-top: 4px;
+    gap: 8px;
+  }
+
+  #ac_editor .ac-editor-head-row {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  #ac_editor .ac-editor-head-title {
+    grid-column: 1;
+  }
+
+  #ac_editor .ac-status-inline {
+    font-size: 11px;
+  }
+
+  #ac_editor .ss_link_version_compact {
+    width: 100%;
+  }
+
+  #ac_editor .ac-lyrics-rail {
+    left: 0 !important;
+    width: 12px !important;
+  }
+
+  #ac_editor .draft-line-rail-btn,
+  #ac_editor .draft-line-rail-btn-placeholder {
+    width: 12px !important;
+    min-width: 12px !important;
+  }
+
+  #ac_editor .draft-line-rail-mini {
+    display: block !important;
+    font-size: 7px !important;
+  }
+}
+
+/* Editor window must stay translucent but without blur */
+#ac_editor.ac-editor-page.ac-editor-card {
+  backdrop-filter: none !important;
+  -webkit-backdrop-filter: none !important;
+}
+
+/* Admin tabs: readable labels + strong active state */
+.admin-tabs {
+  background: transparent !important;
+}
+
+.admin-tabs .admin-tab-btn {
+  color: #eef6ff !important;
+  background: rgba(10, 29, 110, 0.86) !important;
+  border-color: rgba(92, 156, 255, 0.62) !important;
+  backdrop-filter: none !important;
+  -webkit-backdrop-filter: none !important;
+}
+
+.admin-tabs .admin-tab-btn:hover,
+.admin-tabs .admin-tab-btn:focus-visible {
+  color: #ffffff !important;
+  border-color: rgba(134, 198, 255, 0.86) !important;
+}
+
+.admin-tabs .admin-tab-btn.primary,
+.admin-tabs .admin-tab-btn.active {
+  color: #ffffff !important;
+  background: linear-gradient(135deg, rgba(36, 198, 255, 0.94), rgba(14, 130, 255, 0.94)) !important;
+  border-color: rgba(142, 232, 255, 0.92) !important;
+  box-shadow: 0 0 0 1px rgba(142, 232, 255, 0.34) inset, 0 10px 20px rgba(8, 39, 122, 0.32) !important;
+}
+
+html[data-theme="light"] .admin-tabs .admin-tab-btn {
+  color: #f5f9ff !important;
+  background: rgba(0, 20, 168, 0.76) !important;
+  border-color: rgba(183, 206, 255, 0.62) !important;
+}
+
+html[data-theme="white"] .admin-tabs .admin-tab-btn {
+  color: #ffffff !important;
+  background: rgba(25, 0, 255, 0.76) !important;
+  border-color: rgba(255, 255, 255, 0.54) !important;
+}
+
+/* Desktop: make left quick icon rail semi-transparent */
+@media (min-width: 961px) {
+  .ig-rail {
+    background: rgba(10, 28, 63, 0.62) !important;
+    border-color: rgba(85, 144, 231, 0.64) !important;
+  }
+
+  .ig-link {
+    color: #eaf4ff !important;
+    background: rgba(18, 52, 146, 0.42) !important;
+    border-color: rgba(109, 171, 255, 0.44) !important;
+  }
+
+  .ig-link:hover {
+    background: rgba(36, 101, 231, 0.56) !important;
+    color: #ffffff !important;
+  }
+
+  .ig-link.active {
+    background: linear-gradient(135deg, rgba(31, 140, 255, 0.9), rgba(22, 82, 238, 0.9)) !important;
+    border-color: rgba(149, 221, 255, 0.92) !important;
+    color: #ffffff !important;
+  }
+}
+
+/* Mobile editor stability: keep desktop-like controls without overlaps */
+@media (max-width: 760px) {
+  #ac_editor.ac-editor-page {
+    width: 100% !important;
+    max-width: 100% !important;
+    margin: 0 auto !important;
+    padding-left: 8px !important;
+    padding-right: 8px !important;
+    overflow-x: hidden !important;
+  }
+
+  #ac_editor .ac-editor-head-row {
+    grid-template-columns: minmax(0, 1fr) !important;
+    gap: 8px !important;
+  }
+
+  #ac_editor .ac-editor-head-right {
+    grid-column: 1 !important;
+    width: 100% !important;
+    display: flex !important;
+    flex-wrap: wrap !important;
+    justify-content: flex-end !important;
+    align-items: center !important;
+    gap: 8px !important;
+  }
+
+  #ac_editor .ac-editor-meta-controls {
+    justify-content: flex-end !important;
+  }
+
+  #ac_editor .ac-editor-meta-toggles {
+    display: flex !important;
+    flex-wrap: wrap !important;
+    justify-content: flex-end !important;
+    gap: 8px !important;
+  }
+
+  #ac_editor .ac-editor-variant-tabs {
+    width: 100% !important;
+    max-width: 100% !important;
+    justify-content: flex-start !important;
+    flex-wrap: nowrap !important;
+    overflow-x: auto !important;
+    overflow-y: visible !important;
+    -webkit-overflow-scrolling: touch;
+    padding-bottom: 4px !important;
+  }
+
+  #ac_editor #ac_lyrics_editor {
+    width: 100% !important;
+    max-width: 100% !important;
+    margin: 0 !important;
+    padding-left: 30px !important;
+    padding-right: 8px !important;
+  }
+
+  #ac_editor .ac-lyrics-rail {
+    left: 8px !important;
+    width: 18px !important;
+  }
+
+  #ac_editor .draft-line-rail-btn,
+  #ac_editor .draft-line-rail-btn-placeholder {
+    width: 18px !important;
+    min-width: 18px !important;
+    min-height: 16px !important;
+    height: 16px !important;
+  }
+
+  #ac_editor .draft-line-rail-btn::before {
+    content: none !important;
+  }
+
+  #ac_editor .draft-line-rail-mini {
+    display: block !important;
+    font-size: 10px !important;
+    color: #d6efff !important;
+  }
+}
+
+@media (max-width: 430px) {
+  #ac_editor .ac-meta-optional-grid {
+    grid-template-columns: minmax(0, 1fr) !important;
+  }
+}
+
+/* Final mobile/editor layout fixes: tabs, locale switch, centered header, lyrics frame */
+@media (max-width: 760px) {
+  .admin-tabs {
+    display: grid !important;
+    grid-auto-flow: column !important;
+    grid-auto-columns: minmax(0, 1fr) !important;
+    align-items: stretch !important;
+    gap: 6px !important;
+    overflow: visible !important;
+    padding-bottom: 2px !important;
+  }
+
+  .admin-tabs .admin-tab-btn {
+    flex: initial !important;
+    min-width: 0 !important;
+    max-width: none !important;
+    min-height: 34px !important;
+    padding: 5px 6px !important;
+    font-size: 12px !important;
+    line-height: 1.1 !important;
+    white-space: nowrap !important;
+    overflow: hidden !important;
+    text-overflow: ellipsis !important;
+  }
+
+  .topbar #localeSwitch {
+    display: none !important;
+  }
+
+  #ac_editor .ac-editor-head-row {
+    grid-template-columns: minmax(0, 1fr) !important;
+    justify-items: center !important;
+    text-align: center !important;
+  }
+
+  #ac_editor .ac-editor-head-title {
+    grid-column: 1 !important;
+    width: 100% !important;
+    text-align: center !important;
+    justify-self: center !important;
+  }
+
+  #ac_editor .ac-editor-head-right {
+    grid-column: 1 !important;
+    width: auto !important;
+    justify-self: center !important;
+    justify-content: center !important;
+    align-items: center !important;
+    margin-top: 2px !important;
+  }
+}
+
+#ac_editor .ac-lyrics-main-field > .fieldLabel {
+  font-size: 20px !important;
+  line-height: 1.15 !important;
+  font-weight: 700 !important;
+  margin-bottom: 6px !important;
+}
+
+#ac_editor #ac_lyrics_editor {
+  width: min(100%, 980px) !important;
+  max-width: 100% !important;
+  margin-inline: auto !important;
+  min-height: 56svh !important;
+  padding: 10px 10px 10px 42px !important;
+  overflow: hidden !important;
+}
+
+#ac_editor .ac-lyrics-rail {
+  left: 8px !important;
+  width: 24px !important;
+  top: 10px !important;
+  bottom: 10px !important;
+}
+
+#ac_editor .draft-line-rail-btn,
+#ac_editor .draft-line-rail-btn-placeholder {
+  width: 24px !important;
+  min-width: 24px !important;
+  min-height: 18px !important;
+  height: 18px !important;
+}
+
+#ac_editor .draft-line-rail-mini {
+  display: block !important;
+  font-size: 10px !important;
+  color: #dff1ff !important;
+}
+
+#ac_editor #ac_lyrics.song-editor-text-main {
+  width: 100% !important;
+  max-width: none !important;
+  margin: 0 !important;
+  border: 0 !important;
+  border-radius: 0 !important;
+  box-shadow: none !important;
+  background: transparent !important;
+  padding: 8px 10px !important;
+  white-space: pre !important;
+  word-break: normal !important;
+  overflow-wrap: normal !important;
+  overflow-x: auto !important;
+  overflow-y: auto !important;
+  min-height: calc(56svh - 20px) !important;
+}
+
+@media (max-width: 760px) {
+  #ac_editor #ac_lyrics_editor {
+    min-height: 50svh !important;
+    padding: 8px 8px 8px 34px !important;
+  }
+
+  #ac_editor .ac-lyrics-rail {
+    left: 6px !important;
+    width: 20px !important;
+  }
+
+  #ac_editor .draft-line-rail-btn,
+  #ac_editor .draft-line-rail-btn-placeholder {
+    width: 20px !important;
+    min-width: 20px !important;
+  }
+
+  #ac_editor .draft-line-rail-mini {
+    display: block !important;
+    font-size: 10px !important;
+  }
+
+  #ac_editor #ac_lyrics.song-editor-text-main {
+    min-height: calc(50svh - 16px) !important;
+    font-size: 17px !important;
+    line-height: 1.45 !important;
+    padding: 6px 8px !important;
+  }
 }

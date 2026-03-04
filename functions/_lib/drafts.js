@@ -640,6 +640,38 @@ export async function applyDraftOperation(env, { draftId, userId, op }) {
        WHERE id=? AND draft_id=?`,
       [clampConfidence(payload.confidence, 100), nowIso(), variantId, draftId]
     );
+  } else if (type === "delete_variant") {
+    const lineId = String(payload.line_id || "").trim();
+    const variantId = String(payload.variant_id || "").trim();
+    if (!lineId || !variantId) throw new Error("line_id and variant_id are required");
+    const line = await dbGet(env, `SELECT id,active_variant_id FROM draft_lines WHERE id=? AND draft_id=?`, [lineId, draftId]);
+    if (!line) throw new Error("line not found");
+    const variants = await dbAll(
+      env,
+      `SELECT id, confidence, created_at, updated_at
+       FROM draft_line_variants
+       WHERE line_id=? AND draft_id=?`,
+      [lineId, draftId]
+    );
+    if (!Array.isArray(variants) || variants.length <= 1) throw new Error("at least one variant must remain");
+    const exists = variants.some((item) => String(item?.id || "") === variantId);
+    if (!exists) throw new Error("variant not found");
+    await dbRun(env, `DELETE FROM draft_line_variants WHERE id=? AND line_id=? AND draft_id=?`, [variantId, lineId, draftId]);
+    if (String(line.active_variant_id || "") === variantId) {
+      const nextActive = await dbGet(
+        env,
+        `SELECT id FROM draft_line_variants
+         WHERE line_id=? AND draft_id=?
+         ORDER BY confidence DESC, datetime(updated_at) DESC, datetime(created_at) DESC
+         LIMIT 1`,
+        [lineId, draftId]
+      );
+      const nextActiveId = String(nextActive?.id || "").trim();
+      if (!nextActiveId) throw new Error("variant not found");
+      await dbRun(env, `UPDATE draft_line_variants SET is_active=0, updated_at=? WHERE line_id=? AND draft_id=?`, [nowIso(), lineId, draftId]);
+      await dbRun(env, `UPDATE draft_line_variants SET is_active=1, updated_at=? WHERE id=?`, [nowIso(), nextActiveId]);
+      await dbRun(env, `UPDATE draft_lines SET active_variant_id=?, updated_at=? WHERE id=?`, [nextActiveId, nowIso(), lineId]);
+    }
   } else {
     throw new Error(`Unsupported operation type: ${type}`);
   }

@@ -1,4 +1,4 @@
-const CACHE_VERSION = "v9";
+const CACHE_VERSION = "v10";
 const CACHE_NAME = `songbook-app-${CACHE_VERSION}`;
 
 function scopeUrl(path) {
@@ -9,7 +9,6 @@ const CORE_ASSETS = [
   scopeUrl("./"),
   scopeUrl("./index.html"),
   scopeUrl("./app.css"),
-  scopeUrl("./app.js"),
   scopeUrl("./manifest.webmanifest"),
   scopeUrl("./ui/assets/logo-sticker-20260221.png"),
   scopeUrl("./ui/assets/pwa-icon-192-20260221.png"),
@@ -89,7 +88,12 @@ self.addEventListener("fetch", (event) => {
   }
 
   const destination = request.destination || "";
-  if (destination === "style" || destination === "script") {
+  if (destination === "script") {
+    event.respondWith(fetch(request).catch(() => Response.error()));
+    return;
+  }
+
+  if (destination === "style") {
     event.respondWith(networkFirst(request));
     return;
   }

@@ -19,15 +19,17 @@ export async function onRequestGet({ env, request }) {
      GROUP BY lower(trim(coalesce(country, '')))`
   );
 
-  const items = (rows || [])
-    .map((row) => {
-      const country = normalizeSongCountry(String(row?.country || "").trim());
-      const count = Number(row?.count || 0);
-      if (!country || count <= 0) return null;
-      return { country, count };
-    })
-    .filter(Boolean);
+  const countsByCountry = new Map();
+  for (const row of rows || []) {
+    const country = normalizeSongCountry(String(row?.country || "").trim());
+    const count = Number(row?.count || 0);
+    if (!country || count <= 0) continue;
+    countsByCountry.set(country, (countsByCountry.get(country) || 0) + count);
+  }
+
+  const items = Array.from(countsByCountry.entries())
+    .map(([country, count]) => ({ country, count }))
+    .sort((a, b) => b.count - a.count || a.country.localeCompare(b.country));
 
   return json({ items });
 }
-

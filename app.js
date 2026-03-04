@@ -74,6 +74,7 @@ let songPageBgParallaxMetrics = null;
 let songPageBgParallaxLastMeasureAt = 0;
 let songPageBgParallaxLastShiftPx = Number.NaN;
 let globalWallpaperLastShiftPx = Number.NaN;
+let activeRouteRenderToken = 0;
 const SONG_PAGE_BG_PARALLAX_MIN_PX = 180;
 const SONG_PAGE_BG_PARALLAX_MAX_PX = 560;
 const SONG_PAGE_BG_PARALLAX_VIEWPORT_RATIO = 0.52;
@@ -509,7 +510,7 @@ function setAuthDialogMode(mode = "login") {
     }
     authRegisterNickname?.focus({ preventScroll: true });
   }
-  authMsg.textContent = "";
+  if (authMsg) authMsg.textContent = "";
 }
 
 function setAuthKeyboardOffset(px = 0) {
@@ -628,6 +629,31 @@ function appBootLoadingText() {
   return "Loading...";
 }
 
+function escapeHtml(value) {
+  return String(value ?? "")
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;")
+    .replace(/'/g, "&#39;");
+}
+
+function routeLoadingMarkup() {
+  const title = "European Songbook";
+  const subtitle = appBootLoadingText();
+  const aria = appBootLoadingText();
+  return `
+    <div class="route-content-loading" role="status" aria-live="polite" aria-label="${escapeHtml(aria)}">
+      <div class="app-boot-splash-card route-content-loading-card">
+        <img src="./ui/assets/logo-sticker-20260221.png" alt="" loading="eager" decoding="async" fetchpriority="high" />
+        <div class="app-boot-splash-title">${escapeHtml(title)}</div>
+        <div class="app-boot-splash-subtitle">${escapeHtml(subtitle)}</div>
+        <span class="app-boot-splash-loader" aria-hidden="true"></span>
+      </div>
+    </div>
+  `;
+}
+
 function getHashQuery() {
   const hash = location.hash || "#/";
   const raw = hash.startsWith("#/") ? hash.slice(2) : hash.slice(1);
@@ -670,6 +696,11 @@ function setNavLabel(id, text) {
     return;
   }
   node.textContent = text;
+}
+
+function setTextById(id, text) {
+  const node = document.getElementById(id);
+  if (node) node.textContent = text;
 }
 
 function deriveUserDisplayName(user) {
@@ -827,8 +858,8 @@ function applyTheme(theme = activeTheme, options = {}) {
 
 function applyStaticTexts() {
   document.title = t("app.title");
-  document.getElementById("brandTitle").textContent = t("app.title");
-  document.getElementById("brandSubtitle").textContent = brandSubtitleText();
+  setTextById("brandTitle", t("app.title"));
+  setTextById("brandSubtitle", brandSubtitleText());
   if (appBootSplashTitle) appBootSplashTitle.textContent = t("app.title");
   if (appBootSplashSubtitle) appBootSplashSubtitle.textContent = appBootLoadingText();
 
@@ -850,14 +881,14 @@ function applyStaticTexts() {
   setNavLabel("dNavAdminContent", t("admin.tab.content"));
   setNavLabel("dNavAdminUsers", t("admin.tab.users"));
 
-  document.getElementById("menuTitle").textContent = t("menu.title");
-  document.getElementById("menuMainLabel").textContent = t("menu.sections");
-  document.getElementById("menuSettingsLabel").textContent = t("menu.settings");
+  setTextById("menuTitle", t("menu.title"));
+  setTextById("menuMainLabel", t("menu.sections"));
+  setTextById("menuSettingsLabel", t("menu.settings"));
 
-  btnSidebarToggle.setAttribute("aria-label", t("menu.open"));
+  if (btnSidebarToggle) btnSidebarToggle.setAttribute("aria-label", t("menu.open"));
   if (btnMenuClose) btnMenuClose.setAttribute("aria-label", t("menu.close"));
 
-  btnLogin.textContent = t("auth.login");
+  if (btnLogin) btnLogin.textContent = t("auth.login");
   if (btnLogout) btnLogout.textContent = t("auth.logout");
   if (btnMenuLogout) btnMenuLogout.textContent = t("auth.logout");
   if (topSearchInput && topSearchBtn) {
@@ -868,23 +899,23 @@ function applyStaticTexts() {
 
   const footerNote = document.getElementById("footerNote");
   if (footerNote) footerNote.textContent = t("footer.note");
-  document.getElementById("authTitle").textContent = authDialogMode === "register" ? t("auth.doRegister") : t("auth.login");
-  document.getElementById("authLoginNicknameLabel").textContent = authNicknameLabel();
-  document.getElementById("authLoginPasswordLabel").textContent = t("auth.password");
-  document.getElementById("authRegisterNicknameLabel").textContent = authNicknameRegisterLabel();
-  document.getElementById("authRegisterEmailLabel").textContent = authEmailRegisterLabel();
-  document.getElementById("authRegisterPasswordLabel").textContent = t("auth.password");
-  document.getElementById("authRegisterPasswordConfirmLabel").textContent = authPasswordConfirmLabel();
+  setTextById("authTitle", authDialogMode === "register" ? t("auth.doRegister") : t("auth.login"));
+  setTextById("authLoginNicknameLabel", authNicknameLabel());
+  setTextById("authLoginPasswordLabel", t("auth.password"));
+  setTextById("authRegisterNicknameLabel", authNicknameRegisterLabel());
+  setTextById("authRegisterEmailLabel", authEmailRegisterLabel());
+  setTextById("authRegisterPasswordLabel", t("auth.password"));
+  setTextById("authRegisterPasswordConfirmLabel", authPasswordConfirmLabel());
   if (authModeLogin) authModeLogin.textContent = t("auth.doLogin");
   if (authModeRegister) authModeRegister.textContent = t("auth.doRegister");
-  doLogin.textContent = t("auth.doLogin");
-  doRegister.textContent = t("auth.doRegister");
+  if (doLogin) doLogin.textContent = t("auth.doLogin");
+  if (doRegister) doRegister.textContent = t("auth.doRegister");
 
-  document.getElementById("promptTitle").textContent = t("prompt.title");
-  document.getElementById("promptTextLabel").textContent = t("prompt.text");
-  document.getElementById("promptCopy").textContent = t("prompt.copy");
-  document.getElementById("promptOpen").textContent = t("prompt.open");
-  document.getElementById("promptClose").textContent = t("prompt.close");
+  setTextById("promptTitle", t("prompt.title"));
+  setTextById("promptTextLabel", t("prompt.text"));
+  setTextById("promptCopy", t("prompt.copy"));
+  setTextById("promptOpen", t("prompt.open"));
+  setTextById("promptClose", t("prompt.close"));
   if (btnInstallApp) btnInstallApp.textContent = installButtonText();
   syncThemeToggleButton();
 
@@ -1013,7 +1044,7 @@ function setActiveNav() {
     menuUserChip.removeAttribute("title");
   }
 
-  btnLogin.classList.toggle("hidden", !!state.user);
+  if (btnLogin) btnLogin.classList.toggle("hidden", !!state.user);
   if (btnLogout) btnLogout.classList.add("hidden");
   if (btnMenuLogout) btnMenuLogout.classList.toggle("hidden", !state.user);
   updateInstallButtonVisibility();
@@ -1096,8 +1127,8 @@ window.addEventListener("keydown", (e) => {
   if (e.key === "Escape") setMenuOpen(false);
 });
 
-btnLogin.addEventListener("click", () => {
-  authMsg.textContent = "";
+btnLogin?.addEventListener("click", () => {
+  if (authMsg) authMsg.textContent = "";
   if (authLoginNickname) authLoginNickname.value = state.lastNickname || "";
   if (authLoginPassword) authLoginPassword.value = "";
   if (authRegisterNickname) authRegisterNickname.value = state.lastNickname || "";
@@ -1152,13 +1183,13 @@ btnMenuLogout?.addEventListener("click", async () => {
   setMenuOpen(false);
 });
 
-doLogin.addEventListener("click", async (e) => {
+doLogin?.addEventListener("click", async (e) => {
   e.preventDefault();
-  authMsg.textContent = "";
+  if (authMsg) authMsg.textContent = "";
   const nickname = authLoginNickname?.value?.trim() || "";
   const password = authLoginPassword?.value || "";
   if (!nickname || !password) {
-    authMsg.textContent = authNickAndPassRequiredMessage();
+    if (authMsg) authMsg.textContent = authNickAndPassRequiredMessage();
     return;
   }
   state.lastNickname = nickname;
@@ -1168,23 +1199,23 @@ doLogin.addEventListener("click", async (e) => {
     await refreshMe();
     router.go("#/");
   } catch (error) {
-    authMsg.textContent = error?.message || t("auth.loginFailed");
+    if (authMsg) authMsg.textContent = error?.message || t("auth.loginFailed");
   }
 });
 
-doRegister.addEventListener("click", async (e) => {
+doRegister?.addEventListener("click", async (e) => {
   e.preventDefault();
-  authMsg.textContent = "";
+  if (authMsg) authMsg.textContent = "";
   const nickname = authRegisterNickname?.value?.trim() || "";
   const email = authRegisterEmail?.value?.trim() || "";
   const password = authRegisterPassword?.value || "";
   const passwordConfirm = authRegisterPasswordConfirm?.value || "";
   if (!nickname || !email || !password) {
-    authMsg.textContent = authRegisterFieldsRequiredMessage();
+    if (authMsg) authMsg.textContent = authRegisterFieldsRequiredMessage();
     return;
   }
   if (password !== passwordConfirm) {
-    authMsg.textContent = authPasswordMismatchMessage();
+    if (authMsg) authMsg.textContent = authPasswordMismatchMessage();
     return;
   }
   state.lastNickname = nickname;
@@ -1194,7 +1225,7 @@ doRegister.addEventListener("click", async (e) => {
     await refreshMe();
     router.go("#/");
   } catch (error) {
-    authMsg.textContent = getRegisterErrorMessage(error);
+    if (authMsg) authMsg.textContent = getRegisterErrorMessage(error);
   }
 });
 
@@ -1203,14 +1234,17 @@ function shouldUseFastSearchMotion(route) {
 }
 
 router.on(async (route) => {
+  const renderToken = ++activeRouteRenderToken;
   setTopSearchState(route);
   setActiveNav();
   const app = document.getElementById("app");
   app.classList.toggle("song-layout", route?.name === "song");
   app.setAttribute("aria-busy", "true");
   const useReducedRouteMotion = shouldUseFastSearchMotion(route);
+  app.innerHTML = routeLoadingMarkup();
   try {
     const out = await render(route);
+    if (renderToken !== activeRouteRenderToken) return;
     app.innerHTML = out.html;
     bind(route, out.ctx);
     if (route?.name === "admin" && route?.section === "editor") {
@@ -1224,6 +1258,7 @@ router.on(async (route) => {
       animateStagedReveal(app);
     }
   } catch (error) {
+    if (renderToken !== activeRouteRenderToken) return;
     const msg = error?.message || t("app.unexpectedError");
     app.innerHTML = `<div class="card"><div class="h1">${t("common.error")}</div><div class="sep"></div><div class="muted">${msg}</div></div>`;
     if (useReducedRouteMotion) {
@@ -1234,6 +1269,7 @@ router.on(async (route) => {
       animateStagedReveal(app);
     }
   }
+  if (renderToken !== activeRouteRenderToken) return;
   app.setAttribute("aria-busy", "false");
   setMenuOpen(false);
   setActiveNav();

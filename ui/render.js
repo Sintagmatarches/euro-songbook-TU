@@ -776,65 +776,107 @@ function versionListenSectionTitle() {
 }
 
 function adminOnlyContentLabel() {
-  if (uiLocale() === "ru") return "Admin-only контент";
-  if (uiLocale() === "uk") return "Контент лише для адінів";
-  if (uiLocale() === "et") return "Admin-only sisu";
-  return "Admin-only content";
+  if (uiLocale() === "ru") return "\u0422\u043e\u043b\u044c\u043a\u043e \u0434\u043b\u044f \u0430\u0434\u043c\u0438\u043d\u0438\u0441\u0442\u0440\u0430\u0442\u043e\u0440\u043e\u0432";
+  if (uiLocale() === "uk") return "\u041b\u0438\u0448\u0435 \u0434\u043b\u044f \u0430\u0434\u043c\u0456\u043d\u0456\u0441\u0442\u0440\u0430\u0442\u043e\u0440\u0456\u0432";
+  if (uiLocale() === "et") return "Ainult administraatoritele";
+  return "Administrators only";
 }
 
 function adminOnlyContentHint() {
-  if (uiLocale() === "ru") return "Песня видна только пользователям с правом просмотра admin-only.";
-  if (uiLocale() === "uk") return "Пісня видима лише користувачам із правом перегляду admin-only.";
-  if (uiLocale() === "et") return "Laul on nahtav ainult kasutajatele, kellel on admin-only vaatamise oigus.";
-  return "The song is visible only to users with admin-only viewing permission.";
+  if (uiLocale() === "ru") return "\u0414\u043e\u0441\u0442\u0443\u043f\u043d\u043e \u0442\u043e\u043b\u044c\u043a\u043e \u0430\u0434\u043c\u0438\u043d\u0438\u0441\u0442\u0440\u0430\u0442\u043e\u0440\u0430\u043c.";
+  if (uiLocale() === "uk") return "\u0414\u043e\u0441\u0442\u0443\u043f\u043d\u043e \u043b\u0438\u0448\u0435 \u0430\u0434\u043c\u0456\u043d\u0456\u0441\u0442\u0440\u0430\u0442\u043e\u0440\u0430\u043c.";
+  if (uiLocale() === "et") return "Saadaval ainult administraatoritele.";
+  return "Available to administrators only.";
 }
 
 function regionFieldLabel() {
-  if (uiLocale() === "ru") return "Р РµРіРёРѕРЅ";
-  if (uiLocale() === "uk") return "Р РµРіС–РѕРЅ";
+  if (uiLocale() === "ru") return "\u0420\u0435\u0433\u0438\u043e\u043d";
+  if (uiLocale() === "uk") return "\u0420\u0435\u0433\u0456\u043e\u043d";
   if (uiLocale() === "et") return "Piirkond";
   return "Region";
 }
 
 function eventFieldLabel() {
-  if (uiLocale() === "ru") return "РЎРѕР±С‹С‚РёРµ";
-  if (uiLocale() === "uk") return "РџРѕРґС–СЏ";
-  if (uiLocale() === "et") return "Sündmus";
+  if (uiLocale() === "ru") return "\u0421\u043e\u0431\u044b\u0442\u0438\u0435";
+  if (uiLocale() === "uk") return "\u041f\u043e\u0434\u0456\u044f";
+  if (uiLocale() === "et") return "S\u00fcndmus";
   return "Event";
 }
 
 function themeFieldLabel() {
-  if (uiLocale() === "ru") return "РўРµРјР°С‚РёРєР°";
-  if (uiLocale() === "uk") return "РўРµРјР°С‚РёРєР°";
+  if (uiLocale() === "ru") return "\u0422\u0435\u043c\u0430\u0442\u0438\u043a\u0430";
+  if (uiLocale() === "uk") return "\u0422\u0435\u043c\u0430\u0442\u0438\u043a\u0430";
   if (uiLocale() === "et") return "Temaatika";
   return "Theme";
 }
 
 function addFieldLabel() {
-  if (uiLocale() === "ru") return "Добавить поле";
-  if (uiLocale() === "uk") return "Додати поле";
-  if (uiLocale() === "et") return "Lisa väli";
+  if (uiLocale() === "ru") return "\u0414\u043e\u0431\u0430\u0432\u0438\u0442\u044c \u043f\u043e\u043b\u0435";
+  if (uiLocale() === "uk") return "\u0414\u043e\u0434\u0430\u0442\u0438 \u043f\u043e\u043b\u0435";
+  if (uiLocale() === "et") return "Lisa v\u00e4li";
   return "Add field";
 }
 
 function removeFieldLabel() {
-  if (uiLocale() === "ru") return "Скрыть поле";
-  if (uiLocale() === "uk") return "Приховати поле";
-  if (uiLocale() === "et") return "Peida väli";
+  if (uiLocale() === "ru") return "\u0421\u043a\u0440\u044b\u0442\u044c \u043f\u043e\u043b\u0435";
+  if (uiLocale() === "uk") return "\u041f\u0440\u0438\u0445\u043e\u0432\u0430\u0442\u0438 \u043f\u043e\u043b\u0435";
+  if (uiLocale() === "et") return "Peida v\u00e4li";
   return "Hide field";
 }
 
+function deleteSongRevealLabel() {
+  if (uiLocale() === "ru") return "\u041e\u043f\u0430\u0441\u043d\u0430\u044f \u0437\u043e\u043d\u0430";
+  if (uiLocale() === "uk") return "\u041d\u0435\u0431\u0435\u0437\u043f\u0435\u0447\u043d\u0430 \u0437\u043e\u043d\u0430";
+  if (uiLocale() === "et") return "Ohtlik tsoon";
+  return "Danger zone";
+}
+
+function deleteSongConfirmText() {
+  if (uiLocale() === "ru") return "\u0412\u044b \u0442\u043e\u0447\u043d\u043e \u0445\u043e\u0442\u0438\u0442\u0435 \u0443\u0434\u0430\u043b\u0438\u0442\u044c?";
+  if (uiLocale() === "uk") return "\u0412\u0438 \u0442\u043e\u0447\u043d\u043e \u0445\u043e\u0447\u0435\u0442\u0435 \u0432\u0438\u0434\u0430\u043b\u0438\u0442\u0438?";
+  if (uiLocale() === "et") return "Kas olete kindel, et soovite kustutada?";
+  return "Are you sure you want to delete?";
+}
+
 function deletePageVariantLabel() {
-  if (uiLocale() === "ru") return "Удалить версию страницы";
-  if (uiLocale() === "uk") return "Видалити версію сторінки";
-  if (uiLocale() === "et") return "Kustuta lehe versioon";
-  return "Delete page variant";
+  if (uiLocale() === "ru") return "\u0423\u0434\u0430\u043b\u0438\u0442\u044c \u0432\u0435\u0440\u0441\u0438\u044e";
+  if (uiLocale() === "uk") return "\u0412\u0438\u0434\u0430\u043b\u0438\u0442\u0438 \u0432\u0435\u0440\u0441\u0456\u044e";
+  if (uiLocale() === "et") return "Kustuta versioon";
+  return "Delete version";
+}
+
+function deletePageVariantConfirmText() {
+  if (uiLocale() === "ru") return "\u0423\u0434\u0430\u043b\u0438\u0442\u044c \u0432\u044b\u0431\u0440\u0430\u043d\u043d\u0443\u044e \u0432\u0435\u0440\u0441\u0438\u044e?";
+  if (uiLocale() === "uk") return "\u0412\u0438\u0434\u0430\u043b\u0438\u0442\u0438 \u0432\u0438\u0431\u0440\u0430\u043d\u0443 \u0432\u0435\u0440\u0441\u0456\u044e?";
+  if (uiLocale() === "et") return "Kustutada valitud versioon?";
+  return "Delete selected version?";
+}
+
+function deletePageVariantFailedText() {
+  if (uiLocale() === "ru") return "\u041d\u0435 \u0443\u0434\u0430\u043b\u043e\u0441\u044c \u0443\u0434\u0430\u043b\u0438\u0442\u044c \u0432\u0435\u0440\u0441\u0438\u044e";
+  if (uiLocale() === "uk") return "\u041d\u0435 \u0432\u0434\u0430\u043b\u043e\u0441\u044f \u0432\u0438\u0434\u0430\u043b\u0438\u0442\u0438 \u0432\u0435\u0440\u0441\u0456\u044e";
+  if (uiLocale() === "et") return "Versiooni kustutamine ebaonnestus";
+  return "Failed to delete version";
+}
+
+function addVersionButtonLabel() {
+  if (uiLocale() === "ru") return "\u0414\u043e\u0431\u0430\u0432\u0438\u0442\u044c \u0432\u0435\u0440\u0441\u0438\u044e";
+  if (uiLocale() === "uk") return "\u0414\u043e\u0434\u0430\u0442\u0438 \u0432\u0435\u0440\u0441\u0456\u044e";
+  if (uiLocale() === "et") return "Lisa versioon";
+  return "Add version";
+}
+
+function unpublishedStatusLabel() {
+  if (uiLocale() === "ru") return "\u041d\u0435 \u043e\u043f\u0443\u0431\u043b\u0438\u043a\u043e\u0432\u0430\u043d\u0430";
+  if (uiLocale() === "uk") return "\u041d\u0435 \u043e\u043f\u0443\u0431\u043b\u0456\u043a\u043e\u0432\u0430\u043d\u0430";
+  if (uiLocale() === "et") return "Avaldamata";
+  return "Unpublished";
 }
 
 function editorPromptHelperText() {
-  if (uiLocale() === "ru") return "Сформировать промпт по текущей строке и открыть ChatGPT.";
-  if (uiLocale() === "uk") return "Згенерувати промпт за поточним рядком і відкрити ChatGPT.";
-  if (uiLocale() === "et") return "Loo prompt aktiivse rea põhjal ja ava ChatGPT.";
+  if (uiLocale() === "ru") return "\u0421\u043e\u0431\u0440\u0430\u0442\u044c \u043f\u0440\u043e\u043c\u043f\u0442 \u043f\u043e \u0442\u0435\u043a\u0443\u0449\u0435\u0439 \u0441\u0442\u0440\u043e\u043a\u0435 \u0438 \u043e\u0442\u043a\u0440\u044b\u0442\u044c ChatGPT.";
+  if (uiLocale() === "uk") return "\u0417\u0456\u0431\u0440\u0430\u0442\u0438 \u043f\u0440\u043e\u043c\u043f\u0442 \u0437\u0430 \u043f\u043e\u0442\u043e\u0447\u043d\u0438\u043c \u0440\u044f\u0434\u043a\u043e\u043c \u0456 \u0432\u0456\u0434\u043a\u0440\u0438\u0442\u0438 ChatGPT.";
+  if (uiLocale() === "et") return "Koosta prompt aktiivse rea pohjal ja ava ChatGPT.";
   return "Build a prompt from the active line and open ChatGPT.";
 }
 
@@ -851,29 +893,29 @@ function optionalFieldTitleByKey(key = "") {
 }
 
 function songAuditAddedLabel() {
-  if (uiLocale() === "ru") return "Добавил";
-  if (uiLocale() === "uk") return "Додав";
+  if (uiLocale() === "ru") return "\u0414\u043e\u0431\u0430\u0432\u0438\u043b";
+  if (uiLocale() === "uk") return "\u0414\u043e\u0434\u0430\u0432";
   if (uiLocale() === "et") return "Lisaja";
   return "Added by";
 }
 
 function songAuditEditedLabel() {
-  if (uiLocale() === "ru") return "Редактировал";
-  if (uiLocale() === "uk") return "Редагував";
+  if (uiLocale() === "ru") return "\u0420\u0435\u0434\u0430\u043a\u0442\u0438\u0440\u043e\u0432\u0430\u043b";
+  if (uiLocale() === "uk") return "\u0420\u0435\u0434\u0430\u0433\u0443\u0432\u0430\u0432";
   if (uiLocale() === "et") return "Muutis";
   return "Edited by";
 }
 
 function songAuditUnknown() {
-  if (uiLocale() === "ru") return "не указано";
-  if (uiLocale() === "uk") return "не вказано";
+  if (uiLocale() === "ru") return "\u043d\u0435 \u0443\u043a\u0430\u0437\u0430\u043d\u043e";
+  if (uiLocale() === "uk") return "\u043d\u0435 \u0432\u043a\u0430\u0437\u0430\u043d\u043e";
   if (uiLocale() === "et") return "puudub";
   return "not set";
 }
 
 function closeEditorLabel() {
-  if (uiLocale() === "ru") return "Закрыть редактор";
-  if (uiLocale() === "uk") return "Закрити редактор";
+  if (uiLocale() === "ru") return "\u0417\u0430\u043a\u0440\u044b\u0442\u044c \u0440\u0435\u0434\u0430\u043a\u0442\u043e\u0440";
+  if (uiLocale() === "uk") return "\u0417\u0430\u043a\u0440\u0438\u0442\u0438 \u0440\u0435\u0434\u0430\u043a\u0442\u043e\u0440";
   if (uiLocale() === "et") return "Sulge redaktor";
   return "Close editor";
 }
@@ -1199,10 +1241,10 @@ function verifiedLabel() {
 }
 
 function verifiedOnlyLabel() {
-  if (uiLocale() === "ru") return "\u0422\u043e\u043b\u044c\u043a\u043e \u0432\u0435\u0440\u0438\u0444\u0438\u0446\u0438\u0440\u043e\u0432\u0430\u043d\u043d\u044b\u0435 \u0442\u0435\u043a\u0441\u0442\u044b";
-  if (uiLocale() === "uk") return "\u041b\u0438\u0448\u0435 \u0432\u0435\u0440\u0438\u0444\u0456\u043a\u043e\u0432\u0430\u043d\u0456 \u0442\u0435\u043a\u0441\u0442\u0438";
-  if (uiLocale() === "et") return "Ainult verifitseeritud tekstid";
-  return "Verified texts only";
+  if (uiLocale() === "ru") return "\u0412\u0435\u0440\u0438\u0444\u0438\u0446\u0438\u0440\u043e\u0432\u0430\u043d\u043d\u0430\u044f \u0432\u0435\u0440\u0441\u0438\u044f";
+  if (uiLocale() === "uk") return "\u0412\u0435\u0440\u0438\u0444\u0456\u043a\u043e\u0432\u0430\u043d\u0430 \u0432\u0435\u0440\u0441\u0456\u044f";
+  if (uiLocale() === "et") return "Verifitseeritud versioon";
+  return "Verified version";
 }
 
 function homeReportFragmentLabel() {
@@ -1549,7 +1591,7 @@ function draftUiText(key, vars = {}) {
     collaboratorNicknamePlaceholder: "Nickname",
     addCollaborator: "Add contact",
     sendCollaboratorInvite: "Add contact",
-    writeCollaboratively: "Write collaboratively",
+    writeCollaboratively: "Invite",
     myDrafts: "My drafts",
     incomingInvitations: "Incoming invitations",
     invitationPending: "Pending",
@@ -1570,12 +1612,13 @@ function draftUiText(key, vars = {}) {
     publishDraft: "Publish draft",
     publishSong: "Publish",
     songVariants: "Page variants",
-    addSongVariant: "Add page variant",
+    addSongVariant: "Add page version",
+    addLineVariant: "Add line version",
     addVersionTooltip: "Add version",
     deleteVersionTooltip: "Delete version",
     confidenceTool: "Page variants",
     linePickerTool: "Line variants",
-    copyPromptTool: "ChatGPT prompt",
+    copyPromptTool: "Help decode (ChatGPT)",
     liveStatus: "Live status",
     accessMembersEmpty: "Access: no members yet",
     accessMembersWithNames: "Access: {names}",
@@ -1601,7 +1644,11 @@ function draftUiText(key, vars = {}) {
     aiOpen: "Open ChatGPT",
     lineConfidence: "Variant",
     activeVariant: "Selected",
-    variantsList: "Variants",
+    variantsList: "Versions",
+    removeVariant: "Remove",
+    removeVariantTitle: "Delete line version",
+    removeVariantConfirm: "Delete this line version?",
+    removeVariantFailed: "Failed to delete line version",
   };
   const ru = {
     variantBadgeManual: "\u0412\u0440\u0443\u0447\u043d\u0443\u044e",
@@ -1630,7 +1677,8 @@ function draftUiText(key, vars = {}) {
     openDraft: "\u041e\u0442\u043a\u0440\u044b\u0442\u044c \u0447\u0435\u0440\u043d\u043e\u0432\u0438\u043a",
     publishSong: "\u041e\u043f\u0443\u0431\u043b\u0438\u043a\u043e\u0432\u0430\u0442\u044c",
     songVariants: "\u0412\u0430\u0440\u0438\u0430\u043d\u0442\u044b \u0441\u0442\u0440\u0430\u043d\u0438\u0446\u044b",
-    addSongVariant: "\u0414\u043e\u0431\u0430\u0432\u0438\u0442\u044c \u0432\u0430\u0440\u0438\u0430\u043d\u0442 \u0441\u0442\u0440\u0430\u043d\u0438\u0446\u044b",
+    addSongVariant: "\u0414\u043e\u0431\u0430\u0432\u0438\u0442\u044c \u0432\u0435\u0440\u0441\u0438\u044e \u0441\u0442\u0440\u0430\u043d\u0438\u0446\u044b",
+    addLineVariant: "\u0414\u043e\u0431\u0430\u0432\u0438\u0442\u044c \u0432\u0435\u0440\u0441\u0438\u044e \u0441\u0442\u0440\u043e\u043a\u0438",
     addVersionTooltip: "\u0414\u043e\u0431\u0430\u0432\u0438\u0442\u044c \u0432\u0435\u0440\u0441\u0438\u044e",
     deleteVersionTooltip: "\u0423\u0434\u0430\u043b\u0438\u0442\u044c \u0432\u0435\u0440\u0441\u0438\u044e",
     liveStatus: "\u0421\u0442\u0430\u0442\u0443\u0441",
@@ -1641,7 +1689,7 @@ function draftUiText(key, vars = {}) {
     addVariantSuggested: "\u0414\u043e\u0431\u0430\u0432\u0438\u0442\u044c \u043f\u043e\u0434\u0441\u043a\u0430\u0437\u043a\u0443",
     confidenceTool: "\u0412\u0430\u0440\u0438\u0430\u043d\u0442\u044b \u0441\u0442\u0440\u0430\u043d\u0438\u0446\u044b",
     linePickerTool: "\u0412\u0430\u0440\u0438\u0430\u043d\u0442\u044b \u0441\u0442\u0440\u043e\u043a",
-    copyPromptTool: "\u041f\u0440\u043e\u043c\u043f\u0442 \u0434\u043b\u044f ChatGPT",
+    copyPromptTool: "\u041f\u043e\u043c\u043e\u0449\u044c \u0432 \u0440\u0430\u0441\u0448\u0438\u0444\u0440\u043e\u0432\u043a\u0435 (ChatGPT)",
     openCollaborativeDraft: "\u0421\u043e\u0432\u043c\u0435\u0441\u0442\u043d\u044b\u0439 \u0447\u0435\u0440\u043d\u043e\u0432\u0438\u043a",
     addCollaborator: "\u0414\u043e\u0431\u0430\u0432\u0438\u0442\u044c \u043a\u043e\u043d\u0442\u0430\u043a\u0442",
     sendCollaboratorInvite: "\u0414\u043e\u0431\u0430\u0432\u0438\u0442\u044c \u043a\u043e\u043d\u0442\u0430\u043a\u0442",
@@ -1666,10 +1714,14 @@ function draftUiText(key, vars = {}) {
     opStatusPending: "\u0432 \u043e\u0436\u0438\u0434\u0430\u043d\u0438\u0438",
     opStatusApplied: "\u043f\u0440\u0438\u043c\u0435\u043d\u0435\u043d\u043e",
     opStatusPersisted: "\u0441\u043e\u0445\u0440\u0430\u043d\u0435\u043d\u043e",
-    writeCollaboratively: "\u041f\u0438\u0448\u0438\u0442\u0435 \u0432\u043c\u0435\u0441\u0442\u0435",
+    writeCollaboratively: "\u041f\u0440\u0438\u0433\u043b\u0430\u0441\u0438\u0442\u044c",
     lineConfidence: "\u0412\u0430\u0440\u0438\u0430\u043d\u0442",
     activeVariant: "\u0412\u044b\u0431\u0440\u0430\u043d\u043e",
-    variantsList: "\u0412\u0430\u0440\u0438\u0430\u043d\u0442\u044b",
+    variantsList: "\u0412\u0435\u0440\u0441\u0438\u0438",
+    removeVariant: "\u0423\u0434\u0430\u043b\u0438\u0442\u044c",
+    removeVariantTitle: "\u0423\u0434\u0430\u043b\u0438\u0442\u044c \u0432\u0435\u0440\u0441\u0438\u044e \u0441\u0442\u0440\u043e\u043a\u0438",
+    removeVariantConfirm: "\u0423\u0434\u0430\u043b\u0438\u0442\u044c \u044d\u0442\u0443 \u0432\u0435\u0440\u0441\u0438\u044e \u0441\u0442\u0440\u043e\u043a\u0438?",
+    removeVariantFailed: "\u041d\u0435 \u0443\u0434\u0430\u043b\u043e\u0441\u044c \u0443\u0434\u0430\u043b\u0438\u0442\u044c \u0432\u0435\u0440\u0441\u0438\u044e \u0441\u0442\u0440\u043e\u043a\u0438",
     lineSyncPending: "\u0421\u0442\u0440\u043e\u043a\u0430 \u0441\u0438\u043d\u0445\u0440\u043e\u043d\u0438\u0437\u0438\u0440\u0443\u0435\u0442\u0441\u044f, \u043f\u043e\u0432\u0442\u043e\u0440\u0438\u0442\u0435 \u0447\u0435\u0440\u0435\u0437 \u0441\u0435\u043a\u0443\u043d\u0434\u0443",
   };
   const uk = {
@@ -1699,7 +1751,8 @@ function draftUiText(key, vars = {}) {
     openDraft: "\u0412\u0456\u0434\u043a\u0440\u0438\u0442\u0438 \u0447\u0435\u0440\u043d\u0435\u0442\u043a\u0443",
     publishSong: "\u041e\u043f\u0443\u0431\u043b\u0456\u043a\u0443\u0432\u0430\u0442\u0438",
     songVariants: "\u0412\u0430\u0440\u0456\u0430\u043d\u0442\u0438 \u0441\u0442\u043e\u0440\u0456\u043d\u043a\u0438",
-    addSongVariant: "\u0414\u043e\u0434\u0430\u0442\u0438 \u0432\u0430\u0440\u0456\u0430\u043d\u0442 \u0441\u0442\u043e\u0440\u0456\u043d\u043a\u0438",
+    addSongVariant: "\u0414\u043e\u0434\u0430\u0442\u0438 \u0432\u0435\u0440\u0441\u0456\u044e \u0441\u0442\u043e\u0440\u0456\u043d\u043a\u0438",
+    addLineVariant: "\u0414\u043e\u0434\u0430\u0442\u0438 \u0432\u0435\u0440\u0441\u0456\u044e \u0440\u044f\u0434\u043a\u0430",
     addVersionTooltip: "\u0414\u043e\u0434\u0430\u0442\u0438 \u0432\u0435\u0440\u0441\u0456\u044e",
     deleteVersionTooltip: "\u0412\u0438\u0434\u0430\u043b\u0438\u0442\u0438 \u0432\u0435\u0440\u0441\u0456\u044e",
     liveStatus: "\u0421\u0442\u0430\u0442\u0443\u0441",
@@ -1710,7 +1763,7 @@ function draftUiText(key, vars = {}) {
     addVariantSuggested: "\u0414\u043e\u0434\u0430\u0442\u0438 \u043f\u0456\u0434\u043a\u0430\u0437\u043a\u0443",
     confidenceTool: "\u0412\u0430\u0440\u0456\u0430\u043d\u0442\u0438 \u0441\u0442\u043e\u0440\u0456\u043d\u043a\u0438",
     linePickerTool: "\u0412\u0430\u0440\u0456\u0430\u043d\u0442\u0438 \u0440\u044f\u0434\u043a\u0430",
-    copyPromptTool: "\u041f\u0440\u043e\u043c\u043f\u0442 \u0434\u043b\u044f ChatGPT",
+    copyPromptTool: "\u0414\u043e\u043f\u043e\u043c\u043e\u0433\u0442\u0438 \u0432 \u0440\u043e\u0437\u0448\u0438\u0444\u0440\u0443\u0432\u0430\u043d\u043d\u0456 (ChatGPT)",
     openCollaborativeDraft: "\u0421\u043f\u0456\u043b\u044c\u043d\u0430 \u0447\u0435\u0440\u043d\u0435\u0442\u043a\u0430",
     addCollaborator: "\u0414\u043e\u0434\u0430\u0442\u0438 \u043a\u043e\u043d\u0442\u0430\u043a\u0442",
     sendCollaboratorInvite: "\u0414\u043e\u0434\u0430\u0442\u0438 \u043a\u043e\u043d\u0442\u0430\u043a\u0442",
@@ -1735,10 +1788,14 @@ function draftUiText(key, vars = {}) {
     opStatusPending: "\u043e\u0447\u0456\u043a\u0443\u0454",
     opStatusApplied: "\u0437\u0430\u0441\u0442\u043e\u0441\u043e\u0432\u0430\u043d\u043e",
     opStatusPersisted: "\u0437\u0431\u0435\u0440\u0435\u0436\u0435\u043d\u043e",
-    writeCollaboratively: "\u041f\u0438\u0448\u0456\u0442\u044c \u0440\u0430\u0437\u043e\u043c",
+    writeCollaboratively: "\u0417\u0430\u043f\u0440\u043e\u0441\u0438\u0442\u0438",
     lineConfidence: "\u0412\u0430\u0440\u0456\u0430\u043d\u0442",
     activeVariant: "\u0412\u0438\u0431\u0440\u0430\u043d\u043e",
-    variantsList: "\u0412\u0430\u0440\u0456\u0430\u043d\u0442\u0438",
+    variantsList: "\u0412\u0435\u0440\u0441\u0456\u0457",
+    removeVariant: "\u0412\u0438\u0434\u0430\u043b\u0438\u0442\u0438",
+    removeVariantTitle: "\u0412\u0438\u0434\u0430\u043b\u0438\u0442\u0438 \u0432\u0435\u0440\u0441\u0456\u044e \u0440\u044f\u0434\u043a\u0430",
+    removeVariantConfirm: "\u0412\u0438\u0434\u0430\u043b\u0438\u0442\u0438 \u0446\u044e \u0432\u0435\u0440\u0441\u0456\u044e \u0440\u044f\u0434\u043a\u0430?",
+    removeVariantFailed: "\u041d\u0435 \u0432\u0434\u0430\u043b\u043e\u0441\u044f \u0432\u0438\u0434\u0430\u043b\u0438\u0442\u0438 \u0432\u0435\u0440\u0441\u0456\u044e \u0440\u044f\u0434\u043a\u0430",
     lineSyncPending: "\u0420\u044f\u0434\u043e\u043a \u0441\u0438\u043d\u0445\u0440\u043e\u043d\u0456\u0437\u0443\u0454\u0442\u044c\u0441\u044f, \u043f\u043e\u0432\u0442\u043e\u0440\u0456\u0442\u044c \u0437\u0430 \u0441\u0435\u043a\u0443\u043d\u0434\u0443",
   };
   const et = {
@@ -1756,7 +1813,7 @@ function draftUiText(key, vars = {}) {
     collaboratorNicknamePlaceholder: "Kasutajanimi",
     addCollaborator: "Lisa kontakt",
     sendCollaboratorInvite: "Lisa kontakt",
-    writeCollaboratively: "Kirjuta koos",
+    writeCollaboratively: "Kutsu",
     myDrafts: "Minu mustandid",
     incomingInvitations: "Saabunud kutsed",
     invitationPending: "Ootel",
@@ -1777,12 +1834,13 @@ function draftUiText(key, vars = {}) {
     publishDraft: "Avalda mustand",
     publishSong: "Avalda",
     songVariants: "Lehe variandid",
-    addSongVariant: "Lisa lehe variant",
+    addSongVariant: "Lisa lehe versioon",
+    addLineVariant: "Lisa rea versioon",
     addVersionTooltip: "Lisa versioon",
     deleteVersionTooltip: "Kustuta versioon",
     confidenceTool: "Lehe variandid",
     linePickerTool: "Rea variandid",
-    copyPromptTool: "ChatGPT prompt",
+    copyPromptTool: "Aita lahti kirjutada (ChatGPT)",
     liveStatus: "Staatus",
     accessMembersEmpty: "Ligipaas: liikmeid veel pole",
     accessMembersWithNames: "Ligipaas: {names}",
@@ -1807,7 +1865,11 @@ function draftUiText(key, vars = {}) {
     aiOpen: "Ava ChatGPT",
     lineConfidence: "Variant",
     activeVariant: "Valitud",
-    variantsList: "Variandid",
+    variantsList: "Versioonid",
+    removeVariant: "Kustuta",
+    removeVariantTitle: "Kustuta rea versioon",
+    removeVariantConfirm: "Kustutada see rea versioon?",
+    removeVariantFailed: "Rea versiooni kustutamine ebaonnestus",
     lineSyncPending: "Rida s\u00FCnkroonitakse, proovi hetke p\u00E4rast uuesti",
   };
   const fallback = en[key] || key;
@@ -1857,6 +1919,24 @@ function adminOnlyToggleIcon() {
   `;
 }
 
+function collabToggleIcon() {
+  return `
+    <span class="ac-meta-icon" aria-hidden="true">
+      <svg viewBox="0 0 20 20" focusable="false">
+        <path d="M10 2.15a4.2 4.2 0 1 1 0 8.4 4.2 4.2 0 0 1 0-8.4Zm0 1.6a2.6 2.6 0 1 0 0 5.2 2.6 2.6 0 0 0 0-5.2Z"></path>
+        <path d="M3.95 16.85c.2-2.73 2.34-4.68 6.05-4.68 3.72 0 5.86 1.95 6.05 4.68h-1.62c-.17-1.76-1.52-3.08-4.43-3.08s-4.26 1.32-4.43 3.08H3.95Z"></path>
+        <path d="M16.7 5.2v1.9h1.9v1.4h-1.9v1.9h-1.4V8.5h-1.9V7.1h1.9V5.2h1.4Z"></path>
+      </svg>
+    </span>
+  `;
+}
+
+function gptToolIcon() {
+  return `
+    <span class="ac-meta-icon ac-meta-icon-gpt" aria-hidden="true">GPT</span>
+  `;
+}
+
 function draftVariantTypeLabel(value = "") {
   const normalized = String(value || "").trim().toLowerCase();
   if (normalized === "suggested") return draftUiText("variantBadgeSuggested");
@@ -1888,7 +1968,28 @@ function draftConfidenceFromInput(rawValue, fallback = 100) {
 
 function draftActiveVariant(line = {}) {
   const variants = Array.isArray(line?.variants) ? line.variants : [];
-  return variants.find((item) => item?.is_active) || variants[0] || null;
+  if (!variants.length) return null;
+  const activeVariantId = String(line?.active_variant_id || "").trim();
+  if (activeVariantId) {
+    const byActiveId = variants.find((item) => String(item?.id || "").trim() === activeVariantId);
+    if (byActiveId) return byActiveId;
+  }
+  const byActiveFlag = variants.find((item) => item?.is_active);
+  if (byActiveFlag) return byActiveFlag;
+  let best = variants[0];
+  let bestScore = Number(best?.confidence || 0);
+  for (const item of variants) {
+    const score = Number(item?.confidence || 0);
+    if (score > bestScore) {
+      best = item;
+      bestScore = score;
+      continue;
+    }
+    if (score === bestScore && item?.is_active && !best?.is_active) {
+      best = item;
+    }
+  }
+  return best || variants[0] || null;
 }
 
 function draftLinesToLyrics(lines = []) {
@@ -1942,7 +2043,6 @@ function draftLineRowsUI(lines = []) {
               <div class="draft-variant-text">${esc(String(variant?.text || ""))}</div>
               <div class="draft-variant-controls">
                 <span class="badge">${esc(draftVariantTypeLabel(variant?.variant_type || "manual"))}</span>
-                <button class="btn ghost draft-variant-activate" type="button" data-line-id="${esc(line.id)}" data-variant-id="${esc(variant?.id || "")}" ${variant?.is_active ? "disabled" : ""}>${esc(draftUiText("useVariant"))}</button>
               </div>
             </div>
           `).join("")}
@@ -1991,7 +2091,6 @@ function draftLineActionsPanelUI(line = null, index = -1) {
             <div class="draft-variant-text">${esc(String(variant?.text || ""))}</div>
             <div class="draft-variant-controls">
               <span class="badge">${esc(draftVariantTypeLabel(variant?.variant_type || "manual"))}</span>
-              <button class="btn ghost draft-variant-activate" type="button" data-line-id="${esc(line.id)}" data-variant-id="${esc(variant?.id || "")}" ${variant?.is_active ? "disabled" : ""}>${esc(draftUiText("useVariant"))}</button>
             </div>
           </div>
         `).join("")}
@@ -2010,9 +2109,9 @@ function draftLinePopoverUI(line = null, index = -1) {
   if (!line) return "";
   const active = draftActiveVariant(line);
   const activeConfidence = draftClampConfidence(active?.confidence, 100);
-  const variants = [...(Array.isArray(line?.variants) ? line.variants : [])]
-    .sort((a, b) => Number(b?.confidence || 0) - Number(a?.confidence || 0));
+  const variants = [...(Array.isArray(line?.variants) ? line.variants : [])];
   const activeVariantId = String(active?.id || variants[0]?.id || "");
+  const canRemoveVariant = variants.length > 1;
   const safeIndex = Math.max(0, Number(index || 0));
   return `
     <div class="ac-line-popover-card ${draftConfidenceBand(activeConfidence)}" data-line-id="${esc(line.id)}">
@@ -2036,7 +2135,7 @@ function draftLinePopoverUI(line = null, index = -1) {
             </div>
             <div class="draft-variant-controls">
               <input class="input draft-variant-confidence" type="number" min="0" max="100" step="1" inputmode="numeric" value="${variantConfidence}" data-line-id="${esc(line.id)}" data-variant-id="${esc(variantId)}" aria-label="${esc(draftUiText("lineConfidence"))}" />
-              <button class="btn ghost draft-variant-activate" type="button" data-line-id="${esc(line.id)}" data-variant-id="${esc(variantId)}" ${isActive ? "disabled" : ""}>${esc(isActive ? draftUiText("activeVariant") : draftUiText("useVariant"))}</button>
+              <button class="btn ghost draft-variant-remove" type="button" data-line-id="${esc(line.id)}" data-variant-id="${esc(variantId)}" ${canRemoveVariant ? "" : "disabled"} aria-label="${esc(draftUiText("removeVariantTitle"))}" title="${esc(draftUiText("removeVariantTitle"))}">&times;</button>
             </div>
           </div>
         `;
@@ -2044,7 +2143,7 @@ function draftLinePopoverUI(line = null, index = -1) {
         <div class="draft-add-variant">
           <input class="input draft-new-variant-text" type="text" placeholder="${esc(draftUiText("newVariantPlaceholder"))}" data-line-id="${esc(line.id)}" />
           <div class="draft-add-variant-actions">
-            <button class="btn ghost draft-add-variant-btn" type="button" data-line-id="${esc(line.id)}" data-line-index="${safeIndex}">${esc(draftUiText("addSongVariant"))}</button>
+            <button class="btn ghost draft-add-variant-btn" type="button" data-line-id="${esc(line.id)}" data-line-index="${safeIndex}">${esc(draftUiText("addLineVariant"))}</button>
           </div>
         </div>
       </div>
@@ -2098,7 +2197,7 @@ function draftsHubUI(draftsPayload = {}, invitationsPayload = {}) {
         : String(item?.owner_nickname || "").trim();
       const statusLabel = t("status.draft");
       return `
-        <a class="songCard" href="#/draft/${encodeURIComponent(draftId)}">
+        <a class="songCard draft-hub-card" href="#/draft/${encodeURIComponent(draftId)}">
           <div>
             <div class="songTitle">${esc(title)}</div>
             <div class="songMeta">${esc(ownerLabel || "")}</div>
@@ -2117,7 +2216,7 @@ function draftsHubUI(draftsPayload = {}, invitationsPayload = {}) {
         || draftUiText("draftFallbackTitle");
       const inviterName = String(invite?.inviter?.nickname || invite?.inviter?.email || invite?.inviter?.user_id || "").trim();
       return `
-        <div class="songCard draft-invitation-card" data-invite-id="${esc(inviteId)}">
+        <div class="songCard draft-invitation-card draft-hub-card" data-invite-id="${esc(inviteId)}">
           <div style="width:100%">
             <div class="songTitle">${esc(draftTitle)}</div>
             <div class="songMeta">${esc(draftUiText("invitationFrom", { name: inviterName || "-" }))}</div>
@@ -2137,12 +2236,12 @@ function draftsHubUI(draftsPayload = {}, invitationsPayload = {}) {
       <div class="card">
         <div class="h2">${esc(draftUiText("myDrafts"))}</div>
         <div class="sep"></div>
-        <div class="list">${draftsMarkup}</div>
+        <div class="list draft-hub-list">${draftsMarkup}</div>
       </div>
       <div class="card" style="margin-top:12px">
         <div class="h2">${esc(draftUiText("incomingInvitations"))}</div>
         <div class="sep"></div>
-        <div class="list">${incomingMarkup}</div>
+        <div class="list draft-hub-list">${incomingMarkup}</div>
       </div>
     </section>
     <div class="yt-mobile-spacer"></div>
@@ -2898,14 +2997,14 @@ function songInlineLinkRow(l = {}, versions = []) {
   return `
     <div class="songCard ss_link_row" data-version-id="${esc(selectedVersionId)}">
       <div class="ss_link_row_body">
-        <div class="grid2 ss_link_row_meta">
-          <input class="input ss_link_title" placeholder="${esc(t("field.title"))}" value="${esc(l.title || "")}" />
-          <input class="input ss_link_kind" placeholder="${esc(t("field.linkType"))}" value="${esc(l.kind || "")}" />
-        </div>
         <div class="grid2 ss_link_row_target">
-          <select class="select ss_link_version">${versionLinkOptionsMarkup(versions, selectedVersionId)}</select>
           <input class="input ss_link_url" placeholder="${esc(t("field.linkUrl"))}" value="${esc(l.url || "")}" />
+          <input class="input ss_link_title" placeholder="${esc(t("field.title"))}" value="${esc(l.title || "")}" />
         </div>
+        <div class="ss_link_row_meta ss_link_row_meta_compact">
+          <select class="select ss_link_version ss_link_version_compact">${versionLinkOptionsMarkup(versions, selectedVersionId)}</select>
+        </div>
+        <input class="input ss_link_kind hidden" placeholder="${esc(t("field.linkType"))}" value="${esc(l.kind || "")}" />
       </div>
       <button class="btn danger ss_link_remove" type="button">x</button>
     </div>
@@ -2924,7 +3023,7 @@ function songInlineVersionRow(v = {}) {
       </div>
       <div class="ss_version_row_body">
         <div class="grid2 ss_version_row_meta">
-          <input class="input ss_version_title" placeholder="${esc(t("field.title"))}" value="${esc(v.title || "")}" />
+          <input class="input ss_version_title" placeholder="${esc(uiText("performer"))}" value="${esc(v.title || "")}" />
           <input class="input ss_version_lang" placeholder="${esc(t("field.lang"))}" value="${esc(v.lang || "")}" />
         </div>
         <input class="input ss_version_source" placeholder="${esc(t("field.source"))}" value="${esc(v.source || "")}" />
@@ -2950,7 +3049,6 @@ function songDetailsUI(song, extra = {}) {
   const linksEditorHash = canOpenEditor
     ? makeHash("#/admin/editor", { id: song.id, focus: "links", addLink: "1" }, ["id", "focus", "addLink"])
     : "";
-  const showDescriptionInSongCard = false;
   const canSeeStatus = can("songs.edit");
   const favLabel = extra.isFav ? t("song.delFav") : t("song.addFav");
   const statusLabel = song.status === "draft" ? t("status.draft") : t("status.published");
@@ -3103,6 +3201,11 @@ function songDetailsUI(song, extra = {}) {
         : "no links";
   const backgroundCardClass = hasCountryBackground ? " song-card-shell-has-bg" : "";
   const showAuditBlock = isSuperAdmin();
+  const notesValue = String(song.notes || "").trim();
+  const sourceValue = String(song.source || "").trim();
+  const sourcePlayableUrl = normalizePlayableUrl(sourceValue);
+  const sourceTextValue = sourcePlayableUrl ? "" : sourceValue;
+  const showInfoFooterBlock = !!(showAuditBlock || notesValue || sourceTextValue);
   const creatorName = String(song.created_by_email || song.created_by || "").trim() || songAuditUnknown();
   const editorName = String(song.updated_by_email || song.updated_by || "").trim() || songAuditUnknown();
 
@@ -3232,11 +3335,22 @@ function songDetailsUI(song, extra = {}) {
         </div>
       </div>
 
-      ${(showDescriptionInSongCard && song.notes) ? `<div class="card" style="margin-top:12px"><div class="h2">${esc(uiText("description"))}</div><div class="sep"></div><div class="muted">${esc(song.notes)}</div></div>` : ``}
-      ${showAuditBlock ? `
+      ${showInfoFooterBlock ? `
         <div class="card song-audit-card">
-          <div class="muted small"><strong>${esc(songAuditAddedLabel())}:</strong> ${esc(creatorName)}</div>
-          <div class="muted small"><strong>${esc(songAuditEditedLabel())}:</strong> ${esc(editorName)}</div>
+          ${sourceTextValue ? `
+            <div class="muted small song-audit-info-title"><strong>${esc(t("field.source"))}:</strong></div>
+            <div class="muted small song-audit-info-text">${esc(sourceTextValue)}</div>
+          ` : ``}
+          ${notesValue ? `
+            ${sourceTextValue ? `<div class="sep"></div>` : ``}
+            <div class="muted small song-audit-info-title"><strong>${esc(uiText("description"))}:</strong></div>
+            <div class="muted small song-audit-info-text">${esc(notesValue)}</div>
+          ` : ``}
+          ${showAuditBlock ? `
+            ${(sourceTextValue || notesValue) ? `<div class="sep"></div>` : ``}
+            <div class="muted small"><strong>${esc(songAuditAddedLabel())}:</strong> ${esc(creatorName)}</div>
+            <div class="muted small"><strong>${esc(songAuditEditedLabel())}:</strong> ${esc(editorName)}</div>
+          ` : ``}
         </div>
       ` : ``}
     </div>
@@ -3423,19 +3537,33 @@ function adminAccessDeniedUI() {
 
 function adminTabs(active) {
   const songsTabLabel = uiLocale() === "ru"
-    ? "Песни"
+    ? "\u041f\u0435\u0441\u043d\u0438"
     : uiLocale() === "uk"
-      ? "Пісні"
+      ? "\u041f\u0456\u0441\u043d\u0456"
       : uiLocale() === "et"
         ? "Laulud"
         : "Songs";
   const backgroundsTabLabel = uiLocale() === "ru"
-    ? "Фоны стран"
+    ? "\u0424\u043e\u043d\u044b"
     : uiLocale() === "uk"
-      ? "Фони країн"
+      ? "\u0424\u043e\u043d\u0438"
       : uiLocale() === "et"
-        ? "Riikide taustad"
-        : "Country backgrounds";
+        ? "Taustad"
+        : "Backgrounds";
+  const requestsTabLabel = uiLocale() === "ru"
+    ? "\u0417\u0430\u044f\u0432\u043a\u0438"
+    : uiLocale() === "uk"
+      ? "\u0417\u0430\u044f\u0432\u043a\u0438"
+      : uiLocale() === "et"
+        ? "Taotlused"
+        : "Requests";
+  const usersTabLabel = uiLocale() === "ru"
+    ? "\u041f\u043e\u043b\u044c\u0437."
+    : uiLocale() === "uk"
+      ? "\u041a\u043e\u0440\u0438\u0441\u0442."
+      : uiLocale() === "et"
+        ? "Kasut."
+        : "Users";
   const canEditSongs = can("songs.edit");
   const canManageBackgrounds = isSuperAdmin();
   const canReviewRequests = can("proposals.review");
@@ -3444,11 +3572,12 @@ function adminTabs(active) {
     <div class="admin-tabs" style="margin-bottom:12px">
       ${canEditSongs ? `<a class="btn admin-tab-btn ${active === "content" ? "primary" : "ghost"}" href="#/admin/content">${esc(songsTabLabel)}</a>` : ``}
       ${canManageBackgrounds ? `<a class="btn admin-tab-btn ${active === "backgrounds" ? "primary" : "ghost"}" href="#/admin/backgrounds">${esc(backgroundsTabLabel)}</a>` : ``}
-      ${canReviewRequests ? `<a class="btn admin-tab-btn ${active === "requests" ? "primary" : "ghost"}" href="#/admin/requests?status=new">${esc(t("admin.tab.requests"))}</a>` : ``}
-      ${canManageUsers ? `<a class="btn admin-tab-btn ${active === "users" ? "primary" : "ghost"}" href="#/admin/users">${esc(t("admin.tab.users"))}</a>` : ``}
+      ${canReviewRequests ? `<a class="btn admin-tab-btn ${active === "requests" ? "primary" : "ghost"}" href="#/admin/requests?status=new">${esc(requestsTabLabel)}</a>` : ``}
+      ${canManageUsers ? `<a class="btn admin-tab-btn ${active === "users" ? "primary" : "ghost"}" href="#/admin/users">${esc(usersTabLabel)}</a>` : ``}
     </div>
   `;
 }
+
 function adminContentUI(data, params) {
   const items = data?.items || [];
   const localDraftIdentities = listCurrentUserDraftIdentities();
@@ -3497,17 +3626,9 @@ function adminContentUI(data, params) {
 }
 
 function adminEditorCollabPanelUI(options = {}) {
-  const controlsTitle = uiLocale() === "ru"
-    ? "\u0421\u043e\u0432\u043c\u0435\u0441\u0442\u043d\u0430\u044f \u0440\u0430\u0431\u043e\u0442\u0430"
-    : uiLocale() === "uk"
-      ? "\u0421\u043f\u0456\u043b\u044c\u043d\u0430 \u0440\u043e\u0431\u043e\u0442\u0430"
-      : uiLocale() === "et"
-        ? "Koostoimetamine"
-        : "Collaboration";
   return `
     <section class="request-section ac-collab-panel hidden" id="ac_collab_panel" data-mode="collab">
-      <details class="ac-collab-controls" id="ac_collab_controls">
-        <summary>${esc(controlsTitle)}</summary>
+      <div class="ac-collab-controls" id="ac_collab_controls">
         <div class="ac-collab-controls-body">
           <div class="row wrap gap">
             <div class="h2 request-section-title">${esc(draftUiText("openCollaborativeDraft"))}</div>
@@ -3520,7 +3641,7 @@ function adminEditorCollabPanelUI(options = {}) {
           <div class="songMeta ac-collab-meta" id="ac_draft_presence">${esc(draftUiText("accessMembersEmpty"))}</div>
           <div class="list" id="ac_draft_collaborators"></div>
         </div>
-      </details>
+      </div>
     </section>
   `;
 }
@@ -3535,7 +3656,6 @@ function adminEditorUI(song = {}, options = {}) {
   const forceDraftId = String(options.forceDraftId || "").trim();
   const canToggleAdminContent = can("songs.view_admin_content");
   const canMarkVerified = isSuperAdmin();
-  const backHash = options.backHash || "#/admin/content";
   const deleteBtn = (isNew || hideDeleteButton) ? "" : `<button class="btn danger" id="ac_delete" type="button">${esc(t("common.delete"))}</button>`;
   const publishBtn = canPublishDraft ? `<button class="btn" id="ac_publish" type="button">${esc(draftUiText("publishSong"))}</button>` : "";
   const title = String(options.titleOverride || "").trim() || (isNew ? t("admin.newSong") : t("admin.editor"));
@@ -3546,44 +3666,53 @@ function adminEditorUI(song = {}, options = {}) {
           <button class="btn primary" id="ac_save" type="button">${esc(t("common.save"))}</button>
           ${publishBtn}
         </div>
-        ${deleteBtn ? `<div class="actions request-actions ac-danger-actions">${deleteBtn}</div>` : ""}
+        ${deleteBtn ? `
+          <details class="ac-delete-guard" id="ac_delete_guard">
+            <summary class="btn ghost ac-delete-guard-summary">${esc(deleteSongRevealLabel())}</summary>
+            <div class="actions request-actions ac-danger-actions">${deleteBtn}</div>
+          </details>
+        ` : ""}
       `;
 
   return `
     <div>
       ${hideAdminTabs ? "" : adminTabs("content")}
       <div class="card ac-editor-card ac-editor-page request-card song-edit-unified" id="ac_editor">
-        <div class="row wrap gap">
-          <div class="h2">${esc(title)}</div>
-          <a class="btn ghost" href="${esc(backHash)}">${esc(t("common.back"))}</a>
+        <div class="row wrap gap ac-editor-head-row">
+          <div class="h2 ac-editor-head-title">${esc(title)}</div>
+          <div class="ac-editor-head-right">
+            <button class="ac-status-inline is-published" id="ac_status_toggle" type="button" aria-pressed="true" title="${esc(t("field.status"))}" aria-label="${esc(t("field.status"))}">
+              <span class="ac-status-dot" aria-hidden="true"></span>
+              <span class="ac-status-inline-text" id="ac_status_badge">${esc(t("status.published"))}</span>
+            </button>
+          </div>
         </div>
         <div class="sep"></div>
         <input id="ac_id" class="hidden" value="${esc(song.id || "")}" />
         <input id="ac_force_draft_id" class="hidden" value="${esc(forceDraftId)}" />
+        <input id="ac_subtitle" class="hidden" value="" />
+        <input id="ac_status_edit" class="hidden" value="published" />
+        <div class="muted small song-decoding-progress ac-editor-decoding-top" id="ac_decoding">${esc(decodingProgressText(100))}</div>
+        <div id="ac_draft_banner" class="ac-draft-banner hidden" role="status" aria-live="polite"></div>
+        <div class="ac-editor-versions-section">
+          <div class="fieldLabel ac-editor-versions-label">${esc(draftUiText("variantsList"))}</div>
+          <div class="ss_versions_tabs ac-editor-variant-tabs" id="ac_editor_version_tabs"></div>
+        </div>
         <div class="request-section ac-editor-meta-section">
-          <div class="grid2 ac-optional-row">
-            <label class="field"><div class="fieldLabel">${esc(t("field.title"))} *</div><input id="ac_title" class="input" /></label>
-            <label class="field"><div class="fieldLabel">${esc(t("field.status"))}</div><select id="ac_status_edit" class="select"><option value="published">${esc(t("status.published"))}</option><option value="draft">${esc(t("status.draft"))}</option></select></label>
-          </div>
-          <div class="grid2 ac-optional-row">
+          <label class="field ac-meta-title-field"><div class="fieldLabel">${esc(t("field.title"))} *</div><input id="ac_title" class="input" /></label>
+          <div class="grid2 ac-optional-row ac-meta-locale-grid">
             <label class="field"><div class="fieldLabel">${esc(t("field.lang"))} *</div><select id="ac_lang" class="select">${selectOptions("language", "", uiText("selectLanguage"))}</select></label>
             <label class="field"><div class="fieldLabel">${esc(t("field.country"))} *</div><select id="ac_country" class="select" required>${selectOptions("country", "", uiText("selectCountry"))}</select></label>
           </div>
           <label class="field hidden" id="ac_period_wrap"><div class="fieldLabel">${esc(t("field.period"))}</div><select id="ac_period" class="select">${selectOptions("period", "", uiText("selectPeriod"))}</select></label>
           <div class="ac-editor-meta-controls">
-            <div class="ac-editor-meta-add">
-              <button class="btn ghost" id="ac_optional_field_add" type="button" aria-expanded="false" aria-controls="ac_optional_field_menu">+ ${esc(addFieldLabel())}</button>
-              <div class="ac-editor-optional-menu hidden" id="ac_optional_field_menu" role="menu">
-                <button class="btn ghost ac-optional-add-btn" type="button" data-add-field="subtitle">${esc(optionalFieldTitleByKey("subtitle"))}</button>
-                <button class="btn ghost ac-optional-add-btn" type="button" data-add-field="region">${esc(optionalFieldTitleByKey("region"))}</button>
-                <button class="btn ghost ac-optional-add-btn" type="button" data-add-field="event">${esc(optionalFieldTitleByKey("event"))}</button>
-                <button class="btn ghost ac-optional-add-btn" type="button" data-add-field="theme">${esc(optionalFieldTitleByKey("theme"))}</button>
-                <button class="btn ghost ac-optional-add-btn" type="button" data-add-field="year">${esc(optionalFieldTitleByKey("year"))}</button>
-                <button class="btn ghost ac-optional-add-btn" type="button" data-add-field="source">${esc(optionalFieldTitleByKey("source"))}</button>
-                <button class="btn ghost ac-optional-add-btn" type="button" data-add-field="notes">${esc(optionalFieldTitleByKey("notes"))}</button>
-              </div>
-            </div>
             <div class="ac-editor-meta-toggles">
+              <button class="btn ghost ac-icon-toggle ac-gpt-toggle" id="ac_tool_copy_prompt" type="button" title="${esc(draftUiText("copyPromptTool"))}" aria-label="${esc(draftUiText("copyPromptTool"))}">
+                ${gptToolIcon()}
+              </button>
+              <button class="btn ghost ac-icon-toggle ac-collab-toggle" id="ac_collab_toggle" type="button" aria-pressed="false" aria-expanded="false" aria-controls="ac_collab_panel" title="${esc(uiLocale() === "ru" ? "\u041f\u0440\u0438\u0433\u043b\u0430\u0441\u0438\u0442\u044c" : uiLocale() === "uk" ? "\u0417\u0430\u043f\u0440\u043e\u0441\u0438\u0442\u0438" : uiLocale() === "et" ? "Kutsu" : "Invite")}" aria-label="${esc(uiLocale() === "ru" ? "\u041f\u0440\u0438\u0433\u043b\u0430\u0441\u0438\u0442\u044c" : uiLocale() === "uk" ? "\u0417\u0430\u043f\u0440\u043e\u0441\u0438\u0442\u0438" : uiLocale() === "et" ? "Kutsu" : "Invite")}">
+                ${collabToggleIcon()}
+              </button>
               ${canMarkVerified ? `
                 <input id="ac_verified" type="checkbox" class="hidden" />
                 <button class="btn ghost ac-icon-toggle" id="ac_verified_toggle" type="button" aria-pressed="false" title="${esc(verifiedOnlyLabel())}" aria-label="${esc(verifiedOnlyLabel())}">
@@ -3598,49 +3727,35 @@ function adminEditorUI(song = {}, options = {}) {
               ` : ``}
             </div>
           </div>
-          <div class="grid2 ac-optional-row">
-            <label class="field ac-optional-field hidden" data-optional-field="subtitle">
-              <div class="fieldLabel ac-optional-field-label"><span>${esc(optionalFieldTitleByKey("subtitle"))}</span><button class="btn ghost ac-optional-remove" type="button" data-remove-field="subtitle" title="${esc(removeFieldLabel())}" aria-label="${esc(removeFieldLabel())}">-</button></div>
-              <input id="ac_subtitle" class="input" />
-            </label>
-            <label class="field ac-optional-field hidden" data-optional-field="region">
-              <div class="fieldLabel ac-optional-field-label"><span>${esc(optionalFieldTitleByKey("region"))}</span><button class="btn ghost ac-optional-remove" type="button" data-remove-field="region" title="${esc(removeFieldLabel())}" aria-label="${esc(removeFieldLabel())}">-</button></div>
+          <div class="ac-meta-optional-grid">
+            <label class="field ac-optional-field" data-optional-field="region">
+              <div class="fieldLabel ac-optional-field-label"><span>${esc(optionalFieldTitleByKey("region"))}</span></div>
               <input id="ac_region" class="input" />
             </label>
-          </div>
-          <div class="grid2">
-            <label class="field ac-optional-field hidden" data-optional-field="event">
-              <div class="fieldLabel ac-optional-field-label"><span>${esc(optionalFieldTitleByKey("event"))}</span><button class="btn ghost ac-optional-remove" type="button" data-remove-field="event" title="${esc(removeFieldLabel())}" aria-label="${esc(removeFieldLabel())}">-</button></div>
+            <label class="field ac-optional-field" data-optional-field="event">
+              <div class="fieldLabel ac-optional-field-label"><span>${esc(optionalFieldTitleByKey("event"))}</span></div>
               <input id="ac_event" class="input" />
             </label>
-            <label class="field ac-optional-field hidden" data-optional-field="theme">
-              <div class="fieldLabel ac-optional-field-label"><span>${esc(optionalFieldTitleByKey("theme"))}</span><button class="btn ghost ac-optional-remove" type="button" data-remove-field="theme" title="${esc(removeFieldLabel())}" aria-label="${esc(removeFieldLabel())}">-</button></div>
+            <label class="field ac-optional-field" data-optional-field="theme">
+              <div class="fieldLabel ac-optional-field-label"><span>${esc(optionalFieldTitleByKey("theme"))}</span></div>
               <input id="ac_theme" class="input" />
             </label>
-          </div>
-          <div class="grid2">
-            <label class="field ac-optional-field hidden" data-optional-field="year">
-              <div class="fieldLabel ac-optional-field-label"><span>${esc(optionalFieldTitleByKey("year"))}</span><button class="btn ghost ac-optional-remove" type="button" data-remove-field="year" title="${esc(removeFieldLabel())}" aria-label="${esc(removeFieldLabel())}">-</button></div>
+            <label class="field ac-optional-field" data-optional-field="year">
+              <div class="fieldLabel ac-optional-field-label"><span>${esc(optionalFieldTitleByKey("year"))}</span></div>
               <input id="ac_year" class="input" />
             </label>
-            <label class="field ac-optional-field hidden" data-optional-field="source">
-              <div class="fieldLabel ac-optional-field-label"><span>${esc(optionalFieldTitleByKey("source"))}</span><button class="btn ghost ac-optional-remove" type="button" data-remove-field="source" title="${esc(removeFieldLabel())}" aria-label="${esc(removeFieldLabel())}">-</button></div>
+            <label class="field ac-optional-field" data-optional-field="source">
+              <div class="fieldLabel ac-optional-field-label"><span>${esc(optionalFieldTitleByKey("source"))}</span></div>
               <input id="ac_source" class="input" />
             </label>
           </div>
-          <label class="field ac-optional-field hidden" data-optional-field="notes">
-            <div class="fieldLabel ac-optional-field-label"><span>${esc(optionalFieldTitleByKey("notes"))}</span><button class="btn ghost ac-optional-remove" type="button" data-remove-field="notes" title="${esc(removeFieldLabel())}" aria-label="${esc(removeFieldLabel())}">-</button></div>
+          <label class="field ac-optional-field" data-optional-field="notes">
+            <div class="fieldLabel ac-optional-field-label"><span>${esc(optionalFieldTitleByKey("notes"))}</span></div>
             <textarea id="ac_notes" class="textarea song-editor-text"></textarea>
           </label>
         </div>
-        <div id="ac_draft_banner" class="ac-draft-banner hidden" role="status" aria-live="polite"></div>
-        <div class="ss_versions_tabs ac-editor-variant-tabs" id="ac_editor_version_tabs"></div>
-        <div class="actions ac-editor-version-actions">
-          <button class="btn danger hidden" id="ac_remove_active_version" type="button">${esc(deletePageVariantLabel())}</button>
-        </div>
-        ${adminEditorCollabPanelUI({ canPublishDraft })}
         <div class="request-section">
-          <label class="field">
+          <label class="field ac-lyrics-main-field">
             <div class="fieldLabel">${esc(t("field.lyrics"))} *</div>
             <div class="ac-lyrics-editor" id="ac_lyrics_editor">
               <div class="ac-lyrics-rail" id="ac_lyrics_line_rail" aria-hidden="true">
@@ -3651,38 +3766,31 @@ function adminEditorUI(song = {}, options = {}) {
               <div id="ac_line_actions_popover" class="ac-line-popover hidden" aria-live="polite"></div>
             </div>
           </label>
-          <div class="ac-editor-prompt-row">
-            <button class="btn ghost" id="ac_tool_copy_prompt" type="button">${esc(draftUiText("copyPromptTool"))}</button>
-            <div class="muted small ac-editor-prompt-helper">${esc(editorPromptHelperText())}</div>
-          </div>
           <input id="ac_chorus_marker" class="hidden" value="${esc(chorusMarkerLabel())}" />
           <label class="field"><div class="fieldLabel">${esc(chorusFieldLabel())}</div><textarea id="ac_chorus" class="textarea song-editor-text song-editor-chorus"></textarea></label>
         </div>
-        <div class="muted small song-decoding-progress" id="ac_decoding">${esc(decodingProgressText(100))}</div>
 
         <section class="request-section request-repeater-section" id="ac_links_section">
-          <details class="ac-links-details" id="ac_links_details">
-            <summary class="ac-links-summary">
-              <span class="h2 request-section-title">${esc(t("song.links"))}</span>
-              <span class="ac-links-summary-count" id="ac_links_count">(0)</span>
-            </summary>
+          <div class="fieldLabel ac-links-heading">${esc(t("song.links"))}</div>
+          <div class="ac-links-shell">
             <div class="ac-links-body">
               <div id="ac_links" class="request-repeater"></div>
               <div class="request-quick-links">
                 <button class="btn ghost request-add-btn" id="ac_addLink" type="button">${esc(t("common.addLink"))}</button>
-                <button class="btn ghost request-add-btn" id="ac_addLinkYoutube" type="button">+ YouTube</button>
-                <button class="btn ghost request-add-btn" id="ac_addLinkSovmusic" type="button">+ SovMusic</button>
-                <button class="btn ghost request-add-btn" id="ac_addLinkRecords" type="button">+ Russian Records</button>
               </div>
             </div>
-          </details>
+          </div>
         </section>
+        ${adminEditorCollabPanelUI({ canPublishDraft })}
 
         <section class="request-section request-repeater-section hidden" aria-hidden="true">
           <div id="ac_versions" class="request-repeater"></div>
         </section>
 
         <div id="ac_inline_error" class="ac-inline-error hidden" role="alert" aria-live="polite"></div>
+        <div class="actions request-actions ac-version-danger-zone">
+          <button class="btn danger hidden" id="ac_remove_active_version" type="button">${esc(deletePageVariantLabel())}</button>
+        </div>
         ${footerActions}
 
       </div>
@@ -4291,9 +4399,10 @@ function autoGrowTextarea(textarea, options = {}) {
   const preserveViewport = options.preserveViewport !== false;
   const isFocused = document.activeElement === textarea;
   const isSongEditorTextarea = !!textarea.closest("#ac_editor, #songToolsPanel");
+  const isCompactEditorTextarea = isSongEditorTextarea && !textarea.classList.contains("song-editor-text-main");
   const extraBottomSpace = Number.isFinite(Number(options.extraBottomSpace))
     ? Number(options.extraBottomSpace)
-    : (isSongEditorTextarea ? 28 : 8);
+    : (isSongEditorTextarea ? (isCompactEditorTextarea ? 6 : 28) : 8);
   const shouldPreserve = preserveViewport && isFocused && !isSongEditorTextarea;
   const prevScrollY = shouldPreserve ? (window.scrollY || window.pageYOffset || 0) : 0;
   const prevTop = shouldPreserve ? textarea.getBoundingClientRect().top : 0;
@@ -5040,27 +5149,27 @@ function contentDraftComparableSignature(payload = {}) {
 function contentDraftDiffBannerText(hasPublishedBase) {
   if (uiLocale() === "ru") {
     return hasPublishedBase
-      ? "ЧЕРНОВК: текущая версия отличается от публичной. зенения автосохранены до публикации."
-      : "ЧЕРНОВК: непубликованная версия автосохранена локально. Опубликуйте, когда будете готовы.";
+      ? "\u0427\u0435\u0440\u043d\u043e\u0432\u0438\u043a \u0430\u043a\u0442\u0438\u0432\u0435\u043d: \u0442\u0435\u043a\u0443\u0449\u0430\u044f \u0432\u0435\u0440\u0441\u0438\u044f \u043e\u0442\u043b\u0438\u0447\u0430\u0435\u0442\u0441\u044f \u043e\u0442 \u043f\u0443\u0431\u043b\u0438\u0447\u043d\u043e\u0439."
+      : "\u0427\u0435\u0440\u043d\u043e\u0432\u0438\u043a \u0430\u043a\u0442\u0438\u0432\u0435\u043d: \u0432\u0435\u0440\u0441\u0438\u044f \u0435\u0449\u0435 \u043d\u0435 \u043e\u043f\u0443\u0431\u043b\u0438\u043a\u043e\u0432\u0430\u043d\u0430.";
   }
   if (uiLocale() === "uk") {
     return hasPublishedBase
-      ? "ЧЕРНЕТКА: поточна версія відрізняється від публічної. Зіни автозбережено до публікації."
-      : "ЧЕРНЕТКА: неопубліковану версію автозбережено локально. Опублікуйте, коли будете готові.";
+      ? "\u0427\u0435\u0440\u043d\u0435\u0442\u043a\u0430 \u0430\u043a\u0442\u0438\u0432\u043d\u0430: \u043f\u043e\u0442\u043e\u0447\u043d\u0430 \u0432\u0435\u0440\u0441\u0456\u044f \u0432\u0456\u0434\u0440\u0456\u0437\u043d\u044f\u0454\u0442\u044c\u0441\u044f \u0432\u0456\u0434 \u043f\u0443\u0431\u043b\u0456\u0447\u043d\u043e\u0457."
+      : "\u0427\u0435\u0440\u043d\u0435\u0442\u043a\u0430 \u0430\u043a\u0442\u0438\u0432\u043d\u0430: \u0432\u0435\u0440\u0441\u0456\u044e \u0449\u0435 \u043d\u0435 \u043e\u043f\u0443\u0431\u043b\u0456\u043a\u043e\u0432\u0430\u043d\u043e.";
   }
   if (uiLocale() === "et") {
     return hasPublishedBase
-      ? "MUSTAND: praegune versioon erineb avalikust. Muudatused salvestatakse automaatselt kuni avaldamiseni."
-      : "MUSTAND: avaldamata versioon salvestati kohalikult mustandina. Avalda siis, kui oled valmis.";
+      ? "Mustand aktiivne: praegune versioon erineb avalikust."
+      : "Mustand aktiivne: versioon ei ole veel avaldatud.";
   }
   return hasPublishedBase
-    ? "DRAFT: current version differs from the public one. Changes are autosaved until publication."
-    : "DRAFT: unpublished version is autosaved locally. Publish when ready.";
+    ? "Draft active: current version differs from the public one."
+    : "Draft active: this version is not published yet.";
 }
 
 function requestDraftBannerText() {
-  if (uiLocale() === "ru") return "ЧЕРНОВК: заявка автосохранена локально. Отправьте, когда будете готовы.";
-  if (uiLocale() === "uk") return "ЧЕРНЕТКА: заявку автозбережено локально. Надішліть, коли будете готові.";
+  if (uiLocale() === "ru") return "\u0427\u0435\u0440\u043d\u043e\u0432\u0438\u043a: \u0437\u0430\u044f\u0432\u043a\u0430 \u0430\u0432\u0442\u043e\u0441\u043e\u0445\u0440\u0430\u043d\u0435\u043d\u0430 \u043b\u043e\u043a\u0430\u043b\u044c\u043d\u043e. \u041e\u0442\u043f\u0440\u0430\u0432\u044c\u0442\u0435, \u043a\u043e\u0433\u0434\u0430 \u0431\u0443\u0434\u0435\u0442\u0435 \u0433\u043e\u0442\u043e\u0432\u044b.";
+  if (uiLocale() === "uk") return "\u0427\u0435\u0440\u043d\u0435\u0442\u043a\u0430: \u0437\u0430\u044f\u0432\u043a\u0443 \u0430\u0432\u0442\u043e\u0437\u0431\u0435\u0440\u0435\u0436\u0435\u043d\u043e \u043b\u043e\u043a\u0430\u043b\u044c\u043d\u043e. \u041d\u0430\u0434\u0456\u0448\u043b\u0456\u0442\u044c, \u043a\u043e\u043b\u0438 \u0431\u0443\u0434\u0435\u0442\u0435 \u0433\u043e\u0442\u043e\u0432\u0456.";
   if (uiLocale() === "et") return "MUSTAND: taotlus salvestati kohalikult automaatselt. Saada siis, kui oled valmis.";
   return "DRAFT: request is autosaved locally. Submit when ready.";
 }
@@ -6511,7 +6620,7 @@ export function bind(route, ctx) {
       }
 
       qs("ss_delete")?.addEventListener("click", async () => {
-        if (!confirm(t("admin.deleteConfirm"))) return;
+        if (!confirm(deleteSongConfirmText())) return;
         try {
           await api.adminDeleteSong(qs("ss_id").value);
           clearScopedDraft(SONG_TOOLS_DRAFT_PREFIX, songDraftIdentity);
@@ -6734,9 +6843,18 @@ export function bind(route, ctx) {
         const text = String(textInput?.value || "").trim();
         const confidence = Number.parseInt(String(confInput?.value || "80"), 10);
         if (!text) return;
-        sendOp("add_variant", { line_id: lineId, text, confidence, variant_type: "manual" });
+        sendOp("set_line_text", { line_id: lineId, text, confidence, variant_type: "manual" });
         if (textInput) textInput.value = "";
         if (confInput) confInput.value = "80";
+        return;
+      }
+      const removeVariant = target.closest(".draft-variant-remove");
+      if (removeVariant) {
+        const lineId = String(removeVariant.getAttribute("data-line-id") || "").trim();
+        const variantId = String(removeVariant.getAttribute("data-variant-id") || "").trim();
+        if (!lineId || !variantId) return;
+        if (!window.confirm(draftUiText("removeVariantConfirm"))) return;
+        sendOp("delete_variant", { line_id: lineId, variant_id: variantId });
         return;
       }
       const aiCopy = target.closest(".draft-ai-copy");
@@ -7671,9 +7789,6 @@ export function bind(route, ctx) {
     const savedDraft = readContentDraft(currentIdentity);
     if (savedDraft?.payload && contentDraftComparableSignature(savedDraft.payload) !== baseSignature) {
       const restoredPayload = { ...savedDraft.payload };
-      if (!ctx.isNew && initialSong.status === "published" && restoredPayload.status === "draft") {
-        restoredPayload.status = "published";
-      }
       fillContentEditor({ ...initialSong, ...restoredPayload });
       wireAutoGrowTextareas(editorRoot);
       syncDraftState(collectContentPayload());
@@ -7689,19 +7804,16 @@ export function bind(route, ctx) {
     const acMainLyricsBufferNode = qs("ac_main_lyrics_buffer");
     const acEditorVariantTabsNode = qs("ac_editor_version_tabs");
     const acRemoveActiveVersionBtn = qs("ac_remove_active_version");
-    const acLinksDetailsNode = qs("ac_links_details");
-    const acLinksCountNode = qs("ac_links_count");
     const acOptionalFieldToggleBtn = qs("ac_optional_field_add");
     const acOptionalFieldMenu = qs("ac_optional_field_menu");
-    const AC_OPTIONAL_FIELDS = ["subtitle", "region", "event", "theme", "year", "source", "notes"];
+    const acStatusToggleBtn = qs("ac_status_toggle");
+    const AC_OPTIONAL_FIELDS = ["region", "event", "theme", "year", "source"];
     const AC_OPTIONAL_INPUT_IDS = {
-      subtitle: "ac_subtitle",
       region: "ac_region",
       event: "ac_event",
       theme: "ac_theme",
       year: "ac_year",
       source: "ac_source",
-      notes: "ac_notes",
     };
     let acOptionalMenuOpen = false;
     const acOptionalFieldNode = (key = "") => {
@@ -7766,9 +7878,25 @@ export function bind(route, ctx) {
     };
     const acSyncOptionalFieldsFromValues = () => {
       AC_OPTIONAL_FIELDS.forEach((key) => {
-        acSetOptionalFieldVisible(key, acOptionalFieldHasValue(key), { focus: false });
+        acSetOptionalFieldVisible(key, true, { focus: false });
       });
       acRefreshOptionalFieldMenu();
+    };
+    const acSyncStatusBadge = () => {
+      const statusInput = qs("ac_status_edit");
+      const statusBadge = qs("ac_status_badge");
+      if (!(statusInput instanceof HTMLInputElement || statusInput instanceof HTMLSelectElement) || !(statusBadge instanceof HTMLElement)) return;
+      const isPublished = String(statusInput.value || "").trim().toLowerCase() === "published";
+      statusInput.value = isPublished ? "published" : "draft";
+      statusBadge.textContent = isPublished ? t("status.published") : unpublishedStatusLabel();
+      if (acStatusToggleBtn instanceof HTMLButtonElement) {
+        acStatusToggleBtn.classList.toggle("is-published", isPublished);
+        acStatusToggleBtn.classList.toggle("is-draft", !isPublished);
+        acStatusToggleBtn.setAttribute("aria-pressed", isPublished ? "true" : "false");
+        const statusLabel = isPublished ? t("status.published") : unpublishedStatusLabel();
+        acStatusToggleBtn.setAttribute("title", statusLabel);
+        acStatusToggleBtn.setAttribute("aria-label", statusLabel);
+      }
     };
     const acSyncMetaIconToggleState = () => {
       const syncSingle = (checkboxId, buttonId) => {
@@ -7781,20 +7909,38 @@ export function bind(route, ctx) {
       };
       syncSingle("ac_verified", "ac_verified_toggle");
       syncSingle("ac_admin_content", "ac_admin_content_toggle");
+      const collabButton = qs("ac_collab_toggle");
+      if (collabButton instanceof HTMLButtonElement) {
+        const collabPanel = qs("ac_collab_panel");
+        const active = collabPanel instanceof HTMLElement && !collabPanel.classList.contains("hidden");
+        collabButton.classList.toggle("is-active", active);
+        collabButton.setAttribute("aria-pressed", active ? "true" : "false");
+        collabButton.setAttribute("aria-expanded", active ? "true" : "false");
+      }
     };
     const acUpdateLinksCount = () => {
-      if (!(acLinksCountNode instanceof HTMLElement)) return;
       const linksRoot = qs("ac_links");
       const count = Array.from(linksRoot?.querySelectorAll(".ss_link_row") || []).length;
-      acLinksCountNode.textContent = `(${count})`;
+      if (linksRoot instanceof HTMLElement) linksRoot.dataset.linkCount = String(count);
     };
-    const acOpenLinksDetails = () => {
-      if (acLinksDetailsNode instanceof HTMLDetailsElement) acLinksDetailsNode.open = true;
+    const acOpenLinksDetails = () => {};
+    const acSetStatus = (nextStatus = "published") => {
+      const statusInput = qs("ac_status_edit");
+      if (!(statusInput instanceof HTMLInputElement || statusInput instanceof HTMLSelectElement)) return;
+      statusInput.value = String(nextStatus || "").trim().toLowerCase() === "draft" ? "draft" : "published";
+      acSyncStatusBadge();
+      acDispatchOptionalFieldEdit(statusInput);
     };
     acSyncOptionalFieldsFromValues();
+    acSyncStatusBadge();
     acSyncMetaIconToggleState();
     acUpdateLinksCount();
     acSetOptionalMenuOpen(false);
+    acStatusToggleBtn?.addEventListener("click", (event) => {
+      event.preventDefault();
+      const currentStatus = String(qs("ac_status_edit")?.value || "published").trim().toLowerCase();
+      acSetStatus(currentStatus === "published" ? "draft" : "published");
+    });
     acOptionalFieldToggleBtn?.addEventListener("click", (event) => {
       event.preventDefault();
       acSetOptionalMenuOpen(!acOptionalMenuOpen);
@@ -7929,11 +8075,11 @@ export function bind(route, ctx) {
       editorRoot.dataset.activeVariantSource = acActiveVariantSource;
       acEditorVariantTabsNode.classList.toggle("is-single", entries.length <= 1);
       acEditorVariantTabsNode.classList.remove("hidden");
-      const addTitle = draftUiText("addVersionTooltip");
+      const addTitle = addVersionButtonLabel();
       acEditorVariantTabsNode.innerHTML = `${entries.map((entry) => {
         const isActive = entry.key === acActiveVariantSource;
         return `<span class="ac-editor-variant-item ${isActive ? "is-active" : ""}"><button class="btn ghost ss_versions_tab ac-editor-variant-tab ${isActive ? "is-active" : ""}" type="button" data-variant-source="${esc(entry.key)}" aria-pressed="${isActive ? "true" : "false"}" title="${esc(entry.title)}">${esc(entry.label)}</button></span>`;
-      }).join("")}<button class="btn ghost ss_versions_tab ac-editor-variant-tab ac-editor-variant-tab-add" type="button" data-variant-action="add" aria-label="${esc(addTitle)}" title="${esc(addTitle)}">+</button>`;
+      }).join("")}<button class="btn ghost ss_versions_tab ac-editor-variant-tab ac-editor-variant-tab-add" type="button" data-variant-action="add" aria-label="${esc(addTitle)}" title="${esc(addTitle)}"><span aria-hidden="true">+</span><span class="ac-editor-variant-tab-add-label">${esc(addTitle)}</span></button>`;
     };
     const acUpdateActiveVariantDeleteControl = () => {
       if (!(acRemoveActiveVersionBtn instanceof HTMLButtonElement)) return;
@@ -8011,10 +8157,6 @@ export function bind(route, ctx) {
       if (!(acVersionsRoot instanceof HTMLElement)) return false;
       const rowId = normalizeVersionIdentifier(rowIdRaw);
       if (!rowId) return false;
-      const summaries = acVersionSummaries();
-      if (summaries.length <= 1 && summaries.some((entry) => entry.row_id === rowId)) {
-        return false;
-      }
       const rowNode = acVersionsRoot.querySelector(`.ss_version_row[data-version-row-id="${rowId}"]`);
       if (!(rowNode instanceof HTMLElement)) return false;
       const wasActive = acVariantRowIdFromKey(acActiveVariantSource) === rowId;
@@ -8045,9 +8187,15 @@ export function bind(route, ctx) {
       acSetActiveVariantSource(nextKey);
     });
     acRemoveActiveVersionBtn?.addEventListener("click", () => {
-      const rowId = String(acRemoveActiveVersionBtn.getAttribute("data-variant-row-id") || "").trim();
+      const attrRowId = String(acRemoveActiveVersionBtn.getAttribute("data-variant-row-id") || "").trim();
+      const activeRowId = acVariantRowIdFromKey(acActiveVariantSource);
+      const rowId = normalizeVersionIdentifier(attrRowId || activeRowId);
       if (!rowId) return;
-      acRemovePageVariant(rowId);
+      if (!window.confirm(deletePageVariantConfirmText())) return;
+      const removed = acRemovePageVariant(rowId);
+      if (!removed) {
+        showStatusOverlay(deletePageVariantFailedText(), "error");
+      }
     });
     acVersionsRoot?.addEventListener("input", (event) => {
       const target = event.target;
@@ -8240,6 +8388,7 @@ export function bind(route, ctx) {
       if (!inlineCollabRoot) return;
       inlineSetStandaloneMode();
       inlineCollabRoot.classList.toggle("hidden", !visible);
+      acSyncMetaIconToggleState();
       if (!visible) inlineClosePopover();
       if (lyricsEditorNode) window.requestAnimationFrame(() => {
         try { inlineRenderLineRail(); } catch {}
@@ -8389,7 +8538,6 @@ export function bind(route, ctx) {
         .replace(/\n/g, "");
       return text.length > 0;
     };
-    const inlineIsCollabVisible = () => !!inlineCollabRoot && !inlineCollabRoot.classList.contains("hidden");
     const inlineSelectableLines = (lines = inlineMainEditorLines(), sourceTextLines = null) => lines.filter((line, index) => (
       String(line?.id || "").trim().length > 0 && inlineHasLineText(line, Array.isArray(sourceTextLines) ? sourceTextLines[index] : null)
     ));
@@ -8441,8 +8589,14 @@ export function bind(route, ctx) {
       lineActionsPopoverNode.style.width = `${Math.max(220, Math.round(textRect.width))}px`;
       lineActionsPopoverNode.style.top = `${Math.max(0, Math.round(anchorRect.bottom - editorRect.top + 2))}px`;
     };
+    const inlineIsEditingVariantInput = () => {
+      const active = document.activeElement;
+      if (!(active instanceof HTMLInputElement || active instanceof HTMLTextAreaElement)) return false;
+      return active.classList.contains("draft-variant-text-input")
+        || active.classList.contains("draft-variant-confidence");
+    };
     const inlineRenderPopover = () => {
-      if (!lineActionsPopoverNode || !inlineIsCollabVisible()) {
+      if (!lineActionsPopoverNode) {
         inlineClosePopover({ animate: false });
         return;
       }
@@ -8451,6 +8605,10 @@ export function bind(route, ctx) {
       const selectedLine = selectedIndex >= 0 ? lines[selectedIndex] : null;
       if (!inlinePopoverOpen || !selectedLine) {
         inlineClosePopover();
+        return;
+      }
+      if (inlineIsEditingVariantInput() && lineActionsPopoverNode.contains(document.activeElement)) {
+        inlinePositionPopover();
         return;
       }
       lineActionsPopoverNode.innerHTML = draftLinePopoverUI(selectedLine, selectedIndex);
@@ -8481,9 +8639,8 @@ export function bind(route, ctx) {
       lyricsEditorNode.style.setProperty("--ac-collab-pad-bottom", `${padBottomPx}px`);
       lyricsEditorNode.style.setProperty("--ac-collab-viewport-height", `${contentHeightPx}px`);
 
-      const isCollabVisible = inlineIsCollabVisible();
-      lyricsEditorNode.classList.toggle("is-collab-active", isCollabVisible && lines.length > 0);
-      if (!isCollabVisible || !lines.length) {
+      lyricsEditorNode.classList.toggle("is-collab-active", lines.length > 0);
+      if (!lines.length) {
         lyricsLineRailListNode.innerHTML = "";
         inlineClosePopover();
         return;
@@ -8544,6 +8701,10 @@ export function bind(route, ctx) {
         if (inlinePopoverOpen) inlineClosePopover();
       }
       inlineRenderLineRail();
+      if (inlineIsEditingVariantInput() && lineActionsPopoverNode?.contains(document.activeElement)) {
+        inlinePositionPopover();
+        return;
+      }
       inlineRenderPopover();
     };
     const inlineOpenPopover = () => {
@@ -8560,7 +8721,6 @@ export function bind(route, ctx) {
         return true;
       }
       inlineSelectedLineId = lineId;
-      inlineSetPanelVisible(true);
       inlineOpenPopover();
       inlineRefreshLines();
       window.requestAnimationFrame(() => {
@@ -8700,20 +8860,58 @@ export function bind(route, ctx) {
       active.confidence = draftClampConfidence(confidence, 100);
       inlineLocalCommit({ syncEditor: true });
     };
-    const inlineLocalAddVariant = (lineId, text, confidence = 80, variantType = "manual") => {
+    const inlineLocalAddVariant = (lineId, text, confidence = 80, variantType = "manual", options = {}) => {
       inlineEnsureStandalonePayload();
       const line = inlineLocalFindLine(lineId);
-      if (!line) return;
+      if (!line) return "";
       const variants = Array.isArray(line?.variants) ? line.variants : [];
+      const variantId = `loc_variant_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`;
+      const shouldActivate = options?.activate === true;
+      if (shouldActivate) {
+        variants.forEach((item) => { item.is_active = false; });
+      }
       variants.push({
-        id: `loc_variant_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`,
+        id: variantId,
         text: String(text || ""),
         confidence: draftClampConfidence(confidence, 80),
         variant_type: variantType === "suggested" ? "suggested" : "manual",
-        is_active: false,
+        is_active: shouldActivate,
       });
       line.variants = variants;
+      if (shouldActivate) {
+        line.active_variant_id = variantId;
+      }
+      inlineLocalCommit({ syncEditor: shouldActivate });
+      return variantId;
+    };
+    const inlineLocalDeleteVariant = (lineId, variantId) => {
+      inlineEnsureStandalonePayload();
+      const line = inlineLocalFindLine(lineId);
+      if (!line) return false;
+      const variants = Array.isArray(line?.variants) ? line.variants : [];
+      if (variants.length <= 1) return false;
+      const nextVariants = variants.filter((item) => String(item?.id || "") !== String(variantId || ""));
+      if (nextVariants.length === variants.length || nextVariants.length === 0) return false;
+      const deletedWasActive = String(line?.active_variant_id || "") === String(variantId || "")
+        || variants.some((item) => String(item?.id || "") === String(variantId || "") && item?.is_active);
+      line.variants = nextVariants;
+      if (deletedWasActive) {
+        let nextActive = nextVariants[0] || null;
+        for (const item of nextVariants) {
+          if (!nextActive || Number(item?.confidence || 0) > Number(nextActive?.confidence || 0)) {
+            nextActive = item;
+          }
+        }
+        const nextActiveId = String(nextActive?.id || "");
+        nextVariants.forEach((item) => {
+          item.is_active = String(item?.id || "") === nextActiveId;
+        });
+        line.active_variant_id = nextActiveId;
+        inlineLocalCommit({ syncEditor: true });
+        return true;
+      }
       inlineLocalCommit();
+      return true;
     };
     const inlineLocalActivateVariant = (lineId, variantId) => {
       inlineEnsureStandalonePayload();
@@ -8734,7 +8932,27 @@ export function bind(route, ctx) {
         const variant = variants.find((item) => String(item?.id || "") === String(variantId || ""));
         if (variant) {
           variant.confidence = draftClampConfidence(confidence, 100);
-          inlineLocalCommit();
+          const previousActiveId = String(line?.active_variant_id || "").trim();
+          let nextActive = variants[0] || null;
+          for (const item of variants) {
+            if (!nextActive || Number(item?.confidence || 0) > Number(nextActive?.confidence || 0)) {
+              nextActive = item;
+              continue;
+            }
+            if (
+              nextActive
+              && Number(item?.confidence || 0) === Number(nextActive?.confidence || 0)
+              && String(item?.id || "") === previousActiveId
+            ) {
+              nextActive = item;
+            }
+          }
+          const nextActiveId = String(nextActive?.id || "").trim();
+          variants.forEach((item) => {
+            item.is_active = String(item?.id || "") === nextActiveId;
+          });
+          line.active_variant_id = nextActiveId;
+          inlineLocalCommit({ syncEditor: previousActiveId !== nextActiveId });
           return;
         }
       }
@@ -8933,7 +9151,7 @@ export function bind(route, ctx) {
     };
     const inlineBootstrap = async () => {
       if (!inlineCollabRoot) return;
-      inlineSetPanelVisible(true);
+      inlineSetPanelVisible(false);
       if (!inlineDraftId) {
         inlineEnsureStandalonePayload();
         inlineRefreshMeta();
@@ -8979,6 +9197,18 @@ export function bind(route, ctx) {
         await inlineRefreshFromApi();
       } catch (cause) {
         showStatusOverlay(String(cause?.message || t("common.error")), "error");
+      }
+    });
+    qs("ac_collab_toggle")?.addEventListener("click", (event) => {
+      event.preventDefault();
+      const isVisible = !!(inlineCollabRoot && !inlineCollabRoot.classList.contains("hidden"));
+      inlineSetPanelVisible(!isVisible);
+      if (!isVisible) {
+        if (!inlineDraftId) inlineEnsureStandalonePayload();
+        if (collabControlsNode instanceof HTMLDetailsElement) collabControlsNode.open = true;
+        inlineRefreshMeta();
+        inlineRefreshCollaborators();
+        inlineRefreshLines();
       }
     });
     editorRoot?.addEventListener("pointerdown", (event) => {
@@ -9027,27 +9257,57 @@ export function bind(route, ctx) {
       }
       const addVariant = target.closest(".draft-add-variant-btn");
       if (addVariant) {
-        const lineId = String(addVariant.getAttribute("data-line-id") || "").trim();
+        const rawLineId = String(addVariant.getAttribute("data-line-id") || "").trim();
         const lineIndex = Number.parseInt(String(addVariant.getAttribute("data-line-index") || ""), 10);
-        if (!lineId) return;
+        if (!rawLineId) return;
         const row = addVariant.closest(".draft-add-variant");
         if (!row) return;
         const textInput = row.querySelector(".draft-new-variant-text");
         const text = String(textInput?.value || "").trim();
         if (!text) return;
-        const baseLines = splitLines(lyricsTextareaNode?.value || "");
-        let targetIndex = Number.isFinite(lineIndex) ? lineIndex : -1;
-        if (targetIndex < 0) {
-          const lines = inlineMainEditorLines();
-          targetIndex = lines.findIndex((line) => String(line?.id || "") === lineId);
+        let lineId = await inlineResolveVariantLineId(rawLineId, lineIndex);
+        if (!lineId) lineId = rawLineId;
+        inlineSelectedLineId = lineId;
+        inlinePopoverOpen = true;
+        let localLineId = lineId;
+        if (!inlineLocalFindLine(localLineId) && Number.isFinite(lineIndex) && lineIndex >= 0) {
+          const fallbackLineId = String(inlineMainEditorLines()[lineIndex]?.id || "").trim();
+          if (fallbackLineId) localLineId = fallbackLineId;
         }
-        if (!Number.isFinite(targetIndex) || targetIndex < 0) targetIndex = 0;
-        while (baseLines.length <= targetIndex) baseLines.push("");
-        baseLines[targetIndex] = text;
-        const nextLyrics = baseLines.join("\n");
-        acAddPageVariant({ lyrics: nextLyrics, activate: true });
+        if (!inlineLocalFindLine(localLineId)) return;
+        if (inlineDraftId && !inlineIsVirtualLineId(lineId)) {
+          const sent = inlineSendOp("add_variant", {
+            line_id: lineId,
+            text,
+            confidence: 80,
+            variant_type: "manual",
+          });
+          if (!sent) return;
+          inlineLocalAddVariant(localLineId, text, 80, "manual", { activate: false });
+        } else {
+          inlineSelectedLineId = localLineId;
+          inlineLocalAddVariant(localLineId, text, 80, "manual", { activate: false });
+        }
         if (textInput) textInput.value = "";
-        inlineClosePopover({ clearSelection: true, animate: false });
+        inlineRefreshLines();
+        return;
+      }
+      const removeVariant = target.closest(".draft-variant-remove");
+      if (removeVariant) {
+        const lineId = String(removeVariant.getAttribute("data-line-id") || "").trim();
+        const variantId = String(removeVariant.getAttribute("data-variant-id") || "").trim();
+        if (!lineId || !variantId) return;
+        if (!window.confirm(draftUiText("removeVariantConfirm"))) return;
+        if (inlineDraftId && !inlineIsVirtualLineId(lineId)) {
+          const sent = inlineSendOp("delete_variant", { line_id: lineId, variant_id: variantId });
+          if (!sent) return;
+        } else {
+          const removed = inlineLocalDeleteVariant(lineId, variantId);
+          if (!removed) {
+            showStatusOverlay(draftUiText("removeVariantFailed"), "error");
+            return;
+          }
+        }
         inlineRefreshLines();
         return;
       }
@@ -9090,44 +9350,60 @@ export function bind(route, ctx) {
         }
       }
     });
-    editorRoot?.addEventListener("change", (event) => {
-      const target = event.target;
-      if (!(target instanceof HTMLElement)) return;
-      if (target.classList.contains("draft-variant-text-input")) {
-        const lineId = String(target.getAttribute("data-line-id") || "").trim();
-        let variantId = String(target.getAttribute("data-variant-id") || "").trim();
-        if (!variantId && lineId) {
-          const line = inlineLocalFindLine(lineId);
-          variantId = String(draftActiveVariant(line || {})?.id || "").trim();
-        }
-        if (!variantId) return;
-        const nextText = String(target instanceof HTMLInputElement || target instanceof HTMLTextAreaElement ? target.value : "");
-        if (inlineDraftId && lineId && !inlineIsVirtualLineId(lineId)) {
-          inlineSendOp("set_variant_text", { variant_id: variantId, text: nextText });
-        } else {
-          inlineLocalSetVariantText(variantId, nextText);
-        }
-        inlineRefreshLines();
-        return;
-      }
-      if (!target.classList.contains("draft-variant-confidence")) return;
+    const inlineApplyVariantText = (target) => {
+      if (!(target instanceof HTMLInputElement || target instanceof HTMLTextAreaElement)) return false;
+      if (!target.classList.contains("draft-variant-text-input")) return false;
       const lineId = String(target.getAttribute("data-line-id") || "").trim();
       let variantId = String(target.getAttribute("data-variant-id") || "").trim();
       if (!variantId && lineId) {
         const line = inlineLocalFindLine(lineId);
         variantId = String(draftActiveVariant(line || {})?.id || "").trim();
       }
-      if (!variantId) return;
+      if (!variantId) return false;
+      const nextText = String(target.value || "");
+      inlineLocalSetVariantText(variantId, nextText);
+      if (inlineDraftId && lineId && !inlineIsVirtualLineId(lineId)) {
+        inlineSendOp("set_variant_text", { variant_id: variantId, text: nextText }, { silent: true });
+      }
+      return true;
+    };
+    const inlineApplyVariantConfidence = (target) => {
+      if (!(target instanceof HTMLInputElement)) return false;
+      if (!target.classList.contains("draft-variant-confidence")) return false;
+      const lineId = String(target.getAttribute("data-line-id") || "").trim();
+      let variantId = String(target.getAttribute("data-variant-id") || "").trim();
+      if (!variantId && lineId) {
+        const line = inlineLocalFindLine(lineId);
+        variantId = String(draftActiveVariant(line || {})?.id || "").trim();
+      }
+      if (!variantId) return false;
       const confidence = draftConfidenceFromInput(
         target.value,
-        target instanceof HTMLInputElement ? target.defaultValue : 100,
+        target.defaultValue,
       );
+      inlineLocalSetVariantConfidence(variantId, confidence);
+      target.defaultValue = String(confidence);
       if (inlineDraftId && lineId && !inlineIsVirtualLineId(lineId)) {
-        inlineSendOp("set_variant_confidence", { variant_id: variantId, confidence });
-      } else {
-        inlineLocalSetVariantConfidence(variantId, confidence);
+        inlineSendOp("set_variant_confidence", { variant_id: variantId, confidence }, { silent: true });
+        const line = inlineLocalFindLine(lineId);
+        const nextActiveId = String(draftActiveVariant(line || {})?.id || "").trim();
+        if (nextActiveId) {
+          inlineSendOp("set_active_variant", { line_id: lineId, variant_id: nextActiveId }, { silent: true });
+        }
       }
-      inlineRefreshLines();
+      return true;
+    };
+    editorRoot?.addEventListener("change", (event) => {
+      const target = event.target;
+      if (!(target instanceof HTMLElement)) return;
+      if (inlineApplyVariantText(target)) return;
+      inlineApplyVariantConfidence(target);
+    });
+    editorRoot?.addEventListener("focusout", (event) => {
+      const target = event.target;
+      if (!(target instanceof HTMLElement)) return;
+      if (inlineApplyVariantText(target)) return;
+      inlineApplyVariantConfidence(target);
     });
 
     if (!inlineSyncOnSaveOnly) {
@@ -9144,6 +9420,10 @@ export function bind(route, ctx) {
     const inlineOnResize = () => {
       inlineAutoSizeLyrics();
       inlineRenderLineRail();
+      if (inlineIsEditingVariantInput() && lineActionsPopoverNode?.contains(document.activeElement)) {
+        inlinePositionPopover();
+        return;
+      }
       inlineRenderPopover();
     };
     window.addEventListener("resize", inlineOnResize);
@@ -9153,6 +9433,10 @@ export function bind(route, ctx) {
     if (window.ResizeObserver && lyricsTextareaNode) {
       inlineTextareaResizeObserver = new window.ResizeObserver(() => {
         inlineRenderLineRail();
+        if (inlineIsEditingVariantInput() && lineActionsPopoverNode?.contains(document.activeElement)) {
+          inlinePositionPopover();
+          return;
+        }
         inlineRenderPopover();
       });
       inlineTextareaResizeObserver.observe(lyricsTextareaNode);
@@ -9215,7 +9499,7 @@ export function bind(route, ctx) {
         inlineEnsureStandalonePayload();
       }
       inlineSetPanelVisible(true);
-      if (collabControlsNode) collabControlsNode.open = true;
+      if (collabControlsNode instanceof HTMLDetailsElement) collabControlsNode.open = true;
       inlineRefreshMeta();
       inlineRefreshCollaborators();
       inlineRefreshLines();
@@ -9307,8 +9591,8 @@ export function bind(route, ctx) {
       window.addEventListener("hashchange", onInlineLeave, { once: true });
     } else {
       inlineEnsureStandalonePayload();
-      inlineSetPanelVisible(true);
-      if (collabControlsNode) collabControlsNode.open = true;
+      inlineSetPanelVisible(false);
+      if (collabControlsNode instanceof HTMLDetailsElement) collabControlsNode.open = true;
       inlineRefreshMeta();
       inlineRefreshCollaborators();
       inlineRefreshLines();
@@ -9335,8 +9619,6 @@ export function bind(route, ctx) {
     if (acSaveBtn || acPublishBtn) {
       let savePending = false;
       let lastTriggerAt = 0;
-      const preservePublishedOnSave = !ctx.isNew
-        && String(initialSong?.status || "").trim().toLowerCase() === "published";
       const runAdminSave = async (event, options = {}) => {
         event?.preventDefault?.();
         const now = Date.now();
@@ -9346,7 +9628,8 @@ export function bind(route, ctx) {
         const currentBtn = event?.currentTarget instanceof HTMLButtonElement ? event.currentTarget : acSaveBtn;
         const initialSaveText = acSaveBtn?.textContent || t("common.save");
         const initialPublishText = acPublishBtn?.textContent || "";
-        const progressText = options.forceStatus === "published"
+        const forcedStatus = String(options.forceStatus || "").trim().toLowerCase();
+        const progressText = forcedStatus === "published"
           ? (uiLocale() === "ru" ? "Публикация..." : uiLocale() === "uk" ? "Публікація..." : uiLocale() === "et" ? "Avaldamine..." : "Publishing...")
           : `${t("common.save")}...`;
         savePending = true;
@@ -9363,11 +9646,14 @@ export function bind(route, ctx) {
             .trim()
             .toLowerCase();
           const fallbackStatus = currentStatus === "draft" ? "draft" : "published";
-          const nextStatus = options.forceStatus === "published"
+          const nextStatus = forcedStatus === "published"
             ? "published"
-            : (preservePublishedOnSave ? "published" : fallbackStatus);
+            : forcedStatus === "draft"
+              ? "draft"
+            : fallbackStatus;
           payload.status = nextStatus;
           if (qs("ac_status_edit")) qs("ac_status_edit").value = nextStatus;
+          acSyncStatusBadge();
           if (!payload.title || !payload.lang || !payload.country || !String(payload.lyrics || "").trim()) {
             const msg = requiredFieldsErrorText();
             showAcInlineError(msg);
@@ -9391,6 +9677,7 @@ export function bind(route, ctx) {
             : "published";
           payload.status = savedStatus;
           if (qs("ac_status_edit")) qs("ac_status_edit").value = savedStatus;
+          acSyncStatusBadge();
           showSaveSuccessOverlay();
           clearContentDraft(oldIdentity);
           if (!payload.id) clearContentDraft("__new");
@@ -9436,7 +9723,7 @@ export function bind(route, ctx) {
     qs("ac_delete")?.addEventListener("click", async () => {
       const id = qs("ac_id").value.trim();
       if (!id) return;
-      if (!confirm(t("admin.deleteConfirm"))) return;
+      if (!confirm(deleteSongConfirmText())) return;
       try {
         await api.adminDeleteSong(id);
         clearContentDraft(id);
