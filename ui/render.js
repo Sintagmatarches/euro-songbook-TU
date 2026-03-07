@@ -12,6 +12,14 @@ import {
   USSR_PERIOD_VALUES,
 } from "../shared/song-catalogs.js";
 import { ADMIN_PERMISSION_VALUES } from "../shared/admin-permissions.js";
+import {
+  CONFIDENCE_LEVELS,
+  confidenceLevelDetails,
+  confidenceLevelFromValue,
+  confidenceScoreFromLevel,
+  normalizeConfidenceSegments,
+  normalizeConfidenceValue,
+} from "../shared/lyrics-confidence.js";
 
 const ADMIN_PERMISSIONS = ADMIN_PERMISSION_VALUES;
 
@@ -889,7 +897,21 @@ function optionalFieldTitleByKey(key = "") {
   if (normalized === "year") return t("field.year");
   if (normalized === "source") return t("field.source");
   if (normalized === "notes") return uiText("description");
+  if (normalized === "verified_translation") return uiText("verifiedTranslation");
   return key;
+}
+
+function verifiedTranslationToggleLabel(active = false) {
+  if (active) {
+    if (uiLocale() === "ru") return "Оригинал";
+    if (uiLocale() === "uk") return "Оригінал";
+    if (uiLocale() === "et") return "Originaal";
+    return "Original";
+  }
+  if (uiLocale() === "ru") return "Вериф. перевод";
+  if (uiLocale() === "uk") return "Вериф. переклад";
+  if (uiLocale() === "et") return "Kinnitatud tõlge";
+  return "Verified translation";
 }
 
 function songAuditAddedLabel() {
@@ -1219,6 +1241,27 @@ function homeCountryNoDataText() {
   return "Country backgrounds are not configured yet.";
 }
 
+function homeLanguageSectionTitle() {
+  if (uiLocale() === "ru") return "Разделы по языкам";
+  if (uiLocale() === "uk") return "Розділи за мовами";
+  if (uiLocale() === "et") return "Keelepõhised jaotised";
+  return "Language sections";
+}
+
+function homeLanguageSectionHint() {
+  if (uiLocale() === "ru") return "Выберите язык.";
+  if (uiLocale() === "uk") return "Оберіть мову.";
+  if (uiLocale() === "et") return "Vali keel.";
+  return "Choose a language.";
+}
+
+function homeLanguageCountriesTitle(langLabel) {
+  if (uiLocale() === "ru") return `${langLabel}: страны и эпохи`;
+  if (uiLocale() === "uk") return `${langLabel}: країни та епохи`;
+  if (uiLocale() === "et") return `${langLabel}: riigid ja ajastud`;
+  return `${langLabel}: countries and eras`;
+}
+
 function homeResultsTitle() {
   if (uiLocale() === "ru") return "Результаты поиска";
   if (uiLocale() === "uk") return "Результати пошуку";
@@ -1376,45 +1419,120 @@ function homeUI(data, params, homeExtras = {}) {
     backgroundsByCountry.set(key, normalized);
   }
 
-  const countrySet = new Set([...backgroundsByCountry.keys()]);
-  for (const key of countryCounts.keys()) {
-    if (key) countrySet.add(key);
+  const langCountryMap = new Map();
+  const langCountryItems = Array.isArray(homeExtras?.langCountryCounts) ? homeExtras.langCountryCounts : [];
+  for (const item of langCountryItems) {
+    const langKey = normalizeSongLanguage(item?.lang || "");
+    const countryKey = normalizeSongCountry(item?.country || "");
+    const count = Number(item?.count || 0);
+    if (!langKey || count <= 0) continue;
+    if (!langCountryMap.has(langKey)) {
+      langCountryMap.set(langKey, { total: 0, countries: new Map() });
+    }
+    const bucket = langCountryMap.get(langKey);
+    bucket.total += count;
+    if (countryKey) bucket.countries.set(countryKey, (bucket.countries.get(countryKey) || 0) + count);
   }
-  for (const song of data.items || []) {
-    const key = normalizeSongCountry(song?.country || "");
-    if (key) countrySet.add(key);
+
+  const langCountryPeriodItems = Array.isArray(homeExtras?.langCountryPeriodCounts) ? homeExtras.langCountryPeriodCounts : [];
+  const langCountryPeriodMap = new Map();
+  for (const item of langCountryPeriodItems) {
+    const langKey = normalizeSongLanguage(item?.lang || "");
+    const countryKey = normalizeSongCountry(item?.country || "");
+    const periodKey = normalizeSongPeriod(item?.period || "");
+    const count = Number(item?.count || 0);
+    if (!langKey || !countryKey || !periodKey || count <= 0) continue;
+    const key = `${langKey}::${countryKey}`;
+    if (!langCountryPeriodMap.has(key)) langCountryPeriodMap.set(key, new Map());
+    const periodMap = langCountryPeriodMap.get(key);
+    periodMap.set(periodKey, (periodMap.get(periodKey) || 0) + count);
   }
-  const countryCards = [...countrySet]
-    .map((countryKey) => {
-      const background = backgroundsByCountry.get(countryKey) || {};
-      const flagUrl = resolveFlagPreviewImage(background?.preview_flag_config || null, {
-        country: countryKey,
-        period: countryKey === "ussr" ? period : "",
-        kind: "square",
-      })
-        || String(background?.preview_flag_image_url || "").trim();
+
+  const localeForSort = uiLocale() === "ru" ? "ru" : uiLocale() === "uk" ? "uk" : "en";
+  const languageCards = Array.from(langCountryMap.entries())
+    .map(([langKey, bucket]) => {
+      const rankedCountries = Array.from(bucket.countries.entries())
+        .sort((a, b) => b[1] - a[1] || formatCountry(a[0]).localeCompare(formatCountry(b[0]), localeForSort));
+      const topCountry = rankedCountries[0]?.[0] || "";
+      const background = topCountry ? (backgroundsByCountry.get(topCountry) || {}) : {};
+      const flagUrl = topCountry
+        ? (resolveFlagPreviewImage(background?.preview_flag_config || null, {
+            country: topCountry,
+            period: "",
+            kind: "square",
+          }) || String(background?.preview_flag_image_url || "").trim())
+        : "";
       const wallpaperUrl = String(background?.desktop_image_url || background?.mobile_image_url || "").trim();
-      const href = catalogHashForSongFilter({ country: countryKey, searched: "1", adv: "0", page: "1" });
+      const href = catalogHashForSongFilter({ lang: langKey, searched: "0", adv: "0", page: "1" });
       return {
-        key: countryKey,
-        label: formatCountry(countryKey),
-        count: countryCounts.get(countryKey) || 0,
+        key: langKey,
+        label: formatLang(langKey),
+        count: bucket.total,
         href,
-        previewBg: wallpaperUrl || flagUrl,
+        previewBg: wallpaperUrl,
         wallBg: wallpaperUrl,
         flagBg: flagUrl,
-        isActive: country === countryKey,
+        isActive: lang === langKey && !country,
       };
     })
-    .sort((a, b) => {
-      const byCount = (Number(b.count) || 0) - (Number(a.count) || 0);
-      if (byCount !== 0) return byCount;
-      const localeForSort = uiLocale() === "ru" ? "ru" : uiLocale() === "uk" ? "uk" : "en";
-      return a.label.localeCompare(b.label, localeForSort);
-    });
+    .sort((a, b) => (Number(b.count) || 0) - (Number(a.count) || 0) || a.label.localeCompare(b.label, localeForSort));
 
-  const countryCardsHtml = countryCards.length
-    ? countryCards.map((item) => `
+  const selectedLangBucket = lang ? langCountryMap.get(lang) : null;
+  const selectedLangCountryCards = selectedLangBucket
+    ? Array.from(selectedLangBucket.countries.entries())
+      .flatMap(([countryKey, totalCount]) => {
+        const background = backgroundsByCountry.get(countryKey) || {};
+        const flagUrl = resolveFlagPreviewImage(background?.preview_flag_config || null, {
+          country: countryKey,
+          period: "",
+          kind: "square",
+        }) || String(background?.preview_flag_image_url || "").trim();
+        const wallpaperUrl = String(background?.desktop_image_url || background?.mobile_image_url || "").trim();
+
+        if (countryKey !== "ussr") {
+          return [{
+            key: countryKey,
+            label: formatCountry(countryKey),
+            count: totalCount,
+            href: catalogHashForSongFilter({ lang, country: countryKey, searched: "1", adv: "0", page: "1" }),
+            previewBg: wallpaperUrl,
+            wallBg: wallpaperUrl,
+            flagBg: flagUrl,
+          }];
+        }
+
+        const periodMap = langCountryPeriodMap.get(`${lang}::ussr`) || new Map();
+        const periodEntries = Array.from(periodMap.entries())
+          .sort((a, b) => b[1] - a[1] || formatPeriod(a[0]).localeCompare(formatPeriod(b[0]), localeForSort));
+        const periodCards = periodEntries.map(([periodKey, periodCount]) => ({
+          key: `ussr:${periodKey}`,
+          label: `${formatCountry("ussr")} - ${formatPeriod(periodKey)}`,
+          count: periodCount,
+          href: catalogHashForSongFilter({ lang, country: "ussr", period: periodKey, searched: "1", adv: "0", page: "1" }),
+          previewBg: wallpaperUrl,
+          wallBg: wallpaperUrl,
+          flagBg: flagUrl,
+        }));
+        const periodTotal = periodEntries.reduce((sum, [, c]) => sum + Number(c || 0), 0);
+        const withoutPeriod = Math.max(0, totalCount - periodTotal);
+        if (withoutPeriod > 0) {
+          periodCards.unshift({
+            key: "ussr:all",
+            label: formatCountry("ussr"),
+            count: withoutPeriod,
+            href: catalogHashForSongFilter({ lang, country: "ussr", searched: "1", adv: "0", page: "1" }),
+            previewBg: wallpaperUrl,
+            wallBg: wallpaperUrl,
+            flagBg: flagUrl,
+          });
+        }
+        return periodCards;
+      })
+      .sort((a, b) => (Number(b.count) || 0) - (Number(a.count) || 0) || a.label.localeCompare(b.label, localeForSort))
+    : [];
+
+  const languageCardsHtml = languageCards.length
+    ? languageCards.map((item) => `
       <a
         class="home-country-card ${item.isActive ? "is-active" : ""}"
         href="${esc(item.href)}"
@@ -1430,6 +1548,29 @@ function homeUI(data, params, homeExtras = {}) {
       </a>
     `).join("")
     : `<div class="card"><div class="muted">${esc(homeCountryNoDataText())}</div></div>`;
+
+  const selectedLanguageCountryCardsHtml = selectedLangCountryCards.length
+    ? selectedLangCountryCards.map((item) => `
+      <a
+        class="home-country-card"
+        href="${esc(item.href)}"
+        data-home-bg="${esc(item.previewBg || "")}"
+        style="${esc([
+    item.wallBg ? `--home-country-wall:${toCssUrlValue(item.wallBg)}` : "",
+    item.flagBg ? `--home-country-flag:${toCssUrlValue(item.flagBg)}` : "",
+  ].filter(Boolean).join(";"))}"
+      >
+        <span class="home-country-card-label">${esc(item.label)}</span>
+        <span class="home-country-card-count">${esc(homeCountrySongsCountLabel(item.count))}</span>
+        <span class="home-country-card-cta">${esc(homeCountryOpenLabel())}</span>
+      </a>
+    `).join("")
+    : `<div class="card"><div class="muted">${esc(homeCountryNoDataText())}</div></div>`;
+
+  const showLanguageRoot = !didSearch && !lang && !isCountryLocked;
+  const showLanguageCountryPicker = !didSearch && !!lang && !isCountryLocked;
+  const shouldShowResults = didSearch;
+  const showPassiveHint = !showLanguageRoot && !showLanguageCountryPicker;
 
   const loadingResultsText = homeLoadingResultsText();
   const resultLoadingScreenMarkup = `
@@ -1457,8 +1598,6 @@ function homeUI(data, params, homeExtras = {}) {
       : uiLocale() === "et"
         ? "Tapset vastet ei leitud."
         : "No exact match found.";
-
-  const shouldShowResults = didSearch;
 
   return `
     <section class="yt-main home-main">
@@ -1523,15 +1662,25 @@ function homeUI(data, params, homeExtras = {}) {
         </div>
       </div>
 
-      ${!isCountryLocked && !didSearch ? `<div class="home-country-head">
+      ${showLanguageRoot ? `<div class="home-country-head">
         <div>
-          <div class="h1">${esc(homeCountrySectionTitle())}</div>
-          <div class="muted">${esc(homeCountrySectionHint())}</div>
+          <div class="h1">${esc(homeLanguageSectionTitle())}</div>
+          <div class="muted">${esc(homeLanguageSectionHint())}</div>
         </div>
       </div>
 
       <div class="home-country-grid">
-        ${countryCardsHtml}
+        ${languageCardsHtml}
+      </div>` : ``}
+
+      ${showLanguageCountryPicker ? `<div class="home-country-head">
+        <div>
+          <div class="h1">${esc(homeLanguageCountriesTitle(formatLang(lang)))}</div>
+        </div>
+      </div>
+
+      <div class="home-country-grid">
+        ${selectedLanguageCountryCardsHtml}
       </div>` : ``}
 
       ${shouldShowResults ? `
@@ -1561,11 +1710,11 @@ function homeUI(data, params, homeExtras = {}) {
             <div class="card"><div class="muted">${esc(t("home.nothing"))}</div><div class="actions" style="margin-top:10px"><a class="btn ghost" href="${esc(makeHash("#/request", { fragment: q || "" }, ["fragment"]))}">${esc(homeReportFragmentLabel())}</a></div></div>
           </div>
         `}
-      ` : `
+      ` : showPassiveHint ? `
         <div class="card home-search-hint home-search-hint-flat">
           <div class="muted">${esc(homeSearchHintText())}</div>
         </div>
-      `}
+      ` : ``}
     </section>
   <div class="yt-mobile-spacer"></div>
   `;
@@ -1616,7 +1765,6 @@ function draftUiText(key, vars = {}) {
     addLineVariant: "Add line version",
     addVersionTooltip: "Add version",
     deleteVersionTooltip: "Delete version",
-    confidenceTool: "Page variants",
     linePickerTool: "Line variants",
     copyPromptTool: "Help decode (ChatGPT)",
     liveStatus: "Live status",
@@ -1649,6 +1797,20 @@ function draftUiText(key, vars = {}) {
     removeVariantTitle: "Delete line version",
     removeVariantConfirm: "Delete this line version?",
     removeVariantFailed: "Failed to delete line version",
+    activateVariant: "Make active",
+    confidenceLevel: "Confidence",
+    confidenceLevelExact: "100%",
+    confidenceLevelVerySure: "Very sure",
+    confidenceLevelSure: "Sure",
+    confidenceLevelMedium: "Medium confidence",
+    confidenceLevelUnsure: "Not sure",
+    confidenceTool: "Line confidence",
+    confidenceSegmentsTitle: "Fragments",
+    confidenceSelectionHint: "Select part of the active line to mark uncertainty.",
+    confidenceSelectionEmpty: "No fragment selected yet.",
+    confidenceSelectionReady: "Selected: {fragment}",
+    confidenceSegmentsEmpty: "No marked fragments yet.",
+    confidenceSegmentRemoveTitle: "Remove fragment mark",
   };
   const ru = {
     variantBadgeManual: "\u0412\u0440\u0443\u0447\u043d\u0443\u044e",
@@ -1687,7 +1849,6 @@ function draftUiText(key, vars = {}) {
     newVariantPlaceholder: "\u0422\u0435\u043a\u0441\u0442 \u0432\u0430\u0440\u0438\u0430\u043d\u0442\u0430",
     addVariantManual: "\u0414\u043e\u0431\u0430\u0432\u0438\u0442\u044c \u0432\u0430\u0440\u0438\u0430\u043d\u0442",
     addVariantSuggested: "\u0414\u043e\u0431\u0430\u0432\u0438\u0442\u044c \u043f\u043e\u0434\u0441\u043a\u0430\u0437\u043a\u0443",
-    confidenceTool: "\u0412\u0430\u0440\u0438\u0430\u043d\u0442\u044b \u0441\u0442\u0440\u0430\u043d\u0438\u0446\u044b",
     linePickerTool: "\u0412\u0430\u0440\u0438\u0430\u043d\u0442\u044b \u0441\u0442\u0440\u043e\u043a",
     copyPromptTool: "\u041f\u043e\u043c\u043e\u0449\u044c \u0432 \u0440\u0430\u0441\u0448\u0438\u0444\u0440\u043e\u0432\u043a\u0435 (ChatGPT)",
     openCollaborativeDraft: "\u0421\u043e\u0432\u043c\u0435\u0441\u0442\u043d\u044b\u0439 \u0447\u0435\u0440\u043d\u043e\u0432\u0438\u043a",
@@ -1722,6 +1883,20 @@ function draftUiText(key, vars = {}) {
     removeVariantTitle: "\u0423\u0434\u0430\u043b\u0438\u0442\u044c \u0432\u0435\u0440\u0441\u0438\u044e \u0441\u0442\u0440\u043e\u043a\u0438",
     removeVariantConfirm: "\u0423\u0434\u0430\u043b\u0438\u0442\u044c \u044d\u0442\u0443 \u0432\u0435\u0440\u0441\u0438\u044e \u0441\u0442\u0440\u043e\u043a\u0438?",
     removeVariantFailed: "\u041d\u0435 \u0443\u0434\u0430\u043b\u043e\u0441\u044c \u0443\u0434\u0430\u043b\u0438\u0442\u044c \u0432\u0435\u0440\u0441\u0438\u044e \u0441\u0442\u0440\u043e\u043a\u0438",
+    activateVariant: "\u0421\u0434\u0435\u043b\u0430\u0442\u044c \u0430\u043a\u0442\u0438\u0432\u043d\u043e\u0439",
+    confidenceLevel: "\u0423\u0432\u0435\u0440\u0435\u043d\u043d\u043e\u0441\u0442\u044c",
+    confidenceLevelExact: "100%",
+    confidenceLevelVerySure: "\u041e\u0447\u0435\u043d\u044c \u0443\u0432\u0435\u0440\u0435\u043d",
+    confidenceLevelSure: "\u0423\u0432\u0435\u0440\u0435\u043d",
+    confidenceLevelMedium: "\u0421\u0440\u0435\u0434\u043d\u044f\u044f \u0443\u0432\u0435\u0440\u0435\u043d\u043d\u043e\u0441\u0442\u044c",
+    confidenceLevelUnsure: "\u0412\u043e\u043e\u0431\u0449\u0435 \u043d\u0435 \u0443\u0432\u0435\u0440\u0435\u043d",
+    confidenceTool: "\u0423\u0432\u0435\u0440\u0435\u043d\u043d\u043e\u0441\u0442\u044c \u0441\u0442\u0440\u043e\u043a",
+    confidenceSegmentsTitle: "\u0424\u0440\u0430\u0433\u043c\u0435\u043d\u0442\u044b",
+    confidenceSelectionHint: "\u0412\u044b\u0434\u0435\u043b\u0438\u0442\u0435 \u0447\u0430\u0441\u0442\u044c \u0430\u043a\u0442\u0438\u0432\u043d\u043e\u0439 \u0441\u0442\u0440\u043e\u043a\u0438, \u0447\u0442\u043e\u0431\u044b \u043f\u043e\u043c\u0435\u0442\u0438\u0442\u044c \u0441\u043e\u043c\u043d\u0435\u043d\u0438\u0435.",
+    confidenceSelectionEmpty: "\u0424\u0440\u0430\u0433\u043c\u0435\u043d\u0442 \u043f\u043e\u043a\u0430 \u043d\u0435 \u0432\u044b\u0434\u0435\u043b\u0435\u043d.",
+    confidenceSelectionReady: "\u0412\u044b\u0431\u0440\u0430\u043d\u043e: {fragment}",
+    confidenceSegmentsEmpty: "\u041f\u043e\u043c\u0435\u0447\u0435\u043d\u043d\u044b\u0445 \u0444\u0440\u0430\u0433\u043c\u0435\u043d\u0442\u043e\u0432 \u043f\u043e\u043a\u0430 \u043d\u0435\u0442.",
+    confidenceSegmentRemoveTitle: "\u0423\u0431\u0440\u0430\u0442\u044c \u043f\u043e\u043c\u0435\u0442\u043a\u0443 \u0444\u0440\u0430\u0433\u043c\u0435\u043d\u0442\u0430",
     lineSyncPending: "\u0421\u0442\u0440\u043e\u043a\u0430 \u0441\u0438\u043d\u0445\u0440\u043e\u043d\u0438\u0437\u0438\u0440\u0443\u0435\u0442\u0441\u044f, \u043f\u043e\u0432\u0442\u043e\u0440\u0438\u0442\u0435 \u0447\u0435\u0440\u0435\u0437 \u0441\u0435\u043a\u0443\u043d\u0434\u0443",
   };
   const uk = {
@@ -1761,7 +1936,6 @@ function draftUiText(key, vars = {}) {
     newVariantPlaceholder: "\u0422\u0435\u043a\u0441\u0442 \u0432\u0430\u0440\u0456\u0430\u043d\u0442\u0443",
     addVariantManual: "\u0414\u043e\u0434\u0430\u0442\u0438 \u0432\u0430\u0440\u0456\u0430\u043d\u0442",
     addVariantSuggested: "\u0414\u043e\u0434\u0430\u0442\u0438 \u043f\u0456\u0434\u043a\u0430\u0437\u043a\u0443",
-    confidenceTool: "\u0412\u0430\u0440\u0456\u0430\u043d\u0442\u0438 \u0441\u0442\u043e\u0440\u0456\u043d\u043a\u0438",
     linePickerTool: "\u0412\u0430\u0440\u0456\u0430\u043d\u0442\u0438 \u0440\u044f\u0434\u043a\u0430",
     copyPromptTool: "\u0414\u043e\u043f\u043e\u043c\u043e\u0433\u0442\u0438 \u0432 \u0440\u043e\u0437\u0448\u0438\u0444\u0440\u0443\u0432\u0430\u043d\u043d\u0456 (ChatGPT)",
     openCollaborativeDraft: "\u0421\u043f\u0456\u043b\u044c\u043d\u0430 \u0447\u0435\u0440\u043d\u0435\u0442\u043a\u0430",
@@ -1796,6 +1970,20 @@ function draftUiText(key, vars = {}) {
     removeVariantTitle: "\u0412\u0438\u0434\u0430\u043b\u0438\u0442\u0438 \u0432\u0435\u0440\u0441\u0456\u044e \u0440\u044f\u0434\u043a\u0430",
     removeVariantConfirm: "\u0412\u0438\u0434\u0430\u043b\u0438\u0442\u0438 \u0446\u044e \u0432\u0435\u0440\u0441\u0456\u044e \u0440\u044f\u0434\u043a\u0430?",
     removeVariantFailed: "\u041d\u0435 \u0432\u0434\u0430\u043b\u043e\u0441\u044f \u0432\u0438\u0434\u0430\u043b\u0438\u0442\u0438 \u0432\u0435\u0440\u0441\u0456\u044e \u0440\u044f\u0434\u043a\u0430",
+    activateVariant: "\u0417\u0440\u043e\u0431\u0438\u0442\u0438 \u0430\u043a\u0442\u0438\u0432\u043d\u0438\u043c",
+    confidenceLevel: "\u0412\u043f\u0435\u0432\u043d\u0435\u043d\u0456\u0441\u0442\u044c",
+    confidenceLevelExact: "100%",
+    confidenceLevelVerySure: "\u0414\u0443\u0436\u0435 \u0432\u043f\u0435\u0432\u043d\u0435\u043d\u0438\u0439",
+    confidenceLevelSure: "\u0412\u043f\u0435\u0432\u043d\u0435\u043d\u0438\u0439",
+    confidenceLevelMedium: "\u0421\u0435\u0440\u0435\u0434\u043d\u044f \u0432\u043f\u0435\u0432\u043d\u0435\u043d\u0456\u0441\u0442\u044c",
+    confidenceLevelUnsure: "\u0417\u043e\u0432\u0441\u0456\u043c \u043d\u0435 \u0432\u043f\u0435\u0432\u043d\u0435\u043d\u0438\u0439",
+    confidenceTool: "\u0412\u043f\u0435\u0432\u043d\u0435\u043d\u0456\u0441\u0442\u044c \u0440\u044f\u0434\u043a\u0456\u0432",
+    confidenceSegmentsTitle: "\u0424\u0440\u0430\u0433\u043c\u0435\u043d\u0442\u0438",
+    confidenceSelectionHint: "\u0412\u0438\u0434\u0456\u043b\u0456\u0442\u044c \u0447\u0430\u0441\u0442\u0438\u043d\u0443 \u0430\u043a\u0442\u0438\u0432\u043d\u043e\u0433\u043e \u0440\u044f\u0434\u043a\u0430, \u0449\u043e\u0431 \u043f\u043e\u0437\u043d\u0430\u0447\u0438\u0442\u0438 \u0441\u0443\u043c\u043d\u0456\u0432.",
+    confidenceSelectionEmpty: "\u0424\u0440\u0430\u0433\u043c\u0435\u043d\u0442 \u0449\u0435 \u043d\u0435 \u0432\u0438\u0434\u0456\u043b\u0435\u043d\u043e.",
+    confidenceSelectionReady: "\u0412\u0438\u0431\u0440\u0430\u043d\u043e: {fragment}",
+    confidenceSegmentsEmpty: "\u041f\u043e\u043c\u0456\u0447\u0435\u043d\u0438\u0445 \u0444\u0440\u0430\u0433\u043c\u0435\u043d\u0442\u0456\u0432 \u0449\u0435 \u043d\u0435\u043c\u0430\u0454.",
+    confidenceSegmentRemoveTitle: "\u041f\u0440\u0438\u0431\u0440\u0430\u0442\u0438 \u043f\u043e\u0437\u043d\u0430\u0447\u043a\u0443 \u0444\u0440\u0430\u0433\u043c\u0435\u043d\u0442\u0430",
     lineSyncPending: "\u0420\u044f\u0434\u043e\u043a \u0441\u0438\u043d\u0445\u0440\u043e\u043d\u0456\u0437\u0443\u0454\u0442\u044c\u0441\u044f, \u043f\u043e\u0432\u0442\u043e\u0440\u0456\u0442\u044c \u0437\u0430 \u0441\u0435\u043a\u0443\u043d\u0434\u0443",
   };
   const et = {
@@ -1838,7 +2026,6 @@ function draftUiText(key, vars = {}) {
     addLineVariant: "Lisa rea versioon",
     addVersionTooltip: "Lisa versioon",
     deleteVersionTooltip: "Kustuta versioon",
-    confidenceTool: "Lehe variandid",
     linePickerTool: "Rea variandid",
     copyPromptTool: "Aita lahti kirjutada (ChatGPT)",
     liveStatus: "Staatus",
@@ -1870,6 +2057,20 @@ function draftUiText(key, vars = {}) {
     removeVariantTitle: "Kustuta rea versioon",
     removeVariantConfirm: "Kustutada see rea versioon?",
     removeVariantFailed: "Rea versiooni kustutamine ebaonnestus",
+    activateVariant: "Muuda aktiivseks",
+    confidenceLevel: "Kindlus",
+    confidenceLevelExact: "100%",
+    confidenceLevelVerySure: "Vaga kindel",
+    confidenceLevelSure: "Kindel",
+    confidenceLevelMedium: "Keskmine kindlus",
+    confidenceLevelUnsure: "Uldse mitte kindel",
+    confidenceTool: "Ridade kindlus",
+    confidenceSegmentsTitle: "Fragmendid",
+    confidenceSelectionHint: "Vali aktiivsest reast fragment, et markida ebakindlus.",
+    confidenceSelectionEmpty: "Fragmenti pole veel valitud.",
+    confidenceSelectionReady: "Valitud: {fragment}",
+    confidenceSegmentsEmpty: "Margitud fragmente veel pole.",
+    confidenceSegmentRemoveTitle: "Eemalda fragmendi markeering",
     lineSyncPending: "Rida s\u00FCnkroonitakse, proovi hetke p\u00E4rast uuesti",
   };
   const fallback = en[key] || key;
@@ -1944,26 +2145,92 @@ function draftVariantTypeLabel(value = "") {
   return draftUiText("variantBadgeManual");
 }
 
+function draftConfidenceLevel(value, fallback = "exact") {
+  return confidenceLevelFromValue(value, fallback);
+}
+
 function draftConfidenceBand(confidence) {
-  const value = Number(confidence || 0);
-  if (value >= 85) return "is-high";
-  if (value >= 60) return "is-mid";
-  return "is-low";
+  return `is-confidence-${draftConfidenceLevel(confidence)}`;
+}
+
+function draftConfidenceDetails(confidence) {
+  return confidenceLevelDetails(draftConfidenceLevel(confidence));
+}
+
+function draftConfidenceStyleValue(confidence) {
+  const details = draftConfidenceDetails(confidence);
+  return `--confidence-fill:${details.fill}%;--confidence-fill-factor:${(details.fill / 100).toFixed(3)};--confidence-shade:${details.shade};--confidence-border:${details.border};`;
 }
 
 function draftClampConfidence(value, fallback = 100) {
-  const n = Number.parseInt(String(value ?? fallback), 10);
-  if (!Number.isFinite(n)) return fallback;
-  return Math.max(0, Math.min(100, n));
+  return normalizeConfidenceValue(value, fallback);
 }
 
 function draftConfidenceFromInput(rawValue, fallback = 100) {
-  const fallbackValue = draftClampConfidence(fallback, 100);
-  const raw = String(rawValue ?? "").trim();
-  if (!raw) return fallbackValue;
-  const parsed = Number.parseInt(raw, 10);
-  if (!Number.isFinite(parsed)) return fallbackValue;
-  return draftClampConfidence(parsed, fallbackValue);
+  return normalizeConfidenceValue(rawValue, fallback);
+}
+
+function draftConfidenceLabel(value) {
+  const level = draftConfidenceLevel(value, "exact");
+  if (level === "very_sure") return draftUiText("confidenceLevelVerySure");
+  if (level === "sure") return draftUiText("confidenceLevelSure");
+  if (level === "medium") return draftUiText("confidenceLevelMedium");
+  if (level === "unsure") return draftUiText("confidenceLevelUnsure");
+  return draftUiText("confidenceLevelExact");
+}
+
+function draftConfidenceOptions(selectedValue) {
+  const selectedLevel = draftConfidenceLevel(selectedValue, "exact");
+  return CONFIDENCE_LEVELS.map((item) => (
+    `<option value="${esc(item.id)}"${item.id === selectedLevel ? " selected" : ""}>${esc(draftConfidenceLabel(item.id))}</option>`
+  )).join("");
+}
+
+function draftNormalizeSegments(segments, text = "") {
+  return normalizeConfidenceSegments(Array.isArray(segments) ? segments : [], {
+    maxLength: String(text || "").length,
+    dropExact: true,
+  });
+}
+
+function draftSegmentSnippet(text, segment = {}) {
+  const source = String(text || "");
+  const start = Math.max(0, Number(segment?.start || 0));
+  const end = Math.max(start, Number(segment?.end || start));
+  const snippet = source.slice(start, end).trim();
+  return snippet || source.slice(start, end) || "";
+}
+
+function draftReplaceSegmentsInRange(segments, nextSegment, text = "") {
+  const sourceText = String(text || "");
+  const normalized = draftNormalizeSegments(segments, sourceText);
+  const start = Math.max(0, Number(nextSegment?.start || 0));
+  const end = Math.max(start, Number(nextSegment?.end || start));
+  if (end <= start) return normalized;
+  const level = draftConfidenceLevel(nextSegment?.level ?? nextSegment?.confidence, "exact");
+  const next = [];
+  for (const item of normalized) {
+    if (item.end <= start || item.start >= end) {
+      next.push(item);
+      continue;
+    }
+    if (item.start < start) {
+      next.push({ ...item, end: start });
+    }
+    if (item.end > end) {
+      next.push({ ...item, start: end });
+    }
+  }
+  if (level !== "exact") {
+    next.push({
+      start,
+      end,
+      level,
+      confidence_level: level,
+      confidence: confidenceScoreFromLevel(level),
+    });
+  }
+  return draftNormalizeSegments(next, sourceText);
 }
 
 function draftActiveVariant(line = {}) {
@@ -1990,6 +2257,184 @@ function draftActiveVariant(line = {}) {
     }
   }
   return best || variants[0] || null;
+}
+
+function splitLyricsLines(input) {
+  return String(input || "")
+    .replace(/\r\n?/g, "\n")
+    .split("\n");
+}
+
+function draftNormalizeVariantState(rawVariant = {}, options = {}) {
+  const fallbackText = String(options?.fallbackText || "");
+  const text = String(rawVariant?.text ?? fallbackText);
+  const confidence = draftClampConfidence(
+    rawVariant?.confidence_level ?? rawVariant?.level ?? rawVariant?.confidence,
+    options?.fallbackConfidence ?? 100,
+  );
+  return {
+    id: String(rawVariant?.id || options?.fallbackId || `variant_${Date.now()}`),
+    text,
+    confidence,
+    confidence_level: draftConfidenceLevel(confidence),
+    confidence_segments: draftNormalizeSegments(
+      rawVariant?.confidence_segments ?? rawVariant?.segments ?? [],
+      text,
+    ),
+    variant_type: String(rawVariant?.variant_type || "manual").trim() || "manual",
+    is_active: rawVariant?.is_active === true || Number(rawVariant?.is_active || 0) === 1,
+  };
+}
+
+function draftEnsureLineState(line = {}, sourceText = "", index = 0, options = {}) {
+  const safeText = String(sourceText || "");
+  const lineIdPrefix = String(options?.lineIdPrefix || "line");
+  const variantIdPrefix = String(options?.variantIdPrefix || "variant");
+  const baseLine = line && typeof line === "object" ? { ...line } : {};
+  const rawVariants = Array.isArray(baseLine?.variants) ? baseLine.variants : [];
+  const variants = rawVariants.map((item, variantIndex) => draftNormalizeVariantState(item, {
+    fallbackText: safeText,
+    fallbackId: `${variantIdPrefix}_${index + 1}_${variantIndex + 1}`,
+  }));
+  let active = variants.find((item) => String(item?.id || "") === String(baseLine?.active_variant_id || "").trim())
+    || variants.find((item) => item?.is_active)
+    || variants.find((item) => String(item?.text || "") === safeText)
+    || variants[0]
+    || null;
+
+  if (!variants.length) {
+    active = draftNormalizeVariantState({}, {
+      fallbackText: safeText,
+      fallbackId: `${variantIdPrefix}_${index + 1}_1`,
+      fallbackConfidence: 100,
+    });
+    active.is_active = true;
+    variants.push(active);
+  }
+
+  if (safeText !== String(active?.text || "")) {
+    const bySameText = variants.find((item) => String(item?.text || "") === safeText);
+    if (bySameText) {
+      active = bySameText;
+    } else {
+      const injected = draftNormalizeVariantState({
+        id: `${variantIdPrefix}_${index + 1}_active`,
+        text: safeText,
+        confidence: active?.confidence ?? 100,
+        variant_type: active?.variant_type || "manual",
+        is_active: true,
+        confidence_segments: [],
+      }, {
+        fallbackText: safeText,
+        fallbackId: `${variantIdPrefix}_${index + 1}_active`,
+        fallbackConfidence: active?.confidence ?? 100,
+      });
+      variants.unshift(injected);
+      active = injected;
+    }
+  }
+
+  const activeId = String(active?.id || variants[0]?.id || "");
+  variants.forEach((item) => {
+    item.is_active = String(item?.id || "") === activeId;
+    item.confidence = draftClampConfidence(item?.confidence, 100);
+    item.confidence_level = draftConfidenceLevel(item?.confidence);
+    item.confidence_segments = draftNormalizeSegments(item?.confidence_segments, item?.text || "");
+  });
+
+  return {
+    id: String(baseLine?.id || `${lineIdPrefix}_${index + 1}`),
+    line_key: String(baseLine?.line_key || `line_${index + 1}`),
+    sort_order: index,
+    active_variant_id: activeId,
+    variants,
+  };
+}
+
+function draftBuildLinesFromLyricsMeta(lyricsText = "", lyricsMetaInput = null, options = {}) {
+  const sourceLines = splitLyricsLines(lyricsText);
+  const payload = parseLyricsMetaPayload(lyricsMetaInput);
+  const metaLines = Array.isArray(payload?.lines) ? payload.lines : [];
+  return sourceLines.map((sourceText, index) => draftEnsureLineState(metaLines[index], sourceText, index, options));
+}
+
+function draftResyncLines(lines = [], lyricsText = "", options = {}) {
+  const sourceLines = splitLyricsLines(lyricsText);
+  const baseLines = Array.isArray(lines) ? lines : [];
+  return sourceLines.map((sourceText, index) => draftEnsureLineState(baseLines[index], sourceText, index, options));
+}
+
+function draftSyncEditableLines(lines = [], lyricsText = "", options = {}) {
+  const sourceLines = splitLyricsLines(lyricsText);
+  const baseLines = Array.isArray(lines) ? lines : [];
+  return sourceLines.map((sourceText, index) => {
+    const seedLine = draftEnsureLineState(baseLines[index], String(draftActiveVariant(baseLines[index] || {})?.text || sourceText || ""), index, options);
+    const nextLine = {
+      ...seedLine,
+      variants: (Array.isArray(seedLine?.variants) ? seedLine.variants : []).map((variant) => ({ ...variant })),
+    };
+    const active = draftActiveVariant(nextLine || {});
+    if (active && String(active.text || "") !== String(sourceText || "")) {
+      active.text = String(sourceText || "");
+      active.confidence_segments = [];
+    }
+    return draftEnsureLineState(nextLine, sourceText, index, options);
+  });
+}
+
+function draftBuildLyricsMeta(lines = [], lyricsText = "") {
+  const normalizedLines = draftResyncLines(lines, lyricsText);
+  return {
+    lines: normalizedLines.map((line, index) => {
+      const activeVariantId = String(line?.active_variant_id || draftActiveVariant(line || {})?.id || "").trim();
+      const variants = (Array.isArray(line?.variants) ? line.variants : []).map((variant, variantIndex) => {
+        const normalized = draftNormalizeVariantState(variant, {
+          fallbackText: String(variant?.text || ""),
+          fallbackId: `serialized_variant_${index + 1}_${variantIndex + 1}`,
+          fallbackConfidence: variant?.confidence ?? 100,
+        });
+        const level = draftConfidenceLevel(normalized.confidence);
+        return {
+          id: normalized.id,
+          text: normalized.text,
+          confidence: normalized.confidence,
+          confidence_level: level,
+          confidence_segments: draftNormalizeSegments(normalized.confidence_segments, normalized.text),
+          variant_type: normalized.variant_type,
+          is_active: String(normalized.id || "") === activeVariantId,
+        };
+      });
+      return {
+        id: String(line?.id || `line_${index + 1}`),
+        line_key: String(line?.line_key || `line_${index + 1}`),
+        active_variant_id: activeVariantId || String(variants[0]?.id || ""),
+        variants,
+      };
+    }),
+  };
+}
+
+function draftAttachLinesState(rootNode, lines = []) {
+  if (!(rootNode instanceof HTMLElement)) return;
+  rootNode.__lyricsConfidenceLines = lines;
+}
+
+function draftReadAttachedLinesState(rootNode) {
+  if (!(rootNode instanceof HTMLElement)) return [];
+  return Array.isArray(rootNode.__lyricsConfidenceLines) ? rootNode.__lyricsConfidenceLines : [];
+}
+
+function draftEditorLyricsMeta(rootNode, lyricsText = "") {
+  const existingLines = draftReadAttachedLinesState(rootNode);
+  if (existingLines.length) {
+    return draftBuildLyricsMeta(existingLines, lyricsText);
+  }
+  const initialMeta = rootNode && typeof rootNode === "object" ? (rootNode.__lyricsConfidenceMeta || null) : null;
+  const seededLines = draftBuildLinesFromLyricsMeta(lyricsText, initialMeta, {
+    lineIdPrefix: "editor_line",
+    variantIdPrefix: "editor_variant",
+  });
+  return draftBuildLyricsMeta(seededLines, lyricsText);
 }
 
 function draftLinesToLyrics(lines = []) {
@@ -2026,7 +2471,7 @@ function draftLineRowsUI(lines = []) {
     const activeConfidence = Number(active?.confidence || 100);
     const variants = Array.isArray(line?.variants) ? line.variants : [];
     return `
-      <div class="songCard draft-line ${draftConfidenceBand(activeConfidence)}" data-line-id="${esc(line.id)}">
+      <div class="songCard draft-line ${draftConfidenceBand(activeConfidence)}" data-line-id="${esc(line.id)}" style="${draftConfidenceStyleValue(activeConfidence)}">
         <div class="draft-line-header">
           <div class="draft-line-meta">
             <span class="badge">${index + 1}</span>
@@ -2075,13 +2520,13 @@ function draftLineActionsPanelUI(line = null, index = -1) {
   const variants = Array.isArray(line?.variants) ? line.variants : [];
   const safeIndex = Math.max(0, Number(index || 0));
   return `
-    <div class="songCard draft-line-actions ${draftConfidenceBand(activeConfidence)}" data-line-id="${esc(line.id)}">
+    <div class="songCard draft-line-actions ${draftConfidenceBand(activeConfidence)}" data-line-id="${esc(line.id)}" style="${draftConfidenceStyleValue(activeConfidence)}">
       <div class="draft-line-header">
         <div class="draft-line-meta">
           <span class="badge">${safeIndex + 1}</span>
         </div>
       </div>
-      <div class="draft-line-current">${esc(activeText || " ")}</div>
+      <div class="draft-line-current" style="${draftConfidenceStyleValue(activeConfidence)}">${esc(activeText || " ")}</div>
       <div class="actions draft-line-ai-actions">
         <button class="btn ghost draft-ai-copy" type="button" data-line-id="${esc(line.id)}">${esc(draftUiText("aiCopy"))}</button>
       </div>
@@ -2107,14 +2552,19 @@ function draftLineActionsPanelUI(line = null, index = -1) {
 
 function draftLinePopoverUI(line = null, index = -1) {
   if (!line) return "";
-  const active = draftActiveVariant(line);
+  const normalizedLine = draftEnsureLineState(line, String(draftActiveVariant(line)?.text || ""), Math.max(0, Number(index || 0)), {
+    lineIdPrefix: String(line?.id || "line"),
+    variantIdPrefix: `popover_variant_${Math.max(0, Number(index || 0)) + 1}`,
+  });
+  const active = draftActiveVariant(normalizedLine);
   const activeConfidence = draftClampConfidence(active?.confidence, 100);
-  const variants = [...(Array.isArray(line?.variants) ? line.variants : [])];
+  const variants = [...(Array.isArray(normalizedLine?.variants) ? normalizedLine.variants : [])];
   const activeVariantId = String(active?.id || variants[0]?.id || "");
   const canRemoveVariant = variants.length > 1;
   const safeIndex = Math.max(0, Number(index || 0));
+  const activeSegments = draftNormalizeSegments(active?.confidence_segments, active?.text || "");
   return `
-    <div class="ac-line-popover-card ${draftConfidenceBand(activeConfidence)}" data-line-id="${esc(line.id)}">
+    <div class="ac-line-popover-card ${draftConfidenceBand(activeConfidence)}" data-line-id="${esc(normalizedLine.id)}" style="${draftConfidenceStyleValue(activeConfidence)}">
       <div class="draft-line-header">
         <div class="draft-line-meta">
           <span class="badge">${safeIndex + 1}</span>
@@ -2128,22 +2578,50 @@ function draftLinePopoverUI(line = null, index = -1) {
           const variantText = String(variant?.text || "");
           const variantConfidence = draftClampConfidence(variant?.confidence, isActive ? activeConfidence : 80);
           return `
-          <div class="draft-variant-row ${isActive ? "is-active" : ""}">
+          <div class="draft-variant-row ${draftConfidenceBand(variantConfidence)} ${isActive ? "is-active" : ""}" style="${draftConfidenceStyleValue(variantConfidence)}">
             <div class="draft-variant-main">
               <span class="badge">${variantIndex + 1}</span>
-              <input class="input draft-variant-text-input" type="text" value="${esc(variantText)}" data-line-id="${esc(line.id)}" data-variant-id="${esc(variantId)}" placeholder="${esc(draftUiText("newVariantPlaceholder"))}" />
+              <input class="input draft-variant-text-input" type="text" value="${esc(variantText)}" data-line-id="${esc(normalizedLine.id)}" data-variant-id="${esc(variantId)}" placeholder="${esc(draftUiText("newVariantPlaceholder"))}" />
             </div>
             <div class="draft-variant-controls">
-              <input class="input draft-variant-confidence" type="number" min="0" max="100" step="1" inputmode="numeric" value="${variantConfidence}" data-line-id="${esc(line.id)}" data-variant-id="${esc(variantId)}" aria-label="${esc(draftUiText("lineConfidence"))}" />
-              <button class="btn ghost draft-variant-remove" type="button" data-line-id="${esc(line.id)}" data-variant-id="${esc(variantId)}" ${canRemoveVariant ? "" : "disabled"} aria-label="${esc(draftUiText("removeVariantTitle"))}" title="${esc(draftUiText("removeVariantTitle"))}">&times;</button>
+              <button class="btn ghost draft-variant-activate ${isActive ? "draft-variant-current" : ""}" type="button" data-line-id="${esc(normalizedLine.id)}" data-variant-id="${esc(variantId)}" aria-label="${esc(draftUiText("activateVariant"))}" title="${esc(draftUiText("activateVariant"))}">${esc(isActive ? draftUiText("activeVariant") : draftUiText("activateVariant"))}</button>
+              <label class="draft-confidence-level-wrap">
+                <span class="draft-confidence-level-label">${esc(draftUiText("confidenceLevel"))}</span>
+                <select class="input draft-variant-confidence-level" data-line-id="${esc(normalizedLine.id)}" data-variant-id="${esc(variantId)}" aria-label="${esc(draftUiText("confidenceLevel"))}">
+                  ${draftConfidenceOptions(variantConfidence)}
+                </select>
+              </label>
+              <button class="btn ghost draft-variant-remove" type="button" data-line-id="${esc(normalizedLine.id)}" data-variant-id="${esc(variantId)}" ${canRemoveVariant ? "" : "disabled"} aria-label="${esc(draftUiText("removeVariantTitle"))}" title="${esc(draftUiText("removeVariantTitle"))}">&times;</button>
             </div>
           </div>
         `;
         }).join("")}
+        <div class="draft-fragment-editor ${draftConfidenceBand(activeConfidence)}" data-line-id="${esc(normalizedLine.id)}" data-variant-id="${esc(activeVariantId)}" style="${draftConfidenceStyleValue(activeConfidence)}">
+          <div class="draft-fragment-editor-head">
+            <div class="draft-variants-list-title">${esc(draftUiText("confidenceSegmentsTitle"))}</div>
+            <span class="badge">${esc(draftUiText("activeVariant"))}</span>
+          </div>
+          <textarea class="textarea draft-segment-selection-text" readonly spellcheck="false" data-line-id="${esc(normalizedLine.id)}" data-variant-id="${esc(activeVariantId)}">${esc(String(active?.text || ""))}</textarea>
+          <div class="draft-selection-summary">${esc(draftUiText("confidenceSelectionHint"))}</div>
+          <div class="draft-segment-level-grid">
+            ${CONFIDENCE_LEVELS.map((item) => `
+              <button class="btn ghost draft-segment-apply ${draftConfidenceBand(item.id)}" type="button" data-line-id="${esc(normalizedLine.id)}" data-variant-id="${esc(activeVariantId)}" data-level="${esc(item.id)}" title="${esc(draftConfidenceLabel(item.id))}">${esc(draftConfidenceLabel(item.id))}</button>
+            `).join("")}
+          </div>
+          <div class="draft-fragment-list">
+            ${activeSegments.length ? activeSegments.map((segment, segmentIndex) => `
+              <div class="draft-fragment-chip ${draftConfidenceBand(segment.level)}" style="${draftConfidenceStyleValue(segment.level)}">
+                <span class="draft-fragment-chip-text">${esc(draftSegmentSnippet(active?.text || "", segment) || "...")}</span>
+                <span class="draft-fragment-chip-level">${esc(draftConfidenceLabel(segment.level))}</span>
+                <button class="btn ghost draft-segment-remove" type="button" data-line-id="${esc(normalizedLine.id)}" data-variant-id="${esc(activeVariantId)}" data-segment-index="${segmentIndex}" aria-label="${esc(draftUiText("confidenceSegmentRemoveTitle"))}" title="${esc(draftUiText("confidenceSegmentRemoveTitle"))}">&times;</button>
+              </div>
+            `).join("") : `<div class="muted small">${esc(draftUiText("confidenceSegmentsEmpty"))}</div>`}
+          </div>
+        </div>
         <div class="draft-add-variant">
-          <input class="input draft-new-variant-text" type="text" placeholder="${esc(draftUiText("newVariantPlaceholder"))}" data-line-id="${esc(line.id)}" />
+          <input class="input draft-new-variant-text" type="text" placeholder="${esc(draftUiText("newVariantPlaceholder"))}" data-line-id="${esc(normalizedLine.id)}" />
           <div class="draft-add-variant-actions">
-            <button class="btn ghost draft-add-variant-btn" type="button" data-line-id="${esc(line.id)}" data-line-index="${safeIndex}">${esc(draftUiText("addLineVariant"))}</button>
+            <button class="btn ghost draft-add-variant-btn" type="button" data-line-id="${esc(normalizedLine.id)}" data-line-index="${safeIndex}">${esc(draftUiText("addLineVariant"))}</button>
           </div>
         </div>
       </div>
@@ -2390,50 +2868,78 @@ function isSectionToken(line, keywords) {
 }
 
 function parseStructuredLyrics(rawLyrics) {
-  const source = String(rawLyrics || "").replace(/\r\n?/g, "\n").trim();
-  if (!source) return { blocks: [], expanded: "" };
+  const entries = splitLyricsLines(rawLyrics)
+    .map((raw, index) => ({
+      raw: String(raw || ""),
+      text: String(raw || "").trim(),
+      index,
+    }));
+  const hasAnyText = entries.some((entry) => entry.text);
+  if (!hasAnyText) return { blocks: [], expanded: "" };
 
-  const stanzas = source
-    .split(/\n\s*\n+/g)
-    .map((part) => part.split("\n").map((line) => line.trim()).filter(Boolean))
-    .filter((lines) => lines.length > 0)
-    .map((lines) => {
-      const first = lines[0];
-      const tail = lines.slice(1).join("\n").trim();
-      return {
-        lines,
-        first,
-        tail,
-        isChorus: isSectionToken(first, CHORUS_KEYWORDS),
-        isVerse: isSectionToken(first, VERSE_KEYWORDS),
-      };
-    });
+  const stanzas = [];
+  let current = [];
+  for (const entry of entries) {
+    if (!entry.text) {
+      if (current.length) {
+        stanzas.push(current);
+        current = [];
+      }
+      continue;
+    }
+    current.push(entry);
+  }
+  if (current.length) stanzas.push(current);
+
+  const mappedStanzas = stanzas.map((lines) => {
+    const first = lines[0]?.text || "";
+    const tailEntries = lines.slice(1);
+    return {
+      lines,
+      first,
+      tailEntries,
+      tail: tailEntries.map((item) => item.text).join("\n").trim(),
+      isChorus: isSectionToken(first, CHORUS_KEYWORDS),
+      isVerse: isSectionToken(first, VERSE_KEYWORDS),
+    };
+  });
+
   const blocks = [];
-  const firstKnownChorus = stanzas.find((item) => item.isChorus && item.tail)?.tail || "";
-  let rememberedChorus = firstKnownChorus;
+  let rememberedChorusText = "";
+  let rememberedChorusLines = [];
 
-  for (const stanza of stanzas) {
-    const { lines, tail, isChorus, isVerse } = stanza;
+  for (const stanza of mappedStanzas) {
+    const { lines, tailEntries, tail, isChorus, isVerse } = stanza;
     if (isChorus) {
-      if (tail) {
-        rememberedChorus = tail;
-        blocks.push({ type: "chorus", text: tail, source: "full" });
-      } else if (rememberedChorus) {
-        blocks.push({ type: "chorus", text: rememberedChorus, source: "ref" });
+      if (tailEntries.length && tail) {
+        rememberedChorusText = tail;
+        rememberedChorusLines = tailEntries.map((item) => ({ ...item }));
+        blocks.push({ type: "chorus", text: tail, lines: rememberedChorusLines, source: "full" });
+      } else if (rememberedChorusLines.length && rememberedChorusText) {
+        blocks.push({
+          type: "chorus",
+          text: rememberedChorusText,
+          lines: rememberedChorusLines.map((item) => ({ ...item })),
+          source: "ref",
+        });
       } else {
-        blocks.push({ type: "verse", text: lines.join("\n").trim(), source: "full" });
+        const plainLines = lines.map((item) => ({ ...item }));
+        const plainText = plainLines.map((item) => item.text).join("\n").trim();
+        if (plainText) blocks.push({ type: "verse", text: plainText, lines: plainLines, source: "full" });
       }
       continue;
     }
 
     if (isVerse) {
-      const verseText = tail || lines.join("\n").trim();
-      if (verseText) blocks.push({ type: "verse", text: verseText, source: "full" });
+      const verseLines = (tailEntries.length ? tailEntries : lines).map((item) => ({ ...item }));
+      const verseText = verseLines.map((item) => item.text).join("\n").trim();
+      if (verseText) blocks.push({ type: "verse", text: verseText, lines: verseLines, source: "full" });
       continue;
     }
 
-    const plainText = lines.join("\n").trim();
-    if (plainText) blocks.push({ type: "verse", text: plainText, source: "full" });
+    const plainLines = lines.map((item) => ({ ...item }));
+    const plainText = plainLines.map((item) => item.text).join("\n").trim();
+    if (plainText) blocks.push({ type: "verse", text: plainText, lines: plainLines, source: "full" });
   }
 
   const expanded = blocks.map((block) => {
@@ -2458,58 +2964,74 @@ function parseLyricsMetaPayload(input) {
   return null;
 }
 
-function lineConfidenceFromLyricsMeta(lineMeta = {}) {
-  const variants = Array.isArray(lineMeta?.variants) ? lineMeta.variants : [];
-  const activeId = String(lineMeta?.active_variant_id || "").trim();
-  const activeVariant = variants.find((item) => String(item?.id || "") === activeId)
-    || variants.find((item) => !!item?.is_active)
-    || variants[0]
-    || null;
-  const value = Number(activeVariant?.confidence);
-  if (!Number.isFinite(value)) return null;
-  return Math.max(0, Math.min(100, Math.round(value)));
+function extractLyricsRenderLines(rawLyrics, lyricsMetaInput) {
+  const sourceLines = splitLyricsLines(rawLyrics);
+  const normalizedLines = draftBuildLinesFromLyricsMeta(rawLyrics, lyricsMetaInput, {
+    lineIdPrefix: "view_line",
+    variantIdPrefix: "view_variant",
+  });
+  return sourceLines.map((text, index) => {
+    const line = normalizedLines[index] || null;
+    const active = draftActiveVariant(line || {});
+    const confidence = active ? draftClampConfidence(active.confidence, 100) : null;
+    return {
+      raw_index: index,
+      text: String(text || ""),
+      confidence,
+      confidence_level: confidence === null ? null : draftConfidenceLevel(confidence),
+      confidence_segments: draftNormalizeSegments(active?.confidence_segments, text),
+    };
+  });
 }
 
-function extractLyricsLineConfidences(lyricsMetaInput) {
-  const payload = parseLyricsMetaPayload(lyricsMetaInput);
-  const lines = Array.isArray(payload?.lines) ? payload.lines : [];
-  if (!lines.length) return [];
-  return lines.map((lineMeta) => lineConfidenceFromLyricsMeta(lineMeta));
-}
-
-function renderLyricLineWithConfidence(text, confidence) {
-  const numericConfidence = Number(confidence);
+function renderLyricLineWithConfidence(text, meta = null) {
+  const safeMeta = meta && typeof meta === "object" ? meta : null;
+  const numericConfidence = safeMeta ? Number(safeMeta.confidence) : Number.NaN;
   const hasConfidence = Number.isFinite(numericConfidence);
-  const safeConfidence = hasConfidence ? Math.max(0, Math.min(100, Math.round(numericConfidence))) : null;
+  const safeConfidence = hasConfidence ? draftClampConfidence(numericConfidence, 100) : null;
+  const hasVisibleConfidence = hasConfidence && safeConfidence < 100;
+  const publicBand = !hasVisibleConfidence
+    ? ""
+    : safeConfidence >= 85
+      ? "is-high"
+      : safeConfidence >= 60
+        ? "is-mid"
+        : "is-low";
   const classes = [
     "song-lyric-line",
-    hasConfidence ? "has-confidence" : "",
-    hasConfidence ? draftConfidenceBand(safeConfidence) : "",
+    hasVisibleConfidence ? "has-confidence" : "",
+    publicBand,
   ].filter(Boolean).join(" ");
   const content = String(text || "");
-  return `<span class="${classes}"${hasConfidence ? ` data-confidence="${safeConfidence}"` : ""}>${content ? renderTextWithUnknownMarkers(content) : "&nbsp;"}${hasConfidence ? `<span class="song-lyric-line-confidence">${safeConfidence}%</span>` : ""}</span>`;
+  return `<span class="${classes}"${hasVisibleConfidence ? ` data-confidence="${safeConfidence}"` : ""}>${content ? renderTextWithUnknownMarkers(content) : "&nbsp;"}${hasVisibleConfidence ? `<span class="song-lyric-line-confidence">${safeConfidence}%</span>` : ""}</span>`;
 }
 
 function renderStructuredLyrics(rawLyrics, options = {}) {
   const renderWithUnknownMarks = (text) => renderTextWithUnknownMarkers(text);
   const parsed = parseStructuredLyrics(rawLyrics);
   const fallbackText = String(rawLyrics || "").trim();
-  const confidenceSeries = Array.isArray(options?.line_confidences) ? options.line_confidences : [];
-  let confidenceIndex = 0;
-  const nextConfidence = () => {
-    if (!confidenceSeries.length) return null;
-    const value = confidenceSeries[confidenceIndex];
-    confidenceIndex += 1;
-    return value;
-  };
-  const renderBlockTextWithConfidence = (text) => {
-    const lines = String(text || "").split("\n");
-    return lines.map((line) => renderLyricLineWithConfidence(line, nextConfidence())).join("\n");
-  };
+  const renderLines = Array.isArray(options?.render_lines)
+    ? options.render_lines
+    : extractLyricsRenderLines(rawLyrics, options?.lyrics_meta || null);
+  const lineMetaByIndex = new Map(renderLines.map((item) => [Number(item?.raw_index || 0), item]));
+  const hasVisibleStructuredConfidence = renderLines.some((item) => {
+    const numericConfidence = Number(item?.confidence);
+    const safeConfidence = Number.isFinite(numericConfidence) ? draftClampConfidence(numericConfidence, 100) : 100;
+    const segments = draftNormalizeSegments(item?.confidence_segments, item?.text || "");
+    return safeConfidence < 100 || segments.length > 0;
+  });
+  const renderEntriesWithConfidence = (entries = []) => entries.map((entry) => (
+    renderLyricLineWithConfidence(entry?.text || "", lineMetaByIndex.get(Number(entry?.index || 0)) || null)
+  )).join("");
   if (!parsed.blocks.length) {
+    const fallbackEntries = splitLyricsLines(fallbackText).map((line, index) => ({ text: line, index }));
     return {
       html: fallbackText
-        ? `<div class="song-lyric-block is-verse"><pre class="lyrics song-primary-lyrics song-text song-lyric-text">${confidenceSeries.length ? renderBlockTextWithConfidence(fallbackText) : renderWithUnknownMarks(fallbackText)}</pre><span class="song-lyric-marker song-lyric-marker-empty" aria-hidden="true"></span></div>`
+        ? `<div class="song-lyric-block is-verse">${
+          hasVisibleStructuredConfidence
+            ? `<div class="lyrics song-primary-lyrics song-primary-lyrics-structured song-text song-lyric-text">${renderEntriesWithConfidence(fallbackEntries)}</div>`
+            : `<pre class="lyrics song-primary-lyrics song-text song-lyric-text">${renderWithUnknownMarks(fallbackText)}</pre>`
+        }<span class="song-lyric-marker song-lyric-marker-empty" aria-hidden="true"></span></div>`
         : "",
       expanded: fallbackText,
     };
@@ -2525,7 +3047,11 @@ function renderStructuredLyrics(rawLyrics, options = {}) {
     ].filter(Boolean).join(" ");
     return `
       <div class="${classes}">
-        <pre class="lyrics song-primary-lyrics song-text song-lyric-text">${confidenceSeries.length ? renderBlockTextWithConfidence(block.text) : renderWithUnknownMarks(block.text)}</pre>
+        ${
+          hasVisibleStructuredConfidence
+            ? `<div class="lyrics song-primary-lyrics song-primary-lyrics-structured song-text song-lyric-text">${renderEntriesWithConfidence(block.lines || [])}</div>`
+            : `<pre class="lyrics song-primary-lyrics song-text song-lyric-text">${renderWithUnknownMarks(block.text)}</pre>`
+        }
         ${marker ? `<span class="song-lyric-marker">${esc(marker)}</span>` : `<span class="song-lyric-marker song-lyric-marker-empty" aria-hidden="true"></span>`}
       </div>
     `;
@@ -2950,6 +3476,22 @@ function normalizeVersionIdentifier(value) {
   return String(value ?? "").trim();
 }
 
+function parseVersionLyricsMetaValue(value) {
+  if (value && typeof value === "object") return value;
+  const raw = String(value || "").trim();
+  if (!raw) return {};
+  try {
+    const parsed = JSON.parse(raw);
+    return parsed && typeof parsed === "object" ? parsed : {};
+  } catch {
+    return {};
+  }
+}
+
+function serializeVersionLyricsMetaValue(value) {
+  return JSON.stringify(parseVersionLyricsMetaValue(value));
+}
+
 function makeLocalVersionId() {
   return `v_local_${Math.random().toString(36).slice(2, 10)}_${Date.now().toString(36)}`;
 }
@@ -3017,6 +3559,7 @@ function songInlineVersionRow(v = {}) {
   return `
     <div class="songCard ss_version_row" data-version-id="${esc(versionId)}" data-version-row-id="${esc(rowId)}">
       <input type="hidden" class="ss_version_id" value="${esc(versionId)}" />
+      <input type="hidden" class="ss_version_lyrics_meta_json" value="${esc(serializeVersionLyricsMetaValue(v.lyrics_meta_json || v.lyrics_meta || {}))}" />
       <div class="ss_version_row_head">
         <span class="ss_version_badge"><span class="ss_version_index">1</span></span>
         <button class="btn danger ss_version_remove" type="button">x</button>
@@ -3087,7 +3630,14 @@ function songDetailsUI(song, extra = {}) {
       <span class="song-header-tool-text">${esc(favLabel)}</span>
     </button>`
     : "";
-  const headerActionButtons = [editActionBtn, copyActionBtn, favActionBtn].filter(Boolean).join("");
+  const verifiedTranslationValue = String(song?.verified_translation || "").trim();
+  const verifiedTranslationActionBtn = verifiedTranslationValue
+    ? `<button class="btn ghost song-header-tool song-verified-translation-main" id="btnVerifiedTranslationToggle" type="button" aria-pressed="false" title="${esc(verifiedTranslationToggleLabel(false))}" aria-label="${esc(verifiedTranslationToggleLabel(false))}">
+      <span class="song-header-tool-icon" aria-hidden="true">RU</span>
+      <span class="song-header-tool-text">${esc(verifiedTranslationToggleLabel(false))}</span>
+    </button>`
+    : "";
+  const headerActionButtons = [editActionBtn, copyActionBtn, verifiedTranslationActionBtn, favActionBtn].filter(Boolean).join("");
   const hasHeaderSide = !!(statusDot || verifiedPill || headerActionButtons);
   const aiHubTitle = uiLocale() === "ru"
     ? "ИИ-помощник по песне"
@@ -3107,7 +3657,7 @@ function songDetailsUI(song, extra = {}) {
   const aiTranslateDesc = uiLocale() === "ru" ? "Литературный перевод" : uiLocale() === "uk" ? "Літературний переклад" : uiLocale() === "et" ? "Kirjanduslik tolge" : "Literary translation";
   const aiExplainDesc = uiLocale() === "ru" ? "Образы и смысл" : uiLocale() === "uk" ? "Образи та сенс" : uiLocale() === "et" ? "Kujundid ja mote" : "Meaning and imagery";
   const initialLyrics = renderStructuredLyrics(song.lyrics || "", {
-    line_confidences: extractLyricsLineConfidences(song?.lyrics_meta_json || null),
+    lyrics_meta: song?.lyrics_meta_json || null,
   });
   const initialDecodingPercent = decodeLyricsProgressPercent(initialLyrics.expanded || song.lyrics || "");
   const categoryChips = [
@@ -3752,6 +4302,10 @@ function adminEditorUI(song = {}, options = {}) {
           <label class="field ac-optional-field" data-optional-field="notes">
             <div class="fieldLabel ac-optional-field-label"><span>${esc(optionalFieldTitleByKey("notes"))}</span></div>
             <textarea id="ac_notes" class="textarea song-editor-text"></textarea>
+          </label>
+          <label class="field ac-optional-field" data-optional-field="verified_translation">
+            <div class="fieldLabel ac-optional-field-label"><span>${esc(optionalFieldTitleByKey("verified_translation"))}</span></div>
+            <textarea id="ac_verified_translation" class="textarea song-editor-text"></textarea>
           </label>
         </div>
         <div class="request-section">
@@ -4767,6 +5321,7 @@ function collectVersions(rootIdPrefix) {
     lang: entry.row.querySelector(".ss_version_lang")?.value?.trim() || "",
     source: entry.row.querySelector(".ss_version_source")?.value?.trim() || "",
     lyrics: entry.row.querySelector(".ss_version_lyrics")?.value || "",
+    lyrics_meta_json: parseVersionLyricsMetaValue(entry.row.querySelector(".ss_version_lyrics_meta_json")?.value || "{}"),
   })).filter((item) => (item.lyrics || "").trim());
 }
 
@@ -4943,6 +5498,7 @@ function fillContentEditor(song) {
   qs("ac_year").value = song.year || "";
   qs("ac_source").value = song.source || "";
   qs("ac_notes").value = song.notes || "";
+  if (qs("ac_verified_translation")) qs("ac_verified_translation").value = song.verified_translation || "";
   const lyricsParts = splitLyricsForEditor(song.lyrics || "");
   qs("ac_lyrics").value = lyricsParts.lyrics || "";
   if (qs("ac_main_lyrics_buffer")) qs("ac_main_lyrics_buffer").value = lyricsParts.lyrics || "";
@@ -4957,6 +5513,10 @@ function fillContentEditor(song) {
   qs("ac_links").innerHTML = (song.links || []).map((l) => songInlineLinkRow(l, versions)).join("");
   wireDynamicRows(qs("ac_editor"));
   wireAutoGrowTextareas(qs("ac_editor"));
+  if (qs("ac_editor")) {
+    qs("ac_editor").__lyricsConfidenceMeta = song?.lyrics_meta_json || song?.lyrics_meta || null;
+    qs("ac_editor").__lyricsConfidenceLines = null;
+  }
   syncDecodingIndicator("ac_decoding", "ac_lyrics", "ac_chorus", "ac_chorus_marker");
 }
 
@@ -4971,6 +5531,8 @@ function collectContentPayload() {
   const mainLyrics = activeEditorSource === "main"
     ? currentEditorLyrics
     : (qs("ac_main_lyrics_buffer")?.value || currentEditorLyrics);
+  const lyrics = composeLyricsWithChorus(mainLyrics, qs("ac_chorus")?.value || "", qs("ac_chorus_marker")?.value || "");
+  const lyricsMetaJson = draftEditorLyricsMeta(qs("ac_editor"), lyrics);
   return {
     id: id || undefined,
     title: qs("ac_title").value.trim(),
@@ -4985,7 +5547,9 @@ function collectContentPayload() {
     year: qs("ac_year").value.trim(),
     source: qs("ac_source").value.trim(),
     notes: qs("ac_notes").value,
-    lyrics: composeLyricsWithChorus(mainLyrics, qs("ac_chorus")?.value || "", qs("ac_chorus_marker")?.value || ""),
+    verified_translation: qs("ac_verified_translation")?.value || "",
+    lyrics,
+    lyrics_meta_json: lyricsMetaJson,
     verified: qs("ac_verified") ? !!qs("ac_verified").checked : undefined,
     is_admin_content: adminContentToggle ? !!adminContentToggle.checked : undefined,
     links: collectLinks("ac_links", versions),
@@ -5050,6 +5614,8 @@ function collectRequestPayload() {
   const country = normalizeSongCountry(qs("rq_country")?.value?.trim() || "") || "";
   const period = country === "ussr" ? (normalizeSongPeriod(qs("rq_period")?.value?.trim() || "") || "") : "";
   const versions = collectVersions("rq_versions");
+  const lyrics = composeLyricsWithChorus(qs("rq_lyrics")?.value || "", qs("rq_chorus")?.value || "", qs("rq_chorus_marker")?.value || "");
+  const lyricsMetaJson = draftEditorLyricsMeta(qs("requestForm") || qs("rq_lyrics_editor"), lyrics);
   return {
     title: qs("rq_title")?.value?.trim() || "",
     subtitle: qs("rq_subtitle")?.value?.trim() || "",
@@ -5062,7 +5628,8 @@ function collectRequestPayload() {
     year: qs("rq_year")?.value?.trim() || "",
     source: qs("rq_source")?.value?.trim() || "",
     notes: qs("rq_notes")?.value || "",
-    lyrics: composeLyricsWithChorus(qs("rq_lyrics")?.value || "", qs("rq_chorus")?.value || "", qs("rq_chorus_marker")?.value || ""),
+    lyrics,
+    lyrics_meta_json: lyricsMetaJson,
     report_fragment: qs("rq_report_fragment")?.value === "1",
     links: collectLinks("rq_links", versions),
     versions,
@@ -5090,6 +5657,10 @@ function applyRequestPayload(payload = {}) {
   const versions = Array.isArray(payload.versions) ? payload.versions : [];
   if (qs("rq_versions")) qs("rq_versions").innerHTML = versions.map((v) => songInlineVersionRow(v)).join("");
   if (qs("rq_links")) qs("rq_links").innerHTML = (payload.links || []).map((l) => songInlineLinkRow(l, versions)).join("");
+  if (qs("requestForm")) {
+    qs("requestForm").__lyricsConfidenceMeta = payload?.lyrics_meta_json || payload?.lyrics_meta || null;
+    qs("requestForm").__lyricsConfidenceLines = null;
+  }
   syncVersionScopedEditors(document);
   syncDecodingIndicator("rq_decoding", "rq_lyrics", "rq_chorus", "rq_chorus_marker");
 }
@@ -5121,6 +5692,14 @@ function normalizeContentDraftComparable(payload = {}) {
       }))
       .filter((item) => item.lyrics.trim())
     : [];
+  const lyricsMetaComparable = draftBuildLyricsMeta(
+    draftBuildLinesFromLyricsMeta(
+      String(payload.lyrics || ""),
+      payload.lyrics_meta_json || payload.lyrics_meta || null,
+      { lineIdPrefix: "cmp_line", variantIdPrefix: "cmp_variant" },
+    ),
+    String(payload.lyrics || ""),
+  );
   return {
     title: String(payload.title || "").trim(),
     subtitle: String(payload.subtitle || "").trim(),
@@ -5134,6 +5713,7 @@ function normalizeContentDraftComparable(payload = {}) {
     source: String(payload.source || "").trim(),
     notes: String(payload.notes || ""),
     lyrics: String(payload.lyrics || ""),
+    lyrics_meta_json: lyricsMetaComparable,
     verified: !!payload.verified,
     is_admin_content: !!payload.is_admin_content,
     report_fragment: !!payload.report_fragment,
@@ -5348,7 +5928,7 @@ export async function render(route) {
   const params = parseHashParams(route.hash);
 
   if (route.name === "home") {
-    const [data, countryBackgroundsResponse, countryCountsResponse] = await Promise.all([
+    const [data, countryBackgroundsResponse, countryCountsResponse, langCountryCountsResponse, langCountryPeriodCountsResponse] = await Promise.all([
       api.songs({
         q: params.q || "",
         lang: params.lang || "",
@@ -5365,10 +5945,17 @@ export async function render(route) {
       }),
       api.countryBackground("").catch(() => ({ items: [] })),
       api.countryCounts().catch(() => ({ items: [] })),
+      api.langCountryCounts().catch(() => ({ items: [] })),
+      api.langCountryPeriodCounts().catch(() => ({ items: [] })),
     ]);
     const countryBackgrounds = Array.isArray(countryBackgroundsResponse?.items) ? countryBackgroundsResponse.items : [];
     const countryCounts = Array.isArray(countryCountsResponse?.items) ? countryCountsResponse.items : [];
-    return { html: homeUI(data, params, { countryBackgrounds, countryCounts }), ctx: { data, params, countryBackgrounds, countryCounts } };
+    const langCountryCounts = Array.isArray(langCountryCountsResponse?.items) ? langCountryCountsResponse.items : [];
+    const langCountryPeriodCounts = Array.isArray(langCountryPeriodCountsResponse?.items) ? langCountryPeriodCountsResponse.items : [];
+    return {
+      html: homeUI(data, params, { countryBackgrounds, countryCounts, langCountryCounts, langCountryPeriodCounts }),
+      ctx: { data, params, countryBackgrounds, countryCounts, langCountryCounts, langCountryPeriodCounts },
+    };
   }
 
   if (route.name === "song") {
@@ -5972,13 +6559,20 @@ export function bind(route, ctx) {
       document.body.style.setProperty("--song-page-bg-focus-y-mobile", `${mobileFocusY}%`);
     }
     const lyricsMain = qs("songLyricsMain");
+    const verifiedTranslationButton = qs("btnVerifiedTranslationToggle");
+    const verifiedTranslationValue = String(song?.verified_translation || "");
+    let isVerifiedTranslationMode = false;
+    let currentMainLyrics = String(song?.lyrics || "");
+    let currentMainLyricsMeta = song?.lyrics_meta_json || null;
+    let currentMainLang = String(song?.lang || "");
+    let currentMainSource = String(song?.source || "");
     let promptSong = {
       ...song,
       lyrics: String(song?.lyrics || ""),
     };
     const setLyricsView = (lyricsValue, lyricsMeta = null) => {
       const rendered = renderStructuredLyrics(lyricsValue || "", {
-        line_confidences: extractLyricsLineConfidences(lyricsMeta || null),
+        lyrics_meta: lyricsMeta || null,
       });
       if (lyricsMain) lyricsMain.innerHTML = rendered.html;
       promptSong.lyrics = rendered.expanded || String(lyricsValue || "");
@@ -5989,7 +6583,23 @@ export function bind(route, ctx) {
         decodingNode.classList.toggle("hidden", percent >= 100);
       }
     };
+    const syncVerifiedTranslationButton = () => {
+      if (!(verifiedTranslationButton instanceof HTMLButtonElement)) return;
+      const label = verifiedTranslationToggleLabel(isVerifiedTranslationMode);
+      verifiedTranslationButton.classList.toggle("is-active", isVerifiedTranslationMode);
+      verifiedTranslationButton.setAttribute("aria-pressed", isVerifiedTranslationMode ? "true" : "false");
+      verifiedTranslationButton.setAttribute("title", label);
+      verifiedTranslationButton.setAttribute("aria-label", label);
+      const textNode = verifiedTranslationButton.querySelector(".song-header-tool-text");
+      if (textNode) textNode.textContent = label;
+    };
+    const renderActiveMainLyrics = () => {
+      setLyricsView(currentMainLyrics, currentMainLyricsMeta);
+      promptSong.lang = currentMainLang || song.lang || "";
+      promptSong.source = currentMainSource || song.source || "";
+    };
     setLyricsView(song.lyrics || "", song?.lyrics_meta_json || null);
+    syncVerifiedTranslationButton();
 
     const favBtn = qs("btnFavToggle");
     const syncFavButton = () => {
@@ -6052,6 +6662,17 @@ export function bind(route, ctx) {
         copyBtn.setAttribute("title", copyLabel);
       }, 1400);
     });
+    verifiedTranslationButton?.addEventListener("click", () => {
+      if (!String(verifiedTranslationValue || "").trim()) return;
+      isVerifiedTranslationMode = !isVerifiedTranslationMode;
+      if (isVerifiedTranslationMode) {
+        setLyricsView(verifiedTranslationValue, null);
+        promptSong.lang = "ru";
+      } else {
+        renderActiveMainLyrics();
+      }
+      syncVerifiedTranslationButton();
+    });
 
     qs("btnSongListen")?.addEventListener("click", () => {
       const section = qs("songListenSection");
@@ -6092,9 +6713,13 @@ export function bind(route, ctx) {
       const renderVersion = (id) => {
         const chosen = versionById.get(id) || versionById.get("__original");
         activeVersionId = chosen?.id || "__original";
-        setLyricsView(chosen?.lyrics || "", chosen?.lyrics_meta_json || null);
-        promptSong.lang = chosen?.lang || song.lang || "";
-        promptSong.source = chosen?.source || song.source || "";
+        currentMainLyrics = chosen?.lyrics || "";
+        currentMainLyricsMeta = chosen?.lyrics_meta_json || null;
+        currentMainLang = chosen?.lang || song.lang || "";
+        currentMainSource = chosen?.source || song.source || "";
+        isVerifiedTranslationMode = false;
+        renderActiveMainLyrics();
+        syncVerifiedTranslationButton();
         if (versionMeta) {
           versionMeta.textContent = "";
           versionMeta.classList.add("hidden");
@@ -6749,6 +7374,54 @@ export function bind(route, ctx) {
         heardText: current,
       });
     };
+    const updateDraftSelectionSummary = (textareaNode) => {
+      if (!(textareaNode instanceof HTMLTextAreaElement)) return;
+      const editor = textareaNode.closest(".draft-fragment-editor");
+      const summaryNode = editor?.querySelector(".draft-selection-summary");
+      if (!(summaryNode instanceof HTMLElement)) return;
+      const start = Math.max(0, Number(textareaNode.selectionStart || 0));
+      const end = Math.max(start, Number(textareaNode.selectionEnd || start));
+      const selected = String(textareaNode.value || "").slice(start, end).trim();
+      summaryNode.textContent = selected
+        ? draftUiText("confidenceSelectionReady", { fragment: selected })
+        : draftUiText("confidenceSelectionEmpty");
+    };
+    const applyDraftVariantSegments = (target) => {
+      const applyButton = target instanceof HTMLElement ? target.closest(".draft-segment-apply") : null;
+      if (!applyButton) return false;
+      const lineId = String(applyButton.getAttribute("data-line-id") || "").trim();
+      const variantId = String(applyButton.getAttribute("data-variant-id") || "").trim();
+      const level = String(applyButton.getAttribute("data-level") || "").trim();
+      if (!lineId || !variantId || !level) return true;
+      const line = findLineById(lineId);
+      const variant = (Array.isArray(line?.variants) ? line.variants : []).find((item) => String(item?.id || "") === variantId);
+      const editor = applyButton.closest(".draft-fragment-editor");
+      const selectionNode = editor?.querySelector(".draft-segment-selection-text");
+      if (!variant || !(selectionNode instanceof HTMLTextAreaElement)) return true;
+      const start = Math.max(0, Number(selectionNode.selectionStart || 0));
+      const end = Math.max(start, Number(selectionNode.selectionEnd || start));
+      if (end <= start) {
+        updateDraftSelectionSummary(selectionNode);
+        return true;
+      }
+      const nextSegments = draftReplaceSegmentsInRange(variant.confidence_segments, { start, end, level }, variant.text || "");
+      sendOp("set_variant_segments", { variant_id: variantId, confidence_segments: nextSegments });
+      return true;
+    };
+    const removeDraftVariantSegment = (target) => {
+      const removeButton = target instanceof HTMLElement ? target.closest(".draft-segment-remove") : null;
+      if (!removeButton) return false;
+      const lineId = String(removeButton.getAttribute("data-line-id") || "").trim();
+      const variantId = String(removeButton.getAttribute("data-variant-id") || "").trim();
+      const segmentIndex = Number.parseInt(String(removeButton.getAttribute("data-segment-index") || ""), 10);
+      if (!lineId || !variantId || !Number.isFinite(segmentIndex) || segmentIndex < 0) return true;
+      const line = findLineById(lineId);
+      const variant = (Array.isArray(line?.variants) ? line.variants : []).find((item) => String(item?.id || "") === variantId);
+      if (!variant) return true;
+      const nextSegments = draftNormalizeSegments(variant.confidence_segments, variant.text || "").filter((_, index) => index !== segmentIndex);
+      sendOp("set_variant_segments", { variant_id: variantId, confidence_segments: nextSegments });
+      return true;
+    };
     const connectWs = () => {
       if (leaving) return;
       if (!(window.WebSocket)) {
@@ -6812,6 +7485,13 @@ export function bind(route, ctx) {
       });
     };
 
+    draftRoot.addEventListener("pointerdown", (event) => {
+      const target = event.target;
+      if (!(target instanceof HTMLElement)) return;
+      if (!target.closest(".draft-segment-apply, .draft-segment-remove")) return;
+      event.preventDefault();
+    }, { capture: true });
+
     draftRoot.addEventListener("click", async (event) => {
       const target = event.target;
       if (!(target instanceof HTMLElement)) return;
@@ -6839,13 +7519,11 @@ export function bind(route, ctx) {
         const row = addVariant.closest(".draft-add-variant");
         if (!row) return;
         const textInput = row.querySelector(".draft-new-variant-text");
-        const confInput = row.querySelector(".draft-new-variant-confidence");
         const text = String(textInput?.value || "").trim();
-        const confidence = Number.parseInt(String(confInput?.value || "80"), 10);
+        const confidence = draftClampConfidence("sure", 75);
         if (!text) return;
         sendOp("set_line_text", { line_id: lineId, text, confidence, variant_type: "manual" });
         if (textInput) textInput.value = "";
-        if (confInput) confInput.value = "80";
         return;
       }
       const removeVariant = target.closest(".draft-variant-remove");
@@ -6857,6 +7535,8 @@ export function bind(route, ctx) {
         sendOp("delete_variant", { line_id: lineId, variant_id: variantId });
         return;
       }
+      if (applyDraftVariantSegments(target)) return;
+      if (removeDraftVariantSegment(target)) return;
       const aiCopy = target.closest(".draft-ai-copy");
       if (aiCopy) {
         const lineId = String(aiCopy.getAttribute("data-line-id") || "").trim();
@@ -6913,14 +7593,28 @@ export function bind(route, ctx) {
         sendOp("set_variant_text", { variant_id: variantId, text: nextText });
         return;
       }
-      if (!target.classList.contains("draft-variant-confidence")) return;
+      if (!target.classList.contains("draft-variant-confidence-level")) return;
       const variantId = String(target.getAttribute("data-variant-id") || "").trim();
       if (!variantId) return;
       const confidence = draftConfidenceFromInput(
         target.value,
-        target instanceof HTMLInputElement ? target.defaultValue : 100,
+        target instanceof HTMLInputElement || target instanceof HTMLSelectElement ? target.defaultValue : 100,
       );
       sendOp("set_variant_confidence", { variant_id: variantId, confidence });
+    });
+
+    draftRoot.addEventListener("input", (event) => {
+      const target = event.target;
+      if (target instanceof HTMLTextAreaElement && target.classList.contains("draft-segment-selection-text")) {
+        updateDraftSelectionSummary(target);
+      }
+    });
+
+    draftRoot.addEventListener("select", (event) => {
+      const target = event.target;
+      if (target instanceof HTMLTextAreaElement && target.classList.contains("draft-segment-selection-text")) {
+        updateDraftSelectionSummary(target);
+      }
     });
 
     qs("draft_collab_add")?.addEventListener("click", async () => {
@@ -7147,12 +7841,18 @@ export function bind(route, ctx) {
       const lyricsTextareaNode = qs("rq_lyrics");
       const lyricsLineRailListNode = qs("rq_lyrics_line_rail_list");
       const lineActionsPopoverNode = qs("rq_line_actions_popover");
+      const requestRootNode = qs("requestForm") || lyricsEditorNode;
       const toolConfidenceBtn = qs("rq_tool_confidence");
       const toolCopyPromptBtn = qs("rq_tool_copy_prompt");
       if (!(lyricsEditorNode && lyricsTextareaNode && lyricsLineRailListNode && lineActionsPopoverNode)) return;
       const applyRequestViewportFit = () => {
         applyLyricsViewportFit(lyricsEditorNode, lyricsTextareaNode, { bottomReserve: 10, minHeight: 220 });
       };
+      const currentRequestLyrics = () => composeLyricsWithChorus(
+        lyricsTextareaNode.value || "",
+        qs("rq_chorus")?.value || "",
+        qs("rq_chorus_marker")?.value || chorusMarkerLabel(),
+      );
 
       const splitLines = (input) => String(input || "").replace(/\r\n?/g, "\n").split("\n");
       const resolveLineHeightPx = (style) => {
@@ -7181,51 +7881,20 @@ export function bind(route, ctx) {
       let popoverOpen = false;
 
       const ensureLineState = () => {
-        const source = splitLines(lyricsTextareaNode.value || "");
-        while (rqLines.length < source.length) {
-          const index = rqLines.length;
-          const lineId = `rq_line_${index + 1}`;
-          const variantId = `rq_variant_${index + 1}`;
-          rqLines.push({
-            id: lineId,
-            line_key: `line_${index + 1}`,
-            sort_order: index,
-            active_variant_id: variantId,
-            variants: [{
-              id: variantId,
-              text: String(source[index] || ""),
-              confidence: 100,
-              variant_type: "manual",
-              is_active: true,
-            }],
+        const sourceText = String(lyricsTextareaNode.value || "");
+        if (!rqLines.length) {
+          rqLines = draftBuildLinesFromLyricsMeta(sourceText, requestRootNode?.__lyricsConfidenceMeta || null, {
+            lineIdPrefix: "rq_line",
+            variantIdPrefix: "rq_variant",
           });
         }
-        if (rqLines.length > source.length) rqLines = rqLines.slice(0, source.length);
-        rqLines.forEach((line, index) => {
-          line.sort_order = index;
-          if (!line.id) line.id = `rq_line_${index + 1}`;
-          if (!line.line_key) line.line_key = `line_${index + 1}`;
-          if (!Array.isArray(line.variants) || !line.variants.length) {
-            const variantId = `rq_variant_${index + 1}_${Date.now()}`;
-            line.variants = [{
-              id: variantId,
-              text: String(source[index] || ""),
-              confidence: 100,
-              variant_type: "manual",
-              is_active: true,
-            }];
-            line.active_variant_id = variantId;
-            return;
-          }
-          let active = line.variants.find((variant) => variant?.is_active) || null;
-          if (!active) active = line.variants.find((variant) => String(variant?.id || "") === String(line.active_variant_id || "")) || null;
-          if (!active) active = line.variants[0];
-          line.variants.forEach((variant) => {
-            variant.is_active = String(variant?.id || "") === String(active?.id || "");
-          });
-          line.active_variant_id = String(active?.id || "");
-          active.text = String(source[index] || "");
+        rqLines = draftSyncEditableLines(rqLines, sourceText, {
+          lineIdPrefix: "rq_line",
+          variantIdPrefix: "rq_variant",
         });
+        draftAttachLinesState(requestRootNode, rqLines);
+        if (requestRootNode) requestRootNode.__lyricsConfidenceMeta = draftBuildLyricsMeta(rqLines, currentRequestLyrics());
+        const source = splitLines(sourceText);
         return source;
       };
 
@@ -7336,7 +8005,7 @@ export function bind(route, ctx) {
           const confidenceBand = draftConfidenceBand(confidence);
           const isActive = lineId && lineId === String(selectedLineId || "");
           return `
-            <div class="ac-lyrics-rail-slot has-confidence ${confidenceBand}" data-line-id="${esc(lineId)}" data-line-index="${index}" data-slot-index="0">
+            <div class="ac-lyrics-rail-slot has-confidence ${confidenceBand}" data-line-id="${esc(lineId)}" data-line-index="${index}" data-slot-index="0" style="${draftConfidenceStyleValue(confidence)}">
               <div class="ac-lyrics-rail-row ${confidenceBand} ${isActive ? "is-active" : ""}">
                 <button class="draft-line-rail-btn ${confidenceBand} ${isActive ? "is-active" : ""}" type="button" data-line-id="${esc(lineId)}" data-line-index="${index}" aria-expanded="${isActive ? "true" : "false"}" aria-label="${esc(draftUiText("variantsToggle"))}" title="${esc(draftUiText("variantsToggle"))}">
                   <span class="draft-line-rail-mini">${visibleLineNumber}</span>
@@ -7413,6 +8082,10 @@ export function bind(route, ctx) {
       lyricsEditorNode.addEventListener("pointerdown", (event) => {
         const target = event.target;
         if (!(target instanceof HTMLElement)) return;
+        if (target.closest(".draft-segment-apply, .draft-segment-remove")) {
+          event.preventDefault();
+          return;
+        }
         const railHit = target.closest(".draft-line-rail-btn, .ac-lyrics-rail-slot, .ac-lyrics-rail-row, .draft-line-rail-triangle, .draft-line-rail-mini");
         if (!railHit) return;
         const railSlot = railHit.closest(".ac-lyrics-rail-slot");
@@ -7458,6 +8131,8 @@ export function bind(route, ctx) {
           });
           line.active_variant_id = variantId;
           applyActiveLineToTextarea(lineId);
+          draftAttachLinesState(requestRootNode, rqLines);
+          if (requestRootNode) requestRootNode.__lyricsConfidenceMeta = draftBuildLyricsMeta(rqLines, currentRequestLyrics());
           renderRail();
           renderPopover();
           return;
@@ -7471,25 +8146,23 @@ export function bind(route, ctx) {
           const textInput = row.querySelector(".draft-new-variant-text");
           const text = String(textInput?.value || "").trim();
           if (!text) return;
-          const baseLines = splitLines(lyricsTextareaNode.value || "");
-          let targetIndex = Number.isFinite(lineIndex) ? lineIndex : findLineIndex(lineId);
-          if (!Number.isFinite(targetIndex) || targetIndex < 0) targetIndex = 0;
-          while (baseLines.length <= targetIndex) baseLines.push("");
-          baseLines[targetIndex] = text;
-          const nextLyrics = baseLines.join("\n");
-          const versionsRoot = qs("rq_versions");
-          if (versionsRoot instanceof HTMLElement) {
-            versionsRoot.insertAdjacentHTML("beforeend", songInlineVersionRow({ lyrics: nextLyrics }));
-            const lastRow = Array.from(versionsRoot.querySelectorAll(".ss_version_row")).pop();
-            if (lastRow instanceof HTMLElement) {
-              versionsRoot.dataset.activeVersionRowId = String(lastRow.getAttribute("data-version-row-id") || "").trim();
-            }
-            wireDynamicRows(form);
-            wireAutoGrowTextareas(form);
-          }
+          const line = findLine(lineId);
+          if (!line) return;
+          const variantId = `rq_variant_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`;
+          line.variants = [...(Array.isArray(line.variants) ? line.variants : []), {
+            id: variantId,
+            text,
+            confidence: draftClampConfidence("sure", 75),
+            confidence_level: draftConfidenceLevel("sure"),
+            confidence_segments: [],
+            variant_type: "manual",
+            is_active: false,
+          }];
           if (textInput) textInput.value = "";
-          closePopover({ clearSelection: true, animate: false });
+          draftAttachLinesState(requestRootNode, rqLines);
+          if (requestRootNode) requestRootNode.__lyricsConfidenceMeta = draftBuildLyricsMeta(rqLines, currentRequestLyrics());
           renderRail();
+          renderPopover();
           if (syncRequestDraftState(collectRequestPayload())) {
             scheduleRequestDraftSave();
           } else {
@@ -7498,6 +8171,8 @@ export function bind(route, ctx) {
           }
           return;
         }
+        if (applyRequestVariantSegments(target)) return;
+        if (removeRequestVariantSegment(target)) return;
         const aiCopy = target.closest(".draft-ai-copy");
         if (aiCopy) {
           const lineId = String(aiCopy.getAttribute("data-line-id") || "").trim();
@@ -7511,8 +8186,8 @@ export function bind(route, ctx) {
       });
 
       const applyRequestVariantConfidence = (targetNode) => {
-        if (!(targetNode instanceof HTMLInputElement)) return;
-        if (!targetNode.classList.contains("draft-variant-confidence")) return;
+        if (!(targetNode instanceof HTMLInputElement || targetNode instanceof HTMLSelectElement)) return;
+        if (!targetNode.classList.contains("draft-variant-confidence-level")) return;
         const variantId = String(targetNode.getAttribute("data-variant-id") || "").trim();
         const lineId = String(targetNode.getAttribute("data-line-id") || "").trim();
         let fallbackConfidence = 100;
@@ -7525,6 +8200,7 @@ export function bind(route, ctx) {
             fallbackConfidence = draftClampConfidence(variant.confidence, 100);
             const confidence = draftConfidenceFromInput(targetNode.value, fallbackConfidence);
             variant.confidence = draftClampConfidence(confidence, 100);
+            variant.confidence_level = draftConfidenceLevel(variant.confidence);
             updated = true;
             break;
           }
@@ -7536,10 +8212,13 @@ export function bind(route, ctx) {
             fallbackConfidence = draftClampConfidence(activeVariant.confidence, 100);
             const confidence = draftConfidenceFromInput(targetNode.value, fallbackConfidence);
             activeVariant.confidence = draftClampConfidence(confidence, 100);
+            activeVariant.confidence_level = draftConfidenceLevel(activeVariant.confidence);
             updated = true;
           }
         }
         if (!updated) return;
+        draftAttachLinesState(requestRootNode, rqLines);
+        if (requestRootNode) requestRootNode.__lyricsConfidenceMeta = draftBuildLyricsMeta(rqLines, currentRequestLyrics());
         renderRail();
         renderPopover();
       };
@@ -7558,6 +8237,7 @@ export function bind(route, ctx) {
           if (!variant) continue;
           if (String(variant.text || "") === nextText) return;
           variant.text = nextText;
+          variant.confidence_segments = [];
           if (variant.is_active || String(line?.active_variant_id || "") === variantId) {
             line.active_variant_id = variantId;
             variants.forEach((item) => {
@@ -7570,6 +8250,8 @@ export function bind(route, ctx) {
         }
         if (!updated) return;
         if (syncLineId) applyActiveLineToTextarea(syncLineId);
+        draftAttachLinesState(requestRootNode, rqLines);
+        if (requestRootNode) requestRootNode.__lyricsConfidenceMeta = draftBuildLyricsMeta(rqLines, currentRequestLyrics());
         renderRail();
         renderPopover();
         if (syncRequestDraftState(collectRequestPayload())) {
@@ -7580,6 +8262,79 @@ export function bind(route, ctx) {
         }
       };
 
+      const updateRequestSelectionSummary = (textareaNode) => {
+        if (!(textareaNode instanceof HTMLTextAreaElement)) return;
+        const editor = textareaNode.closest(".draft-fragment-editor");
+        const summaryNode = editor?.querySelector(".draft-selection-summary");
+        if (!(summaryNode instanceof HTMLElement)) return;
+        const start = Math.max(0, Number(textareaNode.selectionStart || 0));
+        const end = Math.max(start, Number(textareaNode.selectionEnd || start));
+        const selected = String(textareaNode.value || "").slice(start, end).trim();
+        summaryNode.textContent = selected
+          ? draftUiText("confidenceSelectionReady", { fragment: selected })
+          : draftUiText("confidenceSelectionEmpty");
+      };
+
+      const applyRequestVariantSegments = (targetNode) => {
+        const applyButton = targetNode instanceof HTMLElement ? targetNode.closest(".draft-segment-apply") : null;
+        if (!applyButton) return false;
+        const lineId = String(applyButton.getAttribute("data-line-id") || "").trim();
+        const variantId = String(applyButton.getAttribute("data-variant-id") || "").trim();
+        const level = String(applyButton.getAttribute("data-level") || "").trim();
+        const editor = applyButton.closest(".draft-fragment-editor");
+        const selectionNode = editor?.querySelector(".draft-segment-selection-text");
+        if (!(selectionNode instanceof HTMLTextAreaElement) || !lineId || !variantId || !level) return true;
+        const start = Math.max(0, Number(selectionNode.selectionStart || 0));
+        const end = Math.max(start, Number(selectionNode.selectionEnd || start));
+        if (end <= start) {
+          updateRequestSelectionSummary(selectionNode);
+          return true;
+        }
+        const line = findLine(lineId);
+        const variant = (Array.isArray(line?.variants) ? line.variants : []).find((item) => String(item?.id || "") === variantId);
+        if (!variant) return true;
+        variant.confidence_segments = draftReplaceSegmentsInRange(
+          variant.confidence_segments,
+          { start, end, level },
+          variant.text || "",
+        );
+        draftAttachLinesState(requestRootNode, rqLines);
+        if (requestRootNode) requestRootNode.__lyricsConfidenceMeta = draftBuildLyricsMeta(rqLines, currentRequestLyrics());
+        renderRail();
+        renderPopover();
+        if (syncRequestDraftState(collectRequestPayload())) {
+          scheduleRequestDraftSave();
+        } else {
+          clearTimeout(requestDraftTimer);
+          clearScopedDraft(REQUEST_FORM_DRAFT_PREFIX, requestDraftIdentity);
+        }
+        return true;
+      };
+
+      const removeRequestVariantSegment = (targetNode) => {
+        const removeButton = targetNode instanceof HTMLElement ? targetNode.closest(".draft-segment-remove") : null;
+        if (!removeButton) return false;
+        const lineId = String(removeButton.getAttribute("data-line-id") || "").trim();
+        const variantId = String(removeButton.getAttribute("data-variant-id") || "").trim();
+        const segmentIndex = Number.parseInt(String(removeButton.getAttribute("data-segment-index") || ""), 10);
+        const line = findLine(lineId);
+        const variant = (Array.isArray(line?.variants) ? line.variants : []).find((item) => String(item?.id || "") === variantId);
+        if (!variant || !Number.isFinite(segmentIndex) || segmentIndex < 0) return true;
+        const segments = draftNormalizeSegments(variant.confidence_segments, variant.text || "");
+        variant.confidence_segments = segments.filter((_, index) => index !== segmentIndex);
+        draftAttachLinesState(requestRootNode, rqLines);
+        if (requestRootNode) requestRootNode.__lyricsConfidenceMeta = draftBuildLyricsMeta(rqLines, currentRequestLyrics());
+        renderRail();
+        renderPopover();
+        if (syncRequestDraftState(collectRequestPayload())) {
+          scheduleRequestDraftSave();
+        } else {
+          clearTimeout(requestDraftTimer);
+          clearScopedDraft(REQUEST_FORM_DRAFT_PREFIX, requestDraftIdentity);
+        }
+        return true;
+      };
+
       lyricsEditorNode.addEventListener("change", (event) => {
         applyRequestVariantText(event.target);
         applyRequestVariantConfidence(event.target);
@@ -7587,6 +8342,18 @@ export function bind(route, ctx) {
       lyricsEditorNode.addEventListener("focusout", (event) => {
         applyRequestVariantText(event.target);
         applyRequestVariantConfidence(event.target);
+      });
+      lyricsEditorNode.addEventListener("input", (event) => {
+        const target = event.target;
+        if (target instanceof HTMLTextAreaElement && target.classList.contains("draft-segment-selection-text")) {
+          updateRequestSelectionSummary(target);
+        }
+      });
+      lyricsEditorNode.addEventListener("select", (event) => {
+        const target = event.target;
+        if (target instanceof HTMLTextAreaElement && target.classList.contains("draft-segment-selection-text")) {
+          updateRequestSelectionSummary(target);
+        }
       });
 
       lyricsTextareaNode.addEventListener("scroll", () => {
@@ -7610,11 +8377,7 @@ export function bind(route, ctx) {
         });
       });
 
-      const openPageVariants = () => {
-        const versionsSection = qs("rq_versions")?.closest(".request-repeater-section");
-        versionsSection?.scrollIntoView({ behavior: "smooth", block: "nearest" });
-      };
-      toolConfidenceBtn?.addEventListener("click", openPageVariants);
+      toolConfidenceBtn?.addEventListener("click", openLinePicker);
       toolCopyPromptBtn?.addEventListener("click", () => {
         const prompt = promptAtCaret();
         if (!prompt) {
@@ -8350,22 +9113,9 @@ export function bind(route, ctx) {
         qs("ac_chorus")?.value || "",
         qs("ac_chorus_marker")?.value || chorusMarkerLabel(),
       );
-      const lines = splitLines(composed).map((text, index) => {
-        const lineId = `loc_line_${index + 1}`;
-        const variantId = `loc_variant_${index + 1}`;
-        return {
-          id: lineId,
-          line_key: `line_${index + 1}`,
-          sort_order: index,
-          active_variant_id: variantId,
-          variants: [{
-            id: variantId,
-            text: String(text || ""),
-            confidence: 100,
-            variant_type: "manual",
-            is_active: true,
-          }],
-        };
+      const lines = draftBuildLinesFromLyricsMeta(composed, qs("ac_editor")?.__lyricsConfidenceMeta || ctx.song?.lyrics_meta_json || null, {
+        lineIdPrefix: "loc_line",
+        variantIdPrefix: "loc_variant",
       });
       return {
         draft_id: "",
@@ -8377,6 +9127,7 @@ export function bind(route, ctx) {
     };
     const inlineEnsureStandalonePayload = () => {
       if (inlineDraftId) return;
+      if (Array.isArray(inlineDraftPayload?.lines) && inlineDraftPayload.lines.length) return;
       inlineDraftPayload = inlineBuildStandalonePayload();
       inlineVersion = 0;
     };
@@ -8593,7 +9344,8 @@ export function bind(route, ctx) {
       const active = document.activeElement;
       if (!(active instanceof HTMLInputElement || active instanceof HTMLTextAreaElement)) return false;
       return active.classList.contains("draft-variant-text-input")
-        || active.classList.contains("draft-variant-confidence");
+        || active.classList.contains("draft-variant-confidence-level")
+        || active.classList.contains("draft-segment-selection-text");
     };
     const inlineRenderPopover = () => {
       if (!lineActionsPopoverNode) {
@@ -8677,7 +9429,7 @@ export function bind(route, ctx) {
             )
             : `<span class="draft-line-rail-btn-placeholder" aria-hidden="true"></span>`;
           slots.push(`
-            <div class="ac-lyrics-rail-slot ${hasText ? `has-confidence ${confidenceBand}` : "is-empty"}" data-line-id="${esc(lineId)}" data-line-index="${index}" data-slot-index="${slotIndex}">
+            <div class="ac-lyrics-rail-slot ${hasText ? `has-confidence ${confidenceBand}` : "is-empty"}" data-line-id="${esc(lineId)}" data-line-index="${index}" data-slot-index="${slotIndex}"${hasText ? ` style="${draftConfidenceStyleValue(confidence)}"` : ""}>
               <div class="ac-lyrics-rail-row ${confidenceBand} ${isActive ? "is-active" : ""}">
                 ${buttonMarkup}
               </div>
@@ -8691,6 +9443,17 @@ export function bind(route, ctx) {
     };
     const inlineRefreshLines = () => {
       const editorLines = inlineMainEditorLines();
+      draftAttachLinesState(editorRoot, editorLines);
+      if (editorRoot) {
+        editorRoot.__lyricsConfidenceMeta = draftBuildLyricsMeta(
+          editorLines,
+          composeLyricsWithChorus(
+            qs("ac_lyrics")?.value || "",
+            qs("ac_chorus")?.value || "",
+            qs("ac_chorus_marker")?.value || chorusMarkerLabel(),
+          ),
+        );
+      }
       const sourceTextLines = splitLines(lyricsTextareaNode?.value || "");
       const selectable = inlineSelectableLines(editorLines, sourceTextLines);
       if (!selectable.length) {
@@ -8858,6 +9621,8 @@ export function bind(route, ctx) {
       if (!active) return;
       active.text = String(text || "");
       active.confidence = draftClampConfidence(confidence, 100);
+      active.confidence_level = draftConfidenceLevel(active.confidence);
+      active.confidence_segments = [];
       inlineLocalCommit({ syncEditor: true });
     };
     const inlineLocalAddVariant = (lineId, text, confidence = 80, variantType = "manual", options = {}) => {
@@ -8874,6 +9639,8 @@ export function bind(route, ctx) {
         id: variantId,
         text: String(text || ""),
         confidence: draftClampConfidence(confidence, 80),
+        confidence_level: draftConfidenceLevel(confidence),
+        confidence_segments: [],
         variant_type: variantType === "suggested" ? "suggested" : "manual",
         is_active: shouldActivate,
       });
@@ -8932,27 +9699,8 @@ export function bind(route, ctx) {
         const variant = variants.find((item) => String(item?.id || "") === String(variantId || ""));
         if (variant) {
           variant.confidence = draftClampConfidence(confidence, 100);
-          const previousActiveId = String(line?.active_variant_id || "").trim();
-          let nextActive = variants[0] || null;
-          for (const item of variants) {
-            if (!nextActive || Number(item?.confidence || 0) > Number(nextActive?.confidence || 0)) {
-              nextActive = item;
-              continue;
-            }
-            if (
-              nextActive
-              && Number(item?.confidence || 0) === Number(nextActive?.confidence || 0)
-              && String(item?.id || "") === previousActiveId
-            ) {
-              nextActive = item;
-            }
-          }
-          const nextActiveId = String(nextActive?.id || "").trim();
-          variants.forEach((item) => {
-            item.is_active = String(item?.id || "") === nextActiveId;
-          });
-          line.active_variant_id = nextActiveId;
-          inlineLocalCommit({ syncEditor: previousActiveId !== nextActiveId });
+          variant.confidence_level = draftConfidenceLevel(variant.confidence);
+          inlineLocalCommit();
           return;
         }
       }
@@ -8967,8 +9715,21 @@ export function bind(route, ctx) {
         const nextText = String(text || "");
         if (String(variant.text || "") === nextText) return;
         variant.text = nextText;
+        variant.confidence_segments = [];
         const shouldSyncEditor = Boolean(variant.is_active || String(line?.active_variant_id || "") === String(variantId || ""));
         inlineLocalCommit({ syncEditor: shouldSyncEditor });
+        return;
+      }
+    };
+    const inlineLocalSetVariantSegments = (variantId, segments) => {
+      inlineEnsureStandalonePayload();
+      const lines = Array.isArray(inlineDraftPayload?.lines) ? inlineDraftPayload.lines : [];
+      for (const line of lines) {
+        const variants = Array.isArray(line?.variants) ? line.variants : [];
+        const variant = variants.find((item) => String(item?.id || "") === String(variantId || ""));
+        if (!variant) continue;
+        variant.confidence_segments = draftNormalizeSegments(segments, variant.text || "");
+        inlineLocalCommit();
         return;
       }
     };
@@ -9214,6 +9975,10 @@ export function bind(route, ctx) {
     editorRoot?.addEventListener("pointerdown", (event) => {
       const target = event.target;
       if (!(target instanceof HTMLElement)) return;
+      if (target.closest(".draft-segment-apply, .draft-segment-remove")) {
+        event.preventDefault();
+        return;
+      }
       const railHit = target.closest(".draft-line-rail-btn, .ac-lyrics-rail-slot, .ac-lyrics-rail-row, .draft-line-rail-triangle, .draft-line-rail-mini");
       if (!railHit) return;
       const railSlot = railHit.closest(".ac-lyrics-rail-slot");
@@ -9311,6 +10076,8 @@ export function bind(route, ctx) {
         inlineRefreshLines();
         return;
       }
+      if (inlineApplyVariantSegments(target)) return;
+      if (inlineRemoveVariantSegment(target)) return;
       const aiCopy = target.closest(".draft-ai-copy");
       if (aiCopy) {
         const lineId = String(aiCopy.getAttribute("data-line-id") || "").trim();
@@ -9350,6 +10117,59 @@ export function bind(route, ctx) {
         }
       }
     });
+    const inlineUpdateSelectionSummary = (textareaNode) => {
+      if (!(textareaNode instanceof HTMLTextAreaElement)) return;
+      const editor = textareaNode.closest(".draft-fragment-editor");
+      const summaryNode = editor?.querySelector(".draft-selection-summary");
+      if (!(summaryNode instanceof HTMLElement)) return;
+      const start = Math.max(0, Number(textareaNode.selectionStart || 0));
+      const end = Math.max(start, Number(textareaNode.selectionEnd || start));
+      const selected = String(textareaNode.value || "").slice(start, end).trim();
+      summaryNode.textContent = selected
+        ? draftUiText("confidenceSelectionReady", { fragment: selected })
+        : draftUiText("confidenceSelectionEmpty");
+    };
+    const inlineApplyVariantSegments = (target) => {
+      const applyButton = target instanceof HTMLElement ? target.closest(".draft-segment-apply") : null;
+      if (!applyButton) return false;
+      const lineId = String(applyButton.getAttribute("data-line-id") || "").trim();
+      const variantId = String(applyButton.getAttribute("data-variant-id") || "").trim();
+      const level = String(applyButton.getAttribute("data-level") || "").trim();
+      const editor = applyButton.closest(".draft-fragment-editor");
+      const selectionNode = editor?.querySelector(".draft-segment-selection-text");
+      if (!(selectionNode instanceof HTMLTextAreaElement) || !variantId || !level) return true;
+      const start = Math.max(0, Number(selectionNode.selectionStart || 0));
+      const end = Math.max(start, Number(selectionNode.selectionEnd || start));
+      if (end <= start) {
+        inlineUpdateSelectionSummary(selectionNode);
+        return true;
+      }
+      const line = inlineLocalFindLine(lineId);
+      const variant = (Array.isArray(line?.variants) ? line.variants : []).find((item) => String(item?.id || "") === variantId);
+      if (!variant) return true;
+      const nextSegments = draftReplaceSegmentsInRange(variant.confidence_segments, { start, end, level }, variant.text || "");
+      inlineLocalSetVariantSegments(variantId, nextSegments);
+      if (inlineDraftId && lineId && !inlineIsVirtualLineId(lineId)) {
+        inlineSendOp("set_variant_segments", { variant_id: variantId, confidence_segments: nextSegments }, { silent: true });
+      }
+      return true;
+    };
+    const inlineRemoveVariantSegment = (target) => {
+      const removeButton = target instanceof HTMLElement ? target.closest(".draft-segment-remove") : null;
+      if (!removeButton) return false;
+      const lineId = String(removeButton.getAttribute("data-line-id") || "").trim();
+      const variantId = String(removeButton.getAttribute("data-variant-id") || "").trim();
+      const segmentIndex = Number.parseInt(String(removeButton.getAttribute("data-segment-index") || ""), 10);
+      const line = inlineLocalFindLine(lineId);
+      const variant = (Array.isArray(line?.variants) ? line.variants : []).find((item) => String(item?.id || "") === variantId);
+      if (!variant || !Number.isFinite(segmentIndex) || segmentIndex < 0) return true;
+      const segments = draftNormalizeSegments(variant.confidence_segments, variant.text || "").filter((_, index) => index !== segmentIndex);
+      inlineLocalSetVariantSegments(variantId, segments);
+      if (inlineDraftId && lineId && !inlineIsVirtualLineId(lineId)) {
+        inlineSendOp("set_variant_segments", { variant_id: variantId, confidence_segments: segments }, { silent: true });
+      }
+      return true;
+    };
     const inlineApplyVariantText = (target) => {
       if (!(target instanceof HTMLInputElement || target instanceof HTMLTextAreaElement)) return false;
       if (!target.classList.contains("draft-variant-text-input")) return false;
@@ -9368,8 +10188,8 @@ export function bind(route, ctx) {
       return true;
     };
     const inlineApplyVariantConfidence = (target) => {
-      if (!(target instanceof HTMLInputElement)) return false;
-      if (!target.classList.contains("draft-variant-confidence")) return false;
+      if (!(target instanceof HTMLInputElement || target instanceof HTMLSelectElement)) return false;
+      if (!target.classList.contains("draft-variant-confidence-level")) return false;
       const lineId = String(target.getAttribute("data-line-id") || "").trim();
       let variantId = String(target.getAttribute("data-variant-id") || "").trim();
       if (!variantId && lineId) {
@@ -9377,19 +10197,17 @@ export function bind(route, ctx) {
         variantId = String(draftActiveVariant(line || {})?.id || "").trim();
       }
       if (!variantId) return false;
-      const confidence = draftConfidenceFromInput(
-        target.value,
-        target.defaultValue,
-      );
+      let fallbackConfidence = 100;
+      for (const line of Array.isArray(inlineDraftPayload?.lines) ? inlineDraftPayload.lines : []) {
+        const variant = (Array.isArray(line?.variants) ? line.variants : []).find((item) => String(item?.id || "") === variantId);
+        if (!variant) continue;
+        fallbackConfidence = draftClampConfidence(variant.confidence, 100);
+        break;
+      }
+      const confidence = draftConfidenceFromInput(target.value, fallbackConfidence);
       inlineLocalSetVariantConfidence(variantId, confidence);
-      target.defaultValue = String(confidence);
       if (inlineDraftId && lineId && !inlineIsVirtualLineId(lineId)) {
         inlineSendOp("set_variant_confidence", { variant_id: variantId, confidence }, { silent: true });
-        const line = inlineLocalFindLine(lineId);
-        const nextActiveId = String(draftActiveVariant(line || {})?.id || "").trim();
-        if (nextActiveId) {
-          inlineSendOp("set_active_variant", { line_id: lineId, variant_id: nextActiveId }, { silent: true });
-        }
       }
       return true;
     };
@@ -9404,6 +10222,18 @@ export function bind(route, ctx) {
       if (!(target instanceof HTMLElement)) return;
       if (inlineApplyVariantText(target)) return;
       inlineApplyVariantConfidence(target);
+    });
+    editorRoot?.addEventListener("input", (event) => {
+      const target = event.target;
+      if (target instanceof HTMLTextAreaElement && target.classList.contains("draft-segment-selection-text")) {
+        inlineUpdateSelectionSummary(target);
+      }
+    });
+    editorRoot?.addEventListener("select", (event) => {
+      const target = event.target;
+      if (target instanceof HTMLTextAreaElement && target.classList.contains("draft-segment-selection-text")) {
+        inlineUpdateSelectionSummary(target);
+      }
     });
 
     if (!inlineSyncOnSaveOnly) {
@@ -9503,6 +10333,11 @@ export function bind(route, ctx) {
       inlineRefreshMeta();
       inlineRefreshCollaborators();
       inlineRefreshLines();
+      const selectable = inlineSelectableLines();
+      if (selectable.length && !inlineSelectedLineId) {
+        inlineSelectedLineId = String(selectable[0]?.id || "");
+        inlinePopoverOpen = true;
+      }
       window.requestAnimationFrame(() => {
         inlineRenderLineRail();
         inlineRenderPopover();
@@ -9519,11 +10354,7 @@ export function bind(route, ctx) {
         showStatusOverlay(draftUiText("promptCopyFailed"), "error");
       }
     };
-    const inlineOpenPageVariants = () => {
-      const versionsSection = qs("ac_versions")?.closest(".request-repeater-section");
-      versionsSection?.scrollIntoView({ behavior: "smooth", block: "nearest" });
-    };
-    toolConfidenceBtn?.addEventListener("click", inlineOpenPageVariants);
+    toolConfidenceBtn?.addEventListener("click", inlineOpenLinesPanel);
     toolCopyPromptBtn?.addEventListener("click", inlineCopyPromptFromEditor);
     ["ac_lyrics", "ac_chorus", "ac_chorus_marker", "ac_title"].forEach((id) => {
       qs(id)?.addEventListener("input", () => {
@@ -10877,4 +11708,3 @@ export function bind(route, ctx) {
     return;
   }
 }
-
