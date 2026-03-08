@@ -21,6 +21,7 @@ const menuUserChip = document.getElementById("menuUserChip");
 const topSearchWrap = document.getElementById("topSearchWrap");
 const topSearchInput = document.getElementById("topSearchInput");
 const topSearchBtn = document.getElementById("topSearchBtn");
+const mobileNav = document.getElementById("mobileNav");
 const appBootSplash = document.getElementById("appBootSplash");
 const appBootSplashTitle = document.getElementById("appBootSplashTitle");
 const appBootSplashSubtitle = document.getElementById("appBootSplashSubtitle");
@@ -43,6 +44,8 @@ const authMsg = document.getElementById("authMsg");
 const doLogin = document.getElementById("doLogin");
 const doRegister = document.getElementById("doRegister");
 const localeSwitch = document.getElementById("localeSwitch");
+const localeSwitchMenu = document.getElementById("localeSwitchMenu");
+const localeSwitches = [localeSwitchMenu, localeSwitch].filter(Boolean);
 
 const THEME_KEY = "ui_theme";
 const SUPPORTED_THEMES = ["dark", "white"];
@@ -75,6 +78,7 @@ let songPageBgParallaxLastMeasureAt = 0;
 let songPageBgParallaxLastShiftPx = Number.NaN;
 let globalWallpaperLastShiftPx = Number.NaN;
 let activeRouteRenderToken = 0;
+let mobileNavViewportRaf = 0;
 const SONG_PAGE_BG_PARALLAX_MIN_PX = 180;
 const SONG_PAGE_BG_PARALLAX_MAX_PX = 560;
 const SONG_PAGE_BG_PARALLAX_VIEWPORT_RATIO = 0.52;
@@ -517,6 +521,37 @@ function setAuthKeyboardOffset(px = 0) {
   document.documentElement.style.setProperty("--auth-kb-offset", `${Math.max(0, Math.round(px))}px`);
 }
 
+function setMobileNavViewportOffset(px = 0) {
+  document.documentElement.style.setProperty("--mobile-nav-viewport-offset", `${Math.max(0, Math.round(px))}px`);
+}
+
+function syncMobileNavViewportOffset() {
+  if (!mobileNav || !window.matchMedia("(max-width: 960px)").matches) {
+    setMobileNavViewportOffset(0);
+    return;
+  }
+  const vv = window.visualViewport;
+  if (!vv) {
+    setMobileNavViewportOffset(0);
+    return;
+  }
+  const layoutHeight = Math.max(
+    Number(window.innerHeight || 0),
+    Number(document.documentElement?.clientHeight || 0),
+  );
+  const visualBottom = Number(vv.height || 0) + Number(vv.offsetTop || 0);
+  const viewportOffset = Math.max(0, layoutHeight - visualBottom);
+  setMobileNavViewportOffset(viewportOffset);
+}
+
+function scheduleMobileNavViewportOffsetSync() {
+  if (mobileNavViewportRaf) cancelAnimationFrame(mobileNavViewportRaf);
+  mobileNavViewportRaf = requestAnimationFrame(() => {
+    mobileNavViewportRaf = 0;
+    syncMobileNavViewportOffset();
+  });
+}
+
 function stopAuthViewportSync() {
   if (authViewportCleanup) {
     authViewportCleanup();
@@ -528,6 +563,18 @@ function stopAuthViewportSync() {
   }
   setAuthKeyboardOffset(0);
   document.body.classList.remove("auth-dialog-open");
+}
+
+function isMobileEditorInput(node) {
+  if (!(node instanceof HTMLInputElement || node instanceof HTMLTextAreaElement || node instanceof HTMLSelectElement)) {
+    return false;
+  }
+  if (!window.matchMedia("(max-width: 960px)").matches) return false;
+  return !!node.closest("#ac_editor, #requestForm, #songToolsPanel");
+}
+
+function syncMobileEditorFocusState() {
+  document.body.classList.toggle("mobile-editor-focus", isMobileEditorInput(document.activeElement));
 }
 
 function startAuthViewportSync() {
@@ -884,6 +931,7 @@ function applyStaticTexts() {
   setTextById("menuTitle", t("menu.title"));
   setTextById("menuMainLabel", t("menu.sections"));
   setTextById("menuSettingsLabel", t("menu.settings"));
+  setTextById("menuLocaleLabel", t("home.lang"));
 
   if (btnSidebarToggle) btnSidebarToggle.setAttribute("aria-label", t("menu.open"));
   if (btnMenuClose) btnMenuClose.setAttribute("aria-label", t("menu.close"));
@@ -919,12 +967,14 @@ function applyStaticTexts() {
   if (btnInstallApp) btnInstallApp.textContent = installButtonText();
   syncThemeToggleButton();
 
-  if (localeSwitch) {
+  if (localeSwitches.length) {
     const labels = { ru: "Rus", et: "Est", en: "Eng", uk: "Ukr" };
-    Array.from(localeSwitch.options).forEach((option) => {
-      option.textContent = labels[option.value] || option.textContent;
+    localeSwitches.forEach((switchEl) => {
+      Array.from(switchEl.options).forEach((option) => {
+        option.textContent = labels[option.value] || option.textContent;
+      });
+      switchEl.value = state.locale;
     });
-    localeSwitch.value = state.locale;
   }
   applyAdminAttentionLabels();
   updateUserChip();
@@ -1080,13 +1130,13 @@ applyStaticTexts();
 setupInstallPrompt();
 void registerServiceWorker();
 
-if (localeSwitch) {
-  localeSwitch.addEventListener("change", () => {
-    setLocale(localeSwitch.value);
+localeSwitches.forEach((switchEl) => {
+  switchEl.addEventListener("change", () => {
+    setLocale(switchEl.value);
     applyStaticTexts();
     refreshRoute();
   });
-}
+});
 
 btnThemeToggle?.addEventListener("click", () => {
   applyTheme(activeTheme === "white" ? "dark" : "white");
@@ -1247,6 +1297,9 @@ router.on(async (route) => {
     if (renderToken !== activeRouteRenderToken) return;
     app.innerHTML = out.html;
     bind(route, out.ctx);
+    if (route?.name === "request") {
+      window.scrollTo({ top: 0, left: 0, behavior: "auto" });
+    }
     if (route?.name === "admin" && route?.section === "editor") {
       window.scrollTo({ top: 0, left: 0, behavior: "auto" });
     }
@@ -1277,6 +1330,8 @@ router.on(async (route) => {
   void refreshAdminRequestsAttention();
   resetSongPageBackgroundParallaxCache();
   scheduleSongPageBackgroundParallax();
+  syncMobileEditorFocusState();
+  scheduleMobileNavViewportOffsetSync();
   hideAppBootSplash();
 });
 
@@ -1285,17 +1340,33 @@ window.addEventListener("hashchange", () => {
   router.handle();
   resetSongPageBackgroundParallaxCache();
   scheduleSongPageBackgroundParallax();
+  syncMobileEditorFocusState();
+  scheduleMobileNavViewportOffsetSync();
 });
 
 // Keep parallax synced to scroll/viewport changes.
 window.addEventListener("scroll", scheduleSongPageBackgroundParallax, { passive: true });
 window.addEventListener("resize", handleSongPageBackgroundParallaxViewportChange);
 window.visualViewport?.addEventListener?.("resize", handleSongPageBackgroundParallaxViewportChange);
+window.addEventListener("resize", syncMobileEditorFocusState, { passive: true });
+window.visualViewport?.addEventListener?.("resize", syncMobileEditorFocusState, { passive: true });
+window.addEventListener("resize", scheduleMobileNavViewportOffsetSync, { passive: true });
+window.addEventListener("orientationchange", scheduleMobileNavViewportOffsetSync);
+window.addEventListener("scroll", scheduleMobileNavViewportOffsetSync, { passive: true });
+window.visualViewport?.addEventListener?.("resize", scheduleMobileNavViewportOffsetSync, { passive: true });
+window.visualViewport?.addEventListener?.("scroll", scheduleMobileNavViewportOffsetSync, { passive: true });
+document.addEventListener("focusin", syncMobileEditorFocusState);
+document.addEventListener("focusout", () => {
+  requestAnimationFrame(syncMobileEditorFocusState);
+  scheduleMobileNavViewportOffsetSync();
+});
 
 preloadGlobalWallpaperAssets();
 await refreshMe();
 router.handle();
 resetSongPageBackgroundParallaxCache();
 scheduleSongPageBackgroundParallax();
+syncMobileEditorFocusState();
+scheduleMobileNavViewportOffsetSync();
 setTimeout(hideAppBootSplash, 700);
 

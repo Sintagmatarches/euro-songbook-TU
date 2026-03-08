@@ -934,6 +934,13 @@ function verifiedTranslationToggleLabel(active = false) {
   return "Verified translation";
 }
 
+function multiVersionsOnlyLabel() {
+  if (uiLocale() === "ru") return "Песни с несколькими вариантами";
+  if (uiLocale() === "uk") return "Пісні з кількома варіантами";
+  if (uiLocale() === "et") return "Mitme variandiga laulud";
+  return "Songs with multiple variants";
+}
+
 function songAuditAddedLabel() {
   if (uiLocale() === "ru") return "\u0414\u043e\u0431\u0430\u0432\u0438\u043b";
   if (uiLocale() === "uk") return "\u0414\u043e\u0434\u0430\u0432";
@@ -1170,6 +1177,7 @@ function catalogHashForSongFilter(filters = {}) {
       theme: "",
       verified: "",
       recent: "",
+      multi_versions: "",
       performer: "",
       year: "",
       searched: "1",
@@ -1177,7 +1185,7 @@ function catalogHashForSongFilter(filters = {}) {
       page: "1",
       ...filters,
     },
-    ["q", "lang", "country", "period", "region", "event", "theme", "verified", "recent", "performer", "year", "adv", "searched", "page"],
+    ["q", "lang", "country", "period", "region", "event", "theme", "verified", "recent", "multi_versions", "performer", "year", "adv", "searched", "page"],
   );
 }
 
@@ -1192,6 +1200,7 @@ function collectHomeFilters() {
   const theme = String(qs("yt_theme")?.value || "").trim();
   const verified = qs("yt_verified") instanceof HTMLInputElement && qs("yt_verified").checked ? "1" : "";
   const recent = String(qs("yt_recent_mode")?.value || "").trim() === "1" ? "1" : "";
+  const multiVersions = qs("yt_multi_versions") instanceof HTMLInputElement && qs("yt_multi_versions").checked ? "1" : "";
   const queryInput = qs("yt_q");
   return {
     q: queryInput ? queryInput.value : (qs("topSearchInput")?.value || ""),
@@ -1203,6 +1212,7 @@ function collectHomeFilters() {
     theme,
     verified,
     recent,
+    multi_versions: multiVersions,
     performer: qs("yt_performer")?.value || "",
     year: qs("yt_year")?.value || "",
     adv: qs("yt_advancedPanel")?.classList.contains("hidden") ? "0" : "1",
@@ -1402,12 +1412,13 @@ function homeUI(data, params, homeExtras = {}) {
   const theme = String(params.theme || "").trim();
   const verified = String(params.verified || "").trim() === "1";
   const recent = String(params.recent || "").trim() === "1";
+  const multiVersions = String(params.multi_versions || "").trim() === "1";
   const performer = params.performer || "";
   const year = params.year || "";
   const didSearch = params.searched === "1";
   const lockedCountry = normalizeSongCountry(country || "") || "";
   const isCountryLocked = !!lockedCountry;
-  const hasAdvancedValue = !!(period || region || event || theme || verified || performer || year);
+  const hasAdvancedValue = !!(period || region || event || theme || verified || multiVersions || performer || year);
   const showAdvanced = params.adv === "1" || (!isCountryLocked && hasAdvancedValue);
   const advancedLabel = uiLocale() === "ru"
     ? "Детальный поиск"
@@ -1433,13 +1444,13 @@ function homeUI(data, params, homeExtras = {}) {
     theme: "",
     verified: "",
     recent: "1",
+    multi_versions: "",
     performer: "",
     year: "",
     searched: "1",
     adv: "0",
     page: "1",
   });
-
   const backgroundsByCountry = new Map();
   const countryCounts = new Map();
   const countItems = Array.isArray(homeExtras?.countryCounts) ? homeExtras.countryCounts : [];
@@ -1642,13 +1653,13 @@ function homeUI(data, params, homeExtras = {}) {
       <div class="yt-detail-trigger" id="yt_detailToggleWrap">
         <div class="yt-detail-trigger-actions">
           <button
-            class="btn ghost ${showAdvanced ? "is-open" : ""}"
+            class="btn ghost home-cta-button ${showAdvanced ? "is-open" : ""}"
             id="yt_toggleAdvanced"
             type="button"
             data-label-open="${esc(hideAdvancedLabel)}"
             data-label-closed="${esc(advancedLabel)}"
           >${esc(showAdvanced ? hideAdvancedLabel : advancedLabel)}</button>
-          <a class="btn ghost ${recent ? "is-active" : ""}" id="yt_openRecent" href="${esc(recentEntryHref)}">${esc(homeRecentSongsLabel())}</a>
+          <a class="btn ghost home-cta-button ${recent ? "is-active" : ""}" id="yt_openRecent" href="${esc(recentEntryHref)}">${esc(homeRecentSongsLabel())}</a>
         </div>
       </div>
 
@@ -1688,6 +1699,12 @@ function homeUI(data, params, homeExtras = {}) {
           <div class="checkbox-row">
             <input type="checkbox" id="yt_verified" ${verified ? "checked" : ""} />
             <span>${esc(verifiedOnlyLabel())}</span>
+          </div>
+        </label>
+        <label class="yt-chip-input yt-chip-checkbox">
+          <div class="checkbox-row">
+            <input type="checkbox" id="yt_multi_versions" ${multiVersions ? "checked" : ""} />
+            <span>${esc(multiVersionsOnlyLabel())}</span>
           </div>
         </label>
         <label class="yt-chip-input">
@@ -2237,6 +2254,23 @@ function draftConfidenceLabel(value) {
   return draftUiText("confidenceLevelExact");
 }
 
+function draftIsCompactMobileViewport() {
+  try {
+    return !!window.matchMedia?.("(max-width: 760px)").matches;
+  } catch {
+    return false;
+  }
+}
+
+function draftCompactConfidenceLabel(value) {
+  const level = draftConfidenceLevel(value, "exact");
+  if (level === "very_sure") return "90%";
+  if (level === "sure") return "75%";
+  if (level === "medium") return "50%";
+  if (level === "unsure") return "25%";
+  return "100%";
+}
+
 function draftConfidencePercent(value, fallback = 100) {
   return `${draftClampConfidence(value, fallback)}%`;
 }
@@ -2251,6 +2285,7 @@ function draftVariantNumberLabel(number) {
 
 function draftConfidenceSelectOptions(selectedValue) {
   const selectedLevel = draftConfidenceLevel(selectedValue, "exact");
+  const useCompactLabel = draftIsCompactMobileViewport();
   return [
     "exact",
     "very_sure",
@@ -2258,7 +2293,7 @@ function draftConfidenceSelectOptions(selectedValue) {
     "medium",
     "unsure",
   ].map((level) => (
-    `<option value="${esc(level)}"${level === selectedLevel ? " selected" : ""}>${esc(draftConfidenceLabel(level))}</option>`
+    `<option value="${esc(level)}"${level === selectedLevel ? " selected" : ""}>${esc(useCompactLabel ? draftCompactConfidenceLabel(level) : draftConfidenceLabel(level))}</option>`
   )).join("");
 }
 
@@ -2783,13 +2818,15 @@ function draftLinePopoverUI(line = null, index = -1) {
           <div class="draft-variant-row ${draftConfidenceBand(variantConfidence)} ${isActive ? "is-active" : ""}" style="${draftConfidenceStyleValue(variantConfidence)}">
             <div class="draft-variant-main">
               <div class="draft-variant-head">
-                <span class="draft-variant-index">${esc(draftVariantNumberLabel(variantIndex + 1))}</span>
-                <div class="draft-variant-top-actions">
+                <div class="draft-variant-title-row">
+                  <span class="draft-variant-index">${esc(draftVariantNumberLabel(variantIndex + 1))}</span>
                   ${isActive ? `<span class="badge draft-variant-state">${esc(draftUiText("activeVariant"))}</span>` : ""}
-                  ${canActivateManually ? `<button class="btn ghost draft-variant-activate" type="button" data-line-id="${esc(normalizedLine.id)}" data-variant-id="${esc(variantId)}" aria-label="${esc(draftUiText("useVariant"))}" title="${esc(draftUiText("useVariant"))}">${esc(draftUiText("useVariant"))}</button>` : ""}
+                </div>
+                <div class="draft-variant-top-actions">
                   <button class="btn ghost draft-variant-remove" type="button" data-line-id="${esc(normalizedLine.id)}" data-variant-id="${esc(variantId)}" ${canRemoveVariant ? "" : "disabled"} aria-label="${esc(draftUiText("removeVariantTitle"))}" title="${esc(draftUiText("removeVariantTitle"))}"><span aria-hidden="true">&times;</span></button>
                 </div>
               </div>
+              ${canActivateManually ? `<div class="draft-variant-utility-row"><button class="btn ghost draft-variant-activate" type="button" data-line-id="${esc(normalizedLine.id)}" data-variant-id="${esc(variantId)}" aria-label="${esc(draftUiText("useVariant"))}" title="${esc(draftUiText("useVariant"))}">${esc(draftUiText("useVariant"))}</button></div>` : ""}
               <div class="draft-variant-inline">
                 <input class="input draft-variant-text-input" type="text" value="${esc(variantText)}" data-line-id="${esc(normalizedLine.id)}" data-variant-id="${esc(variantId)}" placeholder="${esc(draftUiText("newVariantPlaceholder"))}" />
               </div>
@@ -3316,14 +3353,56 @@ function renderLyricsEditorOverlayLines(sourceLines = [], lines = []) {
   }).join("");
 }
 
+function renderLyricsEditorMeasureLines(sourceLines = []) {
+  const safeSourceLines = Array.isArray(sourceLines) ? sourceLines : [];
+  return safeSourceLines.map((sourceText) => {
+    const content = String(sourceText ?? "");
+    return `<div class="ac-lyrics-measure-line"><span class="ac-lyrics-measure-anchor">${content ? esc(content) : "&nbsp;"}</span></div>`;
+  }).join("");
+}
+
+function ensureLyricsEditorMeasureContent(editorNode) {
+  if (!(editorNode instanceof HTMLElement)) return null;
+  let measureNode = editorNode.querySelector(".ac-lyrics-measure");
+  if (!(measureNode instanceof HTMLElement)) {
+    measureNode = document.createElement("div");
+    measureNode.className = "ac-lyrics-measure";
+    measureNode.setAttribute("aria-hidden", "true");
+    const contentNode = document.createElement("div");
+    contentNode.className = "ac-lyrics-measure-content";
+    measureNode.appendChild(contentNode);
+    const overlayNode = editorNode.querySelector(".ac-lyrics-overlay");
+    if (overlayNode instanceof HTMLElement) {
+      overlayNode.insertAdjacentElement("afterend", measureNode);
+    } else {
+      editorNode.insertBefore(measureNode, editorNode.firstChild);
+    }
+  }
+  const measureContentNode = measureNode.querySelector(".ac-lyrics-measure-content");
+  return measureContentNode instanceof HTMLElement ? measureContentNode : null;
+}
+
 function syncLyricsEditorOverlay(editorNode, textareaNode, sourceLines = [], lines = [], options = {}) {
   if (!(editorNode instanceof HTMLElement) || !(textareaNode instanceof HTMLTextAreaElement)) return;
   const overlayNode = editorNode.querySelector(".ac-lyrics-overlay");
   const overlayContentNode = overlayNode?.querySelector(".ac-lyrics-overlay-content");
-  if (!(overlayNode instanceof HTMLElement) || !(overlayContentNode instanceof HTMLElement)) return;
+  const measureContentNode = ensureLyricsEditorMeasureContent(editorNode);
+  if (!(overlayNode instanceof HTMLElement) || !(overlayContentNode instanceof HTMLElement) || !(measureContentNode instanceof HTMLElement)) return;
   const textareaStyle = window.getComputedStyle(textareaNode);
+  const textWhiteSpace = String(textareaStyle.whiteSpace || "").trim() || "pre";
+  const textOverflowWrap = String(textareaStyle.overflowWrap || "").trim() || "normal";
+  const textWordBreak = String(textareaStyle.wordBreak || "").trim() || "normal";
+  const wrapsText = textWhiteSpace.includes("pre-wrap")
+    || textWhiteSpace.includes("break-spaces")
+    || textOverflowWrap !== "normal"
+    || textWordBreak === "break-word"
+    || textWordBreak === "break-all";
   overlayContentNode.innerHTML = renderLyricsEditorOverlayLines(sourceLines, lines);
-  const lineHeightPx = Math.max(18, Math.round(Number(options?.lineHeightPx || Number.parseFloat(String(textareaStyle.lineHeight || "")) || 24)));
+  measureContentNode.innerHTML = renderLyricsEditorMeasureLines(sourceLines);
+  const resolvedLineHeightPx = Number.isFinite(Number(options?.lineHeightPx))
+    ? Number(options.lineHeightPx)
+    : Number.parseFloat(String(textareaStyle.lineHeight || ""));
+  const lineHeightPx = Math.max(18, Number.isFinite(resolvedLineHeightPx) ? resolvedLineHeightPx : 24);
   editorNode.style.setProperty("--ac-editor-text-pad-top", textareaStyle.paddingTop || "0px");
   editorNode.style.setProperty("--ac-editor-text-pad-right", textareaStyle.paddingRight || "0px");
   editorNode.style.setProperty("--ac-editor-text-pad-bottom", textareaStyle.paddingBottom || "0px");
@@ -3334,6 +3413,14 @@ function syncLyricsEditorOverlay(editorNode, textareaNode, sourceLines = [], lin
   editorNode.style.setProperty("--ac-editor-font-style", textareaStyle.fontStyle || "normal");
   editorNode.style.setProperty("--ac-editor-letter-spacing", textareaStyle.letterSpacing || "normal");
   editorNode.style.setProperty("--ac-editor-line-height", `${lineHeightPx}px`);
+  [overlayContentNode, measureContentNode].forEach((contentNode) => {
+    contentNode.style.whiteSpace = textWhiteSpace;
+    contentNode.style.overflowWrap = textOverflowWrap;
+    contentNode.style.wordBreak = textWordBreak;
+    contentNode.style.width = wrapsText ? "100%" : "max-content";
+    contentNode.style.minWidth = "100%";
+    contentNode.style.maxWidth = wrapsText ? "100%" : "none";
+  });
   overlayNode.classList.toggle("has-confidence", Array.isArray(sourceLines) && sourceLines.some((sourceText, index) => {
     const line = Array.isArray(lines) ? lines[index] : null;
     const active = draftActiveVariant(line || {});
@@ -3352,6 +3439,64 @@ function syncLyricsEditorOverlayScroll(editorNode, textareaNode) {
   const top = Math.max(0, Number(textareaNode.scrollTop || 0));
   const left = Math.max(0, Number(textareaNode.scrollLeft || 0));
   overlayContentNode.style.transform = `translate(${-Math.round(left)}px, ${-Math.round(top)}px)`;
+}
+
+function resolveLyricsEditorLineMetrics(editorNode, options = {}) {
+  if (!(editorNode instanceof HTMLElement)) return [];
+  const fallbackLineHeightPx = Math.max(18, Number(options?.fallbackLineHeightPx || 24));
+  const fallbackPadTopPx = Math.max(0, Number(options?.fallbackPadTopPx || 0));
+  const fallbackCount = Math.max(0, Number(options?.count || 0));
+  const measureContentNode = editorNode.querySelector(".ac-lyrics-measure-content");
+  const measureLines = measureContentNode instanceof HTMLElement
+    ? Array.from(measureContentNode.querySelectorAll(".ac-lyrics-measure-line"))
+    : [];
+  if (!(measureContentNode instanceof HTMLElement) || !measureLines.length) {
+    return Array.from({ length: fallbackCount }, (_, index) => ({
+      top: fallbackPadTopPx + (index * fallbackLineHeightPx),
+      height: fallbackLineHeightPx,
+    }));
+  }
+  const contentRect = measureContentNode.getBoundingClientRect();
+  const metrics = measureLines.map((lineNode, index) => {
+    const anchorNode = lineNode instanceof HTMLElement
+      ? lineNode.querySelector(".ac-lyrics-measure-anchor")
+      : null;
+    const lineTop = lineNode instanceof HTMLElement
+      ? Math.max(0, Number(lineNode.offsetTop || 0))
+      : fallbackPadTopPx + (index * fallbackLineHeightPx);
+    let lineRects = [];
+    if (anchorNode instanceof HTMLElement && typeof document?.createRange === "function") {
+      const range = document.createRange();
+      try {
+        if (anchorNode.childNodes.length) range.selectNodeContents(anchorNode);
+        else range.selectNode(anchorNode);
+        lineRects = Array.from(range.getClientRects())
+          .map((rect) => ({
+            top: Math.max(0, Number(rect?.top || 0) - Number(contentRect.top || 0)),
+            height: Math.max(1, Number(rect?.height || 0)),
+          }))
+          .filter((rect) => Number.isFinite(rect.top) && Number.isFinite(rect.height) && rect.height > 0.5);
+      } catch {}
+    }
+    const firstRect = lineRects[0] || null;
+    const top = firstRect
+      ? firstRect.top
+      : lineTop;
+    const height = firstRect
+      ? firstRect.height
+      : fallbackLineHeightPx;
+    return {
+      top,
+      height: Math.max(1, height),
+    };
+  });
+  while (metrics.length < fallbackCount) {
+    metrics.push({
+      top: fallbackPadTopPx + (metrics.length * fallbackLineHeightPx),
+      height: fallbackLineHeightPx,
+    });
+  }
+  return metrics;
 }
 
 function renderSongLyricVariantsPanel(meta = null) {
@@ -4154,6 +4299,7 @@ function songDetailsUI(song, extra = {}) {
             <div class="song-title-row">
               <div class="h1 song-title">${esc(song.title)}</div>
             </div>
+            ${song.year ? `<div class="song-year">${esc(song.year)}</div>` : ``}
             ${performerValue ? `<div class="song-performer">${esc(performerValue)}</div>` : ``}
           </div>
           ${hasHeaderSide ? `
@@ -4393,8 +4539,8 @@ function requestUI(options = {}) {
           <textarea id="rq_chorus" class="hidden"></textarea>
           <div id="rq_draft_banner" class="ac-draft-banner hidden" role="status" aria-live="polite"></div>
           <div class="request-section">
-            <label class="field"><div class="fieldLabel">${esc(t("field.source"))} *</div><input class="input" id="rq_source" required /></label>
-            <label class="field"><div class="fieldLabel">${esc(t("field.lyrics"))} *</div><textarea class="textarea song-editor-text song-editor-text-main" id="rq_lyrics" wrap="off" required></textarea></label>
+            <label class="field"><div class="fieldLabel">${esc(t("field.source"))}</div><input class="input" id="rq_source" required /></label>
+            <label class="field"><div class="fieldLabel">${esc(t("field.lyrics"))}</div><textarea class="textarea song-editor-text song-editor-text-main" id="rq_lyrics" wrap="off" required></textarea></label>
           </div>
           <div class="muted small song-decoding-progress" id="rq_decoding">${esc(decodingProgressText(100))}</div>
           <div class="actions request-actions"><button class="btn primary" id="rq_submit" type="submit">${esc(submitFragmentText)}</button></div>
@@ -4404,15 +4550,14 @@ function requestUI(options = {}) {
   }
   return `
     <div class="card request-card">
-      <div class="h1">${esc(titleText)}</div>
-      <div class="muted">${esc(subtitleText)}</div>
+      <div class="h1 request-card-title">${esc(titleText)}</div>
       <div class="sep"></div>
       <form id="requestForm" class="list request-form request-form-vertical">
         <div class="request-section">
-          <label class="field"><div class="fieldLabel">${esc(t("field.title"))} *</div><input class="input" id="rq_title" required /></label>
+          <label class="field"><div class="fieldLabel">${esc(t("field.title"))}</div><input class="input" id="rq_title" required /></label>
           <label class="field"><div class="fieldLabel">${esc(uiText("performer"))}</div><input class="input" id="rq_subtitle" /></label>
-          <label class="field"><div class="fieldLabel">${esc(t("field.lang"))} *</div><select class="select" id="rq_lang">${selectOptions("language", "", uiText("selectLanguage"))}</select></label>
-          <label class="field"><div class="fieldLabel">${esc(t("field.country"))} *</div><select class="select" id="rq_country" required>${selectOptions("country", "", uiText("selectCountry"))}</select></label>
+          <label class="field"><div class="fieldLabel">${esc(t("field.lang"))}</div><select class="select" id="rq_lang">${selectOptions("language", "", uiText("selectLanguage"))}</select></label>
+          <label class="field"><div class="fieldLabel">${esc(t("field.country"))}</div><select class="select" id="rq_country" required>${selectOptions("country", "", uiText("selectCountry"))}</select></label>
           <label class="field" id="rq_period_wrap"><div class="fieldLabel">${esc(t("field.period"))}</div><select class="select" id="rq_period">${selectOptions("period", "", uiText("selectPeriod"))}</select></label>
           <label class="field"><div class="fieldLabel">${esc(t("field.year"))}</div><input class="input" id="rq_year" /></label>
           <label class="field"><div class="fieldLabel">${esc(uiLocale() === "ru" ? "Регион" : uiLocale() === "uk" ? "Регіон" : uiLocale() === "et" ? "Piirkond" : "Region")}</div><input class="input" id="rq_region" /></label>
@@ -4427,7 +4572,7 @@ function requestUI(options = {}) {
         </div>
         <div class="request-section">
           <div class="field">
-            <label class="fieldLabel" for="rq_lyrics">${esc(t("field.lyrics"))} *</label>
+            <label class="fieldLabel" for="rq_lyrics">${esc(t("field.lyrics"))}</label>
             <div class="ac-lyrics-editor" id="rq_lyrics_editor">
               <div class="ac-lyrics-rail" id="rq_lyrics_line_rail" aria-hidden="true">
                 <div class="ac-lyrics-rail-list" id="rq_lyrics_line_rail_list"></div>
@@ -4446,13 +4591,13 @@ function requestUI(options = {}) {
         <section class="request-section request-repeater-section">
           <div class="h2 request-section-title">${esc(t("song.links"))}</div>
           <div id="rq_links" class="request-repeater"></div>
-          <button class="btn ghost request-add-btn" id="rq_addLink" type="button">${esc(t("common.addLink"))}</button>
+          <button class="btn primary request-add-btn request-add-btn-accent" id="rq_addLink" type="button">${esc(t("common.addLink"))}</button>
         </section>
 
         <section class="request-section request-repeater-section">
           <div class="h2 request-section-title">${esc(draftUiText("songVariants"))}</div>
           <div id="rq_versions" class="request-repeater"></div>
-          <button class="btn ghost request-add-btn" id="rq_addVersion" type="button">${esc(draftUiText("addSongVariant"))}</button>
+          <button class="btn primary request-add-btn request-add-btn-accent" id="rq_addVersion" type="button">${esc(`+ ${draftUiText("addSongVariant")}`)}</button>
         </section>
 
         <div class="actions request-actions"><button class="btn primary" id="rq_submit" type="submit">${esc(submitText)}</button></div>
@@ -4711,7 +4856,13 @@ function adminEditorUI(song = {}, options = {}) {
           <div class="ss_versions_tabs ac-editor-variant-tabs" id="ac_editor_version_tabs"></div>
         </div>
         <div class="request-section ac-editor-meta-section">
-          <label class="field ac-meta-title-field"><div class="fieldLabel">${esc(t("field.title"))} *</div><input id="ac_title" class="input" /></label>
+          <label class="field ac-meta-title-field">
+            <div class="fieldLabel ac-title-field-label">
+              <span>${esc(t("field.title"))} *</span>
+              <span class="ac-active-version-indicator" id="ac_active_variant_indicator" hidden></span>
+            </div>
+            <input id="ac_title" class="input" />
+          </label>
           <div class="grid2 ac-optional-row ac-meta-locale-grid">
             <label class="field"><div class="fieldLabel">${esc(t("field.lang"))} *</div><select id="ac_lang" class="select">${selectOptions("language", "", uiText("selectLanguage"))}</select></label>
             <label class="field"><div class="fieldLabel">${esc(t("field.country"))} *</div><select id="ac_country" class="select" required>${selectOptions("country", "", uiText("selectCountry"))}</select></label>
@@ -5577,6 +5728,53 @@ function applyLyricsViewportFit(editorNode, textareaNode, options = {}) {
   textareaNode.style.overflowY = "hidden";
 }
 
+function draftResolveLinePopoverMetrics(editorRect, textRect, anchorRect, popoverNode) {
+  const isCompactMobile = draftIsCompactMobileViewport();
+  const viewportWidth = Math.round(window.visualViewport?.width || window.innerWidth || textRect.width || 0);
+  const viewportHeight = Math.round(window.visualViewport?.height || window.innerHeight || editorRect.height || 0);
+  const horizontalInset = isCompactMobile ? 10 : 24;
+  const minPopoverWidth = isCompactMobile ? 208 : 264;
+  const availableWidth = Math.max(minPopoverWidth, viewportWidth - horizontalInset);
+  const maxPopoverWidth = Math.max(minPopoverWidth, Math.min(availableWidth, isCompactMobile ? 340 : 420));
+  const desiredWidth = isCompactMobile
+    ? Math.round(Math.min(editorRect.width - 14, Math.max(minPopoverWidth, textRect.width * 0.72)))
+    : Math.round(Math.min(Math.max(minPopoverWidth, textRect.width * 0.52), maxPopoverWidth));
+  const popoverWidth = Math.max(minPopoverWidth, Math.min(desiredWidth, maxPopoverWidth));
+  const anchorOffset = Math.max(18, Math.round(anchorRect.width || 0) + 8);
+  const baseLeft = Math.max(0, Math.round(anchorRect.left - editorRect.left + anchorOffset - (isCompactMobile ? 10 : 0)));
+  const maxLeft = Math.max(0, Math.round(editorRect.width - popoverWidth));
+  const measuredHeight = Math.max(1, Math.ceil(popoverNode?.scrollHeight || 0) + 2);
+  const belowTop = Math.max(0, Math.round(anchorRect.bottom - editorRect.top + 2));
+  if (!isCompactMobile) {
+    return {
+      popoverWidth,
+      openHeight: measuredHeight,
+      cardMaxHeight: measuredHeight,
+      left: Math.min(baseLeft, maxLeft),
+      top: belowTop,
+    };
+  }
+
+  const viewportMargin = 8;
+  const belowSpace = Math.max(160, Math.floor(viewportHeight - anchorRect.bottom - viewportMargin));
+  const aboveSpace = Math.max(160, Math.floor(anchorRect.top - viewportMargin));
+  let openHeight = Math.min(measuredHeight, belowSpace);
+  let top = belowTop;
+
+  if (measuredHeight > belowSpace && aboveSpace > belowSpace) {
+    openHeight = Math.min(measuredHeight, aboveSpace);
+    top = Math.max(0, Math.round(anchorRect.top - editorRect.top - openHeight - 6));
+  }
+
+  return {
+    popoverWidth,
+    openHeight,
+    cardMaxHeight: Math.max(136, openHeight - 6),
+    left: Math.min(baseLeft, maxLeft),
+    top,
+  };
+}
+
 function wireAutoGrowTextareas(root = document) {
   if (!root) return;
   root.querySelectorAll("textarea.textarea:not([readonly]), textarea.song-editor-text").forEach((textarea) => {
@@ -6211,10 +6409,16 @@ function contentDraftDiffBannerText(hasPublishedBase) {
 }
 
 function requestDraftBannerText() {
-  if (uiLocale() === "ru") return "\u0427\u0435\u0440\u043d\u043e\u0432\u0438\u043a: \u0437\u0430\u044f\u0432\u043a\u0430 \u0430\u0432\u0442\u043e\u0441\u043e\u0445\u0440\u0430\u043d\u0435\u043d\u0430 \u043b\u043e\u043a\u0430\u043b\u044c\u043d\u043e. \u041e\u0442\u043f\u0440\u0430\u0432\u044c\u0442\u0435, \u043a\u043e\u0433\u0434\u0430 \u0431\u0443\u0434\u0435\u0442\u0435 \u0433\u043e\u0442\u043e\u0432\u044b.";
-  if (uiLocale() === "uk") return "\u0427\u0435\u0440\u043d\u0435\u0442\u043a\u0430: \u0437\u0430\u044f\u0432\u043a\u0443 \u0430\u0432\u0442\u043e\u0437\u0431\u0435\u0440\u0435\u0436\u0435\u043d\u043e \u043b\u043e\u043a\u0430\u043b\u044c\u043d\u043e. \u041d\u0430\u0434\u0456\u0448\u043b\u0456\u0442\u044c, \u043a\u043e\u043b\u0438 \u0431\u0443\u0434\u0435\u0442\u0435 \u0433\u043e\u0442\u043e\u0432\u0456.";
-  if (uiLocale() === "et") return "MUSTAND: taotlus salvestati kohalikult automaatselt. Saada siis, kui oled valmis.";
-  return "DRAFT: request is autosaved locally. Submit when ready.";
+  if (uiLocale() === "ru") {
+    return "\u041f\u0440\u0430\u0432\u043a\u0438 \u043d\u0435 \u0441\u043e\u0445\u0440\u0430\u043d\u0435\u043d\u044b";
+  }
+  if (uiLocale() === "uk") {
+    return "\u041f\u0440\u0430\u0432\u043a\u0438 \u043d\u0435 \u0437\u0431\u0435\u0440\u0435\u0436\u0435\u043d\u0456";
+  }
+  if (uiLocale() === "et") {
+    return "Muudatused on salvestamata";
+  }
+  return "Unsaved changes";
 }
 
 const CONTENT_DRAFT_PREFIX = "admin_content_draft:";
@@ -6402,6 +6606,7 @@ export async function render(route) {
         theme: params.theme || "",
         verified: params.verified || "",
         recent: params.recent || "",
+        multi_versions: params.multi_versions || "",
         performer: params.performer || "",
         year: params.year || "",
         page: Number(params.page || 1),
@@ -6723,7 +6928,7 @@ export function bind(route, ctx) {
         all.country = lockedCountry;
         if (lockedCountry !== "ussr") all.period = "";
       }
-      location.hash = makeHash("#/", all, ["q", "lang", "country", "period", "region", "event", "theme", "verified", "recent", "performer", "year", "adv", "searched", "page"]);
+      location.hash = makeHash("#/", all, ["q", "lang", "country", "period", "region", "event", "theme", "verified", "recent", "multi_versions", "performer", "year", "adv", "searched", "page"]);
     };
 
     ["yt_q", "yt_performer", "yt_year", "yt_country", "yt_lang", "yt_period", "yt_region", "yt_event", "yt_theme"].forEach((id) => qs(id)?.addEventListener("keydown", (e) => {
@@ -6777,6 +6982,7 @@ export function bind(route, ctx) {
         if (qs(id)) qs(id).value = "";
       });
       if (qs("yt_verified")) qs("yt_verified").checked = false;
+      if (qs("yt_multi_versions")) qs("yt_multi_versions").checked = false;
       setSelectValueWithLegacy("yt_lang", "language", "", uiText("selectLanguage"));
       if (!lockedCountry) setSelectValueWithLegacy("yt_country", "country", "", uiText("selectCountry"));
       setSelectValueWithLegacy("yt_period", "period", "", uiText("selectPeriod"));
@@ -6790,6 +6996,7 @@ export function bind(route, ctx) {
         event: "",
         theme: "",
         verified: "",
+        multi_versions: "",
         performer: "",
         year: "",
         searched: "1",
@@ -8205,6 +8412,7 @@ export function bind(route, ctx) {
     const requestFragment = String(route?.query?.fragment || "").trim();
 
     const setRequestDraftBannerVisible = (visible) => {
+      form?.classList.toggle("request-form-has-unsaved", !!visible);
       if (!requestDraftBanner) return;
       requestDraftBanner.classList.toggle("hidden", !visible);
       requestDraftBanner.textContent = visible ? requestDraftBannerText() : "";
@@ -8364,6 +8572,7 @@ export function bind(route, ctx) {
         if (!Number.isFinite(value)) return Math.max(0, fallback);
         return Math.max(0, value);
       };
+      const formatCssPx = (value, fallback = 0) => `${Math.max(0, Number.isFinite(Number(value)) ? Number(value) : fallback).toFixed(2)}px`;
       const hasText = (value) => String(value || "").replace(/\r\n?/g, "\n").replace(/\n/g, "").length > 0;
 
       let rqLines = [];
@@ -8430,6 +8639,7 @@ export function bind(route, ctx) {
           lineActionsPopoverNode.style.removeProperty("left");
           lineActionsPopoverNode.style.removeProperty("width");
           lineActionsPopoverNode.style.removeProperty("--ac-line-popover-open-height");
+          lineActionsPopoverNode.style.removeProperty("--ac-line-popover-card-max-height");
           return;
         }
         closeAnimatedElement(lineActionsPopoverNode, {
@@ -8459,17 +8669,12 @@ export function bind(route, ctx) {
         const editorRect = lyricsEditorNode.getBoundingClientRect();
         const textRect = lyricsTextareaNode.getBoundingClientRect();
         const anchorRect = anchor.getBoundingClientRect();
-        const viewportWidth = Math.round(window.visualViewport?.width || window.innerWidth || textRect.width || 0);
-        const availableWidth = Math.max(180, viewportWidth - 24);
-        const maxPopoverWidth = Math.max(320, Math.min(availableWidth, 560));
-        const popoverWidth = Math.max(180, Math.min(Math.round(textRect.width), maxPopoverWidth));
-        const baseLeft = Math.max(0, Math.round(textRect.left - editorRect.left));
-        const maxLeft = Math.max(0, Math.round(editorRect.width - popoverWidth));
-        const openHeight = Math.max(1, Math.ceil(lineActionsPopoverNode.scrollHeight || 0) + 2);
-        lineActionsPopoverNode.style.setProperty("--ac-line-popover-open-height", `${openHeight}px`);
-        lineActionsPopoverNode.style.left = `${Math.min(baseLeft, maxLeft)}px`;
-        lineActionsPopoverNode.style.width = `${popoverWidth}px`;
-        lineActionsPopoverNode.style.top = `${Math.max(0, Math.round(anchorRect.bottom - editorRect.top + 2))}px`;
+        const metrics = draftResolveLinePopoverMetrics(editorRect, textRect, anchorRect, lineActionsPopoverNode);
+        lineActionsPopoverNode.style.setProperty("--ac-line-popover-open-height", `${metrics.openHeight}px`);
+        lineActionsPopoverNode.style.setProperty("--ac-line-popover-card-max-height", `${metrics.cardMaxHeight}px`);
+        lineActionsPopoverNode.style.left = `${metrics.left}px`;
+        lineActionsPopoverNode.style.width = `${metrics.popoverWidth}px`;
+        lineActionsPopoverNode.style.top = `${metrics.top}px`;
       };
 
       const renderPopover = () => {
@@ -8498,33 +8703,47 @@ export function bind(route, ctx) {
       const renderRail = () => {
         const sourceLines = ensureLineState();
         const textareaStyle = window.getComputedStyle(lyricsTextareaNode);
-        const lineHeightPx = Math.round(resolveLineHeightPx(textareaStyle));
-        const padTopPx = Math.round(resolvePaddingPx(textareaStyle.paddingTop, 12));
-        const padBottomPx = Math.round(resolvePaddingPx(textareaStyle.paddingBottom, 12));
+        const lineHeightPx = resolveLineHeightPx(textareaStyle);
+        const padTopPx = resolvePaddingPx(textareaStyle.paddingTop, 12);
+        const padBottomPx = resolvePaddingPx(textareaStyle.paddingBottom, 12);
         const contentHeightPx = Math.max(
           Math.round(Number(lyricsTextareaNode.scrollHeight || 0)),
           Math.round(Number(lyricsTextareaNode.offsetHeight || lyricsTextareaNode.clientHeight || 0)),
           Math.round(lineHeightPx * 2),
         );
-        lyricsEditorNode.style.setProperty("--ac-collab-line-height", `${lineHeightPx}px`);
-        lyricsEditorNode.style.setProperty("--ac-collab-pad-top", `${padTopPx}px`);
-        lyricsEditorNode.style.setProperty("--ac-collab-pad-bottom", `${padBottomPx}px`);
-        lyricsEditorNode.style.setProperty("--ac-collab-viewport-height", `${contentHeightPx}px`);
+        lyricsEditorNode.style.setProperty("--ac-collab-line-height", formatCssPx(lineHeightPx, 24));
+        lyricsEditorNode.style.setProperty("--ac-rail-line-offset", formatCssPx(Math.max(0, (lineHeightPx - 18) / 2), 0));
+        lyricsEditorNode.style.setProperty("--ac-collab-pad-top", formatCssPx(padTopPx, 12));
+        lyricsEditorNode.style.setProperty("--ac-collab-pad-bottom", formatCssPx(padBottomPx, 12));
+        lyricsEditorNode.style.setProperty("--ac-collab-viewport-height", formatCssPx(contentHeightPx, 0));
+        syncLyricsEditorOverlay(lyricsEditorNode, lyricsTextareaNode, sourceLines, rqLines, { lineHeightPx });
+        const lineMetrics = resolveLyricsEditorLineMetrics(lyricsEditorNode, {
+          count: sourceLines.length,
+          fallbackLineHeightPx: lineHeightPx,
+          fallbackPadTopPx: padTopPx,
+        });
+        lyricsLineRailListNode.style.paddingTop = "0px";
+        lyricsLineRailListNode.style.paddingBottom = "0px";
 
         let visibleLineNumber = 0;
         lyricsLineRailListNode.innerHTML = sourceLines.map((lineText, index) => {
           const line = rqLines[index] || null;
           const lineId = String(line?.id || "").trim();
           const isTextLine = hasText(lineText);
+          const metric = lineMetrics[index] || {
+            top: padTopPx + (index * lineHeightPx),
+            height: lineHeightPx,
+          };
+          const slotLayoutStyle = `top:${formatCssPx(metric.top, padTopPx)};height:${formatCssPx(metric.height, lineHeightPx)};min-height:${formatCssPx(metric.height, lineHeightPx)};`;
           if (isTextLine) visibleLineNumber += 1;
           if (!isTextLine) {
-            return `<div class="ac-lyrics-rail-slot is-empty" data-line-index="${index}" data-slot-index="0" aria-hidden="true"><div class="ac-lyrics-rail-row"><span class="draft-line-rail-btn-placeholder" aria-hidden="true"></span></div></div>`;
+            return `<div class="ac-lyrics-rail-slot is-empty" data-line-index="${index}" data-slot-index="0" aria-hidden="true" style="${slotLayoutStyle}"><div class="ac-lyrics-rail-row"><span class="draft-line-rail-btn-placeholder" aria-hidden="true"></span></div></div>`;
           }
           const confidence = Number(draftActiveVariant(line)?.confidence || 100);
           const confidenceBand = draftConfidenceBand(confidence);
           const isActive = lineId && lineId === String(selectedLineId || "");
           return `
-            <div class="ac-lyrics-rail-slot has-confidence ${confidenceBand}" data-line-id="${esc(lineId)}" data-line-index="${index}" data-slot-index="0" style="${draftConfidenceStyleValue(confidence)}">
+            <div class="ac-lyrics-rail-slot has-confidence ${confidenceBand}" data-line-id="${esc(lineId)}" data-line-index="${index}" data-slot-index="0" style="${slotLayoutStyle}${draftConfidenceStyleValue(confidence)}">
               <div class="ac-lyrics-rail-row ${confidenceBand} ${isActive ? "is-active" : ""}">
                 <button class="draft-line-rail-btn ${confidenceBand} ${isActive ? "is-active" : ""}" type="button" data-line-id="${esc(lineId)}" data-line-index="${index}" aria-expanded="${isActive ? "true" : "false"}" aria-label="${esc(draftUiText("variantsToggle"))}" title="${esc(draftUiText("variantsToggle"))}">
                   <span class="draft-line-rail-mini">${visibleLineNumber}</span>
@@ -8535,7 +8754,6 @@ export function bind(route, ctx) {
         }).join("");
         const hasAny = sourceLines.some((lineText) => hasText(lineText));
         lyricsEditorNode.classList.toggle("is-collab-active", hasAny);
-        syncLyricsEditorOverlay(lyricsEditorNode, lyricsTextareaNode, sourceLines, rqLines, { lineHeightPx });
         if (!hasAny) {
           selectedLineId = "";
           closePopover({ clearSelection: true, animate: false });
@@ -9119,6 +9337,7 @@ export function bind(route, ctx) {
     const acLyricsNode = qs("ac_lyrics");
     const acMainLyricsBufferNode = qs("ac_main_lyrics_buffer");
     const acEditorVariantTabsNode = qs("ac_editor_version_tabs");
+    const acActiveVariantIndicatorNode = qs("ac_active_variant_indicator");
     const acRemoveActiveVersionBtn = qs("ac_remove_active_version");
     const acOptionalFieldToggleBtn = qs("ac_optional_field_add");
     const acOptionalFieldMenu = qs("ac_optional_field_menu");
@@ -9355,6 +9574,20 @@ export function bind(route, ctx) {
         })),
       ];
     };
+    const acUpdateActiveVariantIndicator = () => {
+      if (!(acActiveVariantIndicatorNode instanceof HTMLElement)) return;
+      const entries = acVariantEntries();
+      const activeEntry = entries.find((entry) => entry.key === acActiveVariantSource) || entries[0] || null;
+      if (!activeEntry) {
+        acActiveVariantIndicatorNode.textContent = "";
+        acActiveVariantIndicatorNode.hidden = true;
+        return;
+      }
+      acActiveVariantIndicatorNode.textContent = String(activeEntry.label || "1");
+      acActiveVariantIndicatorNode.setAttribute("title", String(activeEntry.title || ""));
+      acActiveVariantIndicatorNode.setAttribute("aria-label", String(activeEntry.title || ""));
+      acActiveVariantIndicatorNode.hidden = false;
+    };
     const acSyncActiveSourceFromEditor = () => {
       if (!(acLyricsNode instanceof HTMLTextAreaElement)) return;
       const activeRowId = acVariantRowIdFromKey(acActiveVariantSource);
@@ -9383,6 +9616,7 @@ export function bind(route, ctx) {
       if (!entries.length) {
         acEditorVariantTabsNode.classList.add("hidden");
         acEditorVariantTabsNode.innerHTML = "";
+        acUpdateActiveVariantIndicator();
         return;
       }
       if (!entries.some((entry) => entry.key === acActiveVariantSource)) {
@@ -9396,6 +9630,7 @@ export function bind(route, ctx) {
         const isActive = entry.key === acActiveVariantSource;
         return `<span class="ac-editor-variant-item ${isActive ? "is-active" : ""}"><button class="btn ghost ss_versions_tab ac-editor-variant-tab ${isActive ? "is-active" : ""}" type="button" data-variant-source="${esc(entry.key)}" aria-pressed="${isActive ? "true" : "false"}" title="${esc(entry.title)}">${esc(entry.label)}</button></span>`;
       }).join("")}<button class="btn ghost ss_versions_tab ac-editor-variant-tab ac-editor-variant-tab-add" type="button" data-variant-action="add" aria-label="${esc(addTitle)}" title="${esc(addTitle)}"><span aria-hidden="true">+</span><span class="ac-editor-variant-tab-add-label">${esc(addTitle)}</span></button>`;
+      acUpdateActiveVariantIndicator();
     };
     const acUpdateActiveVariantDeleteControl = () => {
       if (!(acRemoveActiveVersionBtn instanceof HTMLButtonElement)) return;
@@ -9444,6 +9679,7 @@ export function bind(route, ctx) {
       acRenderEditorVariantTabs();
       acUpdateActiveVariantDeleteControl();
       acLoadActiveSourceIntoEditor({ emitInput: options.emitInput !== false });
+      acUpdateActiveVariantIndicator();
     };
     if (acLyricsNode instanceof HTMLTextAreaElement) {
       acSetMainLyrics(acLyricsNode.value || "");
@@ -9826,14 +10062,14 @@ export function bind(route, ctx) {
       if (!Number.isFinite(value)) return Math.max(0, fallback);
       return Math.max(0, value);
     };
+    const inlineFormatCssPx = (value, fallback = 0) => `${Math.max(0, Number.isFinite(Number(value)) ? Number(value) : fallback).toFixed(2)}px`;
     const inlineLineVisualSpan = (line, options = {}) => {
       const fallbackText = String(draftActiveVariant(line)?.text || "");
       const text = String(options?.text ?? fallbackText)
         .replace(/\r\n?/g, "\n")
         .replace(/^\n+|\n+$/g, "");
       if (!text) return 1;
-      const rows = text.split("\n").length;
-      return Math.max(1, rows);
+      return Math.max(1, text.split("\n").length);
     };
     const inlineHasLineText = (line, sourceText = null) => {
       const baseText = sourceText ?? draftActiveVariant(line)?.text ?? "";
@@ -9858,6 +10094,7 @@ export function bind(route, ctx) {
         lineActionsPopoverNode.style.removeProperty("left");
         lineActionsPopoverNode.style.removeProperty("width");
         lineActionsPopoverNode.style.removeProperty("--ac-line-popover-open-height");
+        lineActionsPopoverNode.style.removeProperty("--ac-line-popover-card-max-height");
       };
       if (!animate || lineActionsPopoverNode.classList.contains("hidden")) {
         finalize();
@@ -9876,6 +10113,7 @@ export function bind(route, ctx) {
       syncLyricsEditorOverlayScroll(lyricsEditorNode, lyricsTextareaNode);
     };
     const inlinePreserveEditorViewport = (callback) => {
+      const isCompactMobile = draftIsCompactMobileViewport();
       const pageX = Number(window.scrollX || window.pageXOffset || 0);
       const pageY = Number(window.scrollY || window.pageYOffset || 0);
       const textTop = lyricsTextareaNode instanceof HTMLTextAreaElement
@@ -9890,7 +10128,7 @@ export function bind(route, ctx) {
           lyricsTextareaNode.scrollTop = textTop;
           lyricsTextareaNode.scrollLeft = textLeft;
         }
-        window.scrollTo(pageX, pageY);
+        if (!isCompactMobile) window.scrollTo(pageX, pageY);
         inlineSyncLineRailScroll();
         inlinePositionPopover();
       };
@@ -9912,17 +10150,12 @@ export function bind(route, ctx) {
       const editorRect = lyricsEditorNode.getBoundingClientRect();
       const textRect = lyricsTextareaNode.getBoundingClientRect();
       const anchorRect = anchor.getBoundingClientRect();
-      const viewportWidth = Math.round(window.visualViewport?.width || window.innerWidth || textRect.width || 0);
-      const availableWidth = Math.max(180, viewportWidth - 24);
-      const maxPopoverWidth = Math.max(320, Math.min(availableWidth, 560));
-      const popoverWidth = Math.max(180, Math.min(Math.round(textRect.width), maxPopoverWidth));
-      const baseLeft = Math.max(0, Math.round(textRect.left - editorRect.left));
-      const maxLeft = Math.max(0, Math.round(editorRect.width - popoverWidth));
-      const openHeight = Math.max(1, Math.ceil(lineActionsPopoverNode.scrollHeight || 0) + 2);
-      lineActionsPopoverNode.style.setProperty("--ac-line-popover-open-height", `${openHeight}px`);
-      lineActionsPopoverNode.style.left = `${Math.min(baseLeft, maxLeft)}px`;
-      lineActionsPopoverNode.style.width = `${popoverWidth}px`;
-      lineActionsPopoverNode.style.top = `${Math.max(0, Math.round(anchorRect.bottom - editorRect.top + 2))}px`;
+      const metrics = draftResolveLinePopoverMetrics(editorRect, textRect, anchorRect, lineActionsPopoverNode);
+      lineActionsPopoverNode.style.setProperty("--ac-line-popover-open-height", `${metrics.openHeight}px`);
+      lineActionsPopoverNode.style.setProperty("--ac-line-popover-card-max-height", `${metrics.cardMaxHeight}px`);
+      lineActionsPopoverNode.style.left = `${metrics.left}px`;
+      lineActionsPopoverNode.style.width = `${metrics.popoverWidth}px`;
+      lineActionsPopoverNode.style.top = `${metrics.top}px`;
     };
     const inlineIsEditingVariantInput = () => {
       const active = document.activeElement;
@@ -9966,19 +10199,27 @@ export function bind(route, ctx) {
       const lines = inlineMainEditorLines();
       const sourceTextLines = splitLines(lyricsTextareaNode?.value || "");
       const textareaStyle = window.getComputedStyle(lyricsTextareaNode);
-      const lineHeightPx = Math.round(inlineResolveLineHeightPx(textareaStyle));
-      const padTopPx = Math.round(inlineResolvePaddingPx(textareaStyle.paddingTop, 12));
-      const padBottomPx = Math.round(inlineResolvePaddingPx(textareaStyle.paddingBottom, 12));
+      const lineHeightPx = inlineResolveLineHeightPx(textareaStyle);
+      const padTopPx = inlineResolvePaddingPx(textareaStyle.paddingTop, 12);
+      const padBottomPx = inlineResolvePaddingPx(textareaStyle.paddingBottom, 12);
       const contentHeightPx = Math.max(
         Math.round(Number(lyricsTextareaNode.scrollHeight || 0)),
         Math.round(Number(lyricsTextareaNode.offsetHeight || lyricsTextareaNode.clientHeight || 0)),
         Math.round(lineHeightPx * 2),
       );
-      lyricsEditorNode.style.setProperty("--ac-collab-line-height", `${lineHeightPx}px`);
-      lyricsEditorNode.style.setProperty("--ac-collab-pad-top", `${padTopPx}px`);
-      lyricsEditorNode.style.setProperty("--ac-collab-pad-bottom", `${padBottomPx}px`);
-      lyricsEditorNode.style.setProperty("--ac-collab-viewport-height", `${contentHeightPx}px`);
+      lyricsEditorNode.style.setProperty("--ac-collab-line-height", inlineFormatCssPx(lineHeightPx, 24));
+      lyricsEditorNode.style.setProperty("--ac-rail-line-offset", inlineFormatCssPx(Math.max(0, (lineHeightPx - 18) / 2), 0));
+      lyricsEditorNode.style.setProperty("--ac-collab-pad-top", inlineFormatCssPx(padTopPx, 12));
+      lyricsEditorNode.style.setProperty("--ac-collab-pad-bottom", inlineFormatCssPx(padBottomPx, 12));
+      lyricsEditorNode.style.setProperty("--ac-collab-viewport-height", inlineFormatCssPx(contentHeightPx, 0));
       syncLyricsEditorOverlay(lyricsEditorNode, lyricsTextareaNode, sourceTextLines, lines, { lineHeightPx });
+      const lineMetrics = resolveLyricsEditorLineMetrics(lyricsEditorNode, {
+        count: sourceTextLines.length,
+        fallbackLineHeightPx: lineHeightPx,
+        fallbackPadTopPx: padTopPx,
+      });
+      lyricsLineRailListNode.style.paddingTop = "0px";
+      lyricsLineRailListNode.style.paddingBottom = "0px";
 
       lyricsEditorNode.classList.toggle("is-collab-active", lines.length > 0);
       if (!lines.length) {
@@ -10003,29 +10244,25 @@ export function bind(route, ctx) {
         const confidence = Number(draftActiveVariant(line)?.confidence || 100);
         const confidenceBand = draftConfidenceBand(confidence);
         const isActive = lineId && lineId === String(inlineSelectedLineId || "");
-        const span = inlineLineVisualSpan(line, { text: sourceText });
-        const slots = [];
-        for (let slotIndex = 0; slotIndex < span; slotIndex += 1) {
-          if (slotIndex > 0 || !hasText) {
-            slots.push(`<div class="ac-lyrics-rail-slot is-empty" data-line-index="${index}" data-slot-index="${slotIndex}" aria-hidden="true"></div>`);
-            continue;
-          }
-          const buttonMarkup = hasText
-            ? (
-              lineId
-                ? `<button class="draft-line-rail-btn ${confidenceBand} ${isActive ? "is-active" : ""}" type="button" data-line-id="${esc(lineId)}" data-line-index="${index}" aria-expanded="${isActive ? "true" : "false"}" aria-label="${esc(draftUiText("variantsToggle"))}" title="${esc(draftUiText("variantsToggle"))}"><span class="draft-line-rail-mini">${visibleLineNumber}</span></button>`
-                : `<button class="draft-line-rail-btn ${confidenceBand}" type="button" data-line-id="" data-line-index="${index}" aria-expanded="false" aria-label="${esc(draftUiText("variantsToggle"))}" title="${esc(draftUiText("variantsToggle"))}"><span class="draft-line-rail-mini">${visibleLineNumber}</span></button>`
-            )
-            : `<span class="draft-line-rail-btn-placeholder" aria-hidden="true"></span>`;
-          slots.push(`
-            <div class="ac-lyrics-rail-slot ${hasText ? `has-confidence ${confidenceBand}` : "is-empty"}" data-line-id="${esc(lineId)}" data-line-index="${index}" data-slot-index="${slotIndex}"${hasText ? ` style="${draftConfidenceStyleValue(confidence)}"` : ""}>
-              <div class="ac-lyrics-rail-row ${confidenceBand} ${isActive ? "is-active" : ""}">
-                ${buttonMarkup}
-              </div>
+        const metric = lineMetrics[index] || {
+          top: padTopPx + (index * lineHeightPx),
+          height: lineHeightPx,
+        };
+        const slotLayoutStyle = `top:${inlineFormatCssPx(metric.top, padTopPx)};height:${inlineFormatCssPx(metric.height, lineHeightPx)};min-height:${inlineFormatCssPx(metric.height, lineHeightPx)};`;
+        const buttonMarkup = hasText
+          ? (
+            lineId
+              ? `<button class="draft-line-rail-btn ${confidenceBand} ${isActive ? "is-active" : ""}" type="button" data-line-id="${esc(lineId)}" data-line-index="${index}" aria-expanded="${isActive ? "true" : "false"}" aria-label="${esc(draftUiText("variantsToggle"))}" title="${esc(draftUiText("variantsToggle"))}"><span class="draft-line-rail-mini">${visibleLineNumber}</span></button>`
+              : `<button class="draft-line-rail-btn ${confidenceBand}" type="button" data-line-id="" data-line-index="${index}" aria-expanded="false" aria-label="${esc(draftUiText("variantsToggle"))}" title="${esc(draftUiText("variantsToggle"))}"><span class="draft-line-rail-mini">${visibleLineNumber}</span></button>`
+          )
+          : `<span class="draft-line-rail-btn-placeholder" aria-hidden="true"></span>`;
+        return `
+          <div class="ac-lyrics-rail-slot ${hasText ? `has-confidence ${confidenceBand}` : "is-empty"}" data-line-id="${esc(lineId)}" data-line-index="${index}" data-slot-index="0"${hasText ? ` style="${slotLayoutStyle}${draftConfidenceStyleValue(confidence)}"` : ` style="${slotLayoutStyle}"`}>
+            <div class="ac-lyrics-rail-row ${confidenceBand} ${isActive ? "is-active" : ""}">
+              ${buttonMarkup}
             </div>
-          `);
-        }
-        return slots.join("");
+          </div>
+        `;
       }).join("");
       inlineSyncLineRailScroll();
       inlinePositionPopover();
@@ -10967,7 +11204,9 @@ export function bind(route, ctx) {
         inlineRenderLineRail();
         inlineRenderPopover();
       });
-      qs("ac_lyrics_editor")?.scrollIntoView({ behavior: "smooth", block: "nearest" });
+      if (!draftIsCompactMobileViewport()) {
+        qs("ac_lyrics_editor")?.scrollIntoView({ behavior: "smooth", block: "nearest" });
+      }
     };
     const inlineCopyPromptFromEditor = () => {
       const prompt = inlineEditorPromptAtCaret();
