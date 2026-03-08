@@ -1,0 +1,74 @@
+{
+  "export_sql": "C:\\Users\\svyat\\Desktop\\песенник 21 февраля\\песенник 15 февраля\\euro-songbook-cloudflare-fixed2-palette-api-fix(1)\\tmp_songs_export.sql",
+  "out_sql": "tmp_verified_translation_pilot_1000.sql",
+  "seed": 42,
+  "sample_size_requested": 1000,
+  "eligible_total": 9674,
+  "sampled_total": 1000,
+  "extracted_total": 6,
+  "extraction_rate_sample": 0.6,
+  "skip_reason_counts": {
+    "skip_non_published": 2957,
+    "no_split_detected": 994
+  },
+  "extraction_reason_counts": {
+    "split_by_script": 6
+  },
+  "update_statements": 6,
+  "examples": [
+    {
+      "id": "tg3_1c8d20e",
+      "lang": "pl",
+      "title": "Песня о Тито",
+      "reason": "split_by_script",
+      "before_preview": "Tam nekje med svobodnimi polji / kjer iz zemlje klije mlada rast / njemu, ki vodnik nam je najbolji / smo zložili pesem to na čast",
+      "main_preview": "Tam nekje med svobodnimi polji / kjer iz zemlje klije mlada rast / njemu, ki vodnik nam je najbolji / smo zložili pesem to na čast",
+      "verified_preview": "Где-то среди свободных полей / Где из земли проростает молодняк / В честь того, кто вождь наш самый лучший / Мы создали эту песню"
+    },
+    {
+      "id": "apww2_piosenka",
+      "lang": "pl",
+      "title": "NN, J. Kozłowski - Piosenka (Zasmuciła się piosenka...)",
+      "reason": "split_by_script",
+      "before_preview": "Muzyka: NN / Słowa: Janusz Kozłowski / Zasmuciła się piosenka, / pośród zgliszcz i ruin płynie.",
+      "main_preview": "Muzyka: NN / Słowa: Janusz Kozłowski / Zasmuciła się piosenka, / pośród zgliszcz i ruin płynie.",
+      "verified_preview": "Песня Варшавского восстания 1944 г. / Подстрочный перевод: / Песенка / Опечалилась песенка,"
+    },
+    {
+      "id": "apww2_levante",
+      "lang": "es",
+      "title": "¡Pueblos de Levante! (плакат Испанской республики, 1936-39 гг.)",
+      "reason": "split_by_script",
+      "before_preview": "Los hijos, las madres y las compañeras / de los heroes de Madrid no deben perecer / bajo la metralla y el fuego de los aviones fascistas. / ¡Facilidad su evacuacion!",
+      "main_preview": "Los hijos, las madres y las compañeras / de los heroes de Madrid no deben perecer / bajo la metralla y el fuego de los aviones fascistas. / ¡Facilidad su evacuacion!",
+      "verified_preview": "Жители Леванта! / Дети, матери и жены / героев Мадрида не должны находиться / под обстрелом и бомбами фашистских самолетов."
+    },
+    {
+      "id": "aplibrc_lepolitique",
+      "lang": "ru",
+      "title": "Boris Vian - Le politique",
+      "reason": "split_by_script",
+      "before_preview": "Paroles et musique de Boris Vian / Ils ont sonné à ma porte / Je suis sorti de mon lit / Ils sont entrés dans ma chambre",
+      "main_preview": "Paroles et musique de Boris Vian / Ils ont sonné à ma porte / Je suis sorti de mon lit / Ils sont entrés dans ma chambre",
+      "verified_preview": "Политический / Они постучали в двери / Подняв меня поутру / Ввалились бесцеремонно"
+    },
+    {
+      "id": "tg3_e8psxp",
+      "lang": "mk",
+      "title": "Интернационал - Югославский",
+      "reason": "split_by_script",
+      "before_preview": "Ustajte svi na zemlji kleti, / Svi sužnji koje mori glad! / Nepravdi razum sad se sveti, / Tutnji već i selo i grad.",
+      "main_preview": "Ustajte svi na zemlji kleti, / Svi sužnji koje mori glad! / Nepravdi razum sad se sveti, / Tutnji već i selo i grad.",
+      "verified_preview": "А тоже и: / Устаjте сви нa земљи клети, / Сви сужњи коjе мори глад! / Неправди разум сад сe свети,"
+    },
+    {
+      "id": "aplibrc_swinia",
+      "lang": "pl",
+      "title": "Okupacyjna świnia (tradicyjna ballada okupacyjna)",
+      "reason": "split_by_script",
+      "before_preview": "(Окупационная свинья) / Tradicyjna ballada okupacyjna / Hej tam pod Krakowem / Rwąca Wisła płynie.",
+      "main_preview": "(Окупационная свинья) / Tradicyjna ballada okupacyjna / Hej tam pod Krakowem / Rwąca Wisła płynie.",
+      "verified_preview": "Песня польского Сопротивления 1939-44 гг. / Фрагмент фильма \"Zakazane piosenki\" с этой песней - см., например, / Подстрочный перевод: / Оккупационная свинья"
+    }
+  ]
+}

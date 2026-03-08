@@ -1,0 +1,18 @@
+{
+  "summary": {
+    "db_name": "euro-songbook-db",
+    "total_statements": 5197,
+    "start_index": 0,
+    "processed_in_run": 5197,
+    "next_index": 5197,
+    "applied_in_run": 5197,
+    "failed_in_run": 0,
+    "api_calls_in_run": 44,
+    "retries_in_run": 0,
+    "split_fallbacks_in_run": 0,
+    "elapsed_seconds": 230.1,
+    "done": true,
+    "failures_total": 0
+  },
+  "failures": []
+}

@@ -1,0 +1,185 @@
+{
+  "sections": [
+    {
+      "section": "subculture_students",
+      "title": "Students",
+      "index_url": "http://a-pesni.org/stud/Stud.php",
+      "total_links": 522,
+      "imported": 480,
+      "skipped": {
+        "not_song_like": 5,
+        "missing_title_or_lyrics": 36,
+        "duplicate_song": 1
+      },
+      "sql_path": "C:\\Users\\svyat\\Desktop\\песенник 21 февраля\\песенник 15 февраля\\euro-songbook-cloudflare-fixed2-palette-api-fix(1)\\tmp_import_a_pesni_subculture_students.sql",
+      "json_path": "C:\\Users\\svyat\\Desktop\\песенник 21 февраля\\песенник 15 февраля\\euro-songbook-cloudflare-fixed2-palette-api-fix(1)\\out\\a_pesni\\subculture_students.json"
+    },
+    {
+      "section": "subculture_army",
+      "title": "Army",
+      "index_url": "http://a-pesni.org/army/Army.php",
+      "total_links": 1342,
+      "imported": 1213,
+      "skipped": {
+        "not_song_like": 98,
+        "oversize_lyrics": 20,
+        "missing_title_or_lyrics": 6,
+        "duplicate_song": 5
+      },
+      "sql_path": "C:\\Users\\svyat\\Desktop\\песенник 21 февраля\\песенник 15 февраля\\euro-songbook-cloudflare-fixed2-palette-api-fix(1)\\tmp_import_a_pesni_subculture_army.sql",
+      "json_path": "C:\\Users\\svyat\\Desktop\\песенник 21 февраля\\песенник 15 февраля\\euro-songbook-cloudflare-fixed2-palette-api-fix(1)\\out\\a_pesni\\subculture_army.json"
+    },
+    {
+      "section": "subculture_cossacks",
+      "title": "Cossacks",
+      "index_url": "http://a-pesni.org/kazaki/Kazaki.php",
+      "total_links": 931,
+      "imported": 780,
+      "skipped": {
+        "not_song_like": 64,
+        "oversize_lyrics": 19,
+        "missing_title_or_lyrics": 5,
+        "duplicate_song": 63
+      },
+      "sql_path": "C:\\Users\\svyat\\Desktop\\песенник 21 февраля\\песенник 15 февраля\\euro-songbook-cloudflare-fixed2-palette-api-fix(1)\\tmp_import_a_pesni_subculture_cossacks.sql",
+      "json_path": "C:\\Users\\svyat\\Desktop\\песенник 21 февраля\\песенник 15 февраля\\euro-songbook-cloudflare-fixed2-palette-api-fix(1)\\out\\a_pesni\\subculture_cossacks.json"
+    },
+    {
+      "section": "folk_historical_ballads",
+      "title": "Historical songs and ballads XIII-XIX",
+      "index_url": "http://a-pesni.org/istor/Istor.php",
+      "total_links": 559,
+      "imported": 414,
+      "skipped": {
+        "not_song_like": 63,
+        "oversize_lyrics": 19,
+        "missing_title_or_lyrics": 5,
+        "duplicate_song": 58
+      },
+      "sql_path": "C:\\Users\\svyat\\Desktop\\песенник 21 февраля\\песенник 15 февраля\\euro-songbook-cloudflare-fixed2-palette-api-fix(1)\\tmp_import_a_pesni_folk_historical_ballads.sql",
+      "json_path": "C:\\Users\\svyat\\Desktop\\песенник 21 февраля\\песенник 15 февраля\\euro-songbook-cloudflare-fixed2-palette-api-fix(1)\\out\\a_pesni\\folk_historical_ballads.json"
+    },
+    {
+      "section": "folk_landless_peasants",
+      "title": "Peasants without land",
+      "index_url": "http://a-pesni.org/bezzem/Bezzem.php",
+      "total_links": 58,
+      "imported": 58,
+      "skipped": {},
+      "sql_path": "C:\\Users\\svyat\\Desktop\\песенник 21 февраля\\песенник 15 февраля\\euro-songbook-cloudflare-fixed2-palette-api-fix(1)\\tmp_import_a_pesni_folk_landless_peasants.sql",
+      "json_path": "C:\\Users\\svyat\\Desktop\\песенник 21 февраля\\песенник 15 февраля\\euro-songbook-cloudflare-fixed2-palette-api-fix(1)\\out\\a_pesni\\folk_landless_peasants.json"
+    },
+    {
+      "section": "folk_workers",
+      "title": "Workers",
+      "index_url": "http://a-pesni.org/labor/Labor.php",
+      "total_links": 54,
+      "imported": 54,
+      "skipped": {},
+      "sql_path": "C:\\Users\\svyat\\Desktop\\песенник 21 февраля\\песенник 15 февраля\\euro-songbook-cloudflare-fixed2-palette-api-fix(1)\\tmp_import_a_pesni_folk_workers.sql",
+      "json_path": "C:\\Users\\svyat\\Desktop\\песенник 21 февраля\\песенник 15 февраля\\euro-songbook-cloudflare-fixed2-palette-api-fix(1)\\out\\a_pesni\\folk_workers.json"
+    },
+    {
+      "section": "folk_russian_misc",
+      "title": "Russian folk (misc)",
+      "index_url": "http://a-pesni.org/rus/Rus.php",
+      "total_links": 154,
+      "imported": 151,
+      "skipped": {
+        "not_song_like": 1,
+        "duplicate_song": 2
+      },
+      "sql_path": "C:\\Users\\svyat\\Desktop\\песенник 21 февраля\\песенник 15 февраля\\euro-songbook-cloudflare-fixed2-palette-api-fix(1)\\tmp_import_a_pesni_folk_russian_misc.sql",
+      "json_path": "C:\\Users\\svyat\\Desktop\\песенник 21 февраля\\песенник 15 февраля\\euro-songbook-cloudflare-fixed2-palette-api-fix(1)\\out\\a_pesni\\folk_russian_misc.json"
+    },
+    {
+      "section": "folk_ukrainian_misc",
+      "title": "Ukrainian folk (misc)",
+      "index_url": "http://a-pesni.org/ukr/Ukr.php",
+      "total_links": 68,
+      "imported": 68,
+      "skipped": {},
+      "sql_path": "C:\\Users\\svyat\\Desktop\\песенник 21 февраля\\песенник 15 февраля\\euro-songbook-cloudflare-fixed2-palette-api-fix(1)\\tmp_import_a_pesni_folk_ukrainian_misc.sql",
+      "json_path": "C:\\Users\\svyat\\Desktop\\песенник 21 февраля\\песенник 15 февраля\\euro-songbook-cloudflare-fixed2-palette-api-fix(1)\\out\\a_pesni\\folk_ukrainian_misc.json"
+    },
+    {
+      "section": "folk_belarusian_misc",
+      "title": "Belarusian folk (misc)",
+      "index_url": "http://a-pesni.org/belorus/Belorus.php",
+      "total_links": 52,
+      "imported": 52,
+      "skipped": {},
+      "sql_path": "C:\\Users\\svyat\\Desktop\\песенник 21 февраля\\песенник 15 февраля\\euro-songbook-cloudflare-fixed2-palette-api-fix(1)\\tmp_import_a_pesni_folk_belarusian_misc.sql",
+      "json_path": "C:\\Users\\svyat\\Desktop\\песенник 21 февраля\\песенник 15 февраля\\euro-songbook-cloudflare-fixed2-palette-api-fix(1)\\out\\a_pesni\\folk_belarusian_misc.json"
+    },
+    {
+      "section": "folk_polish_misc",
+      "title": "Polish folk (misc)",
+      "index_url": "http://a-pesni.org/polsk/Polsk.php",
+      "total_links": 482,
+      "imported": 380,
+      "skipped": {
+        "not_song_like": 96,
+        "missing_title_or_lyrics": 6
+      },
+      "sql_path": "C:\\Users\\svyat\\Desktop\\песенник 21 февраля\\песенник 15 февраля\\euro-songbook-cloudflare-fixed2-palette-api-fix(1)\\tmp_import_a_pesni_folk_polish_misc.sql",
+      "json_path": "C:\\Users\\svyat\\Desktop\\песенник 21 февраля\\песенник 15 февраля\\euro-songbook-cloudflare-fixed2-palette-api-fix(1)\\out\\a_pesni\\folk_polish_misc.json"
+    },
+    {
+      "section": "folk_mari_misc",
+      "title": "Mari folk (misc)",
+      "index_url": "http://a-pesni.org/marij/Marij.php",
+      "total_links": 2,
+      "imported": 2,
+      "skipped": {},
+      "sql_path": "C:\\Users\\svyat\\Desktop\\песенник 21 февраля\\песенник 15 февраля\\euro-songbook-cloudflare-fixed2-palette-api-fix(1)\\tmp_import_a_pesni_folk_mari_misc.sql",
+      "json_path": "C:\\Users\\svyat\\Desktop\\песенник 21 февраля\\песенник 15 февраля\\euro-songbook-cloudflare-fixed2-palette-api-fix(1)\\out\\a_pesni\\folk_mari_misc.json"
+    },
+    {
+      "section": "liberation_revolutions_civil_wars",
+      "title": "Liberation songs: revolutions and civil wars",
+      "index_url": "http://a-pesni.org/intern/Intern.php",
+      "total_links": 465,
+      "imported": 378,
+      "skipped": {
+        "not_song_like": 81,
+        "missing_title_or_lyrics": 5,
+        "oversize_lyrics": 1
+      },
+      "sql_path": "C:\\Users\\svyat\\Desktop\\песенник 21 февраля\\песенник 15 февраля\\euro-songbook-cloudflare-fixed2-palette-api-fix(1)\\tmp_import_a_pesni_liberation_revolutions_civil_wars.sql",
+      "json_path": "C:\\Users\\svyat\\Desktop\\песенник 21 февраля\\песенник 15 февраля\\euro-songbook-cloudflare-fixed2-palette-api-fix(1)\\out\\a_pesni\\liberation_revolutions_civil_wars.json"
+    },
+    {
+      "section": "liberation_national",
+      "title": "Liberation songs: national liberation",
+      "index_url": "http://a-pesni.org/nations/Nations.php",
+      "total_links": 243,
+      "imported": 241,
+      "skipped": {
+        "not_song_like": 2
+      },
+      "sql_path": "C:\\Users\\svyat\\Desktop\\песенник 21 февраля\\песенник 15 февраля\\euro-songbook-cloudflare-fixed2-palette-api-fix(1)\\tmp_import_a_pesni_liberation_national.sql",
+      "json_path": "C:\\Users\\svyat\\Desktop\\песенник 21 февраля\\песенник 15 февраля\\euro-songbook-cloudflare-fixed2-palette-api-fix(1)\\out\\a_pesni\\liberation_national.json"
+    },
+    {
+      "section": "liberation_yiddish",
+      "title": "Yiddish songs",
+      "index_url": "http://a-pesni.org/idich/Idich.php",
+      "total_links": 4,
+      "imported": 4,
+      "skipped": {},
+      "sql_path": "C:\\Users\\svyat\\Desktop\\песенник 21 февраля\\песенник 15 февраля\\euro-songbook-cloudflare-fixed2-palette-api-fix(1)\\tmp_import_a_pesni_liberation_yiddish.sql",
+      "json_path": "C:\\Users\\svyat\\Desktop\\песенник 21 февраля\\песенник 15 февраля\\euro-songbook-cloudflare-fixed2-palette-api-fix(1)\\out\\a_pesni\\liberation_yiddish.json"
+    },
+    {
+      "section": "liberation_esperanto",
+      "title": "Esperanto songs",
+      "index_url": "http://a-pesni.org/esperanto/Esperanto.php",
+      "total_links": 3,
+      "imported": 3,
+      "skipped": {},
+      "sql_path": "C:\\Users\\svyat\\Desktop\\песенник 21 февраля\\песенник 15 февраля\\euro-songbook-cloudflare-fixed2-palette-api-fix(1)\\tmp_import_a_pesni_liberation_esperanto.sql",
+      "json_path": "C:\\Users\\svyat\\Desktop\\песенник 21 февраля\\песенник 15 февраля\\euro-songbook-cloudflare-fixed2-palette-api-fix(1)\\out\\a_pesni\\liberation_esperanto.json"
+    }
+  ]
+}
