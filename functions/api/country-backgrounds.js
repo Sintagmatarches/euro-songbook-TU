@@ -2,6 +2,11 @@ import { json } from "../_lib/utils.js";
 import { dbAll, dbGet } from "../_lib/db.js";
 import { ensureSchemaAndSeed } from "../_lib/schema.js";
 import { normalizeSongCountry } from "../../shared/song-catalogs.js";
+import {
+  buildVisualProfileFromLegacyFields,
+  normalizeVisualProfile,
+  serializeVisualProfile,
+} from "../../shared/song-visuals.js";
 
 const CHUNK_MARKER_PREFIX = "__chunked__:country_background:";
 
@@ -37,11 +42,24 @@ async function normalizeRow(env, row) {
   const desktopImageUrl = await resolveChunkedValue(env, country, "desktop_image_url", row.desktop_image_url || row.image_url || "");
   const mobileImageUrl = await resolveChunkedValue(env, country, "mobile_image_url", row.mobile_image_url || "");
   const previewFlagImageUrl = await resolveChunkedValue(env, country, "preview_flag_image_url", row.preview_flag_image_url || "");
+  const visualProfileJson = await resolveChunkedValue(env, country, "visual_profile_json", row.visual_profile_json || "");
+  const profile = visualProfileJson
+    ? normalizeVisualProfile(visualProfileJson)
+    : buildVisualProfileFromLegacyFields({
+        desktop_image_url: desktopImageUrl,
+        mobile_image_url: mobileImageUrl,
+        preview_flag_image_url: previewFlagImageUrl,
+        desktop_focus_x: row.desktop_focus_x,
+        desktop_focus_y: row.desktop_focus_y,
+        mobile_focus_x: row.mobile_focus_x,
+        mobile_focus_y: row.mobile_focus_y,
+      });
   return {
     country,
     desktop_image_url: desktopImageUrl,
     mobile_image_url: mobileImageUrl,
     preview_flag_image_url: previewFlagImageUrl,
+    visual_profile_json: visualProfileJson || serializeVisualProfile(profile),
     desktop_focus_x: clampFocus(row.desktop_focus_x),
     desktop_focus_y: clampFocus(row.desktop_focus_y),
     mobile_focus_x: clampFocus(row.mobile_focus_x),
@@ -64,7 +82,7 @@ export async function onRequestGet({ env, request }) {
   if (country) {
     const row = await dbGet(
       env,
-      `SELECT country, desktop_image_url, mobile_image_url, preview_flag_image_url, desktop_focus_x, desktop_focus_y, mobile_focus_x, mobile_focus_y, image_url, updated_at
+      `SELECT country, desktop_image_url, mobile_image_url, preview_flag_image_url, visual_profile_json, desktop_focus_x, desktop_focus_y, mobile_focus_x, mobile_focus_y, image_url, updated_at
        FROM country_backgrounds
        WHERE lower(country) = ?
        LIMIT 1`,
@@ -76,7 +94,7 @@ export async function onRequestGet({ env, request }) {
 
   const items = await dbAll(
     env,
-    `SELECT country, desktop_image_url, mobile_image_url, preview_flag_image_url, desktop_focus_x, desktop_focus_y, mobile_focus_x, mobile_focus_y, image_url, updated_at
+    `SELECT country, desktop_image_url, mobile_image_url, preview_flag_image_url, visual_profile_json, desktop_focus_x, desktop_focus_y, mobile_focus_x, mobile_focus_y, image_url, updated_at
      FROM country_backgrounds
      ORDER BY country ASC`,
     []

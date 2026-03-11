@@ -2,6 +2,7 @@ import { SONG_LANGUAGE_VALUES, normalizeSongLanguage } from "./song-catalogs.js"
 
 export const ADMIN_PERMISSION_VALUES = [
   "songs.create",
+  "songs.bulk_import",
   "songs.edit",
   "songs.delete",
   "songs.view_admin_content",
@@ -17,6 +18,7 @@ export const LEGACY_ADMIN_PERMISSION_EXPANSIONS = Object.freeze({
 });
 
 export const ADMIN_PERMISSION_DEPENDENCIES = Object.freeze({
+  "songs.bulk_import": ["songs.create"],
   "songs.delete": ["songs.edit"],
   "proposals.approve": ["proposals.review"],
   "proposals.reject": ["proposals.review"],

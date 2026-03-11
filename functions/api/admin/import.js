@@ -1,5 +1,5 @@
 import { json, err, readJSON, makeId } from "../../_lib/utils.js";
-import { requireSuperAdmin, assertScopeForLang, dbRun, dbGet, canViewAdminContent } from "../../_lib/db.js";
+import { requirePermission, assertScopeForLang, dbRun, dbGet, canViewAdminContent } from "../../_lib/db.js";
 import { ensureSchemaAndSeed } from "../../_lib/schema.js";
 import { normalizeSongCatalogInput } from "../../../shared/song-catalogs.js";
 
@@ -14,7 +14,7 @@ async function upsertFTS(env, songId, title, lyrics){
 
 export async function onRequestPost({ env, request }){
   await ensureSchemaAndSeed(env);
-  const access = await requireSuperAdmin(env, request);
+  const access = await requirePermission(env, request, "songs.bulk_import");
   if (access instanceof Response) return access;
   const body = await readJSON(request);
   const items = body?.items;

@@ -1,4 +1,4 @@
-const CACHE_VERSION = "v10";
+const CACHE_VERSION = "v11";
 const CACHE_NAME = `songbook-app-${CACHE_VERSION}`;
 
 function scopeUrl(path) {
@@ -11,8 +11,11 @@ const CORE_ASSETS = [
   scopeUrl("./app.css"),
   scopeUrl("./manifest.webmanifest"),
   scopeUrl("./ui/assets/logo-sticker-20260221.png"),
-  scopeUrl("./ui/assets/pwa-icon-192-20260221.png"),
-  scopeUrl("./ui/assets/pwa-icon-512-20260221.png"),
+  scopeUrl("./favicon.ico"),
+  scopeUrl("./ui/assets/favicon-32-20260308.png"),
+  scopeUrl("./ui/assets/apple-touch-icon-180-20260308.png"),
+  scopeUrl("./ui/assets/pwa-icon-192-20260308.png"),
+  scopeUrl("./ui/assets/pwa-icon-512-20260308.png"),
   scopeUrl("./ui/assets/ussr-hero.jpg"),
 ];
 

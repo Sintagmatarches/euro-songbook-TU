@@ -2,6 +2,16 @@ import { json, err, readJSON } from "../../_lib/utils.js";
 import { requireSuperAdmin, dbAll, dbGet, dbRun } from "../../_lib/db.js";
 import { ensureSchemaAndSeed } from "../../_lib/schema.js";
 import { normalizeSongCountry, normalizeSongPeriod } from "../../../shared/song-catalogs.js";
+import {
+  buildVisualProfileFromLegacyFields,
+  hasVisualProfileContent,
+  normalizeVisualBackground,
+  normalizeVisualProfile,
+  normalizeVisualSymbol,
+  resolveVisualVariant,
+  serializeVisualProfile,
+  validateVisualProfileRanges,
+} from "../../../shared/song-visuals.js";
 
 const CHUNK_MARKER_PREFIX = "__chunked__:country_background:";
 const CHUNK_SIZE = 350_000;
@@ -121,7 +131,7 @@ function normalizeFlagImageValue(value) {
   if (!raw.startsWith("{")) return normalizeImageValue(raw);
   try {
     const parsed = JSON.parse(raw);
-    const safe = { default: { long: "", long_mobile: "", square: "" }, periods: {} };
+    const safe = { default: { long: "", long_mobile: "", square: "" }, periods: {}, ranges: [] };
     const base = normalizeFlagConfigEntry(parsed?.default ?? parsed);
     if (!base) return null;
     safe.default = base;
@@ -129,7 +139,8 @@ function normalizeFlagImageValue(value) {
     Object.entries(periods).forEach(([k, v]) => {
       const next = normalizeFlagConfigEntry(v);
       if (!next) throw new Error("bad period");
-      safe.periods[k] = next;
+      const normalizedPeriod = normalizeSongPeriod(k);
+      if (normalizedPeriod) safe.periods[normalizedPeriod] = next;
     });
     const ranges = Array.isArray(parsed?.ranges) ? parsed.ranges : [];
     safe.ranges = ranges
@@ -171,17 +182,91 @@ function normalizePeriodImageValue(value) {
   }
 }
 
+function sanitizeVisualBackground(entry = {}) {
+  const normalized = normalizeVisualBackground(entry);
+  const imageUrl = normalizeImageValue(normalized.image_url);
+  if (imageUrl === null) return null;
+  return {
+    image_url: imageUrl || "",
+    focus_x: clampFocus(normalized.focus_x),
+    focus_y: clampFocus(normalized.focus_y),
+  };
+}
+
+function sanitizeVisualSymbol(entry = {}) {
+  const normalized = normalizeVisualSymbol(entry);
+  const long = normalizeImageValue(normalized.long);
+  const longMobile = normalizeImageValue(normalized.long_mobile);
+  const square = normalizeImageValue(normalized.square);
+  if (long === null || longMobile === null || square === null) return null;
+  return {
+    long: long || "",
+    long_mobile: longMobile || "",
+    square: square || long || "",
+  };
+}
+
+function sanitizeVisualProfile(profileInput = {}) {
+  const profile = normalizeVisualProfile(profileInput);
+  const validation = validateVisualProfileRanges(profile);
+  if (!validation.ok) return { ok: false, error: validation.error || "Overlapping visual ranges" };
+
+  const next = {
+    default: {
+      desktop: sanitizeVisualBackground(profile?.default?.desktop || {}),
+      mobile: sanitizeVisualBackground(profile?.default?.mobile || {}),
+      symbol: sanitizeVisualSymbol(profile?.default?.symbol || {}),
+    },
+    variants: [],
+  };
+  if (!next.default.desktop || !next.default.mobile || !next.default.symbol) {
+    return { ok: false, error: "Invalid visual profile values" };
+  }
+
+  for (let index = 0; index < profile.variants.length; index += 1) {
+    const row = profile.variants[index];
+    const desktop = sanitizeVisualBackground(row?.desktop || {});
+    const mobile = sanitizeVisualBackground(row?.mobile || {});
+    const symbol = sanitizeVisualSymbol(row?.symbol || {});
+    if (!desktop || !mobile || !symbol) {
+      return { ok: false, error: `Invalid visual profile values in variants[${index}]` };
+    }
+    next.variants.push({
+      from: row.from,
+      to: row.to,
+      desktop,
+      mobile,
+      symbol,
+    });
+  }
+
+  return { ok: true, value: next };
+}
+
 async function normalizeRow(env, row) {
   if (!row) return null;
   const country = String(row.country || "").trim();
   const desktopImageUrl = await resolveChunkedValue(env, country, "desktop_image_url", row.desktop_image_url || row.image_url || "");
   const mobileImageUrl = await resolveChunkedValue(env, country, "mobile_image_url", row.mobile_image_url || "");
   const previewFlagImageUrl = await resolveChunkedValue(env, country, "preview_flag_image_url", row.preview_flag_image_url || "");
+  const visualProfileJson = await resolveChunkedValue(env, country, "visual_profile_json", row.visual_profile_json || "");
+  const visualProfile = visualProfileJson
+    ? normalizeVisualProfile(visualProfileJson)
+    : buildVisualProfileFromLegacyFields({
+        desktop_image_url: desktopImageUrl,
+        mobile_image_url: mobileImageUrl,
+        preview_flag_image_url: previewFlagImageUrl,
+        desktop_focus_x: row.desktop_focus_x,
+        desktop_focus_y: row.desktop_focus_y,
+        mobile_focus_x: row.mobile_focus_x,
+        mobile_focus_y: row.mobile_focus_y,
+      });
   return {
     country,
     desktop_image_url: desktopImageUrl,
     mobile_image_url: mobileImageUrl,
     preview_flag_image_url: previewFlagImageUrl,
+    visual_profile_json: visualProfileJson || serializeVisualProfile(visualProfile),
     desktop_focus_x: clampFocus(row.desktop_focus_x),
     desktop_focus_y: clampFocus(row.desktop_focus_y),
     mobile_focus_x: clampFocus(row.mobile_focus_x),
@@ -194,7 +279,7 @@ async function normalizeRow(env, row) {
 async function fetchCountryBackground(env, country) {
   const row = await dbGet(
     env,
-    `SELECT country, desktop_image_url, mobile_image_url, preview_flag_image_url, desktop_focus_x, desktop_focus_y, mobile_focus_x, mobile_focus_y, image_url, updated_at
+    `SELECT country, desktop_image_url, mobile_image_url, preview_flag_image_url, visual_profile_json, desktop_focus_x, desktop_focus_y, mobile_focus_x, mobile_focus_y, image_url, updated_at
      FROM country_backgrounds
      WHERE lower(country)=?
      LIMIT 1`,
@@ -209,7 +294,7 @@ export async function onRequestGet({ env, request }) {
   if (superAccess instanceof Response) return superAccess;
   const items = await dbAll(
     env,
-    `SELECT country, desktop_image_url, mobile_image_url, preview_flag_image_url, desktop_focus_x, desktop_focus_y, mobile_focus_x, mobile_focus_y, image_url, updated_at
+    `SELECT country, desktop_image_url, mobile_image_url, preview_flag_image_url, visual_profile_json, desktop_focus_x, desktop_focus_y, mobile_focus_x, mobile_focus_y, image_url, updated_at
      FROM country_backgrounds
      ORDER BY country ASC`,
     []
@@ -226,60 +311,100 @@ export async function onRequestPut({ env, request }) {
   const country = normalizeSongCountry(body?.country || "");
   if (!country) return err("Invalid country value", 400);
 
-  const desktopImageUrl = normalizePeriodImageValue(body?.desktop_image_url ?? body?.desktopImageUrl ?? body?.image_url ?? body?.imageUrl);
-  const mobileImageUrl = normalizePeriodImageValue(body?.mobile_image_url ?? body?.mobileImageUrl);
-  if (desktopImageUrl === null || mobileImageUrl === null) {
-    return err("Invalid image value. Use data:image..., absolute http(s) URL, or /relative/path", 400);
-  }
-
-  const desktopFocusX = clampFocus(body?.desktop_focus_x ?? body?.desktopFocusX);
-  const desktopFocusY = clampFocus(body?.desktop_focus_y ?? body?.desktopFocusY);
-  const mobileFocusX = clampFocus(body?.mobile_focus_x ?? body?.mobileFocusX);
-  const mobileFocusY = clampFocus(body?.mobile_focus_y ?? body?.mobileFocusY);
   const current = await fetchCountryBackground(env, country);
+  let profile = current?.visual_profile_json
+    ? normalizeVisualProfile(current.visual_profile_json)
+    : buildVisualProfileFromLegacyFields(current || {});
 
-  let previewFlagImageUrl = String(current?.preview_flag_image_url || "").trim();
-  const hasFlagPayload = (
-    Object.prototype.hasOwnProperty.call(body || {}, "preview_flag_image_url")
-    || Object.prototype.hasOwnProperty.call(body || {}, "previewFlagImageUrl")
-    || Object.prototype.hasOwnProperty.call(body || {}, "flag_image_url")
-    || Object.prototype.hasOwnProperty.call(body || {}, "flagImageUrl")
+  const hasVisualProfilePayload = (
+    Object.prototype.hasOwnProperty.call(body || {}, "visual_profile")
+    || Object.prototype.hasOwnProperty.call(body || {}, "visualProfile")
+    || Object.prototype.hasOwnProperty.call(body || {}, "visual_profile_json")
+    || Object.prototype.hasOwnProperty.call(body || {}, "visualProfileJson")
   );
-  if (hasFlagPayload) {
-    const parsedFlag = normalizeFlagImageValue(
-      body?.preview_flag_image_url
-      ?? body?.previewFlagImageUrl
-      ?? body?.flag_image_url
-      ?? body?.flagImageUrl
+
+  if (hasVisualProfilePayload) {
+    const parsed = sanitizeVisualProfile(
+      body?.visual_profile
+      ?? body?.visualProfile
+      ?? body?.visual_profile_json
+      ?? body?.visualProfileJson
     );
-    if (parsedFlag === null) {
-      return err("Invalid flag image value. Use data:image..., absolute http(s) URL, or /relative/path", 400);
+    if (!parsed.ok) return err(parsed.error || "Invalid visual profile", 400);
+    profile = parsed.value;
+  } else {
+    const desktopImageUrl = normalizePeriodImageValue(body?.desktop_image_url ?? body?.desktopImageUrl ?? body?.image_url ?? body?.imageUrl);
+    const mobileImageUrl = normalizePeriodImageValue(body?.mobile_image_url ?? body?.mobileImageUrl);
+    if (desktopImageUrl === null || mobileImageUrl === null) {
+      return err("Invalid image value. Use data:image..., absolute http(s) URL, or /relative/path", 400);
     }
-    previewFlagImageUrl = parsedFlag || "";
+
+    let previewFlagImageUrl = String(current?.preview_flag_image_url || "").trim();
+    const hasFlagPayload = (
+      Object.prototype.hasOwnProperty.call(body || {}, "preview_flag_image_url")
+      || Object.prototype.hasOwnProperty.call(body || {}, "previewFlagImageUrl")
+      || Object.prototype.hasOwnProperty.call(body || {}, "flag_image_url")
+      || Object.prototype.hasOwnProperty.call(body || {}, "flagImageUrl")
+    );
+    if (hasFlagPayload) {
+      const parsedFlag = normalizeFlagImageValue(
+        body?.preview_flag_image_url
+        ?? body?.previewFlagImageUrl
+        ?? body?.flag_image_url
+        ?? body?.flagImageUrl
+      );
+      if (parsedFlag === null) {
+        return err("Invalid flag image value. Use data:image..., absolute http(s) URL, or /relative/path", 400);
+      }
+      previewFlagImageUrl = parsedFlag || "";
+    }
+
+    const nextLegacyProfile = buildVisualProfileFromLegacyFields({
+      desktop_image_url: desktopImageUrl || current?.desktop_image_url || "",
+      mobile_image_url: mobileImageUrl || current?.mobile_image_url || "",
+      preview_flag_image_url: previewFlagImageUrl || "",
+      desktop_focus_x: body?.desktop_focus_x ?? body?.desktopFocusX ?? current?.desktop_focus_x,
+      desktop_focus_y: body?.desktop_focus_y ?? body?.desktopFocusY ?? current?.desktop_focus_y,
+      mobile_focus_x: body?.mobile_focus_x ?? body?.mobileFocusX ?? current?.mobile_focus_x,
+      mobile_focus_y: body?.mobile_focus_y ?? body?.mobileFocusY ?? current?.mobile_focus_y,
+    });
+    const parsed = sanitizeVisualProfile(nextLegacyProfile);
+    if (!parsed.ok) return err(parsed.error || "Invalid visual profile", 400);
+    profile = parsed.value;
   }
 
-  if (!desktopImageUrl && !mobileImageUrl && !previewFlagImageUrl) {
+  if (!hasVisualProfileContent(profile)) {
     await dbRun(env, `DELETE FROM country_backgrounds WHERE lower(country)=?`, [country]);
     await clearChunks(env, country, "desktop_image_url");
     await clearChunks(env, country, "mobile_image_url");
     await clearChunks(env, country, "preview_flag_image_url");
+    await clearChunks(env, country, "visual_profile_json");
     return json({ ok: true, deleted: true, country });
   }
 
-  const storedDesktopImageUrl = await writeChunkedValue(env, country, "desktop_image_url", desktopImageUrl);
-  const storedMobileImageUrl = await writeChunkedValue(env, country, "mobile_image_url", mobileImageUrl);
-  const storedPreviewFlagImageUrl = await writeChunkedValue(env, country, "preview_flag_image_url", previewFlagImageUrl);
+  const serializedProfile = serializeVisualProfile(profile);
+  const activeDefault = resolveVisualVariant(profile, {});
+  const defaultDesktopImageUrl = String(activeDefault?.desktop?.image_url || "").trim();
+  const defaultMobileImageUrl = String(activeDefault?.mobile?.image_url || "").trim();
+  const defaultSymbol = normalizeVisualSymbol(activeDefault?.symbol || {});
+  const defaultPreviewFlagImageUrl = String(defaultSymbol.long || defaultSymbol.long_mobile || defaultSymbol.square || "").trim();
+
+  const storedDesktopImageUrl = await writeChunkedValue(env, country, "desktop_image_url", defaultDesktopImageUrl);
+  const storedMobileImageUrl = await writeChunkedValue(env, country, "mobile_image_url", defaultMobileImageUrl);
+  const storedPreviewFlagImageUrl = await writeChunkedValue(env, country, "preview_flag_image_url", defaultPreviewFlagImageUrl);
+  const storedVisualProfileJson = await writeChunkedValue(env, country, "visual_profile_json", serializedProfile);
   const legacyImageUrl = storedDesktopImageUrl || storedMobileImageUrl;
 
   await dbRun(
     env,
     `INSERT INTO country_backgrounds (
-       country, desktop_image_url, mobile_image_url, preview_flag_image_url, desktop_focus_x, desktop_focus_y, mobile_focus_x, mobile_focus_y, image_url, updated_at, updated_by
-     ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, datetime('now'), ?)
+       country, desktop_image_url, mobile_image_url, preview_flag_image_url, visual_profile_json, desktop_focus_x, desktop_focus_y, mobile_focus_x, mobile_focus_y, image_url, updated_at, updated_by
+     ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, datetime('now'), ?)
      ON CONFLICT(country) DO UPDATE SET
        desktop_image_url = excluded.desktop_image_url,
        mobile_image_url = excluded.mobile_image_url,
        preview_flag_image_url = excluded.preview_flag_image_url,
+       visual_profile_json = excluded.visual_profile_json,
        desktop_focus_x = excluded.desktop_focus_x,
        desktop_focus_y = excluded.desktop_focus_y,
        mobile_focus_x = excluded.mobile_focus_x,
@@ -292,10 +417,11 @@ export async function onRequestPut({ env, request }) {
       storedDesktopImageUrl,
       storedMobileImageUrl,
       storedPreviewFlagImageUrl,
-      desktopFocusX,
-      desktopFocusY,
-      mobileFocusX,
-      mobileFocusY,
+      storedVisualProfileJson,
+      clampFocus(profile?.default?.desktop?.focus_x),
+      clampFocus(profile?.default?.desktop?.focus_y),
+      clampFocus(profile?.default?.mobile?.focus_x),
+      clampFocus(profile?.default?.mobile?.focus_y),
       legacyImageUrl,
       access.id,
     ]
@@ -316,5 +442,6 @@ export async function onRequestDelete({ env, request }) {
   await clearChunks(env, country, "desktop_image_url");
   await clearChunks(env, country, "mobile_image_url");
   await clearChunks(env, country, "preview_flag_image_url");
+  await clearChunks(env, country, "visual_profile_json");
   return json({ ok: true, deleted: true, country });
 }

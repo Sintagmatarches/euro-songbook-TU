@@ -43,9 +43,8 @@ const authRegisterPasswordConfirm = document.getElementById("authRegisterPasswor
 const authMsg = document.getElementById("authMsg");
 const doLogin = document.getElementById("doLogin");
 const doRegister = document.getElementById("doRegister");
-const localeSwitch = document.getElementById("localeSwitch");
 const localeSwitchMenu = document.getElementById("localeSwitchMenu");
-const localeSwitches = [localeSwitchMenu, localeSwitch].filter(Boolean);
+const localeSwitches = [localeSwitchMenu].filter(Boolean);
 
 const THEME_KEY = "ui_theme";
 const SUPPORTED_THEMES = ["dark", "white"];
@@ -62,10 +61,17 @@ const MOTION_MEDIUM_MS = 150;
 const MENU_DRAWER_MOTION_MS = 260;
 const MENU_BACKDROP_MOTION_MS = 180;
 const DIALOG_MOTION_MS = 200;
-const PAGE_CURTAIN_MOTION_MS = 180;
+const PAGE_CURTAIN_MOTION_MS = 320;
+const PAGE_ENTER_ACTIVATE_DELAY_MS = 70;
+const STAGED_REVEAL_MOTION_MS = 420;
+const STAGED_REVEAL_ACTIVATE_DELAY_MS = 90;
+const STAGED_REVEAL_STEP_MS = 52;
+const STAGED_REVEAL_MAX_INDEX = 16;
 const activeTransitions = new WeakMap();
 let pageEnterTimer = 0;
+let pageEnterActivateTimer = 0;
 let stagedRevealTimer = 0;
+let stagedRevealActivateTimer = 0;
 let pendingAdminRequestsCount = 0;
 let pendingAdminRequestsFetchedAt = 0;
 let pendingAdminRequestsUserKey = "";
@@ -100,7 +106,7 @@ const GLOBAL_WALLPAPER_ASSET_URLS = [
   "./picture/phone_wallpaper.jpg",
 ];
 let globalWallpaperAssetsPreloaded = false;
-const STAGED_REVEAL_SELECTOR = ".card, .songCard, .yt-card, .pill, .badge, .song-version-btn, .pager-shell .btn";
+const STAGED_REVEAL_SELECTOR = ".card, .songCard, .yt-card, .home-language-card, .home-country-card, .home-country-group-card, .request-section, .request-repeater, .ss_link_row, .ss_version_row, .ac_item, .ab-flag-range-row, .pill, .badge, .song-version-btn, .pager-shell .btn, .song-aux-panel, .song-tools-panel, .yt-chips, .ac-editor-optional-menu, .ig-drawer-header, .ig-drawer-group, .ig-drawer-link, .ig-drawer-button, .ig-drawer .user-chip-drawer";
 
 function safeStorageGet(key) {
   try {
@@ -240,18 +246,22 @@ function closeDialogAnimated(dialog) {
 function animateAppEnter(container) {
   if (!container || prefersReducedMotion()) return;
   clearTimeout(pageEnterTimer);
+  clearTimeout(pageEnterActivateTimer);
   container.classList.remove("page-enter", "page-enter-active");
   requestAnimationFrame(() => {
     container.classList.add("page-enter");
-    requestAnimationFrame(() => container.classList.add("page-enter-active"));
+    pageEnterActivateTimer = setTimeout(() => {
+      requestAnimationFrame(() => container.classList.add("page-enter-active"));
+    }, PAGE_ENTER_ACTIVATE_DELAY_MS);
   });
   pageEnterTimer = setTimeout(() => {
     container.classList.remove("page-enter", "page-enter-active");
-  }, motionDuration(PAGE_CURTAIN_MOTION_MS) + 60);
+  }, PAGE_ENTER_ACTIVATE_DELAY_MS + motionDuration(PAGE_CURTAIN_MOTION_MS) + 120);
 }
 
 function clearStagedReveal(container) {
   clearTimeout(stagedRevealTimer);
+  clearTimeout(stagedRevealActivateTimer);
   if (!container) return;
   container.classList.remove("stagger-ready");
   container.querySelectorAll(".stagger-item").forEach((node) => {
@@ -273,12 +283,22 @@ function animateStagedReveal(container) {
 
   nodes.forEach((node, index) => {
     node.classList.add("stagger-item");
-    node.style.setProperty("--stagger-index", String(Math.min(index, 16)));
+    node.style.setProperty("--stagger-index", String(Math.min(index, STAGED_REVEAL_MAX_INDEX)));
   });
 
-  requestAnimationFrame(() => container.classList.add("stagger-ready"));
-  stagedRevealTimer = setTimeout(() => clearStagedReveal(container), motionDuration(280) + 120);
+  stagedRevealActivateTimer = setTimeout(() => {
+    requestAnimationFrame(() => container.classList.add("stagger-ready"));
+  }, STAGED_REVEAL_ACTIVATE_DELAY_MS);
+  const lastDelayMs = Math.min(Math.max(nodes.length - 1, 0), STAGED_REVEAL_MAX_INDEX) * STAGED_REVEAL_STEP_MS;
+  stagedRevealTimer = setTimeout(
+    () => clearStagedReveal(container),
+    STAGED_REVEAL_ACTIVATE_DELAY_MS + lastDelayMs + motionDuration(STAGED_REVEAL_MOTION_MS) + 180
+  );
 }
+
+window.__applyStagedReveal = (container) => {
+  animateStagedReveal(container);
+};
 
 function resetSongPageBackgroundParallaxCache() {
   songPageBgParallaxMetrics = null;
@@ -801,6 +821,7 @@ function hasPermission(permission) {
 
 function hasAnyAdminAccess() {
   return hasPermission("songs.edit")
+    || hasPermission("songs.bulk_import")
     || hasPermission("proposals.review")
     || !!(state.user && state.user.role === "super_admin");
 }
@@ -1059,6 +1080,7 @@ function setMenuOpen(open) {
   if (open) {
     animateElementOpen(menuBackdrop);
     animateElementOpen(menuDrawer);
+    animateStagedReveal(menuDrawer);
     menuDrawer.setAttribute("aria-hidden", "false");
     document.body.classList.add("menu-open");
     return;
@@ -1078,13 +1100,14 @@ function setActiveNav() {
 
   const canSeeUser = !!state.user;
   const canEditSongs = hasPermission("songs.edit");
+  const canBulkImportSongs = hasPermission("songs.bulk_import");
   const canReviewRequests = hasPermission("proposals.review");
   const isSuperAdmin = !!(state.user && state.user.role === "super_admin");
   const canSeeAdmin = hasAnyAdminAccess();
 
   ["navFav", "mNavFav", "dNavFav", "navDrafts", "mNavDrafts", "dNavDrafts"].forEach((id) => document.getElementById(id)?.classList.toggle("hidden", !canSeeUser));
   ["navAdmin", "mNavAdmin", "dNavAdmin", "menuAdminGroup"].forEach((id) => document.getElementById(id)?.classList.toggle("hidden", !canSeeAdmin));
-  document.getElementById("dNavAdminContent")?.classList.toggle("hidden", !canEditSongs);
+  document.getElementById("dNavAdminContent")?.classList.toggle("hidden", !(canEditSongs || canBulkImportSongs));
   document.getElementById("dNavAdminRequests")?.classList.toggle("hidden", !canReviewRequests);
   document.getElementById("dNavAdminUsers")?.classList.toggle("hidden", !isSuperAdmin);
   menuSettingsGroup?.classList.remove("hidden");
@@ -1280,7 +1303,7 @@ doRegister?.addEventListener("click", async (e) => {
 });
 
 function shouldUseFastSearchMotion(route) {
-  return route?.name === "home" && String(route?.query?.searched || "") === "1";
+  return false;
 }
 
 router.on(async (route) => {

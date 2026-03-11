@@ -94,6 +94,7 @@ export async function onRequestGet({ env, request }) {
   const rawTheme = (url.searchParams.get("theme") || "").trim();
   const rawVerified = (url.searchParams.get("verified") || "").trim();
   const rawRecent = (url.searchParams.get("recent") || "").trim();
+  const rawMultiVersions = (url.searchParams.get("multi_versions") || "").trim();
   const lang = rawLang ? (normalizeSongLanguage(rawLang) || "") : "";
   const country = rawCountry ? (normalizeSongCountry(rawCountry) || "") : "";
   const period = rawPeriod ? (normalizeSongPeriod(rawPeriod) || "") : "";
@@ -104,6 +105,7 @@ export async function onRequestGet({ env, request }) {
   const theme = rawTheme;
   const verified = rawVerified === "1";
   const recent = rawRecent === "1";
+  const multiVersions = rawMultiVersions === "1";
   const page = clamp(url.searchParams.get("page"), 1, 9999);
   const per = SONGS_PAGE_SIZE;
 
@@ -111,7 +113,14 @@ export async function onRequestGet({ env, request }) {
     return json({ items: [], total: 0, page, pages: 1 });
   }
 
-  const filters = { lang, country, period, performer, year, region, event, theme, verified, recent };
+  const filters = { lang, country, period, performer, year, region, event, theme, verified, recent, multiVersions };
+  const versionCountsJoinSql = `
+    LEFT JOIN (
+      SELECT song_id, COUNT(*) AS version_rows
+      FROM song_versions
+      GROUP BY song_id
+    ) vc ON vc.song_id = s.id
+  `;
 
   if (q) {
     const tokens = q
@@ -127,9 +136,11 @@ export async function onRequestGet({ env, request }) {
     const fuzzyQuery = tokens.map((t) => `${t}*`).join(" OR ");
 
     const { where, params } = buildSqlFilters(filters, { includeAdminContent });
+    if (filters.multiVersions) where.push("coalesce(vc.version_rows, 0) >= 1");
     const fromSql = `
       FROM songs_fts
       JOIN songs s ON s.id = songs_fts.song_id
+      ${versionCountsJoinSql}
     `;
     const runFts = async (matchQuery, mode, titleMatchQuery) => {
       const whereWithMatch = [...where, "songs_fts MATCH ?"];
@@ -154,8 +165,10 @@ export async function onRequestGet({ env, request }) {
          `WITH matched AS (
            SELECT
              s.id AS song_id,
+             s.title,
              s.created_at,
              MIN(songs_fts.rowid) AS pick_rowid,
+             coalesce(vc.version_rows, 0) AS version_rows,
              ${SONG_DUPLICATE_KEY_SQL} AS duplicate_key
            ${fromSql}
            ${whereSql}
@@ -166,37 +179,22 @@ export async function onRequestGet({ env, request }) {
            ${fromSql}
            WHERE ${where.join(" AND ")} AND songs_fts MATCH ?
          ),
-         deduped AS (
-           SELECT
-             matched.duplicate_key,
-             MAX(datetime(matched.created_at)) AS picked_created_at,
-             MAX(CASE WHEN title_hits.song_id IS NULL THEN 0 ELSE 1 END) AS title_match
-           FROM matched
-           LEFT JOIN title_hits ON title_hits.song_id = matched.song_id
-           GROUP BY matched.duplicate_key
-         ),
-         picked_ids AS (
-           SELECT
-             matched.duplicate_key,
-             MIN(matched.song_id) AS song_id
-           FROM matched
-           JOIN deduped
-             ON deduped.duplicate_key = matched.duplicate_key
-            AND datetime(matched.created_at) = deduped.picked_created_at
-           GROUP BY matched.duplicate_key
-         ),
          ranked AS (
            SELECT
              matched.*,
-             deduped.title_match
-           FROM picked_ids
-           JOIN matched ON matched.song_id = picked_ids.song_id
-           JOIN deduped ON deduped.duplicate_key = picked_ids.duplicate_key
+             CASE WHEN title_hits.song_id IS NULL THEN 0 ELSE 1 END AS title_match,
+             ROW_NUMBER() OVER (
+               PARTITION BY matched.duplicate_key
+               ORDER BY matched.version_rows DESC, datetime(matched.created_at) DESC, matched.song_id ASC
+             ) AS duplicate_rank
+           FROM matched
+           LEFT JOIN title_hits ON title_hits.song_id = matched.song_id
          )
          SELECT
            s.id,
            s.title,
            s.subtitle,
+           s.lyrics,
            s.lang,
            s.country,
            s.period,
@@ -207,11 +205,13 @@ export async function onRequestGet({ env, request }) {
            s.year,
            s.created_at,
            snippet(songs_fts, 1, '', '', '...', 12) AS snippet,
-           ranked.title_match
+           ranked.title_match,
+           ranked.version_rows
          FROM ranked
          JOIN songs s ON s.id = ranked.song_id
          JOIN songs_fts ON songs_fts.rowid = ranked.pick_rowid
-         ORDER BY ranked.title_match DESC, datetime(s.created_at) DESC, s.title ASC
+         WHERE ranked.duplicate_rank = 1
+         ORDER BY ranked.title_match DESC, ranked.version_rows DESC, datetime(s.created_at) DESC, s.title ASC
           LIMIT ? OFFSET ?`,
         [...fullParams, titleMatchQuery, per, offset]
       );
@@ -260,12 +260,14 @@ export async function onRequestGet({ env, request }) {
   }
 
   const { where, params } = buildSqlFilters(filters, { includeAdminContent });
+  if (filters.multiVersions) where.push("coalesce(vc.version_rows, 0) >= 1");
   const whereSql = `WHERE ${where.join(" AND ")}`;
 
   const totalRow = await dbGet(
     env,
     `SELECT COUNT(DISTINCT ${SONG_DUPLICATE_KEY_SQL}) AS c
      FROM songs s
+     ${versionCountsJoinSql}
      ${whereSql}`,
     params
   );
@@ -279,33 +281,29 @@ export async function onRequestGet({ env, request }) {
     `WITH filtered AS (
        SELECT
          s.id,
+         s.title,
          s.created_at,
+         coalesce(vc.version_rows, 0) AS version_rows,
          ${SONG_DUPLICATE_KEY_SQL} AS duplicate_key
        FROM songs s
+       ${versionCountsJoinSql}
        ${whereSql}
      ),
-     deduped AS (
+     ranked AS (
        SELECT
-         duplicate_key,
-         MAX(datetime(created_at)) AS picked_created_at
+         filtered.*,
+         ROW_NUMBER() OVER (
+           PARTITION BY filtered.duplicate_key
+           ORDER BY filtered.version_rows DESC, datetime(filtered.created_at) DESC, filtered.id ASC
+         ) AS duplicate_rank
        FROM filtered
-       GROUP BY duplicate_key
-     ),
-     picked_ids AS (
-       SELECT
-         filtered.duplicate_key,
-         MIN(filtered.id) AS id
-       FROM filtered
-       JOIN deduped
-         ON deduped.duplicate_key = filtered.duplicate_key
-        AND datetime(filtered.created_at) = deduped.picked_created_at
-       GROUP BY filtered.duplicate_key
      )
-     SELECT s.id, s.title, s.subtitle, s.lang, s.country, s.period, s.region, s.event, s.theme, coalesce(s.verified, 0) AS verified, s.year, s.created_at,
-            '' AS snippet
-     FROM picked_ids
-     JOIN songs s ON s.id = picked_ids.id
-     ORDER BY ${recent ? "datetime(s.created_at) DESC, s.title ASC" : "s.title ASC"}
+     SELECT s.id, s.title, s.subtitle, s.lyrics, s.lang, s.country, s.period, s.region, s.event, s.theme, coalesce(s.verified, 0) AS verified, s.year, s.created_at,
+            '' AS snippet, ranked.version_rows
+     FROM ranked
+     JOIN songs s ON s.id = ranked.id
+     WHERE ranked.duplicate_rank = 1
+     ORDER BY ${filters.multiVersions ? "ranked.version_rows DESC, s.title ASC" : recent ? "datetime(s.created_at) DESC, s.title ASC" : "s.title ASC"}
      LIMIT ? OFFSET ?`,
     [...params, per, offset]
   );

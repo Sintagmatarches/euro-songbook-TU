@@ -14,6 +14,10 @@ import {
 } from "../../shared/admin-permissions.js";
 
 const ADMIN_ALL_PERMISSIONS = [...ADMIN_PERMISSION_VALUES];
+const FULL_SCHEMA_MARKER_KEY = "schema.full.version";
+const AUTH_SCHEMA_MARKER_KEY = "schema.auth.version";
+const FULL_SCHEMA_MARKER_VALUE = "2026-03-11-full-v3";
+const AUTH_SCHEMA_MARKER_VALUE = "2026-03-09-auth-v1";
 
 const SAMPLE_SONGS = [
   {
@@ -81,6 +85,53 @@ const SAMPLE_SONGS = [
 
 let schemaSeedWork = null;
 let schemaSeedReady = false;
+let authSchemaWork = null;
+let authSchemaReady = false;
+
+async function readSchemaMarker(env, key) {
+  try {
+    const row = await dbGet(env, `SELECT value FROM app_meta WHERE key=? LIMIT 1`, [key]);
+    return String(row?.value || "").trim();
+  } catch {
+    return "";
+  }
+}
+
+async function writeSchemaMarker(env, key, value) {
+  await dbRun(
+    env,
+    `CREATE TABLE IF NOT EXISTS app_meta (
+      key TEXT PRIMARY KEY,
+      value TEXT NOT NULL,
+      updated_at TEXT NOT NULL DEFAULT (datetime('now'))
+    )`
+  );
+  await dbRun(
+    env,
+    `INSERT INTO app_meta (key, value, updated_at)
+     VALUES (?, ?, datetime('now'))
+     ON CONFLICT(key) DO UPDATE SET
+       value=excluded.value,
+       updated_at=datetime('now')`,
+    [key, value]
+  );
+}
+
+async function hasFreshFullSchema(env) {
+  const marker = await readSchemaMarker(env, FULL_SCHEMA_MARKER_KEY);
+  if (marker !== FULL_SCHEMA_MARKER_VALUE) return false;
+  schemaSeedReady = true;
+  authSchemaReady = true;
+  return true;
+}
+
+async function hasFreshAuthSchema(env) {
+  if (await hasFreshFullSchema(env)) return true;
+  const marker = await readSchemaMarker(env, AUTH_SCHEMA_MARKER_KEY);
+  if (marker !== AUTH_SCHEMA_MARKER_VALUE) return false;
+  authSchemaReady = true;
+  return true;
+}
 
 async function ensureSongLinksVersionColumn(env) {
   try {
@@ -169,6 +220,7 @@ async function ensureCountryBackgroundColumns(env) {
     await addColumn("mobile_focus_y", "mobile_focus_y REAL NOT NULL DEFAULT 50");
     await addColumn("image_url", "image_url TEXT");
     await addColumn("preview_flag_image_url", "preview_flag_image_url TEXT");
+    await addColumn("visual_profile_json", "visual_profile_json TEXT");
 
     await dbRun(
       env,
@@ -554,6 +606,35 @@ async function ensureDraftTables(env) {
   await dbRun(env, `CREATE INDEX IF NOT EXISTS idx_draft_snapshots_version ON draft_snapshots(draft_id, version DESC)`);
 }
 
+async function ensureSongbookImportTables(env) {
+  await dbRun(
+    env,
+    `CREATE TABLE IF NOT EXISTS songbook_import_sessions (
+      id TEXT PRIMARY KEY,
+      created_by TEXT REFERENCES users(id) ON DELETE SET NULL,
+      updated_by TEXT REFERENCES users(id) ON DELETE SET NULL,
+      source_name TEXT,
+      source_type TEXT NOT NULL DEFAULT 'text',
+      import_lang TEXT,
+      import_country TEXT,
+      extraction_mode TEXT NOT NULL DEFAULT 'manual',
+      raw_text TEXT NOT NULL DEFAULT '',
+      editor_text TEXT NOT NULL DEFAULT '',
+      song_count INTEGER NOT NULL DEFAULT 0,
+      marker_count INTEGER NOT NULL DEFAULT 0,
+      request_ids_json TEXT NOT NULL DEFAULT '[]',
+      status TEXT NOT NULL CHECK(status IN ('draft','submitted')) DEFAULT 'draft',
+      created_at TEXT NOT NULL,
+      updated_at TEXT NOT NULL,
+      submitted_at TEXT
+    )`
+  );
+
+  await dbRun(env, `CREATE INDEX IF NOT EXISTS idx_songbook_import_sessions_updated ON songbook_import_sessions(updated_at DESC)`);
+  await dbRun(env, `CREATE INDEX IF NOT EXISTS idx_songbook_import_sessions_status ON songbook_import_sessions(status, updated_at DESC)`);
+  await dbRun(env, `CREATE INDEX IF NOT EXISTS idx_songbook_import_sessions_creator ON songbook_import_sessions(created_by, updated_at DESC)`);
+}
+
 export async function ensureSchema(env) {
   await dbRun(env, "PRAGMA foreign_keys = ON");
 
@@ -708,12 +789,14 @@ export async function ensureSchema(env) {
       mobile_focus_y REAL NOT NULL DEFAULT 50,
       image_url TEXT,
       preview_flag_image_url TEXT,
+      visual_profile_json TEXT,
       updated_at TEXT NOT NULL DEFAULT (datetime('now')),
       updated_by TEXT REFERENCES users(id) ON DELETE SET NULL
     )`
   );
   await ensureCountryBackgroundColumns(env);
   await ensureDraftTables(env);
+  await ensureSongbookImportTables(env);
 
   await dbRun(
     env,
@@ -755,6 +838,14 @@ export async function ensureSchema(env) {
 }
 
 export async function ensureAuthSchema(env) {
+  if (authSchemaReady || schemaSeedReady) return;
+  if (await hasFreshAuthSchema(env)) return;
+  if (authSchemaWork) {
+    await authSchemaWork;
+    return;
+  }
+
+  authSchemaWork = (async () => {
   await dbRun(env, "PRAGMA foreign_keys = ON");
 
   await dbRun(
@@ -782,6 +873,17 @@ export async function ensureAuthSchema(env) {
     )`
   );
   await dbRun(env, `CREATE INDEX IF NOT EXISTS idx_rate_limits_reset ON rate_limits(reset_at)`);
+    await writeSchemaMarker(env, AUTH_SCHEMA_MARKER_KEY, AUTH_SCHEMA_MARKER_VALUE);
+    authSchemaReady = true;
+  })();
+
+  try {
+    await authSchemaWork;
+  } catch (error) {
+    authSchemaWork = null;
+    authSchemaReady = false;
+    throw error;
+  }
 }
 
 async function upsertFTS(env, songId, title, lyrics) {
@@ -863,6 +965,7 @@ export async function ensureSeed(env) {
 
 export async function ensureSchemaAndSeed(env) {
   if (schemaSeedReady) return;
+  if (await hasFreshFullSchema(env)) return;
   if (schemaSeedWork) {
     await schemaSeedWork;
     return;
@@ -873,7 +976,10 @@ export async function ensureSchemaAndSeed(env) {
     await ensureSuperAdmin(env);
     await ensureUsersNicknameData(env);
     await ensureSeed(env);
+    await writeSchemaMarker(env, AUTH_SCHEMA_MARKER_KEY, AUTH_SCHEMA_MARKER_VALUE);
+    await writeSchemaMarker(env, FULL_SCHEMA_MARKER_KEY, FULL_SCHEMA_MARKER_VALUE);
     schemaSeedReady = true;
+    authSchemaReady = true;
   })();
 
   try {
@@ -881,6 +987,7 @@ export async function ensureSchemaAndSeed(env) {
   } catch (error) {
     schemaSeedWork = null;
     schemaSeedReady = false;
+    authSchemaReady = false;
     throw error;
   }
 }

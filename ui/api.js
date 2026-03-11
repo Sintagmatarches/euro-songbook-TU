@@ -346,6 +346,9 @@ export const api = {
   },
   async adminDeleteSong(id) { return req(`api/admin/songs/${encodeURIComponent(id)}`, { method:"DELETE" }); },
   async adminSong(id) { return req(`api/admin/songs/${encodeURIComponent(id)}`); },
+  async adminImportSongs(payload = {}) {
+    return req("api/admin/import", { method: "POST", body: JSON.stringify(payload) });
+  },
   async createRequest(payload) {
     return req("api/requests", { method: "POST", body: JSON.stringify(payload) });
   },
