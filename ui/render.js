@@ -6204,7 +6204,7 @@ function adminContentUI(data, params) {
         </div>
         <div class="actions ac-actions-row" style="margin-top:10px">
           <button class="btn" id="ac_search">${esc(t("common.search"))}</button>
-          <a class="btn ghost" id="ac_new" href="#/admin/editor?new=1">${esc(newSongLabel)}</a>
+          <a class="btn ghost" id="ac_new" href="#/request">${esc(newSongLabel)}</a>
         </div>
         <div class="sep"></div>
         <div class="list ac-list" id="ac_list">
@@ -6251,20 +6251,28 @@ function adminEditorUI(song = {}, options = {}) {
   const hideAdminTabs = options.hideAdminTabs === true;
   const hideSongActions = options.hideSongActions === true;
   const hideDeleteButton = options.hideDeleteButton === true;
+  const hideStatusToggle = options.hideStatusToggle === true;
+  const requestMode = options.requestMode === true;
   const canPublishDraft = options.canPublishDraft !== false;
+  const canCreateSongs = can("songs.create");
   const canEditSongs = can("songs.edit");
+  const canWriteSongs = isNew ? canCreateSongs : canEditSongs;
   const forceDraftId = String(options.forceDraftId || "").trim();
   const canToggleAdminContent = can("songs.view_admin_content");
   const canMarkVerified = isSuperAdmin();
   const initialAffiliation = resolveHistoricalAffiliationSelection(song.country || "");
-  const deleteBtn = (isNew || hideDeleteButton) ? "" : `<button class="btn danger" id="ac_delete" type="button">${esc(t("common.delete"))}</button>`;
-  const publishBtn = canPublishDraft ? `<button class="btn" id="ac_publish" type="button">${esc(draftUiText("publishSong"))}</button>` : "";
+  const showStatusInline = !hideStatusToggle && canWriteSongs;
+  const saveButtonLabel = String(options.saveButtonLabel || "").trim() || t("common.save");
+  const publishButtonLabel = String(options.publishButtonLabel || "").trim() || draftUiText("publishSong");
+  const subtitle = String(options.subtitleOverride || "").trim();
+  const deleteBtn = (!canEditSongs || isNew || hideDeleteButton) ? "" : `<button class="btn danger" id="ac_delete" type="button">${esc(t("common.delete"))}</button>`;
+  const publishBtn = canWriteSongs && canPublishDraft ? `<button class="btn" id="ac_publish" type="button">${esc(publishButtonLabel)}</button>` : "";
   const title = String(options.titleOverride || "").trim() || (isNew ? t("admin.newSong") : t("admin.editor"));
-  const footerActions = (hideSongActions || !canEditSongs)
+  const footerActions = (hideSongActions || (!canWriteSongs && !requestMode))
     ? ""
     : `
         <div class="actions request-actions ac-primary-actions" style="margin-top:12px">
-          <button class="btn primary" id="ac_save" type="button">${esc(t("common.save"))}</button>
+          <button class="btn primary" id="ac_save" type="button">${esc(saveButtonLabel)}</button>
           ${publishBtn}
         </div>
         ${deleteBtn ? `
@@ -6280,18 +6288,23 @@ function adminEditorUI(song = {}, options = {}) {
       ${hideAdminTabs ? "" : adminTabs("content")}
       <div class="card ac-editor-card ac-editor-page request-card song-edit-unified" id="ac_editor">
         <div class="row wrap gap ac-editor-head-row">
-          <div class="h2 ac-editor-head-title">${esc(title)}</div>
-          <div class="ac-editor-head-right">
-            <button class="ac-status-inline is-published" id="ac_status_toggle" type="button" aria-pressed="true" title="${esc(t("field.status"))}" aria-label="${esc(t("field.status"))}">
-              <span class="ac-status-dot" aria-hidden="true"></span>
-              <span class="ac-status-inline-text" id="ac_status_badge">${esc(t("status.published"))}</span>
-            </button>
+          <div class="ac-editor-head-copy">
+            <div class="h2 ac-editor-head-title">${esc(title)}</div>
+            ${subtitle ? `<div class="muted small ac-editor-head-subtitle">${esc(subtitle)}</div>` : ""}
           </div>
+          ${showStatusInline ? `
+            <div class="ac-editor-head-right">
+              <button class="ac-status-inline is-published" id="ac_status_toggle" type="button" aria-pressed="true" title="${esc(t("field.status"))}" aria-label="${esc(t("field.status"))}">
+                <span class="ac-status-dot" aria-hidden="true"></span>
+                <span class="ac-status-inline-text" id="ac_status_badge">${esc(t("status.published"))}</span>
+              </button>
+            </div>
+          ` : ``}
         </div>
         <div class="sep"></div>
         <input id="ac_id" class="hidden" value="${esc(song.id || "")}" />
         <input id="ac_force_draft_id" class="hidden" value="${esc(forceDraftId)}" />
-        <input id="ac_subtitle" class="hidden" value="" />
+        <input id="ac_request_mode" class="hidden" value="${requestMode ? "1" : "0"}" />
         <input id="ac_status_edit" class="hidden" value="published" />
         <div class="muted small song-decoding-progress ac-editor-decoding-top" id="ac_decoding">${esc(decodingProgressText(100))}</div>
         <div id="ac_draft_banner" class="ac-draft-banner hidden" role="status" aria-live="polite"></div>
@@ -6306,6 +6319,10 @@ function adminEditorUI(song = {}, options = {}) {
               <span class="ac-active-version-indicator" id="ac_active_variant_indicator" hidden></span>
             </div>
             <input id="ac_title" class="input" />
+          </label>
+          <label class="field ac-meta-subtitle-field">
+            <div class="fieldLabel">${esc(uiText("performer"))}</div>
+            <input id="ac_subtitle" class="input" />
           </label>
           <div class="ac-historical-grid ac-meta-locale-grid">
             <label class="field"><div class="fieldLabel">${esc(t("field.lang"))} *</div><select id="ac_lang" class="select">${selectOptions("language", "", uiText("selectLanguage"))}</select></label>
@@ -8579,12 +8596,55 @@ export async function render(route) {
 
   if (route.name === "request") {
     const isFragmentReport = String(route?.query?.fragment || "").trim().length > 0;
-    return { html: requestUI({ isFragmentReport }), ctx: { isFragmentReport } };
+    if (isFragmentReport) {
+      return { html: requestUI({ isFragmentReport: true }), ctx: { isFragmentReport: true } };
+    }
+    if (!state.user) {
+      return { html: requestUI({ isFragmentReport: false }), ctx: { isFragmentReport: false } };
+    }
+    const canCreateSongs = can("songs.create");
+    const titleText = uiLocale() === "ru"
+      ? "Добавить песню"
+      : uiLocale() === "uk"
+        ? "Додати пісню"
+        : uiLocale() === "et"
+          ? "Lisa laul"
+          : "Add song";
+    const subtitleText = uiLocale() === "ru"
+      ? "Используйте тот же полноценный редактор, что и для существующих песен: у администраторов запись создаётся сразу, у остальных уходит как заявка."
+      : uiLocale() === "uk"
+        ? "Використовуйте той самий повноцінний редактор, що й для наявних пісень: в адміністраторів запис створюється одразу, в інших іде як заявка."
+        : uiLocale() === "et"
+          ? "Kasuta sama tait redaktorit mis olemasolevate laulude jaoks: administraatoritel luuakse kirje kohe, teistel saadetakse taotlus."
+          : "Use the same full editor as for existing songs: admins create the record directly, everyone else sends a request.";
+    const submitText = uiLocale() === "ru"
+      ? "Отправить"
+      : uiLocale() === "uk"
+        ? "Надіслати"
+        : uiLocale() === "et"
+          ? "Saada"
+          : "Send";
+    const song = { status: canCreateSongs ? "published" : "draft", links: [], versions: [] };
+    return {
+      html: adminEditorUI(song, {
+        isNew: true,
+        hideAdminTabs: true,
+        hideDeleteButton: true,
+        requestMode: true,
+        canPublishDraft: canCreateSongs,
+        hideStatusToggle: !canCreateSongs,
+        titleOverride: titleText,
+        subtitleOverride: subtitleText,
+        saveButtonLabel: canCreateSongs ? t("common.save") : submitText,
+      }),
+      ctx: { isFragmentReport: false, requestMode: true, song, isNew: true },
+    };
   }
 
   if (route.name === "admin") {
     if (!isAdminLike()) return { html: adminAccessDeniedUI(), ctx: {} };
     const canEditSongs = can("songs.edit");
+    const canCreateSongs = can("songs.create");
     const canBulkImport = can("songs.bulk_import");
     const canContent = canEditSongs || canBulkImport;
     const canRequests = can("proposals.review");
@@ -8592,7 +8652,7 @@ export async function render(route) {
     const canUsers = isSuperAdmin();
     const allowedSections = [
       canContent ? "content" : "",
-      canEditSongs ? "editor" : "",
+      (canEditSongs || canCreateSongs) ? "editor" : "",
       canRequests ? "requests" : "",
       canBackgrounds ? "backgrounds" : "",
       canUsers ? "users" : "",
@@ -8675,6 +8735,7 @@ export async function render(route) {
     }
 
     if (section === "editor") {
+      const canCreateSongs = can("songs.create");
       let requestedDraftId = String(params.draft || "").trim();
       const requestedSongId = String(params.id || route.path?.[2] || "").trim();
       if (!requestedDraftId && requestedSongId) {
@@ -8698,6 +8759,12 @@ export async function render(route) {
       const fallbackSongId = String(draftData?.snapshot?.song_id || "").trim();
       const editorId = requestedSongId || fallbackSongId;
       const isNew = !editorId;
+      if (isNew && !canCreateSongs && !canEditSongs) {
+        return { html: `${adminTabs("content")}<div class="card"><div class="muted">${esc(t("admin.accessDeniedDesc"))}</div></div>`, ctx: { section } };
+      }
+      if (!isNew && !canEditSongs) {
+        return { html: `${adminTabs("content")}<div class="card"><div class="muted">${esc(t("admin.accessDeniedDesc"))}</div></div>`, ctx: { section } };
+      }
       let song = isNew
         ? { status: "draft", links: [], versions: [] }
         : await api.adminSong(editorId);
@@ -11127,7 +11194,7 @@ export function bind(route, ctx) {
     return;
   }
 
-  if (route.name === "request") {
+  if (route.name === "request" && ctx?.isFragmentReport) {
     const form = qs("requestForm");
     if (!form) return;
     const isFragmentReport = !!ctx?.isFragmentReport;
@@ -12338,10 +12405,11 @@ export function bind(route, ctx) {
     return;
   }
 
-  if ((route.name === "admin" && ctx.section === "editor") || route.name === "draft") {
+  if ((route.name === "admin" && ctx.section === "editor") || route.name === "draft" || (route.name === "request" && ctx?.requestMode)) {
     const editorRoot = qs("ac_editor");
     if (!editorRoot) return;
 
+    const isRequestMode = route.name === "request" && ctx?.requestMode === true;
     const initialSong = ctx.song || { status: "draft", links: [], versions: [] };
     fillContentEditor(initialSong);
     const editorHistoricalBinder = bindHistoricalSelectors({
@@ -12363,7 +12431,9 @@ export function bind(route, ctx) {
     const setDraftBannerVisible = (visible) => {
       if (!draftBanner) return;
       draftBanner.classList.toggle("hidden", !visible);
-      draftBanner.textContent = visible ? contentDraftDiffBannerText(hasPublishedBase) : "";
+      draftBanner.textContent = visible
+        ? (isRequestMode ? requestDraftBannerText() : contentDraftDiffBannerText(hasPublishedBase))
+        : "";
     };
 
     const computeDiffFromBase = (payload = collectContentPayload()) => {
@@ -14407,16 +14477,20 @@ export function bind(route, ctx) {
         const initialSaveText = acSaveBtn?.textContent || t("common.save");
         const initialPublishText = acPublishBtn?.textContent || "";
         const forcedStatus = String(options.forceStatus || "").trim().toLowerCase();
+        const canDirectCreate = !isRequestMode || can("songs.create");
         const progressText = forcedStatus === "published"
           ? (uiLocale() === "ru" ? "Публикация..." : uiLocale() === "uk" ? "Публікація..." : uiLocale() === "et" ? "Avaldamine..." : "Publishing...")
           : `${t("common.save")}...`;
+        const resolvedProgressText = (!canDirectCreate && isRequestMode && forcedStatus !== "published")
+          ? (uiLocale() === "ru" ? "Отправка..." : uiLocale() === "uk" ? "Надсилання..." : uiLocale() === "et" ? "Saatmine..." : "Sending...")
+          : progressText;
         savePending = true;
         [acSaveBtn, acPublishBtn].forEach((btn) => {
           if (!btn) return;
           btn.disabled = true;
           btn.classList.add("is-busy");
         });
-        if (currentBtn) currentBtn.textContent = progressText;
+        if (currentBtn) currentBtn.textContent = resolvedProgressText;
         try {
           acSyncActiveSourceFromEditor();
           const payload = collectContentPayload();
@@ -14448,6 +14522,25 @@ export function bind(route, ctx) {
           }
           if (acInlineError) acInlineError.classList.add("hidden");
           const oldIdentity = contentDraftIdentity();
+          if (!canDirectCreate && isRequestMode) {
+            const out = await api.createRequest(payload);
+            clearContentDraft(oldIdentity);
+            clearContentDraft("__new");
+            hasDiffFromBase = false;
+            setDraftBannerVisible(false);
+            showStatusOverlay(t("request.sent", { id: out.id }), "success");
+            savePending = false;
+            [acSaveBtn, acPublishBtn].forEach((btn) => {
+              if (!btn) return;
+              btn.disabled = false;
+              btn.classList.remove("is-busy");
+            });
+            if (acSaveBtn) acSaveBtn.textContent = initialSaveText;
+            if (acPublishBtn) acPublishBtn.textContent = initialPublishText;
+            const requestHash = makeHash("#/request", { refresh: String(Date.now()) }, ["refresh"]);
+            if (location.hash !== requestHash) location.hash = requestHash;
+            return;
+          }
           const out = await api.adminSaveSong(payload);
           const savedId = out.id || payload.id || "";
           const savedStatus = String(out?.status || payload.status || "published").trim().toLowerCase() === "draft"
@@ -14487,7 +14580,10 @@ export function bind(route, ctx) {
             if (location.hash !== editorHash) location.hash = editorHash;
           }
         } catch (e) {
-          showStatusOverlay(`${t("admin.saveError")}: ${e?.message || t("common.error")}`, "error");
+          const errorText = isRequestMode && !can("songs.create")
+            ? (e?.message || t("common.error"))
+            : `${t("admin.saveError")}: ${e?.message || t("common.error")}`;
+          showStatusOverlay(errorText, "error");
           savePending = false;
           [acSaveBtn, acPublishBtn].forEach((btn) => {
             if (!btn) return;
