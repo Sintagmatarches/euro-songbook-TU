@@ -64,8 +64,11 @@ export async function enforceRateLimit(env, request, options = {}) {
       { "Retry-After": String(retryAfter) }
     );
   } catch (cause) {
-    console.warn("[rate-limit] fail-open:", cause?.message || cause);
-    // Fail-open: auth/data APIs remain available if limiter storage fails.
-    return null;
+    console.warn("[rate-limit] fail-closed:", cause?.message || cause);
+    return json(
+      { error: "rate limit unavailable", retry_after: 60 },
+      503,
+      { "Retry-After": "60" }
+    );
   }
 }

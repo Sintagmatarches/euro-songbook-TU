@@ -1,39 +1,54 @@
 # euro-songbook (Cloudflare Pages + Pages Functions + D1)
 
-Это рабочий каркас «цифрового песенника»:
-- каталог песен, поиск по названию/тексту, фильтры
+Рабочий каркас цифрового песенника:
+- каталог песен, поиск по названию и тексту, фильтры
 - страница песни: текст, метаданные, версии, внешние ссылки
-- «ИИ‑кнопки»: формируют промпт и открывают ChatGPT в новой вкладке (без API)
-- авторизация (JWT), роли user/admin
+- AI-кнопки: формируют prompt и открывают ChatGPT в новой вкладке
+- авторизация на JWT
 - избранное
-- админка: добавление/редактирование/удаление, импорт JSON
+- черновики
+- админка: создание, редактирование, удаление, импорт
 
-## Что где
-- `/index.html`, `/app.js`, `/app.css` — фронтенд (без сборки, работает сразу)
-- `/functions/api/*` — backend (Cloudflare Pages Functions)
-- `/db/schema.sql` — схема D1 (SQLite + FTS5)
+## Структура
+- `/index.html`, `/app.js`, `/app.css` — фронтенд без сборки
+- `/functions/api/*` — backend на Pages Functions
+- `/db/schema.sql` — схема D1
 
-## Настройка в Cloudflare (коротко)
-Важно: **Direct Upload из панели (drag&drop) не работает с Pages Functions** — развертывай через Git или Wrangler.
+## Настройка Cloudflare
+Важно: direct upload из панели не подходит для Pages Functions. Используйте Git или Wrangler.
 
-1) Создай проект **Pages** и подключи репозиторий (или деплой через Wrangler).
-2) Build settings:
-   - Framework preset: None
-   - Build command: (пусто)
-   - Output directory: `/` (корень)
-3) Создай базу **D1** и добавь binding `DB` в Pages.
-4) Добавь переменные окружения в Pages:
-   - `JWT_SECRET` — длинная случайная строка
-
-## Первый запуск
-1) Открой сайт и нажми **Регистрация**.
-   - **Первый зарегистрированный пользователь становится админом автоматически.**
-2) При первом обращении к API схема D1 создаётся автоматически и добавляются 3 демо‑песни.
-
-## Импорт песен (админ)
-- POST `/api/admin/import`
-- Заголовок: `Authorization: Bearer <token>`
-- Body: JSON-массив песен. Пример в `db/sample_songs.json`.
+1. Создайте проект **Pages**.
+2. Build settings:
+   - Framework preset: `None`
+   - Build command: пусто
+   - Output directory: `/`
+3. Создайте базу **D1** и добавьте binding `DB`.
+4. Настройте переменные окружения в Pages:
+   - `JWT_SECRET` — длинный случайный секрет
+   - `SETUP_TOKEN` — секрет для setup endpoint, если он нужен
+   - `ENABLE_SETUP=0` — оставляйте выключенным после первичной инициализации
 
 ## Локальная разработка
-Можно через `wrangler pages dev .` (нужен Wrangler).
+Для локального запуска используйте `.dev.vars`. Пример лежит в `.dev.vars.example`.
+
+Запуск:
+
+```bash
+npx wrangler pages dev .
+```
+
+## Первый запуск
+1. Откройте сайт и зарегистрируйте пользователя.
+2. Роль пользователя берется только из базы данных. Автоматического назначения admin/super_admin по email или по порядку регистрации нет.
+3. При первом обращении к API схема D1 создается автоматически и добавляются demo-песни.
+
+## Импорт песен
+- POST `/api/admin/import`
+- Заголовок: `Authorization: Bearer <token>`
+- Body: JSON-объект вида `{ "items": [...] }`
+- Пример структуры песен: `db/sample_songs.json`
+
+## Безопасность конфигурации
+- Не храните production secrets в `wrangler.toml`.
+- Для production используйте Pages secrets (`wrangler pages secret put ...`).
+- Setup endpoint должен быть выключен (`ENABLE_SETUP=0`) после первичной настройки.

@@ -3,6 +3,7 @@ import { requireAuth, getUserAccess, dbRun } from "../_lib/db.js";
 import { ensureSchemaAndSeed } from "../_lib/schema.js";
 import { normalizeSongCatalogInput } from "../../shared/song-catalogs.js";
 import { syncSongSearchIndex } from "../_lib/song-search.mjs";
+import { sanitizeSongLinks } from "../_lib/link-safety.js";
 
 function normStr(v) {
   const value = (v ?? "").toString().trim();
@@ -89,6 +90,12 @@ export async function onRequestPost({ env, request }) {
   const access = await getUserAccess(env, auth.sub);
   if (!access) return err("Unauthorized", 401);
   const body = await readJSON(request);
+  let safeLinks = [];
+  try {
+    safeLinks = sanitizeSongLinks(body?.links, { fieldName: "links" });
+  } catch (cause) {
+    return err(String(cause?.message || "invalid links"), 400);
+  }
   const catalog = normalizeSongCatalogInput(body || {});
   if (!catalog.ok) return err(catalog.error, 400);
 
@@ -136,7 +143,7 @@ export async function onRequestPost({ env, request }) {
       subtitle: body.subtitle,
       lyrics: body.lyrics,
     });
-    await replaceLinks(env, id, body.links);
+    await replaceLinks(env, id, safeLinks);
     await replaceVersions(env, id, body.versions);
     return json({ id, status: "published", mode: "published" });
   }
@@ -166,7 +173,7 @@ export async function onRequestPost({ env, request }) {
       String(body.lyrics ?? ""),
       JSON.stringify(body.lyrics_meta_json || body.lyrics_meta || {}),
       JSON.stringify(normArray(body.tags)),
-      JSON.stringify(normArray(body.links)),
+      JSON.stringify(safeLinks),
       JSON.stringify(normArray(body.versions)),
     ]
   );

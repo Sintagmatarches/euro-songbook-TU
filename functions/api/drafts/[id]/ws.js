@@ -40,14 +40,38 @@ function extractToken(request) {
   const url = new URL(request.url);
   const fromQuery = String(url.searchParams.get("token") || "").trim();
   if (fromQuery) return fromQuery;
+  const protocols = String(request.headers.get("sec-websocket-protocol") || "")
+    .split(",")
+    .map((value) => String(value || "").trim())
+    .filter(Boolean);
+  const authProtocolIndex = protocols.indexOf("songbook-auth");
+  if (authProtocolIndex >= 0 && protocols[authProtocolIndex + 1]) {
+    return protocols[authProtocolIndex + 1];
+  }
   const authHeader = String(request.headers.get("authorization") || "");
   if (!authHeader.toLowerCase().startsWith("bearer ")) return "";
   return authHeader.slice(7).trim();
 }
 
+function requestedProtocols(request) {
+  return String(request.headers.get("sec-websocket-protocol") || "")
+    .split(",")
+    .map((value) => String(value || "").trim())
+    .filter(Boolean);
+}
+
+function websocketResponseHeaders(request) {
+  const protocols = requestedProtocols(request);
+  return protocols.includes("songbook-auth")
+    ? { "Sec-WebSocket-Protocol": "songbook-auth" }
+    : {};
+}
+
 async function getAccessWithToken(env, request, draftId) {
   const token = extractToken(request);
-  if (!token) return null;
+  if (!token) {
+    return requireDraftAccess(env, request, draftId);
+  }
   const payload = await verifyJWT(env.JWT_SECRET, token);
   if (!payload?.sub) return null;
   const headers = new Headers(request.headers);
@@ -197,7 +221,11 @@ export class DraftRoomDO {
       onDisconnect: disconnect,
     });
 
-    return new Response(null, { status: 101, webSocket: client });
+    return new Response(null, {
+      status: 101,
+      webSocket: client,
+      headers: websocketResponseHeaders(request),
+    });
   }
 }
 
@@ -250,6 +278,10 @@ export async function onRequestGet({ env, request, params }) {
     onDisconnect: close,
   });
 
-  return new Response(null, { status: 101, webSocket: client });
+  return new Response(null, {
+    status: 101,
+    webSocket: client,
+    headers: websocketResponseHeaders(request),
+  });
 }
 

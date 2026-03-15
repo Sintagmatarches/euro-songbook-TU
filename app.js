@@ -124,11 +124,6 @@ function safeStorageSet(key, value) {
   } catch {}
 }
 
-function readAuthToken() {
-  if (typeof api?.getToken === "function") return api.getToken();
-  return safeStorageGet("token");
-}
-
 function hideAppBootSplash() {
   if (!appBootSplash || appBootSplashHidden) return;
   appBootSplashHidden = true;
@@ -1150,12 +1145,6 @@ function setActiveNav() {
 }
 
 async function refreshMe() {
-  const token = readAuthToken();
-  if (!token) {
-    state.user = null;
-    setActiveNav();
-    return;
-  }
   try {
     state.user = await api.me();
   } catch {
@@ -1224,7 +1213,7 @@ window.addEventListener("keydown", (e) => {
   if (e.key === "Escape") setMenuOpen(false);
 });
 
-btnLogin?.addEventListener("click", () => {
+function openAuthDialog(mode = "login") {
   if (authMsg) authMsg.textContent = "";
   if (authLoginNickname) authLoginNickname.value = state.lastNickname || "";
   if (authLoginPassword) authLoginPassword.value = "";
@@ -1232,9 +1221,13 @@ btnLogin?.addEventListener("click", () => {
   if (authRegisterEmail) authRegisterEmail.value = "";
   if (authRegisterPassword) authRegisterPassword.value = "";
   if (authRegisterPasswordConfirm) authRegisterPasswordConfirm.value = "";
-  setAuthDialogMode("login");
+  setAuthDialogMode(mode === "register" ? "register" : "login");
   openDialogAnimated(dlgAuth);
   startAuthViewportSync();
+}
+
+btnLogin?.addEventListener("click", () => {
+  openAuthDialog("login");
 });
 authModeLogin?.addEventListener("click", () => setAuthDialogMode("login"));
 authModeRegister?.addEventListener("click", () => setAuthDialogMode("register"));
@@ -1262,6 +1255,13 @@ dlgAuth?.addEventListener("close", () => {
   clearPendingTransition(dlgAuth);
   dlgAuth.classList.remove("is-open", "is-closing");
   stopAuthViewportSync();
+});
+document.addEventListener("click", (event) => {
+  const trigger = event.target instanceof HTMLElement ? event.target.closest("[data-auth-dialog]") : null;
+  if (!trigger) return;
+  event.preventDefault();
+  const mode = String(trigger.getAttribute("data-auth-dialog") || "login").trim().toLowerCase();
+  openAuthDialog(mode);
 });
 
 async function doLogout() {

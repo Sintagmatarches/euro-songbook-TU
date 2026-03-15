@@ -1,0 +1,3 @@
+JWT_SECRET=replace_me_with_long_random_secret_before_production
+SETUP_TOKEN=replace_me_with_setup_token_if_needed
+ENABLE_SETUP=0

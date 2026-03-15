@@ -1,6 +1,6 @@
 import { json, err, readJSON } from "../../_lib/utils.js";
 import { dbGet } from "../../_lib/db.js";
-import { signJWT } from "../../_lib/auth.js";
+import { signJWT, buildAuthCookie } from "../../_lib/auth.js";
 import { verifyPassword } from "../../_lib/password.js";
 import { ensureSchemaAndSeed, ensureAuthSchema } from "../../_lib/schema.js";
 import { enforceRateLimit } from "../../_lib/rate-limit.js";
@@ -67,5 +67,9 @@ export async function onRequestPost({ env, request }) {
     role,
   }, 60 * 60 * 24 * 14);
 
-  return json({ token, role, nickname: String(user.nickname || "") });
+  return json(
+    { role, nickname: String(user.nickname || "") },
+    200,
+    { "Set-Cookie": buildAuthCookie(request, token, 60 * 60 * 24 * 14) }
+  );
 }

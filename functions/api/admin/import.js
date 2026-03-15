@@ -3,6 +3,7 @@ import { requirePermission, assertScopeForLang, dbRun, dbGet, canViewAdminConten
 import { ensureSchemaAndSeed } from "../../_lib/schema.js";
 import { normalizeSongCatalogInput } from "../../../shared/song-catalogs.js";
 import { syncSongSearchIndex } from "../../_lib/song-search.mjs";
+import { sanitizeSongLinks } from "../../_lib/link-safety.js";
 
 function normStr(v){ v = (v ?? "").toString().trim(); return v || null; }
 function normLinkVersion(v){ v = (v ?? "").toString().trim(); return v || null; }
@@ -20,6 +21,12 @@ export async function onRequestPost({ env, request }){
   let inserted = 0;
   for(let index = 0; index < items.length; index += 1){
     const it = items[index];
+    let safeLinks = [];
+    try {
+      safeLinks = sanitizeSongLinks(it?.links, { fieldName: `items[${index}].links` });
+    } catch (cause) {
+      return err(String(cause?.message || "invalid links"), 400);
+    }
     const catalog = normalizeSongCatalogInput(it || {});
     if(!it?.title || !it?.lyrics) continue;
     if (!catalog.ok) return err(`items[${index}]: ${catalog.error}`, 400);
@@ -112,7 +119,7 @@ export async function onRequestPost({ env, request }){
     if(Array.isArray(it.links)){
       await dbRun(env, `DELETE FROM song_links WHERE song_id=?`, [id]);
       let order = 0;
-      for(const l of it.links){
+      for(const l of safeLinks){
         if(!l?.url) continue;
         await dbRun(env, `INSERT INTO song_links (id,song_id,title,url,kind,version_id,sort_order) VALUES (?,?,?,?,?,?,?)`,
           [makeId("l"), id, normStr(l.title), String(l.url), normStr(l.kind), normLinkVersion(l.version_id ?? l.versionId), order++]

@@ -26,8 +26,8 @@ export async function dbRun(env, sql, params=[]){
 }
 
 export async function requireAuth(env, req){
-  const { verifyJWT, getBearer } = await import("./auth.js");
-  const token = getBearer(req);
+  const { verifyJWT, getAuthToken } = await import("./auth.js");
+  const token = getAuthToken(req);
   if(!token) return err("Unauthorized", 401);
   const secret = env.JWT_SECRET;
   if (!isSafeJwtSecret(secret)) return err("Server misconfigured (JWT_SECRET)", 500);
@@ -44,10 +44,7 @@ export async function getUserAccess(env, userId){
   const scopeRows = await dbAll(env, `SELECT lang FROM user_scope_languages WHERE user_id=? ORDER BY lang ASC`, [userId]);
   const permissions = permsRows.map((r) => r.permission);
   const scopeLanguages = scopeRows.map((r) => String(r.lang || "").trim()).filter(Boolean);
-  const superAdminEmail = String(env.SUPER_ADMIN_EMAIL || "").trim().toLowerCase();
-  const isConfiguredSuper = superAdminEmail && String(user.email || "").toLowerCase() === superAdminEmail;
-  const role = user.role === "super_admin" || isConfiguredSuper ? "super_admin" : user.role;
-  return { ...user, role, permissions, scopeLanguages };
+  return { ...user, permissions, scopeLanguages };
 }
 
 function isSuperAdminRole(role){
@@ -96,8 +93,8 @@ export async function requireSuperAdmin(env, req){
 
 export async function getOptionalUserAccess(env, req){
   try {
-    const { verifyJWT, getBearer } = await import("./auth.js");
-    const token = getBearer(req);
+    const { verifyJWT, getAuthToken } = await import("./auth.js");
+    const token = getAuthToken(req);
     if(!token) return null;
     const secret = env.JWT_SECRET;
     if (!isSafeJwtSecret(secret)) return null;

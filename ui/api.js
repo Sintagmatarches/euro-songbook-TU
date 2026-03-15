@@ -6,6 +6,7 @@ import { state } from "./state.js";
 const ROOT = new URL("../", import.meta.url);
 const GET_CACHE_TTL_MS = 60_000;
 const PERSISTENT_GET_CACHE_KEY = "songbook_api_get_cache_v2";
+const AUTH_CACHE_SCOPE_KEY = "songbook_auth_cache_scope";
 const PERSISTENT_GET_CACHE_MAX_ENTRIES = 24;
 const PERSISTENT_GET_CACHE_MAX_BYTES = 1_500_000;
 const PERSISTENT_GET_CACHE_MAX_AGE_MS = 21 * 24 * 60 * 60 * 1000;
@@ -98,6 +99,20 @@ function safeStorageSet(key, value) {
 function safeStorageRemove(key) {
   try {
     localStorage.removeItem(key);
+  } catch {}
+}
+
+function safeSessionStorageGet(key) {
+  try {
+    return sessionStorage.getItem(key);
+  } catch {
+    return null;
+  }
+}
+
+function safeSessionStorageSet(key, value) {
+  try {
+    sessionStorage.setItem(key, value);
   } catch {}
 }
 
@@ -196,30 +211,40 @@ function clearPersistentGetCacheByPrefix(prefix = "") {
   if (changed) writePersistentGetCacheBucket(bucket);
 }
 
-let volatileAuthToken = safeStorageGet("token") || "";
-
-function readAuthToken() {
-  const persisted = safeStorageGet("token") || "";
-  if (persisted) {
-    volatileAuthToken = persisted;
-    return persisted;
-  }
-  return volatileAuthToken || "";
+function nextAuthCacheScope(prefix = "anon") {
+  return `${prefix}:${Date.now().toString(36)}:${Math.random().toString(36).slice(2, 10)}`;
 }
 
-function writeAuthToken(token) {
-  const value = String(token || "").trim();
-  volatileAuthToken = value;
-  if (value) safeStorageSet("token", value);
-  else safeStorageRemove("token");
+function getAuthCacheScope() {
+  const existing = safeSessionStorageGet(AUTH_CACHE_SCOPE_KEY);
+  if (existing) return existing;
+  const created = nextAuthCacheScope("anon");
+  safeSessionStorageSet(AUTH_CACHE_SCOPE_KEY, created);
+  return created;
+}
+
+function rotateAuthCacheScope(prefix = "auth") {
+  const next = nextAuthCacheScope(prefix);
+  safeSessionStorageSet(AUTH_CACHE_SCOPE_KEY, next);
+  return next;
+}
+
+function isSessionScopedPath(path = "") {
+  const clean = String(path || "").replace(/^\//, "").toLowerCase();
+  return clean === "api/me"
+    || clean.startsWith("api/favorites")
+    || clean.startsWith("api/admin/")
+    || clean.startsWith("api/drafts")
+    || clean.startsWith("api/requests")
+    || clean.startsWith("api/auth/");
 }
 
 async function req(path, opts = {}) {
   const method = (opts.method || "GET").toUpperCase();
   const absoluteUrl = u(path);
-  const token = readAuthToken();
   const canUseCache = method === "GET" && !opts.noCache;
-  const key = canUseCache ? `${token}:${absoluteUrl}` : "";
+  const sessionScoped = isSessionScopedPath(path);
+  const key = canUseCache ? `${sessionScoped ? getAuthCacheScope() : "public"}:${absoluteUrl}` : "";
   if (canUseCache) {
     const cached = getCache.get(key);
     if (cached && cached.expiresAt > Date.now()) {
@@ -230,17 +255,17 @@ async function req(path, opts = {}) {
   const headers = new Headers(opts.headers || {});
   headers.set("Accept", "application/json");
   if (opts.body && !headers.has("Content-Type")) headers.set("Content-Type", "application/json");
-  if (token) headers.set("Authorization", `Bearer ${token}`);
   let res;
   try {
     res = await fetch(absoluteUrl, {
       ...opts,
       headers,
       method,
+      credentials: opts.credentials || "same-origin",
       cache: canUseCache ? (opts.cache || "default") : "no-store",
     });
   } catch (error) {
-    if (canUseCache) {
+    if (canUseCache && !sessionScoped) {
       const persistent = readPersistentGetCacheEntry(key);
       if (persistent) {
         const fallbackData = cloneJsonLike(persistent.data);
@@ -269,12 +294,14 @@ async function req(path, opts = {}) {
       expiresAt: Date.now() + GET_CACHE_TTL_MS,
       data: cloneJsonLike(data),
     });
-    rememberPersistentGetCacheEntry(key, data);
+    if (!sessionScoped) rememberPersistentGetCacheEntry(key, data);
   } else {
     getCache.clear();
   }
   return data;
 }
+
+safeStorageRemove("token");
 
 export const api = {
   async songs(params = {}) {
@@ -306,7 +333,9 @@ export const api = {
         password,
       }),
     });
-    writeAuthToken(data.token);
+    safeStorageRemove("token");
+    rotateAuthCacheScope("auth");
+    getCache.clear();
     return data;
   },
   async register(nickname, email, password, passwordConfirm) {
@@ -314,17 +343,20 @@ export const api = {
       method: "POST",
       body: JSON.stringify({ nickname, email, password, password_confirm: passwordConfirm }),
     });
-    writeAuthToken(data.token);
+    safeStorageRemove("token");
+    rotateAuthCacheScope("auth");
+    getCache.clear();
     return data;
   },
   async logout() {
-    const token = readAuthToken();
-    if (token) clearPersistentGetCacheByPrefix(`${token}:`);
-    writeAuthToken("");
+    await req("api/auth/logout", { method: "POST" });
+    safeStorageRemove("token");
+    rotateAuthCacheScope("anon");
+    clearPersistentGetCacheByPrefix("");
     getCache.clear();
     state.user = null;
   },
-  getToken() { return readAuthToken(); },
+  getToken() { return ""; },
   async me() { return req("api/me"); },
 
   async favorites() { return req("api/favorites"); },
@@ -429,14 +461,13 @@ export const api = {
         body: JSON.stringify(payload || {}),
       });
     }
-    const token = readAuthToken();
     const headers = new Headers({ Accept: "application/json", "Content-Type": "application/json" });
-    if (token) headers.set("Authorization", `Bearer ${token}`);
     const res = await fetch(u(`api/drafts/${encodeURIComponent(id)}/autosave`), {
       method,
       headers,
       body: JSON.stringify(payload || {}),
       keepalive: true,
+      credentials: "same-origin",
     });
     const text = await res.text();
     let data = null;
@@ -461,9 +492,11 @@ export const api = {
     return req(`api/drafts/${encodeURIComponent(id)}/history`, { noCache: true });
   },
   draftWsUrl(id) {
-    const token = readAuthToken();
-    const relative = `api/drafts/${encodeURIComponent(id)}/ws?token=${encodeURIComponent(token)}`;
+    const relative = `api/drafts/${encodeURIComponent(id)}/ws`;
     const absolute = u(relative);
     return absolute.replace(/^http:/i, "ws:").replace(/^https:/i, "wss:");
+  },
+  draftWsProtocols() {
+    return [];
   },
 };

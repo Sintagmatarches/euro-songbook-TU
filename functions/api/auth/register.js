@@ -1,7 +1,7 @@
 import { json, err, readJSON, makeId } from "../../_lib/utils.js";
 import { dbRun, dbGet } from "../../_lib/db.js";
 import { hashPassword } from "../../_lib/password.js";
-import { signJWT } from "../../_lib/auth.js";
+import { signJWT, buildAuthCookie } from "../../_lib/auth.js";
 import { ensureSchemaAndSeed, ensureAuthSchema } from "../../_lib/schema.js";
 import { enforceRateLimit } from "../../_lib/rate-limit.js";
 import { getUsersTableProfile, buildUserInsertStatement } from "../../_lib/user-password-store.js";
@@ -89,7 +89,11 @@ export async function onRequestPost({ env, request }){
     const userRole = createdUser?.role ?? role;
 
     const token = await signJWT(env.JWT_SECRET, { sub: userId, email, nickname, role: userRole }, 60*60*24*14);
-    return json({ token, role: userRole, nickname });
+    return json(
+      { role: userRole, nickname },
+      200,
+      { "Set-Cookie": buildAuthCookie(request, token, 60 * 60 * 24 * 14) }
+    );
   } catch (cause) {
     console.error("[auth/register] failed:", cause);
     return err("registration temporarily unavailable", 500, { code: "auth_internal" });

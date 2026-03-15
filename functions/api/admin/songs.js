@@ -3,6 +3,7 @@ import { requirePermission, assertScopeForLang, dbRun, dbGet, dbAll, canViewAdmi
 import { ensureSchemaAndSeed } from "../../_lib/schema.js";
 import { normalizeSongCatalogInput, normalizeSongCountry } from "../../../shared/song-catalogs.js";
 import { syncSongSearchIndex } from "../../_lib/song-search.mjs";
+import { sanitizeSongLinks } from "../../_lib/link-safety.js";
 
 function normStr(v){ v = (v ?? "").toString().trim(); return v || null; }
 function normLinkVersion(v){ v = (v ?? "").toString().trim(); return v || null; }
@@ -135,6 +136,12 @@ export async function onRequestGet({ env, request }){
 export async function onRequestPost({ env, request }){
   await ensureSchemaAndSeed(env);
   const body = await readJSON(request);
+  let safeLinks = [];
+  try {
+    safeLinks = sanitizeSongLinks(body?.links, { fieldName: "links" });
+  } catch (cause) {
+    return err(String(cause?.message || "invalid links"), 400);
+  }
   const catalog = normalizeSongCatalogInput(body || {});
   if (!catalog.ok) return err(catalog.error, 400);
   if(!body?.title || !catalog.value.lang || !catalog.value.country || !body?.lyrics) {
@@ -144,7 +151,7 @@ export async function onRequestPost({ env, request }){
   const access = await requirePermission(env, request, "songs.create", { lang: catalog.value.lang });
   if (access instanceof Response) return access;
   const isAdminContent = toAdminContentFlag(body?.is_admin_content ?? body?.isAdminContent);
-  if(Array.isArray(body.links) && body.links.length > 0) {
+  if(safeLinks.length > 0) {
     const linkPerm = await requirePermission(env, request, "links.manage", { lang: catalog.value.lang });
     if (linkPerm instanceof Response) return linkPerm;
   }
@@ -199,7 +206,7 @@ export async function onRequestPost({ env, request }){
     subtitle: body.subtitle,
     lyrics: body.lyrics,
   });
-  await replaceLinks(env, id, body.links);
+  await replaceLinks(env, id, safeLinks);
   await replaceVersions(env, id, body.versions);
   return json({
     id,

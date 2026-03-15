@@ -1113,10 +1113,22 @@ function listenHostText(url) {
   }
 }
 
+function safeExternalUrl(url) {
+  const raw = String(url || "").trim();
+  if (!raw) return "";
+  try {
+    const parsed = new URL(raw);
+    if (parsed.protocol !== "http:" && parsed.protocol !== "https:") return "";
+    return parsed.toString();
+  } catch {
+    return "";
+  }
+}
+
 function collectListenServiceItems(song, links) {
   const targets = resolveListenServiceTargets(song, links);
   return LISTEN_SERVICES.map((service) => {
-    const url = targets[service.id] || "";
+    const url = safeExternalUrl(targets[service.id] || "");
     if (!url) return null;
     return {
       ...service,
@@ -1129,7 +1141,7 @@ function collectListenServiceItems(song, links) {
 function collectListenServiceItemsForVersion(song, links, version = null) {
   const targets = resolveListenServiceTargetsForVersion(song, links, version);
   return LISTEN_SERVICES.map((service) => {
-    const url = targets[service.id] || "";
+    const url = safeExternalUrl(targets[service.id] || "");
     if (!url) return null;
     return {
       ...service,
@@ -3394,7 +3406,39 @@ function draftInvitationStatusLabel(status = "") {
   return draftUiText("invitationPending");
 }
 
+function renderGuestAuthActions() {
+  return `
+    <div class="actions" style="margin-top:12px">
+      <button class="btn primary" type="button" data-auth-dialog="login">${esc(t("auth.login"))}</button>
+      <button class="btn ghost" type="button" data-auth-dialog="register">${esc(t("auth.doRegister"))}</button>
+    </div>
+  `;
+}
+
+function draftsGuestDescription() {
+  return uiLocale() === "ru"
+    ? "Чтобы видеть свои черновики и приглашения, нужно войти в аккаунт."
+    : uiLocale() === "uk"
+      ? "Щоб бачити свої чернетки та запрошення, потрібно увійти в акаунт."
+      : uiLocale() === "et"
+        ? "Mustandite ja kutsete nägemiseks tuleb sisse logida."
+        : "Log in to view your drafts and invitations.";
+}
+
 function draftsHubUI(draftsPayload = {}, invitationsPayload = {}) {
+  if (!state.user) {
+    return `
+      <section class="yt-main">
+        <div class="card">
+          <div class="h2">${esc(draftUiText("myDrafts"))}</div>
+          <div class="sep"></div>
+          <div class="muted">${esc(draftsGuestDescription())}</div>
+          ${renderGuestAuthActions()}
+        </div>
+      </section>
+      <div class="yt-mobile-spacer"></div>
+    `;
+  }
   const drafts = (Array.isArray(draftsPayload?.items) ? draftsPayload.items : [])
     .filter((item) => String(item?.status || "draft").trim().toLowerCase() === "draft");
   const incoming = Array.isArray(invitationsPayload?.items) ? invitationsPayload.items : [];
@@ -5050,7 +5094,14 @@ function songDetailsUI(song, extra = {}) {
 
 function favoritesUI(data, options = {}) {
   if (!state.user) {
-    return `<div class="card"><div class="h1">${esc(t("favorites.needLoginTitle"))}</div><div class="sep"></div><div class="muted">${esc(t("favorites.needLoginDesc"))}</div></div>`;
+    return `
+      <div class="card">
+        <div class="h1">${esc(t("favorites.needLoginTitle"))}</div>
+        <div class="sep"></div>
+        <div class="muted">${esc(t("favorites.needLoginDesc"))}</div>
+        ${renderGuestAuthActions()}
+      </div>
+    `;
   }
   const items = data?.items || [];
   const backgroundsByCountry = options.backgroundsByCountry instanceof Map ? options.backgroundsByCountry : new Map();
@@ -5081,7 +5132,14 @@ function requestUI(options = {}) {
         : uiLocale() === "et"
           ? "Lisa laul"
           : "Add song";
-    return `<div class="card"><div class="h1">${esc(notLoggedTitle)}</div><div class="sep"></div><div class="muted">${esc(t("request.needLogin"))}</div></div>`;
+    return `
+      <div class="card">
+        <div class="h1">${esc(notLoggedTitle)}</div>
+        <div class="sep"></div>
+        <div class="muted">${esc(t("request.needLogin"))}</div>
+        ${renderGuestAuthActions()}
+      </div>
+    `;
   }
   const titleText = uiLocale() === "ru"
     ? "Добавить песню"
@@ -7429,6 +7487,24 @@ function openDraftAiPrompt(text) {
   return true;
 }
 
+async function copyTextWithFallback(text) {
+  const value = String(text || "");
+  if (!value) return;
+  if (navigator.clipboard?.writeText) {
+    await navigator.clipboard.writeText(value);
+    return;
+  }
+  const tmp = document.createElement("textarea");
+  tmp.value = value;
+  tmp.setAttribute("readonly", "readonly");
+  tmp.style.position = "fixed";
+  tmp.style.opacity = "0";
+  document.body.appendChild(tmp);
+  tmp.select();
+  document.execCommand("copy");
+  document.body.removeChild(tmp);
+}
+
 function wirePromptButtons() {
   const dlg = qs("dlgPrompt");
   const copyBtn = qs("promptCopy");
@@ -7462,8 +7538,7 @@ function wirePromptButtons() {
     copyBtn.dataset.wired = "1";
     copyBtn.addEventListener("click", async () => {
       try {
-        if (!navigator.clipboard?.writeText) throw new Error("unavailable");
-        await navigator.clipboard.writeText(area.value || "");
+        await copyTextWithFallback(area.value || "");
         msg.textContent = t("prompt.copied");
       } catch {
         msg.textContent = t("prompt.copyFailed");
@@ -10585,27 +10660,12 @@ export function bind(route, ctx) {
 
     const copyBtn = qs("btnCopyLyrics");
     const copyLabel = t("prompt.copy");
-    const copyWithFallback = async (text) => {
-      if (navigator.clipboard?.writeText) {
-        await navigator.clipboard.writeText(text);
-        return;
-      }
-      const tmp = document.createElement("textarea");
-      tmp.value = text;
-      tmp.setAttribute("readonly", "readonly");
-      tmp.style.position = "fixed";
-      tmp.style.opacity = "0";
-      document.body.appendChild(tmp);
-      tmp.select();
-      document.execCommand("copy");
-      document.body.removeChild(tmp);
-    };
     copyBtn?.addEventListener("click", async () => {
       const text = promptSong.lyrics || "";
       if (!text.trim()) return;
       copyBtn.classList.remove("is-copied", "is-failed");
       try {
-        await copyWithFallback(text);
+        await copyTextWithFallback(text);
         copyBtn.classList.add("is-copied");
         copyBtn.setAttribute("title", t("prompt.copied"));
       } catch {
@@ -10710,7 +10770,11 @@ export function bind(route, ctx) {
       const renderVersionListenLinks = (items = []) => {
         if (!items.length) return `<span class="song-version-listen-empty">-</span>`;
         return items
-          .map((item) => `<a class="song-version-listen-link" href="${esc(item.url)}" rel="noreferrer noopener">${esc(item.label)}</a>`)
+          .map((item) => {
+            const href = safeExternalUrl(item.url);
+            if (!href) return "";
+            return `<a class="song-version-listen-link" href="${esc(href)}" rel="noreferrer noopener">${esc(item.label)}</a>`;
+          })
           .join(" ");
       };
       const syncVersionListenPanel = () => {
@@ -11344,7 +11408,7 @@ export function bind(route, ctx) {
         return;
       }
       setPresence(draftUiText("statusConnecting"));
-      ws = new WebSocket(api.draftWsUrl(draftId));
+      ws = new WebSocket(api.draftWsUrl(draftId), api.draftWsProtocols());
       ws.addEventListener("open", () => setPresence(draftUiText("statusOnline")));
       ws.addEventListener("message", (event) => {
         let message = null;
@@ -14244,7 +14308,7 @@ export function bind(route, ctx) {
     const inlineConnectWs = () => {
       if (!inlineDraftId || inlineLeaving) return;
       if (!(window.WebSocket)) return;
-      inlineWs = new WebSocket(api.draftWsUrl(inlineDraftId));
+      inlineWs = new WebSocket(api.draftWsUrl(inlineDraftId), api.draftWsProtocols());
       inlineWs.addEventListener("open", () => {});
       inlineWs.addEventListener("message", (event) => {
         let message = null;

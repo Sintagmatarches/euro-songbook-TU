@@ -3,6 +3,7 @@ import { requirePermission, dbRun, dbGet, dbAll, assertScopeForLang, canViewAdmi
 import { ensureSchemaAndSeed } from "../../../_lib/schema.js";
 import { normalizeSongCatalogInput } from "../../../../shared/song-catalogs.js";
 import { syncSongSearchIndex, deleteSongSearchIndex } from "../../../_lib/song-search.mjs";
+import { sanitizeSongLinks } from "../../../_lib/link-safety.js";
 
 function normStr(v){ v = (v ?? "").toString().trim(); return v || null; }
 function normLinkVersion(v){ v = (v ?? "").toString().trim(); return v || null; }
@@ -178,6 +179,14 @@ export async function onRequestPut({ env, request, params }){
   if (access instanceof Response) return access;
   const id = params.id;
   const body = await readJSON(request);
+  let safeLinks = null;
+  if (Object.prototype.hasOwnProperty.call(body || {}, "links")) {
+    try {
+      safeLinks = sanitizeSongLinks(body?.links, { fieldName: "links" });
+    } catch (cause) {
+      return err(String(cause?.message || "invalid links"), 400);
+    }
+  }
   const currentSong = await dbGet(env, `SELECT * FROM songs WHERE id=?`, [id]);
   if(!currentSong) return err("Not found", 404);
   if(Number(currentSong.is_admin_content || 0) === 1 && !canViewAdminContent(access)) return err("Not found", 404);
@@ -284,7 +293,7 @@ export async function onRequestPut({ env, request, params }){
     subtitle,
     lyrics,
   });
-  if (hasOwn("links")) await replaceLinks(env, id, body.links);
+  if (hasOwn("links")) await replaceLinks(env, id, safeLinks);
   if (hasOwn("versions")) await replaceVersions(env, id, body.versions);
   return json({
     id,
