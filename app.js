@@ -107,6 +107,7 @@ const GLOBAL_WALLPAPER_ASSET_URLS = [
   "./picture/AdobeStock_479740218.jpeg",
   "./picture/phone_wallpaper.jpg",
 ];
+const AUTH_HINT_COOKIE_NAME = "songbook_session_hint";
 let globalWallpaperAssetsPreloaded = false;
 const STAGED_REVEAL_SELECTOR = ".card, .songCard, .yt-card, .home-language-card, .home-country-card, .home-country-group-card, .request-section, .request-repeater, .ss_link_row, .ss_version_row, .ac_item, .ab-flag-range-row, .pill, .badge, .song-version-btn, .pager-shell .btn, .song-aux-panel, .song-tools-panel, .yt-chips, .ac-editor-optional-menu, .ig-drawer-header, .ig-drawer-group, .ig-drawer-link, .ig-drawer-button, .ig-drawer .user-chip-drawer";
 
@@ -122,6 +123,41 @@ function safeStorageSet(key, value) {
   try {
     localStorage.setItem(key, value);
   } catch {}
+}
+
+function readCookie(name) {
+  const target = String(name || "").trim();
+  if (!target) return "";
+  try {
+    const parts = String(document.cookie || "").split(";");
+    for (const part of parts) {
+      const [rawKey, ...rawValue] = String(part || "").trim().split("=");
+      if (String(rawKey || "").trim() !== target) continue;
+      return rawValue.join("=");
+    }
+  } catch {}
+  return "";
+}
+
+function hasAuthSessionHint() {
+  return readCookie(AUTH_HINT_COOKIE_NAME) === "1";
+}
+
+function clearAuthSessionHint() {
+  document.cookie = `${AUTH_HINT_COOKIE_NAME}=; Path=/; Max-Age=0; Expires=Thu, 01 Jan 1970 00:00:00 GMT; SameSite=Lax`;
+}
+
+function rememberAuthSessionHint() {
+  document.cookie = `${AUTH_HINT_COOKIE_NAME}=1; Path=/; SameSite=Lax`;
+}
+
+function shouldBootstrapAuthOnLoad() {
+  if (hasAuthSessionHint()) return true;
+  const hash = String(location.hash || "#/").trim().toLowerCase();
+  return hash.startsWith("#/request")
+    || hash.startsWith("#/favorites")
+    || hash.startsWith("#/draft")
+    || hash.startsWith("#/admin");
 }
 
 function hideAppBootSplash() {
@@ -1147,7 +1183,9 @@ function setActiveNav() {
 async function refreshMe() {
   try {
     state.user = await api.me();
+    if (state.user) rememberAuthSessionHint();
   } catch {
+    clearAuthSessionHint();
     state.user = null;
   }
   setActiveNav();
@@ -1410,7 +1448,12 @@ document.addEventListener("focusout", () => {
 });
 
 preloadGlobalWallpaperAssets();
-await refreshMe();
+if (shouldBootstrapAuthOnLoad()) {
+  await refreshMe();
+} else {
+  state.user = null;
+  setActiveNav();
+}
 router.handle();
 resetSongPageBackgroundParallaxCache();
 scheduleSongPageBackgroundParallax();

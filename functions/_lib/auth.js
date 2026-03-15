@@ -1,5 +1,6 @@
 // Minimal JWT (HS256) using WebCrypto. For Cloudflare Workers runtime.
 const AUTH_COOKIE_NAME = "songbook_session";
+const AUTH_HINT_COOKIE_NAME = "songbook_session_hint";
 
 function b64urlEncode(bytes) {
   let str = "";
@@ -104,6 +105,16 @@ function authCookieBase(request) {
   ].filter(Boolean);
 }
 
+function authHintCookieBase(request) {
+  const secure = new URL(request.url).protocol === "https:";
+  return [
+    `${AUTH_HINT_COOKIE_NAME}=`,
+    "Path=/",
+    "SameSite=Lax",
+    secure ? "Secure" : "",
+  ].filter(Boolean);
+}
+
 export function buildAuthCookie(request, token, ttlSeconds = 60 * 60 * 24 * 14) {
   return [
     `${AUTH_COOKIE_NAME}=${encodeURIComponent(String(token || ""))}`,
@@ -112,9 +123,25 @@ export function buildAuthCookie(request, token, ttlSeconds = 60 * 60 * 24 * 14) 
   ].join("; ");
 }
 
+export function buildAuthHintCookie(request, ttlSeconds = 60 * 60 * 24 * 14) {
+  return [
+    `${AUTH_HINT_COOKIE_NAME}=1`,
+    ...authHintCookieBase(request).slice(1),
+    `Max-Age=${Math.max(0, Number(ttlSeconds || 0))}`,
+  ].join("; ");
+}
+
 export function clearAuthCookie(request) {
   return [
     ...authCookieBase(request),
+    "Max-Age=0",
+    "Expires=Thu, 01 Jan 1970 00:00:00 GMT",
+  ].join("; ");
+}
+
+export function clearAuthHintCookie(request) {
+  return [
+    ...authHintCookieBase(request),
     "Max-Age=0",
     "Expires=Thu, 01 Jan 1970 00:00:00 GMT",
   ].join("; ");

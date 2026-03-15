@@ -1287,6 +1287,21 @@ function catalogHashForSongFilter(filters = {}) {
   );
 }
 
+function hasHomeSearchIntent(params = {}) {
+  const query = String(params.q || "").trim();
+  const country = normalizeSongCountry(params.country || "") || String(params.country || "").trim();
+  const period = normalizeSongPeriod(params.period || "") || String(params.period || "").trim();
+  const region = String(params.region || "").trim();
+  const event = String(params.event || "").trim();
+  const theme = String(params.theme || "").trim();
+  const performer = String(params.performer || "").trim();
+  const year = String(params.year || "").trim();
+  const verified = String(params.verified || "").trim() === "1";
+  const recent = String(params.recent || "").trim() === "1";
+  const multiVersions = String(params.multi_versions || "").trim() === "1";
+  return !!(query || country || period || region || event || theme || performer || year || verified || recent || multiVersions);
+}
+
 function collectHomeFilters() {
   const rawCountry = qs("yt_country")?.value || "";
   const country = normalizeSongCountry(rawCountry) || rawCountry;
@@ -1772,7 +1787,7 @@ function homeUI(data, params, homeExtras = {}) {
   const multiVersions = String(params.multi_versions || "").trim() === "1";
   const performer = params.performer || "";
   const year = params.year || "";
-  const didSearch = params.searched === "1";
+  const didSearch = params.searched === "1" || hasHomeSearchIntent(params);
   const lockedCountry = normalizeSongCountry(country || "") || "";
   const isCountryLocked = !!lockedCountry;
   const hasAdvancedValue = !!(period || region || event || theme || verified || multiVersions || performer || year);
@@ -7489,20 +7504,36 @@ function openDraftAiPrompt(text) {
 
 async function copyTextWithFallback(text) {
   const value = String(text || "");
-  if (!value) return;
+  if (!value) throw new Error("copy_empty");
   if (navigator.clipboard?.writeText) {
-    await navigator.clipboard.writeText(value);
-    return;
+    try {
+      await navigator.clipboard.writeText(value);
+      return;
+    } catch {}
   }
+  if (typeof document?.execCommand !== "function") throw new Error("copy_unavailable");
   const tmp = document.createElement("textarea");
   tmp.value = value;
   tmp.setAttribute("readonly", "readonly");
   tmp.style.position = "fixed";
+  tmp.style.top = "0";
+  tmp.style.left = "-9999px";
   tmp.style.opacity = "0";
   document.body.appendChild(tmp);
+  const selection = document.getSelection?.();
+  const existingRange = selection && selection.rangeCount > 0 ? selection.getRangeAt(0).cloneRange() : null;
+  const active = document.activeElement instanceof HTMLElement ? document.activeElement : null;
+  tmp.focus({ preventScroll: true });
   tmp.select();
-  document.execCommand("copy");
+  tmp.setSelectionRange(0, tmp.value.length);
+  const copied = document.execCommand("copy");
   document.body.removeChild(tmp);
+  if (existingRange && selection) {
+    selection.removeAllRanges();
+    selection.addRange(existingRange);
+  }
+  active?.focus?.({ preventScroll: true });
+  if (!copied) throw new Error("copy_unavailable");
 }
 
 function wirePromptButtons() {
@@ -8857,6 +8888,14 @@ export async function render(route) {
     }
     const isFav = Array.isArray(fav?.items) && fav.items.some((x) => x.id === song.id);
     return { html: songDetailsUI(song, { isFav, background }), ctx: { song, isFav, background } };
+  }
+
+  if (route.name === "draft_legacy") {
+    const legacyDraftId = String(route.id || route.path?.[1] || "").trim();
+    if (legacyDraftId) {
+      location.hash = `#/draft/${encodeURIComponent(legacyDraftId)}`;
+      return { html: `<div class="card"><div class="muted">${esc(t("common.load"))}...</div></div>`, ctx: {} };
+    }
   }
 
   if (route.name === "draft") {
@@ -15005,7 +15044,7 @@ export function bind(route, ctx) {
           if (qs("ac_status_edit")) qs("ac_status_edit").value = nextStatus;
           acSyncStatusBadge();
           if (!payload.title || !payload.lang || !payload.country || !String(payload.lyrics || "").trim()) {
-            const msg = requiredFieldsErrorText();
+            const msg = t("request.required");
             showAcInlineError(msg);
             showStatusOverlay(msg, "error");
             savePending = false;

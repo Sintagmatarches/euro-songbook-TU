@@ -1,7 +1,7 @@
 import { json, err, readJSON, makeId } from "../../_lib/utils.js";
 import { dbRun, dbGet } from "../../_lib/db.js";
 import { hashPassword } from "../../_lib/password.js";
-import { signJWT, buildAuthCookie } from "../../_lib/auth.js";
+import { signJWT, buildAuthCookie, buildAuthHintCookie } from "../../_lib/auth.js";
 import { ensureSchemaAndSeed, ensureAuthSchema } from "../../_lib/schema.js";
 import { enforceRateLimit } from "../../_lib/rate-limit.js";
 import { getUsersTableProfile, buildUserInsertStatement } from "../../_lib/user-password-store.js";
@@ -92,7 +92,12 @@ export async function onRequestPost({ env, request }){
     return json(
       { role: userRole, nickname },
       200,
-      { "Set-Cookie": buildAuthCookie(request, token, 60 * 60 * 24 * 14) }
+      {
+        "Set-Cookie": [
+          buildAuthCookie(request, token, 60 * 60 * 24 * 14),
+          buildAuthHintCookie(request, 60 * 60 * 24 * 14),
+        ],
+      }
     );
   } catch (cause) {
     console.error("[auth/register] failed:", cause);

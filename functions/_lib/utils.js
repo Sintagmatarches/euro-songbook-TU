@@ -1,11 +1,22 @@
 export function json(data, status=200, headers={}){
+  const responseHeaders = new Headers({
+    "Content-Type": "application/json; charset=utf-8",
+    "Cache-Control": "no-store",
+  });
+  if (headers instanceof Headers) {
+    headers.forEach((value, key) => responseHeaders.append(key, value));
+  } else {
+    Object.entries(headers || {}).forEach(([key, value]) => {
+      if (Array.isArray(value)) {
+        value.forEach((entry) => responseHeaders.append(key, entry));
+        return;
+      }
+      responseHeaders.set(key, value);
+    });
+  }
   return new Response(JSON.stringify(data), {
     status,
-    headers: {
-      "Content-Type": "application/json; charset=utf-8",
-      "Cache-Control": "no-store",
-      ...headers,
-    }
+    headers: responseHeaders,
   });
 }
 export function err(message, status=400, extra={}){
