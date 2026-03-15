@@ -1,0 +1,1722 @@
+{
+  "total": 8353,
+  "changed": 505,
+  "pair_counts": [
+    {
+      "old_lang": "ru",
+      "new_lang": "pl",
+      "count": 432
+    },
+    {
+      "old_lang": "es",
+      "new_lang": "ru",
+      "count": 11
+    },
+    {
+      "old_lang": "ru",
+      "new_lang": "lb",
+      "count": 11
+    },
+    {
+      "old_lang": "uk",
+      "new_lang": "ru",
+      "count": 8
+    },
+    {
+      "old_lang": "ru",
+      "new_lang": "ca",
+      "count": 6
+    },
+    {
+      "old_lang": "be",
+      "new_lang": "ru",
+      "count": 6
+    },
+    {
+      "old_lang": "fr",
+      "new_lang": "ru",
+      "count": 4
+    },
+    {
+      "old_lang": "ru",
+      "new_lang": "it",
+      "count": 4
+    },
+    {
+      "old_lang": "ru",
+      "new_lang": "de",
+      "count": 4
+    },
+    {
+      "old_lang": "ru",
+      "new_lang": "ro",
+      "count": 3
+    },
+    {
+      "old_lang": "ru",
+      "new_lang": "uk",
+      "count": 3
+    },
+    {
+      "old_lang": "en",
+      "new_lang": "ru",
+      "count": 2
+    },
+    {
+      "old_lang": "ru",
+      "new_lang": "fr",
+      "count": 2
+    },
+    {
+      "old_lang": "nl",
+      "new_lang": "ru",
+      "count": 1
+    },
+    {
+      "old_lang": "pl",
+      "new_lang": "ru",
+      "count": 1
+    },
+    {
+      "old_lang": "sr",
+      "new_lang": "bs",
+      "count": 1
+    },
+    {
+      "old_lang": "lt",
+      "new_lang": "ru",
+      "count": 1
+    },
+    {
+      "old_lang": "hu",
+      "new_lang": "ru",
+      "count": 1
+    },
+    {
+      "old_lang": "fi",
+      "new_lang": "ru",
+      "count": 1
+    },
+    {
+      "old_lang": "sr",
+      "new_lang": "ru",
+      "count": 1
+    },
+    {
+      "old_lang": "de",
+      "new_lang": "es",
+      "count": 1
+    },
+    {
+      "old_lang": "be",
+      "new_lang": "lb",
+      "count": 1
+    }
+  ],
+  "examples": [
+    {
+      "id": "tg3_1f7hwkv",
+      "title": "Широки поля",
+      "old_lang": "nl",
+      "new_lang": "ru",
+      "confidence": 1.0,
+      "reason": "ru_default"
+    },
+    {
+      "id": "tg3_1web60w",
+      "title": "Красное знамя",
+      "old_lang": "pl",
+      "new_lang": "ru",
+      "confidence": 1.0,
+      "reason": "ru_default"
+    },
+    {
+      "id": "tg3_1yw7hyp",
+      "title": "Медсестра Анюта",
+      "old_lang": "fr",
+      "new_lang": "ru",
+      "confidence": 1.0,
+      "reason": "ru_default"
+    },
+    {
+      "id": "tg3_60iy3v",
+      "title": "Испания будет свободной",
+      "old_lang": "es",
+      "new_lang": "ru",
+      "confidence": 1.0,
+      "reason": "ru_default"
+    },
+    {
+      "id": "tg3_9rbd5y",
+      "title": "Песня испанских детей о Ленине",
+      "old_lang": "es",
+      "new_lang": "ru",
+      "confidence": 1.0,
+      "reason": "ru_default"
+    },
+    {
+      "id": "tg3_bjxy9u",
+      "title": "Рачунајте на нас (Рассчитывайте на нас) - Сербскохорватский",
+      "old_lang": "sr",
+      "new_lang": "bs",
+      "confidence": 1.0,
+      "reason": "lid_all"
+    },
+    {
+      "id": "tg3_bmbxne",
+      "title": "Литовский замок",
+      "old_lang": "lt",
+      "new_lang": "ru",
+      "confidence": 1.0,
+      "reason": "ru_default"
+    },
+    {
+      "id": "tg3_bsnrme",
+      "title": "Марш ударников (Марш венгерских шахтёров)",
+      "old_lang": "hu",
+      "new_lang": "ru",
+      "confidence": 1.0,
+      "reason": "ru_default"
+    },
+    {
+      "id": "tg3_f3a3tr",
+      "title": "Английская песенка",
+      "old_lang": "en",
+      "new_lang": "ru",
+      "confidence": 1.0,
+      "reason": "ru_default"
+    },
+    {
+      "id": "tg3_gk5jnc",
+      "title": "Финский лес",
+      "old_lang": "fi",
+      "new_lang": "ru",
+      "confidence": 1.0,
+      "reason": "ru_default"
+    },
+    {
+      "id": "tg3_rgy9pr",
+      "title": "Песня французских докеров",
+      "old_lang": "fr",
+      "new_lang": "ru",
+      "confidence": 1.0,
+      "reason": "ru_default"
+    },
+    {
+      "id": "tg3_uy7j2r",
+      "title": "Пой со мной",
+      "old_lang": "en",
+      "new_lang": "ru",
+      "confidence": 1.0,
+      "reason": "ru_default"
+    },
+    {
+      "id": "tg3_z58brz",
+      "title": "Песня об Испании",
+      "old_lang": "es",
+      "new_lang": "ru",
+      "confidence": 1.0,
+      "reason": "ru_default"
+    },
+    {
+      "id": "tg3_zf2980",
+      "title": "Полный вперед",
+      "old_lang": "fr",
+      "new_lang": "ru",
+      "confidence": 1.0,
+      "reason": "ru_default"
+    },
+    {
+      "id": "aplocal_mojastrana",
+      "title": "МОЯ СТРАНА СОШЛА С УМА",
+      "old_lang": "uk",
+      "new_lang": "ru",
+      "confidence": 1.0,
+      "reason": "ru_default"
+    },
+    {
+      "id": "apww1_elssegadors",
+      "title": "Els segadors (Tradicional S. XVIII)",
+      "old_lang": "ru",
+      "new_lang": "ca",
+      "confidence": 1.0,
+      "reason": "lid_all"
+    },
+    {
+      "id": "apww1_innogaribaldi",
+      "title": "Olivieri, L. Mercantini - Inno di Garibaldi",
+      "old_lang": "ru",
+      "new_lang": "it",
+      "confidence": 1.0,
+      "reason": "lid_all"
+    },
+    {
+      "id": "apww1_loboier",
+      "title": "Lo boièr (с mp3)",
+      "old_lang": "ru",
+      "new_lang": "ca",
+      "confidence": 1.0,
+      "reason": "lid_all"
+    },
+    {
+      "id": "apww1_marseillaise_ca",
+      "title": "Ignasi Iglésies i Pujades - La Marsellesa (catalá)",
+      "old_lang": "ru",
+      "new_lang": "ca",
+      "confidence": 1.0,
+      "reason": "lid_all"
+    },
+    {
+      "id": "apww1_spigolatrice",
+      "title": "L. Mercantini - La Spigolatrice di Sapri (Сборщица колосьев из Сапри)",
+      "old_lang": "ru",
+      "new_lang": "it",
+      "confidence": 1.0,
+      "reason": "lid_all"
+    },
+    {
+      "id": "apww1_zumantua",
+      "title": "L. Knebelsberger, J. Mosen - Zu Mantua in Banden",
+      "old_lang": "ru",
+      "new_lang": "lb",
+      "confidence": 1.0,
+      "reason": "lid_low_conf"
+    },
+    {
+      "id": "apww1_1000val",
+      "title": "Tysiąc walecznych (Тысяча храбрецов)",
+      "old_lang": "ru",
+      "new_lang": "pl",
+      "confidence": 1.0,
+      "reason": "lid_all"
+    },
+    {
+      "id": "apww1_1864",
+      "title": "1864",
+      "old_lang": "ru",
+      "new_lang": "pl",
+      "confidence": 1.0,
+      "reason": "lid_all"
+    },
+    {
+      "id": "apww1_1brygada",
+      "title": "Му, Pierwsza Brygada (Мы, Первая Бригада)",
+      "old_lang": "ru",
+      "new_lang": "pl",
+      "confidence": 1.0,
+      "reason": "lid_all"
+    },
+    {
+      "id": "apww1_1kadrowa",
+      "title": "Pierwsza kadrowa (Первая кадровая)",
+      "old_lang": "ru",
+      "new_lang": "pl",
+      "confidence": 1.0,
+      "reason": "lid_all"
+    },
+    {
+      "id": "apww1_1mazur",
+      "title": "Jeszcze jeden mazur dzisiaj (Еще одну мазурку сегодня)",
+      "old_lang": "ru",
+      "new_lang": "pl",
+      "confidence": 1.0,
+      "reason": "lid_all"
+    },
+    {
+      "id": "apww1_3maj",
+      "title": "Witaj, majowa jutrzenko (Здравствуй, майская заря)",
+      "old_lang": "ru",
+      "new_lang": "pl",
+      "confidence": 1.0,
+      "reason": "lid_all"
+    },
+    {
+      "id": "apww1_3majnowy",
+      "title": "Treci Maj Nowy (Третий Май новый)",
+      "old_lang": "ru",
+      "new_lang": "pl",
+      "confidence": 1.0,
+      "reason": "lid_all"
+    },
+    {
+      "id": "apww1_4wiwaty",
+      "title": "Cztery wiwaty (Mazurek. Na nutę: \"Żyli ludzie przed Krakusem\")",
+      "old_lang": "ru",
+      "new_lang": "pl",
+      "confidence": 1.0,
+      "reason": "lid_all"
+    },
+    {
+      "id": "apww1_bartosz",
+      "title": "Bartosz Głowacki (Бартош Гловацкий)",
+      "old_lang": "ru",
+      "new_lang": "pl",
+      "confidence": 1.0,
+      "reason": "lid_all"
+    },
+    {
+      "id": "apww1_bialachor",
+      "title": "Biała chorągiewka (Mazurek. Na nutę: «Kujawianka od poranka» Белый флажок (Мазурка. На мотив «Куявянка с утра»)",
+      "old_lang": "ru",
+      "new_lang": "pl",
+      "confidence": 1.0,
+      "reason": "lid_all"
+    },
+    {
+      "id": "apww1_bialeorle",
+      "title": "Blałe orlę (Белые орлы)",
+      "old_lang": "ru",
+      "new_lang": "pl",
+      "confidence": 1.0,
+      "reason": "lid_all"
+    },
+    {
+      "id": "apww1_biednykraj",
+      "title": "Biedny kraj (Бедный край)",
+      "old_lang": "ru",
+      "new_lang": "pl",
+      "confidence": 1.0,
+      "reason": "lid_all"
+    },
+    {
+      "id": "apww1_bogurodzica",
+      "title": "Bogurodzica (Богородица)",
+      "old_lang": "ru",
+      "new_lang": "pl",
+      "confidence": 1.0,
+      "reason": "lid_all"
+    },
+    {
+      "id": "apww1_bozecos",
+      "title": "Boże, coś Polskę (Боже, что Польшу...)",
+      "old_lang": "ru",
+      "new_lang": "pl",
+      "confidence": 1.0,
+      "reason": "lid_all"
+    },
+    {
+      "id": "apww1_bozeojcze",
+      "title": "Modlitwa codzienna (śpiewana po kościołach) Ежедневная молитва (поется в костелах)",
+      "old_lang": "ru",
+      "new_lang": "pl",
+      "confidence": 0.9941,
+      "reason": "lid_all"
+    },
+    {
+      "id": "apww1_bozeros",
+      "title": "Boże, coś Rosyę (Боже, что Россию)",
+      "old_lang": "ru",
+      "new_lang": "pl",
+      "confidence": 1.0,
+      "reason": "lid_all"
+    },
+    {
+      "id": "apww1_braciado",
+      "title": "Marsz Obozovy Hasło Wojska Polskiego ( Лагерный марш Сигнал Войска Польского)",
+      "old_lang": "ru",
+      "new_lang": "pl",
+      "confidence": 1.0,
+      "reason": "lid_all"
+    },
+    {
+      "id": "apww1_bywdziewcze",
+      "title": "Bywaj dziewczę zdrowe (Будь здорова, девица)",
+      "old_lang": "ru",
+      "new_lang": "pl",
+      "confidence": 1.0,
+      "reason": "lid_all"
+    },
+    {
+      "id": "apww1_chocburza",
+      "title": "Choć burza huczy wkoło nas (Пусть буря ревет вокруг нас)",
+      "old_lang": "ru",
+      "new_lang": "pl",
+      "confidence": 1.0,
+      "reason": "lid_all"
+    },
+    {
+      "id": "apww1_choragiewka",
+      "title": "Chorągiewka (Флажок)",
+      "old_lang": "ru",
+      "new_lang": "pl",
+      "confidence": 1.0,
+      "reason": "lid_all"
+    },
+    {
+      "id": "apww1_choral",
+      "title": "Chorał (Хорал)",
+      "old_lang": "ru",
+      "new_lang": "pl",
+      "confidence": 1.0,
+      "reason": "lid_all"
+    },
+    {
+      "id": "apww1_chorstrzelcow",
+      "title": "Sł. Adam Mickiewicz - Chór strzelców",
+      "old_lang": "ru",
+      "new_lang": "pl",
+      "confidence": 1.0,
+      "reason": "lid_all"
+    },
+    {
+      "id": "apww1_czescmlod",
+      "title": "Cześć młodzieży polskiej (z nutami)",
+      "old_lang": "ru",
+      "new_lang": "pl",
+      "confidence": 1.0,
+      "reason": "lid_all"
+    },
+    {
+      "id": "apww1_czescpolsk",
+      "title": "S. Surzyński, F. Frankowski - Cześć polskiej ziemi, cześć! (z nutami)",
+      "old_lang": "ru",
+      "new_lang": "pl",
+      "confidence": 1.0,
+      "reason": "lid_all"
+    },
+    {
+      "id": "apww1_czescprzem",
+      "title": "Sł. J. Szastecki - Cześć przemysłowi (z nutami)",
+      "old_lang": "ru",
+      "new_lang": "pl",
+      "confidence": 1.0,
+      "reason": "lid_all"
+    },
+    {
+      "id": "apww1_dawneczasy",
+      "title": "Sł. F. A. Kr. - Dawne czasy (z nutami)",
+      "old_lang": "ru",
+      "new_lang": "pl",
+      "confidence": 1.0,
+      "reason": "lid_all"
+    },
+    {
+      "id": "apww1_doataku",
+      "title": "Do ataku (Peśń z roku 1831)",
+      "old_lang": "ru",
+      "new_lang": "pl",
+      "confidence": 1.0,
+      "reason": "lid_all"
+    },
+    {
+      "id": "apww1_dobronihej",
+      "title": "Tłum. E. Porębowicz - Do broni hej! (Hymn francuski narodowy, z nutami)",
+      "old_lang": "ru",
+      "new_lang": "pl",
+      "confidence": 1.0,
+      "reason": "lid_all"
+    },
+    {
+      "id": "apww1_dofrancuzow",
+      "title": "Sł. K. Gaszyński - Do Francuzów",
+      "old_lang": "ru",
+      "new_lang": "pl",
+      "confidence": 1.0,
+      "reason": "lid_all"
+    },
+    {
+      "id": "apww1_doorla",
+      "title": "Sl. H. Kunaszowski - Do orla (z nutami)",
+      "old_lang": "ru",
+      "new_lang": "pl",
+      "confidence": 1.0,
+      "reason": "lid_all"
+    },
+    {
+      "id": "apww1_dopolski",
+      "title": "Sł. F. Kowalski - Do Polski (z nutami)",
+      "old_lang": "ru",
+      "new_lang": "pl",
+      "confidence": 1.0,
+      "reason": "lid_all"
+    },
+    {
+      "id": "apww1_dumkanaw",
+      "title": "Sł. M. Gosławski - Dumka na wygnaniu (z nutami)",
+      "old_lang": "ru",
+      "new_lang": "pl",
+      "confidence": 1.0,
+      "reason": "lid_all"
+    },
+    {
+      "id": "apww1_dziewikrak",
+      "title": "Sł. F. Kowalski - Dziewczyna i Krakus (z nutami)",
+      "old_lang": "ru",
+      "new_lang": "pl",
+      "confidence": 1.0,
+      "reason": "lid_all"
+    },
+    {
+      "id": "apww1_dziswwarsz",
+      "title": "Dziś w Warszawie (z nutami)",
+      "old_lang": "ru",
+      "new_lang": "pl",
+      "confidence": 1.0,
+      "reason": "lid_all"
+    },
+    {
+      "id": "apww1_ejdziewczyno",
+      "title": "S. Niewiadomski, K. Makuszynski - Ej dziewczyno, ej niebogo (z nutami)",
+      "old_lang": "ru",
+      "new_lang": "pl",
+      "confidence": 1.0,
+      "reason": "lid_all"
+    },
+    {
+      "id": "apww1_ejpilkuba",
+      "title": "Ej pił Kuba do Jakóba",
+      "old_lang": "ru",
+      "new_lang": "pl",
+      "confidence": 1.0,
+      "reason": "lid_all"
+    },
+    {
+      "id": "apww1_gaudemater",
+      "title": "Wincenty z Kielczy - Gaude, mater Polonia (z nutami)",
+      "old_lang": "ru",
+      "new_lang": "lb",
+      "confidence": 1.0,
+      "reason": "lid_low_conf"
+    },
+    {
+      "id": "apww1_gdynarod",
+      "title": "W. A. Mozart, G. Ehrenberg - Gdy naród do boju (z nutami)",
+      "old_lang": "ru",
+      "new_lang": "pl",
+      "confidence": 1.0,
+      "reason": "lid_all"
+    },
+    {
+      "id": "apww1_gdziedom",
+      "title": "Gdzie dom jest mój (z nutami)",
+      "old_lang": "ru",
+      "new_lang": "pl",
+      "confidence": 1.0,
+      "reason": "lid_all"
+    },
+    {
+      "id": "apww1_gwiazdka",
+      "title": "Sł. W. Pol - Gwiаzdka (z nutami)",
+      "old_lang": "ru",
+      "new_lang": "pl",
+      "confidence": 1.0,
+      "reason": "lid_all"
+    },
+    {
+      "id": "apww1_hdopracy",
+      "title": "Sł. S. Buszczyński - Hymn do pracy (z nutami)",
+      "old_lang": "ru",
+      "new_lang": "pl",
+      "confidence": 1.0,
+      "reason": "lid_all"
+    },
+    {
+      "id": "apww1_hejmazury",
+      "title": "Hej Mazury, hejże ha! (z nutami)",
+      "old_lang": "ru",
+      "new_lang": "pl",
+      "confidence": 1.0,
+      "reason": "lid_all"
+    },
+    {
+      "id": "apww1_hejnadzeja",
+      "title": "Hej! nadzjeja jeszcze z nami! (z nutami)",
+      "old_lang": "ru",
+      "new_lang": "pl",
+      "confidence": 1.0,
+      "reason": "lid_all"
+    },
+    {
+      "id": "apww1_hejstrzelcy",
+      "title": "Sł. i muz. W. L. Anczyc - Marsz strzelców (Hej, strzelcy wraz..., z nutami)",
+      "old_lang": "ru",
+      "new_lang": "pl",
+      "confidence": 1.0,
+      "reason": "lid_all"
+    },
+    {
+      "id": "apww1_hulanka",
+      "title": "Sł. S. Witwicki - Hulanka (z nutami)",
+      "old_lang": "ru",
+      "new_lang": "pl",
+      "confidence": 1.0,
+      "reason": "lid_all"
+    },
+    {
+      "id": "apww1_hymndobalt",
+      "title": "F. Nowowejski, S. Rybka - Hymn do Bałtyku (z nutami)",
+      "old_lang": "ru",
+      "new_lang": "pl",
+      "confidence": 1.0,
+      "reason": "lid_all"
+    },
+    {
+      "id": "apww1_hymndomilosci",
+      "title": "W. Sowiński, I. Krasicki - Hymn do miłości ojczyzny (z nutami)",
+      "old_lang": "ru",
+      "new_lang": "pl",
+      "confidence": 1.0,
+      "reason": "lid_all"
+    },
+    {
+      "id": "apww1_hymnmars",
+      "title": "Prz. B. Kiciński - Hymn wojenny Marsylczyków",
+      "old_lang": "ru",
+      "new_lang": "pl",
+      "confidence": 1.0,
+      "reason": "lid_all"
+    },
+    {
+      "id": "apww1_idziezoln",
+      "title": "Idzie żołnierz borem, lasem (z nutami)",
+      "old_lang": "ru",
+      "new_lang": "pl",
+      "confidence": 1.0,
+      "reason": "lid_all"
+    },
+    {
+      "id": "apww1_jakdlugo",
+      "title": "Sł. K. Krumłowski - Jak długo w sercu naszym (z nutami)",
+      "old_lang": "ru",
+      "new_lang": "pl",
+      "confidence": 1.0,
+      "reason": "lid_all"
+    },
+    {
+      "id": "apww1_jakdobrzenam",
+      "title": "Jak dobrze nam (z nutami)",
+      "old_lang": "ru",
+      "new_lang": "pl",
+      "confidence": 1.0,
+      "reason": "lid_all"
+    },
+    {
+      "id": "apww1_jakzemmasz",
+      "title": "A. Wolska, B. Pawłowicz - Jakżem maszerował (z nutami)",
+      "old_lang": "ru",
+      "new_lang": "pl",
+      "confidence": 1.0,
+      "reason": "lid_all"
+    },
+    {
+      "id": "apww1_jampolak",
+      "title": "Jam Polak znany z niedoli (z nutami)",
+      "old_lang": "ru",
+      "new_lang": "pl",
+      "confidence": 1.0,
+      "reason": "lid_all"
+    },
+    {
+      "id": "apww1_jechalkozak",
+      "title": "Jechał kozak zaporozki (z nutami)",
+      "old_lang": "ru",
+      "new_lang": "pl",
+      "confidence": 1.0,
+      "reason": "lid_all"
+    },
+    {
+      "id": "apww1_jedzienakasz",
+      "title": "Jedzie na kasztance (z nutami)",
+      "old_lang": "ru",
+      "new_lang": "lb",
+      "confidence": 1.0,
+      "reason": "lid_low_conf"
+    },
+    {
+      "id": "apww1_jeszcze1830",
+      "title": "Sł. S. Witwicki - Jeszcze Polska nie zginęła (Dn. 4 grudnia 1830, z nutami)",
+      "old_lang": "ru",
+      "new_lang": "pl",
+      "confidence": 1.0,
+      "reason": "lid_all"
+    },
+    {
+      "id": "apww1_kosiskowr",
+      "title": "Kosynier i Skowronek (z nutami)",
+      "old_lang": "ru",
+      "new_lang": "pl",
+      "confidence": 1.0,
+      "reason": "lid_all"
+    },
+    {
+      "id": "apww1_kosyniery",
+      "title": "Sł. F. Kowalski - Kosyniery (Hej tatulu со to znacy..., z nutami)",
+      "old_lang": "ru",
+      "new_lang": "pl",
+      "confidence": 1.0,
+      "reason": "lid_all"
+    },
+    {
+      "id": "apww1_krakkosc",
+      "title": "Sł. W. L. Anczyc - Krakowiak Kościuszki (z nutami)",
+      "old_lang": "ru",
+      "new_lang": "pl",
+      "confidence": 1.0,
+      "reason": "lid_all"
+    },
+    {
+      "id": "apww1_krakowiak_alb",
+      "title": "Krakowiak (Albożmy tо jacy, tacy, tасу, jacy...)",
+      "old_lang": "ru",
+      "new_lang": "pl",
+      "confidence": 1.0,
+      "reason": "lid_all"
+    },
+    {
+      "id": "apww1_krakus",
+      "title": "Krakus (z nutami)",
+      "old_lang": "ru",
+      "new_lang": "pl",
+      "confidence": 1.0,
+      "reason": "lid_all"
+    },
+    {
+      "id": "apww1_krakusy",
+      "title": "M. Korotyński, W. Pol - Krakusy (Mazur Dwernickiego po pierwszej bitwie 14 lutego 1831, z nutami)",
+      "old_lang": "ru",
+      "new_lang": "pl",
+      "confidence": 1.0,
+      "reason": "lid_all"
+    },
+    {
+      "id": "apww1_krzyzzalud",
+      "title": "Sł. M. Skałkowski - Krzyż za lud (z nutami)",
+      "old_lang": "ru",
+      "new_lang": "pl",
+      "confidence": 1.0,
+      "reason": "lid_all"
+    },
+    {
+      "id": "apww1_kurdesz",
+      "title": "Sł. F. Bohomolec - Kurdesz (z nutami)",
+      "old_lang": "ru",
+      "new_lang": "pl",
+      "confidence": 1.0,
+      "reason": "lid_all"
+    },
+    {
+      "id": "apww1_laczko",
+      "title": "Łączko, łączko (z nutami)",
+      "old_lang": "ru",
+      "new_lang": "pl",
+      "confidence": 1.0,
+      "reason": "lid_all"
+    },
+    {
+      "id": "apww1_leguny",
+      "title": "Sł. i muz. A. Kowalski - Leguny w niebie (z nutami)",
+      "old_lang": "ru",
+      "new_lang": "pl",
+      "confidence": 1.0,
+      "reason": "lid_all"
+    },
+    {
+      "id": "apww1_litwinka",
+      "title": "Sł. Cywiński - Litwinka (z nutami)",
+      "old_lang": "ru",
+      "new_lang": "pl",
+      "confidence": 1.0,
+      "reason": "lid_all"
+    },
+    {
+      "id": "apww1_maliniak",
+      "title": "Sł. Fr. Kowalski - Maliniak (z nutami)",
+      "old_lang": "ru",
+      "new_lang": "pl",
+      "confidence": 1.0,
+      "reason": "lid_all"
+    },
+    {
+      "id": "apww1_marszleglit",
+      "title": "Sł. F. Kowalski - Marsz Legii litewsko-wołyńskiej (z nutami)",
+      "old_lang": "ru",
+      "new_lang": "pl",
+      "confidence": 1.0,
+      "reason": "lid_all"
+    },
+    {
+      "id": "apww1_marszmal",
+      "title": "Sł. J. Małachowski - Marsz wolnych strzelców sandomirskich Małachowskiego (z nutami)",
+      "old_lang": "ru",
+      "new_lang": "pl",
+      "confidence": 1.0,
+      "reason": "lid_all"
+    },
+    {
+      "id": "apww1_marszmier",
+      "title": "Marsz Mierosławskiego (z nutami)",
+      "old_lang": "ru",
+      "new_lang": "pl",
+      "confidence": 1.0,
+      "reason": "lid_all"
+    },
+    {
+      "id": "apww1_marszpolonia",
+      "title": "Marsz, marsz Polonia (z nutami)",
+      "old_lang": "ru",
+      "new_lang": "pl",
+      "confidence": 1.0,
+      "reason": "lid_all"
+    },
+    {
+      "id": "apww1_marszsokolow_b",
+      "title": "Sł. L. Benedyktowicz - Marsz Sokołów (Hej, bracia Sokoły, zanućmy w pochodzie...)",
+      "old_lang": "ru",
+      "new_lang": "pl",
+      "confidence": 1.0,
+      "reason": "lid_all"
+    },
+    {
+      "id": "apww1_marszsokolow",
+      "title": "W. Czerwiński, J. Lam - Marsz Sokołów (Ospały i gnuśny, zgrzybiały ten świat..., z nutami)",
+      "old_lang": "ru",
+      "new_lang": "pl",
+      "confidence": 1.0,
+      "reason": "lid_all"
+    },
+    {
+      "id": "apww1_marszsyb",
+      "title": "Cz. Majewski, M. Jonkajtis - Marsz Sybiriaków",
+      "old_lang": "ru",
+      "new_lang": "pl",
+      "confidence": 1.0,
+      "reason": "lid_all"
+    },
+    {
+      "id": "apww1_marszzabug",
+      "title": "Sł. S. Goszczyński - Marsz za Bug (z nutami)",
+      "old_lang": "ru",
+      "new_lang": "pl",
+      "confidence": 1.0,
+      "reason": "lid_all"
+    },
+    {
+      "id": "apww1_marszzollang",
+      "title": "Marsz żołnierzy Langiewicza (z nutami)",
+      "old_lang": "ru",
+      "new_lang": "pl",
+      "confidence": 1.0,
+      "reason": "lid_all"
+    },
+    {
+      "id": "apww1_marszzuchow",
+      "title": "Marsz zuchów (z obozu Czachowskiego), z nutami",
+      "old_lang": "ru",
+      "new_lang": "pl",
+      "confidence": 1.0,
+      "reason": "lid_all"
+    },
+    {
+      "id": "apww1_maszeruja",
+      "title": "Sł. i muz. Ł. Luskino - Piechota (z nutami)",
+      "old_lang": "ru",
+      "new_lang": "pl",
+      "confidence": 1.0,
+      "reason": "lid_all"
+    },
+    {
+      "id": "apww1_matczyne",
+      "title": "Sł. i muz. A. Kowalski - Matczyne ręce (z nutami)",
+      "old_lang": "ru",
+      "new_lang": "pl",
+      "confidence": 1.0,
+      "reason": "lid_all"
+    },
+    {
+      "id": "apww1_mazpodolski",
+      "title": "Sł. M. Gosławski - Mazur Podolski z r. 1830 (z nutami)",
+      "old_lang": "ru",
+      "new_lang": "pl",
+      "confidence": 1.0,
+      "reason": "lid_all"
+    },
+    {
+      "id": "apww1_mazur_pol",
+      "title": "Sł. W. Pol - Mazur (Piękna nasza Polska cała..., z nutami)",
+      "old_lang": "ru",
+      "new_lang": "pl",
+      "confidence": 1.0,
+      "reason": "lid_all"
+    },
+    {
+      "id": "apww1_mazur",
+      "title": "Mazur (Chociaż bieda, to hoc, hoc!.., z nutami)",
+      "old_lang": "ru",
+      "new_lang": "pl",
+      "confidence": 1.0,
+      "reason": "lid_all"
+    },
+    {
+      "id": "apww1_mazur1831",
+      "title": "Mazur z r. 1831 (z nutami)",
+      "old_lang": "ru",
+      "new_lang": "pl",
+      "confidence": 1.0,
+      "reason": "lid_all"
+    },
+    {
+      "id": "apww1_mazurdabr",
+      "title": "Sł. J. Wybicki - Mazurek Dąbrowskiego (z nutami)",
+      "old_lang": "ru",
+      "new_lang": "pl",
+      "confidence": 1.0,
+      "reason": "lid_all"
+    },
+    {
+      "id": "apww1_mazurpobudki",
+      "title": "Mazur Pobudki",
+      "old_lang": "ru",
+      "new_lang": "pl",
+      "confidence": 1.0,
+      "reason": "lid_all"
+    },
+    {
+      "id": "apww1_mazurwojen",
+      "title": "Sł. A. Słowaczyński - Mazur wojenny (z nutami)",
+      "old_lang": "ru",
+      "new_lang": "pl",
+      "confidence": 1.0,
+      "reason": "lid_all"
+    },
+    {
+      "id": "apww1_mazurwoln",
+      "title": "Mazur wolnych strzelców (z nutami)",
+      "old_lang": "ru",
+      "new_lang": "pl",
+      "confidence": 1.0,
+      "reason": "lid_all"
+    },
+    {
+      "id": "apww1_mbiedakow",
+      "title": "Sł. W. Wolski - Marsz biedaków Warszawskich (z nutami)",
+      "old_lang": "ru",
+      "new_lang": "pl",
+      "confidence": 1.0,
+      "reason": "lid_all"
+    },
+    {
+      "id": "apww1_mewa",
+      "title": "Mewa (z nutami)",
+      "old_lang": "ru",
+      "new_lang": "pl",
+      "confidence": 1.0,
+      "reason": "lid_all"
+    },
+    {
+      "id": "apww1_mkosiarzy",
+      "title": "Sł. W. Wolski - Marsz Kosiarzy (z nutami)",
+      "old_lang": "ru",
+      "new_lang": "pl",
+      "confidence": 1.0,
+      "reason": "lid_all"
+    },
+    {
+      "id": "apww1_mnaczescob",
+      "title": "Sł. R. Suchodolski- Marsz na cześć obrońców Ojczyzny (z nutami)",
+      "old_lang": "ru",
+      "new_lang": "pl",
+      "confidence": 1.0,
+      "reason": "lid_all"
+    },
+    {
+      "id": "apww1_modlitwa",
+      "title": "Sł. A. Trzecieski, przekł. Jakub z Lublina - Modlitwa za Rzecz Pospolitą naszą i za Króla (z nutami)",
+      "old_lang": "ru",
+      "new_lang": "pl",
+      "confidence": 1.0,
+      "reason": "lid_all"
+    },
+    {
+      "id": "apww1_modprzedbit",
+      "title": "Sł. F. Kowalski (podlug Körnera) - Modlitwa przed bitwą (z nutami)",
+      "old_lang": "ru",
+      "new_lang": "pl",
+      "confidence": 1.0,
+      "reason": "lid_all"
+    },
+    {
+      "id": "apww1_morzenasze",
+      "title": "Sł. i muz. A. Kowalski - Morze, nasze morze (z nutami)",
+      "old_lang": "ru",
+      "new_lang": "pl",
+      "confidence": 1.0,
+      "reason": "lid_all"
+    },
+    {
+      "id": "apww1_mpowstancow",
+      "title": "Sł. W. Wolski - Marsz powstańców (z nutami)",
+      "old_lang": "ru",
+      "new_lang": "pl",
+      "confidence": 1.0,
+      "reason": "lid_all"
+    },
+    {
+      "id": "apww1_muszka",
+      "title": "Muszka (Pieśń więźnia, z nutami)",
+      "old_lang": "ru",
+      "new_lang": "pl",
+      "confidence": 1.0,
+      "reason": "lid_all"
+    },
+    {
+      "id": "apww1_mwojenny",
+      "title": "Marsz wojenny (z nutami)",
+      "old_lang": "ru",
+      "new_lang": "pl",
+      "confidence": 1.0,
+      "reason": "lid_all"
+    },
+    {
+      "id": "apww1_mysmyprzysz",
+      "title": "Myśmy przyszłością narodu (z nutami)",
+      "old_lang": "ru",
+      "new_lang": "pl",
+      "confidence": 1.0,
+      "reason": "lid_all"
+    },
+    {
+      "id": "apww1_mzuawow",
+      "title": "Sł. W. Wolski - Marsz Żuawów (z nutami)",
+      "old_lang": "ru",
+      "new_lang": "pl",
+      "confidence": 1.0,
+      "reason": "lid_all"
+    },
+    {
+      "id": "apww1_nawawel",
+      "title": "S. Moniuszko, E. Wasilewski - Na Wawel, na Wawel (z nutami)",
+      "old_lang": "ru",
+      "new_lang": "pl",
+      "confidence": 1.0,
+      "reason": "lid_all"
+    },
+    {
+      "id": "apww1_nawolyn",
+      "title": "Nа Wоłyń (z nutami)",
+      "old_lang": "ru",
+      "new_lang": "pl",
+      "confidence": 1.0,
+      "reason": "lid_all"
+    },
+    {
+      "id": "apww1_nawshud",
+      "title": "Na wschód",
+      "old_lang": "ru",
+      "new_lang": "pl",
+      "confidence": 1.0,
+      "reason": "lid_all"
+    },
+    {
+      "id": "apww1_nematojak",
+      "title": "Nie ma to jak sapery (z nutami)",
+      "old_lang": "ru",
+      "new_lang": "pl",
+      "confidence": 1.0,
+      "reason": "lid_all"
+    },
+    {
+      "id": "apww1_niechpolska",
+      "title": "A. Bojarski, W. Pol - Niechaj Polska zna (z nutami)",
+      "old_lang": "ru",
+      "new_lang": "pl",
+      "confidence": 1.0,
+      "reason": "lid_all"
+    },
+    {
+      "id": "apww1_niemasznad",
+      "title": "Nie masz nad leguna (z nutami)",
+      "old_lang": "ru",
+      "new_lang": "pl",
+      "confidence": 1.0,
+      "reason": "lid_all"
+    },
+    {
+      "id": "apww1_nienawidze",
+      "title": "S. Surzyński, S. Starzewski - Nienawidzę was próżniaki",
+      "old_lang": "ru",
+      "new_lang": "pl",
+      "confidence": 1.0,
+      "reason": "lid_all"
+    },
+    {
+      "id": "apww1_nieopuszczaj",
+      "title": "Sł. Ks. Antoniewicz - Nie opuszczaj nas! (z nutami)",
+      "old_lang": "ru",
+      "new_lang": "pl",
+      "confidence": 1.0,
+      "reason": "lid_all"
+    },
+    {
+      "id": "apww1_obozmosk",
+      "title": "Sł. W. Pol - Obóz Moskiewski роd Kownem (z nutami)",
+      "old_lang": "ru",
+      "new_lang": "pl",
+      "confidence": 1.0,
+      "reason": "lid_all"
+    },
+    {
+      "id": "apww1_ojczenaszpol",
+      "title": "Ojcze nasz Polaka (z nutami)",
+      "old_lang": "ru",
+      "new_lang": "pl",
+      "confidence": 1.0,
+      "reason": "lid_all"
+    },
+    {
+      "id": "apww1_omojrozm",
+      "title": "O mój rozmarynie (z nutami)",
+      "old_lang": "ru",
+      "new_lang": "pl",
+      "confidence": 1.0,
+      "reason": "lid_all"
+    },
+    {
+      "id": "apww1_opuszojcz",
+      "title": "Sł. W. Pol - Opuszczenie ojczyzny (z nutami)",
+      "old_lang": "ru",
+      "new_lang": "pl",
+      "confidence": 1.0,
+      "reason": "lid_all"
+    },
+    {
+      "id": "apww1_orzelbialy",
+      "title": "Orzeł biały (z nutami)",
+      "old_lang": "ru",
+      "new_lang": "pl",
+      "confidence": 1.0,
+      "reason": "lid_all"
+    },
+    {
+      "id": "apww1_p1792",
+      "title": "Sł. Dzierzkowski - Pieśń z r. 1792. (z nutami)",
+      "old_lang": "ru",
+      "new_lang": "pl",
+      "confidence": 1.0,
+      "reason": "lid_all"
+    },
+    {
+      "id": "apww1_p1863",
+      "title": "Pieśń z r. 1863. (Chcecie, bym wam zaśpiewał..., z nutami)",
+      "old_lang": "ru",
+      "new_lang": "pl",
+      "confidence": 1.0,
+      "reason": "lid_all"
+    },
+    {
+      "id": "apww1_p4pietra",
+      "title": "Sł. W. Wolski - Pieśń czwartego piętra (z nutami)",
+      "old_lang": "ru",
+      "new_lang": "pl",
+      "confidence": 1.0,
+      "reason": "lid_all"
+    },
+    {
+      "id": "apww1_pakadwarsz",
+      "title": "Sł. E. Wasilewski - Pieśń akademików warszawsich (z nutami)",
+      "old_lang": "ru",
+      "new_lang": "pl",
+      "confidence": 1.0,
+      "reason": "lid_all"
+    },
+    {
+      "id": "apww1_pfilaretow_m",
+      "title": "Sł. A. Mickiewicz - Pieśń Filaretów (Uzyjmy dziś żywota..., z nutami)",
+      "old_lang": "ru",
+      "new_lang": "pl",
+      "confidence": 1.0,
+      "reason": "lid_all"
+    },
+    {
+      "id": "apww1_pfilaretow",
+      "title": "Sł. A. E. Odyniec - Pieśń filaretów (Precz precz od nas smutek wszelki!.., z nutami)",
+      "old_lang": "ru",
+      "new_lang": "pl",
+      "confidence": 1.0,
+      "reason": "lid_all"
+    },
+    {
+      "id": "apww1_piesnslazakow",
+      "title": "Sl. B. Koraszewski - Piesn Slazakow",
+      "old_lang": "ru",
+      "new_lang": "pl",
+      "confidence": 1.0,
+      "reason": "lid_all"
+    },
+    {
+      "id": "apww1_pijekuba",
+      "title": "Pije Kuba",
+      "old_lang": "ru",
+      "new_lang": "pl",
+      "confidence": 1.0,
+      "reason": "lid_all"
+    },
+    {
+      "id": "apww1_pkatorz",
+      "title": "Sł. Adam Mickiewicz - Pieśń Katorżników (z nutami)",
+      "old_lang": "ru",
+      "new_lang": "pl",
+      "confidence": 1.0,
+      "reason": "lid_all"
+    },
+    {
+      "id": "apww1_pkonfed",
+      "title": "Pieśń konfederacka (1768-1772), z nutami",
+      "old_lang": "ru",
+      "new_lang": "pl",
+      "confidence": 1.0,
+      "reason": "lid_all"
+    },
+    {
+      "id": "apww1_pkosynierow",
+      "title": "Piosnka kosynierów",
+      "old_lang": "ru",
+      "new_lang": "pl",
+      "confidence": 1.0,
+      "reason": "lid_all"
+    },
+    {
+      "id": "apww1_pkowala",
+      "title": "Sł. S. Starzyński - Pieśń kowala (z nutami)",
+      "old_lang": "ru",
+      "new_lang": "pl",
+      "confidence": 1.0,
+      "reason": "lid_all"
+    },
+    {
+      "id": "apww1_plegionistow",
+      "title": "Pieśń Legionistów Polskich",
+      "old_lang": "ru",
+      "new_lang": "pl",
+      "confidence": 1.0,
+      "reason": "lid_all"
+    },
+    {
+      "id": "apww1_pleglit",
+      "title": "Sł. F. Kowalski - Pieśń legionistów litewsko-wołyńskich (z nutami)",
+      "old_lang": "ru",
+      "new_lang": "pl",
+      "confidence": 1.0,
+      "reason": "lid_all"
+    },
+    {
+      "id": "apww1_plirnika",
+      "title": "Sł. W. L. Anczyc, Jadwiga z Strokowa, Wincenty Motas z Grzębowa - Pieśń lirnika (z nutami)",
+      "old_lang": "ru",
+      "new_lang": "pl",
+      "confidence": 1.0,
+      "reason": "lid_all"
+    },
+    {
+      "id": "apww1_plonieognisko",
+      "title": "Sł. i muz. J. Braun - Płonie ognisko (z nutami)",
+      "old_lang": "ru",
+      "new_lang": "pl",
+      "confidence": 1.0,
+      "reason": "lid_all"
+    },
+    {
+      "id": "apww1_pludu1794",
+      "title": "Pieśń ludu z r. 1794 (z nutami)",
+      "old_lang": "ru",
+      "new_lang": "pl",
+      "confidence": 1.0,
+      "reason": "lid_all"
+    },
+    {
+      "id": "apww1_pmabyla",
+      "title": "Sł. A. Mickiewicz - Pieśń ma była już w grobie (z nutami)",
+      "old_lang": "ru",
+      "new_lang": "pl",
+      "confidence": 1.0,
+      "reason": "lid_all"
+    },
+    {
+      "id": "apww1_pmlod",
+      "title": "Sł. A. Borucki - Рieśń młodzieży",
+      "old_lang": "ru",
+      "new_lang": "pl",
+      "confidence": 1.0,
+      "reason": "lid_all"
+    },
+    {
+      "id": "apww1_pmlodejwiary",
+      "title": "Sł. M. Romanowski - Pieśń młodej wiary (z nutami)",
+      "old_lang": "ru",
+      "new_lang": "ro",
+      "confidence": 1.0,
+      "reason": "title_hint"
+    },
+    {
+      "id": "apww1_pmlodpol",
+      "title": "Sł. Rapperswy - Pieśń młodzieży polskiej uniwersytetów moskiewskich (z nutami)",
+      "old_lang": "ru",
+      "new_lang": "pl",
+      "confidence": 1.0,
+      "reason": "lid_all"
+    },
+    {
+      "id": "apww1_pobozowa",
+      "title": "Pieśń obozowa",
+      "old_lang": "ru",
+      "new_lang": "pl",
+      "confidence": 1.0,
+      "reason": "lid_all"
+    },
+    {
+      "id": "apww1_pobudka_dluz",
+      "title": "Sł. K. Dłużewski (?) - Pobudka (z nutami)",
+      "old_lang": "ru",
+      "new_lang": "pl",
+      "confidence": 1.0,
+      "reason": "lid_all"
+    },
+    {
+      "id": "apww1_pobudkadzw",
+      "title": "Sł. P. Wójcikowski - Pobudka dzwoni... (Pieśń strzelców borysławskich)",
+      "old_lang": "ru",
+      "new_lang": "pl",
+      "confidence": 1.0,
+      "reason": "lid_all"
+    },
+    {
+      "id": "apww1_pocieszenie",
+      "title": "Pocieszenie (z nutami)",
+      "old_lang": "ru",
+      "new_lang": "pl",
+      "confidence": 1.0,
+      "reason": "lid_all"
+    },
+    {
+      "id": "apww1_pohwesel",
+      "title": "Sł. F. Bohomolec - Pochwała wesołości (z nutami)",
+      "old_lang": "ru",
+      "new_lang": "pl",
+      "confidence": 1.0,
+      "reason": "lid_all"
+    },
+    {
+      "id": "apww1_polakbezr",
+      "title": "Polak bez ręki (z nutami)",
+      "old_lang": "ru",
+      "new_lang": "pl",
+      "confidence": 1.0,
+      "reason": "lid_all"
+    },
+    {
+      "id": "apww1_polka_gor",
+      "title": "Sł. A. Gorecki - Polka (Przestań przedemną łzy ronić..., z nutami)",
+      "old_lang": "ru",
+      "new_lang": "pl",
+      "confidence": 1.0,
+      "reason": "lid_all"
+    },
+    {
+      "id": "apww1_polka_pojde",
+      "title": "Роlkа (Pójdę za mąż, pójdę może..., z nutami)",
+      "old_lang": "ru",
+      "new_lang": "pl",
+      "confidence": 1.0,
+      "reason": "lid_all"
+    },
+    {
+      "id": "apww1_polka",
+      "title": "Polka (Ładna Francuzka, dowcipna i żywa...)",
+      "old_lang": "ru",
+      "new_lang": "pl",
+      "confidence": 1.0,
+      "reason": "lid_all"
+    },
+    {
+      "id": "apww1_polonezkos",
+      "title": "T. Kościuszko, R. Suchodolski - Polonez Kościuszki (z nutami)",
+      "old_lang": "ru",
+      "new_lang": "pl",
+      "confidence": 1.0,
+      "reason": "lid_all"
+    },
+    {
+      "id": "apww1_polskapowst",
+      "title": "Sl. K. Gaszynski - Polska powstajaca (z nutami)",
+      "old_lang": "ru",
+      "new_lang": "pl",
+      "confidence": 1.0,
+      "reason": "lid_all"
+    },
+    {
+      "id": "apww1_pozegnanie",
+      "title": "Pożegnanie (z nutami)",
+      "old_lang": "ru",
+      "new_lang": "pl",
+      "confidence": 1.0,
+      "reason": "lid_all"
+    },
+    {
+      "id": "apww1_pozegnkonst",
+      "title": "Sl. J. Maciejowski - Pozegnanie W. Ks. Konstantego (z nutami)",
+      "old_lang": "ru",
+      "new_lang": "lb",
+      "confidence": 1.0,
+      "reason": "lid_low_conf"
+    },
+    {
+      "id": "apww1_ppolwamer",
+      "title": "Рieśń Polaków w Ameryce",
+      "old_lang": "ru",
+      "new_lang": "lb",
+      "confidence": 1.0,
+      "reason": "lid_low_conf"
+    },
+    {
+      "id": "apww1_proboty",
+      "title": "Sl. J. G. - Piesn roboty (z nutami)",
+      "old_lang": "ru",
+      "new_lang": "pl",
+      "confidence": 1.0,
+      "reason": "lid_all"
+    },
+    {
+      "id": "apww1_prykowa",
+      "title": "Pieśń Rykowa (z nutami)",
+      "old_lang": "ru",
+      "new_lang": "pl",
+      "confidence": 1.0,
+      "reason": "lid_all"
+    },
+    {
+      "id": "apww1_przybulani",
+      "title": "Sł. F. Gwiżdż - Przybyli ułani pod okienko (z nutami)",
+      "old_lang": "ru",
+      "new_lang": "pl",
+      "confidence": 1.0,
+      "reason": "lid_all"
+    },
+    {
+      "id": "apww1_pslaska",
+      "title": "Pieśń Śląlska",
+      "old_lang": "ru",
+      "new_lang": "pl",
+      "confidence": 1.0,
+      "reason": "lid_all"
+    },
+    {
+      "id": "apww1_pslazakow",
+      "title": "Sł. Br. Koraszewski - Piosnka Ślązaków",
+      "old_lang": "ru",
+      "new_lang": "pl",
+      "confidence": 1.0,
+      "reason": "lid_all"
+    },
+    {
+      "id": "apww1_pstarcow",
+      "title": "Sł. F. Kowalski - Pieśń starców (z nutami)",
+      "old_lang": "ru",
+      "new_lang": "pl",
+      "confidence": 1.0,
+      "reason": "lid_all"
+    },
+    {
+      "id": "apww1_ptulacza",
+      "title": "Sł. J. Słowacki - Pieśń tułacza",
+      "old_lang": "ru",
+      "new_lang": "pl",
+      "confidence": 1.0,
+      "reason": "lid_all"
+    },
+    {
+      "id": "apww1_puczniow",
+      "title": "Pieśń uczniów na Litwie (z nutami)",
+      "old_lang": "ru",
+      "new_lang": "pl",
+      "confidence": 1.0,
+      "reason": "lid_all"
+    },
+    {
+      "id": "apww1_pulana",
+      "title": "Piosnka ulana (z nutami)",
+      "old_lang": "ru",
+      "new_lang": "pl",
+      "confidence": 1.0,
+      "reason": "lid_all"
+    },
+    {
+      "id": "apww1_pulanow",
+      "title": "Sł. W. Pol - Pieśń Ułanów po zwycięstwie pod Wawrem (z nutami)",
+      "old_lang": "ru",
+      "new_lang": "pl",
+      "confidence": 1.0,
+      "reason": "lid_all"
+    },
+    {
+      "id": "apww1_pulanow1863",
+      "title": "Pieśń ułanów z r. 1863. (z nutami)",
+      "old_lang": "ru",
+      "new_lang": "pl",
+      "confidence": 1.0,
+      "reason": "lid_all"
+    },
+    {
+      "id": "apww1_pwieznia",
+      "title": "Sł. M. Bodzyński - Pieśń więźnia (z nutami)",
+      "old_lang": "ru",
+      "new_lang": "pl",
+      "confidence": 1.0,
+      "reason": "lid_all"
+    },
+    {
+      "id": "apww1_pwojenna",
+      "title": "Pieśń wojenna (Niemasz bracie nic na świecie...)",
+      "old_lang": "ru",
+      "new_lang": "pl",
+      "confidence": 1.0,
+      "reason": "lid_all"
+    },
+    {
+      "id": "apww1_pwygn",
+      "title": "Рieśń wygnańców",
+      "old_lang": "ru",
+      "new_lang": "pl",
+      "confidence": 1.0,
+      "reason": "lid_all"
+    },
+    {
+      "id": "apww1_pzoln1863",
+      "title": "Pieśń żołnierska z r. 1863 (z nutami)",
+      "old_lang": "ru",
+      "new_lang": "pl",
+      "confidence": 1.0,
+      "reason": "lid_all"
+    },
+    {
+      "id": "apww1_pzolnierza",
+      "title": "Sł. A. Mickiewicz - Pieśń żołnierza",
+      "old_lang": "ru",
+      "new_lang": "pl",
+      "confidence": 1.0,
+      "reason": "lid_all"
+    },
+    {
+      "id": "apww1_pzr1863",
+      "title": "Pieśń z r. 1863. (Od zimy, od Wincentego..., z nutami)",
+      "old_lang": "ru",
+      "new_lang": "pl",
+      "confidence": 1.0,
+      "reason": "lid_all"
+    },
+    {
+      "id": "apww1_pzwygnania",
+      "title": "Sł. J. Czeczot - Piosnka z wygnania (z nutami)",
+      "old_lang": "ru",
+      "new_lang": "pl",
+      "confidence": 1.0,
+      "reason": "lid_all"
+    },
+    {
+      "id": "apww1_rocznpowst",
+      "title": "Sł. W. Pol - Rocznica powstania (z nutami)",
+      "old_lang": "ru",
+      "new_lang": "pl",
+      "confidence": 1.0,
+      "reason": "lid_all"
+    },
+    {
+      "id": "apww1_rota",
+      "title": "F. Nowowiejski, M. Konopnicka - Rota (z nutami)",
+      "old_lang": "ru",
+      "new_lang": "pl",
+      "confidence": 1.0,
+      "reason": "lid_all"
+    },
+    {
+      "id": "apww1_rozkwitaja",
+      "title": "M. Kozar-Słobódski, K. Wroczyński - Rozkwitają pąki białych róż (z nutami)",
+      "old_lang": "ru",
+      "new_lang": "pl",
+      "confidence": 1.0,
+      "reason": "lid_all"
+    },
+    {
+      "id": "apww1_rozlaczenie",
+      "title": "Sł. A. Bielowski - Rozłączenie (Za Niemen..., z nutami)",
+      "old_lang": "ru",
+      "new_lang": "pl",
+      "confidence": 1.0,
+      "reason": "lid_all"
+    },
+    {
+      "id": "apww1_rymcym",
+      "title": "Rym, cym, cym (z nutami)",
+      "old_lang": "ru",
+      "new_lang": "pl",
+      "confidence": 1.0,
+      "reason": "lid_all"
+    },
+    {
+      "id": "apww1_sercewplecaku",
+      "title": "Sł. i muz. M. Zieliński - Serce w plecaku (z nutami)",
+      "old_lang": "ru",
+      "new_lang": "pl",
+      "confidence": 1.0,
+      "reason": "lid_all"
+    },
+    {
+      "id": "apww1_serdeczna",
+      "title": "Serdeczna Matko",
+      "old_lang": "ru",
+      "new_lang": "pl",
+      "confidence": 1.0,
+      "reason": "lid_all"
+    },
+    {
+      "id": "apww1_skrakusow",
+      "title": "Śpiew Krakusów (z nutami)",
+      "old_lang": "ru",
+      "new_lang": "pl",
+      "confidence": 1.0,
+      "reason": "lid_all"
+    },
+    {
+      "id": "apww1_slaskihymn",
+      "title": "Śląski hymn narodowy",
+      "old_lang": "ru",
+      "new_lang": "pl",
+      "confidence": 1.0,
+      "reason": "lid_all"
+    },
+    {
+      "id": "apww1_slaskmoja",
+      "title": "Sł. Ks. Przyniczyński - Śląsk moja Ojczyzna",
+      "old_lang": "ru",
+      "new_lang": "pl",
+      "confidence": 1.0,
+      "reason": "lid_all"
+    },
+    {
+      "id": "apww1_smogily",
+      "title": "F. Chopin, W. Pol - Śpiew z mogiły (z nutami)",
+      "old_lang": "ru",
+      "new_lang": "pl",
+      "confidence": 1.0,
+      "reason": "lid_all"
+    },
+    {
+      "id": "apww1_sowolnosci",
+      "title": "Sl. Bard nadwislanski - Spiew о wolnosci (с нотами)",
+      "old_lang": "ru",
+      "new_lang": "pl",
+      "confidence": 1.0,
+      "reason": "lid_all"
+    },
+    {
+      "id": "apww1_spiewboj",
+      "title": "Sł. S. Witwicki - Śpiew bojowy",
+      "old_lang": "ru",
+      "new_lang": "pl",
+      "confidence": 1.0,
+      "reason": "lid_all"
+    }
+  ],
+  "update_statements": 505,
+  "langid_enabled": true,
+  "update_sql": "C:\\Users\\svyat\\Desktop\\песенник 21 февраля\\песенник 15 февраля\\euro-songbook-cloudflare-fixed2-palette-api-fix(1)\\tmp_reclassify_languages.sql",
+  "export_sql": "C:\\Users\\svyat\\Desktop\\песенник 21 февраля\\песенник 15 февраля\\euro-songbook-cloudflare-fixed2-palette-api-fix(1)\\tmp_songs_export.sql"
+}

@@ -1,0 +1,8 @@
+строка:1 знак:121
++ ... евраля\euro-songbook-cloudflare-fixed2-palette-api-fix(1)'; 1='1'; d8 ...
++                                                                 ~
+Недопустимое условие назначения. Входным значением оператора назначения должен быть объект, способный принимать назначе
+ния, такой как переменная или свойство.
+    + CategoryInfo          : ParserError: (:) [], ParentContainsErrorRecordException
+    + FullyQualifiedErrorId : InvalidLeftHandSide
+ 

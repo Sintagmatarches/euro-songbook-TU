@@ -1,0 +1,17 @@
+{
+  "samples_total": 90,
+  "problem_rows": 1,
+  "problem_examples": [
+    {
+      "id": "apstud_letpogoda",
+      "title": "Евгений Исакевич - Летная погода (с mp3)",
+      "lang": "ru",
+      "country": "russian_federation_1991",
+      "year": "1996",
+      "issues": [
+        "notes_meta"
+      ],
+      "lyrics_snippet": "Am\r\nТы сидишь за толстой плотной оболочкой,\r\nDm\r\nСамолет моторами ревёт.\r\nE Dm E\r\nТолько осциллограф обозначил точкой\r\nDm E Am\r\nМестоположение твоё.\r\nA7\r\nСветят плотоядно лампочки "
+    }
+  ]
+}
