@@ -210,26 +210,49 @@ export async function onRequestGet({ env, request }) {
       : country
         ? [country]
         : [];
-    const out = await searchSongs(env, {
-      q,
-      page,
-      includeAdminContent,
-      filters: {
-        lang,
-        countryValues,
-        period,
-        performer,
-        year,
-        region,
-        event,
-        theme,
-        verified,
-        recent,
-        multiVersions,
-      },
-    });
-    out.items = rerankVisibleSearchItems(out.items, q);
-    return json(out);
+    try {
+      const out = await searchSongs(env, {
+        q,
+        page,
+        includeAdminContent,
+        filters: {
+          lang,
+          countryValues,
+          period,
+          performer,
+          year,
+          region,
+          event,
+          theme,
+          verified,
+          recent,
+          multiVersions,
+        },
+      });
+      out.items = rerankVisibleSearchItems(out.items, q);
+      return json(out);
+    } catch (cause) {
+      console.error("[songs/search] fallback empty result:", {
+        message: String(cause?.message || cause || ""),
+        query: q,
+      });
+      return json({
+        items: [],
+        total: 0,
+        page: 1,
+        pages: 1,
+        search_mode: "empty",
+        suggestions: [],
+        suggestions_total: 0,
+        did_you_mean: [],
+        bucket_counts: { exact: 0, partial: 0, text: 0, fuzzy: 0 },
+        query_analysis: {
+          normalized: normalizeSearchText(q),
+          corrected_tokens: [],
+          literal_hits: { phrase: 0, tokens: 0, prefix: 0, fuzzy: 0 },
+        },
+      });
+    }
   }
 
   const { where, params } = buildSqlFilters(filters, { includeAdminContent });

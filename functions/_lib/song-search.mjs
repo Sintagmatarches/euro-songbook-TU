@@ -974,12 +974,19 @@ export async function searchSongs(env, options = {}) {
     };
   }
 
+  const shouldRunTypoSearch = analysis.tokens.some((token) => String(token?.normalized || "").length >= 3);
   const exactPhraseRows = await queryExactPhraseRows(env, filters, analysis, { includeAdminContent });
   const exactTokenRows = await queryExactTokenRows(env, filters, analysis, { includeAdminContent });
   const prefixRows = await queryPrefixRows(env, filters, analysis, { includeAdminContent });
-  const typoCandidates = await collectTypoCandidates(env, filters, analysis, { includeAdminContent });
-  const fuzzyRows = await queryFuzzyRows(env, filters, analysis, typoCandidates, { includeAdminContent });
-  const didYouMean = buildDidYouMeanQueries(rawQuery, analysis, typoCandidates);
+  const typoCandidates = shouldRunTypoSearch
+    ? await collectTypoCandidates(env, filters, analysis, { includeAdminContent })
+    : [];
+  const fuzzyRows = shouldRunTypoSearch
+    ? await queryFuzzyRows(env, filters, analysis, typoCandidates, { includeAdminContent })
+    : [];
+  const didYouMean = shouldRunTypoSearch
+    ? buildDidYouMeanQueries(rawQuery, analysis, typoCandidates)
+    : [];
 
   const candidateMap = new Map();
   mergeCandidateMap(candidateMap, exactPhraseRows, "exact_phrase");
