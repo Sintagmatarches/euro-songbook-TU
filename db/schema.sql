@@ -65,6 +65,17 @@ CREATE TABLE IF NOT EXISTS favorites (
   PRIMARY KEY(user_id, song_id)
 );
 
+CREATE TABLE IF NOT EXISTS song_revisions (
+  id TEXT PRIMARY KEY,
+  song_id TEXT NOT NULL,
+  revision_seq INTEGER NOT NULL,
+  action TEXT NOT NULL CHECK(action IN ('create','update','delete','restore','snapshot')),
+  actor_user_id TEXT REFERENCES users(id) ON DELETE SET NULL,
+  restored_from_revision_id TEXT,
+  snapshot_json TEXT NOT NULL,
+  created_at TEXT NOT NULL
+);
+
 CREATE TABLE IF NOT EXISTS song_requests (
   id TEXT PRIMARY KEY,
   user_id TEXT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
@@ -189,6 +200,9 @@ CREATE INDEX IF NOT EXISTS idx_songs_verified ON songs(verified);
 CREATE INDEX IF NOT EXISTS idx_songs_region ON songs(region);
 CREATE INDEX IF NOT EXISTS idx_songs_event ON songs(event);
 CREATE INDEX IF NOT EXISTS idx_songs_theme ON songs(theme);
+CREATE UNIQUE INDEX IF NOT EXISTS idx_song_revisions_song_seq ON song_revisions(song_id, revision_seq);
+CREATE INDEX IF NOT EXISTS idx_song_revisions_song_created ON song_revisions(song_id, created_at DESC);
+CREATE INDEX IF NOT EXISTS idx_song_revisions_created ON song_revisions(created_at DESC);
 CREATE INDEX IF NOT EXISTS idx_song_requests_status_created ON song_requests(status, created_at DESC);
 CREATE INDEX IF NOT EXISTS idx_song_requests_user_created ON song_requests(user_id, created_at DESC);
 CREATE INDEX IF NOT EXISTS idx_draft_owner_updated ON drafts(owner_user_id, updated_at DESC);

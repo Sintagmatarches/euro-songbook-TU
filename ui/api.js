@@ -657,6 +657,13 @@ export const api = {
   },
   async adminDeleteSong(id) { return req(`api/admin/songs/${encodeURIComponent(id)}`, { method:"DELETE" }); },
   async adminSong(id) { return req(`api/admin/songs/${encodeURIComponent(id)}`); },
+  async adminSongHistory(id) { return req(`api/admin/songs/${encodeURIComponent(id)}/history`, { noCache: true }); },
+  async adminRestoreSongRevision(id, revisionId) {
+    return req(`api/admin/songs/${encodeURIComponent(id)}/restore`, {
+      method: "POST",
+      body: JSON.stringify({ revision_id: String(revisionId || "") }),
+    });
+  },
   async adminImportSongs(payload = {}) {
     return req("api/admin/import", { method: "POST", body: JSON.stringify(payload) });
   },

@@ -150,6 +150,22 @@ const PERMISSION_DESCRIPTIONS_UK = {
 const esc = (s = "") => String(s).replace(/[&<>\"']/g, (m) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", "\"": "&quot;", "'": "&#39;" }[m]));
 const qs = (id) => document.getElementById(id);
 const uiLocale = () => (state.locale || "ru");
+function formatDateTime(value) {
+  if (!value) return "";
+  const date = value instanceof Date ? value : new Date(value);
+  if (!Number.isFinite(date.getTime())) return "";
+  try {
+    return new Intl.DateTimeFormat(uiLocale(), {
+      year: "numeric",
+      month: "short",
+      day: "numeric",
+      hour: "2-digit",
+      minute: "2-digit",
+    }).format(date);
+  } catch {
+    return date.toISOString().slice(0, 16).replace("T", " ");
+  }
+}
 const UI_MOTION_MEDIUM_MS = 280;
 const uiTransitionState = new WeakMap();
 
@@ -1347,6 +1363,7 @@ const isSuperAdmin = () => !!(state.user && state.user.role === "super_admin");
 function badge(status) {
   if (status === "published") return `<span class="badge ok">${esc(t("status.published"))}</span>`;
   if (status === "draft") return `<span class="badge draft">${esc(t("status.draft"))}</span>`;
+  if (status === "deleted") return `<span class="badge warn">${esc(t("status.deleted"))}</span>`;
   if (status === "new") return `<span class="badge warn">${esc(t("status.new"))}</span>`;
   if (status === "approved") return `<span class="badge ok">${esc(t("status.approved"))}</span>`;
   if (status === "rejected") return `<span class="badge draft">${esc(t("status.rejected"))}</span>`;
@@ -7620,6 +7637,135 @@ function adminContentEditLabel() {
   return "Edit";
 }
 
+function songRevisionHistoryTitle() {
+  if (uiLocale() === "ru") return "История и rollback";
+  if (uiLocale() === "uk") return "Історія та rollback";
+  if (uiLocale() === "et") return "Ajalugu ja rollback";
+  return "History and rollback";
+}
+
+function songRevisionHistorySubtitle() {
+  if (uiLocale() === "ru") return "Просматривайте ревизии, загружайте их в редактор и применяйте откат вперёд или назад.";
+  if (uiLocale() === "uk") return "Переглядайте ревізії, завантажуйте їх у редактор та застосовуйте відкат уперед або назад.";
+  if (uiLocale() === "et") return "Vaata revisjone, laadi need redaktorisse ja rakenda rollback edasi või tagasi.";
+  return "Review revisions, load them into the editor, and apply rollback backward or forward.";
+}
+
+function songRevisionDeletedNotice() {
+  if (uiLocale() === "ru") return "Песня сейчас удалена. Вы можете восстановить любую живую ревизию или снова применить удалённое состояние.";
+  if (uiLocale() === "uk") return "Пісню зараз видалено. Ви можете відновити будь-яку живу ревізію або знову застосувати стан видалення.";
+  if (uiLocale() === "et") return "Laul on praegu kustutatud. Saad taastada mistahes elusa revisjoni või rakendada uuesti kustutatud oleku.";
+  return "This song is currently deleted. You can restore any live revision or re-apply the deleted state.";
+}
+
+function songRevisionEmptyText() {
+  if (uiLocale() === "ru") return "История появится после первой зафиксированной ревизии.";
+  if (uiLocale() === "uk") return "Історія з’явиться після першої зафіксованої ревізії.";
+  if (uiLocale() === "et") return "Ajalugu ilmub pärast esimest salvestatud revisjoni.";
+  return "History will appear after the first recorded revision.";
+}
+
+function songRevisionLoadLabel() {
+  if (uiLocale() === "ru") return "Загрузить в редактор";
+  if (uiLocale() === "uk") return "Завантажити в редактор";
+  if (uiLocale() === "et") return "Laadi redaktorisse";
+  return "Load into editor";
+}
+
+function songRevisionRestoreLabel() {
+  if (uiLocale() === "ru") return "Применить ревизию";
+  if (uiLocale() === "uk") return "Застосувати ревізію";
+  if (uiLocale() === "et") return "Rakenda revisjon";
+  return "Apply revision";
+}
+
+function songRevisionCurrentLabel() {
+  if (uiLocale() === "ru") return "Текущее состояние";
+  if (uiLocale() === "uk") return "Поточний стан";
+  if (uiLocale() === "et") return "Praegune olek";
+  return "Current state";
+}
+
+function songRevisionActionLabel(action = "", snapshot = {}) {
+  const normalized = String(action || "").trim().toLowerCase();
+  const deleted = Number(snapshot?.is_deleted || 0) === 1;
+  if (normalized === "create") return uiLocale() === "ru" ? "Создание" : uiLocale() === "uk" ? "Створення" : uiLocale() === "et" ? "Loomine" : "Created";
+  if (normalized === "update") return uiLocale() === "ru" ? "Изменение" : uiLocale() === "uk" ? "Зміна" : uiLocale() === "et" ? "Muutmine" : "Updated";
+  if (normalized === "delete") return uiLocale() === "ru" ? "Удаление" : uiLocale() === "uk" ? "Видалення" : uiLocale() === "et" ? "Kustutamine" : "Deleted";
+  if (normalized === "restore") {
+    if (deleted) return uiLocale() === "ru" ? "Возврат в удалённое состояние" : uiLocale() === "uk" ? "Повернення до видаленого стану" : uiLocale() === "et" ? "Taastamine kustutatud olekusse" : "Restored to deleted state";
+    return uiLocale() === "ru" ? "Восстановление" : uiLocale() === "uk" ? "Відновлення" : uiLocale() === "et" ? "Taastamine" : "Restored";
+  }
+  if (normalized === "snapshot") return uiLocale() === "ru" ? "Базовая ревизия" : uiLocale() === "uk" ? "Базова ревізія" : uiLocale() === "et" ? "Baasrevisjon" : "Baseline snapshot";
+  return uiLocale() === "ru" ? "Ревизия" : uiLocale() === "uk" ? "Ревізія" : uiLocale() === "et" ? "Revisjon" : "Revision";
+}
+
+function songRevisionActorText(item = {}) {
+  const name = String(item?.actor_nickname || item?.actor_email || item?.actor_user_id || "").trim();
+  if (name) return name;
+  if (uiLocale() === "ru") return "Автор не указан";
+  if (uiLocale() === "uk") return "Автор не вказаний";
+  if (uiLocale() === "et") return "Autor puudub";
+  return "Unknown actor";
+}
+
+function adminSongRevisionListMarkup(historyData = {}) {
+  const items = Array.isArray(historyData?.items) ? historyData.items : [];
+  if (!items.length) {
+    return `<div class="muted small">${esc(songRevisionEmptyText())}</div>`;
+  }
+  return items.map((item) => {
+    const snapshot = item?.snapshot || {};
+    const status = Number(snapshot?.is_deleted || 0) === 1 ? "deleted" : (snapshot?.status || "published");
+    const metaBits = [
+      snapshot?.lang ? formatLang(snapshot.lang) : "",
+      snapshot?.country ? formatCountry(snapshot.country) : "",
+      item?.created_at ? formatDateTime(item.created_at) : "",
+      songRevisionActorText(item),
+    ].filter(Boolean);
+    const previewText = String(snapshot?.lyrics || "").trim() || String(snapshot?.notes || "").trim() || String(snapshot?.source || "").trim() || "-";
+    return `
+      <article class="card ac-revision-item${item?.is_current ? " is-current" : ""}" data-revision-id="${esc(item?.id || "")}">
+        <div class="ac-revision-item-head">
+          <div>
+            <div class="songTitle ac-revision-title">${esc(snapshot?.title || item?.summary?.title || "-")}</div>
+            <div class="songMeta ac-revision-meta">${esc(metaBits.join(" / "))}</div>
+          </div>
+          <div class="ac-revision-badges">
+            ${badge(status)}
+            <span class="badge">${esc(songRevisionActionLabel(item?.action, snapshot))}</span>
+            ${item?.is_current ? `<span class="badge ok">${esc(songRevisionCurrentLabel())}</span>` : ``}
+          </div>
+        </div>
+        <div class="muted small ac-revision-snippet">${esc(previewText.slice(0, 220))}</div>
+        <div class="actions ac-revision-actions">
+          <button class="btn ghost" type="button" data-revision-load="${esc(item?.id || "")}">${esc(songRevisionLoadLabel())}</button>
+          <button class="btn" type="button" data-revision-restore="${esc(item?.id || "")}">${esc(songRevisionRestoreLabel())}</button>
+        </div>
+      </article>
+    `;
+  }).join("");
+}
+
+function adminSongHistoryPanelUI(historyData = {}, song = {}) {
+  const songId = String(song?.id || "").trim();
+  if (!songId) return "";
+  const isDeleted = Number(song?.is_deleted || historyData?.is_deleted || 0) === 1;
+  return `
+    <section class="card ac-revision-panel" id="ac_revision_panel" data-song-id="${esc(songId)}">
+      <div class="ac-revision-panel-head">
+        <div>
+          <div class="h2 ac-revision-panel-title">${esc(songRevisionHistoryTitle())}</div>
+          <div class="muted small ac-revision-panel-subtitle">${esc(songRevisionHistorySubtitle())}</div>
+        </div>
+        ${isDeleted ? badge("deleted") : ""}
+      </div>
+      ${isDeleted ? `<div class="ac-revision-deleted-note">${esc(songRevisionDeletedNotice())}</div>` : ``}
+      <div class="ac-revision-list" id="ac_revision_list">${adminSongRevisionListMarkup(historyData)}</div>
+    </section>
+  `;
+}
+
 function unifiedSongEditorHash(options = {}) {
   const songId = String(options.songId || "").trim();
   const draftId = String(options.draftId || "").trim();
@@ -7855,7 +8001,7 @@ function adminSongsUI(data, params = {}) {
       <div class="card admin-song-filter-card">
         <div class="ac-filter-grid ac-filter-grid-admin">
           <input class="input" id="ac_q" placeholder="${esc(t("admin.filterQuery"))}" value="${esc(params.q || "")}" />
-          <select class="select" id="ac_status"><option value="">${esc(t("status.all"))}</option><option value="published" ${(params.status || "") === "published" ? "selected" : ""}>${esc(t("status.published"))}</option><option value="draft" ${(params.status || "") === "draft" ? "selected" : ""}>${esc(t("status.draft"))}</option></select>
+          <select class="select" id="ac_status"><option value="">${esc(t("status.all"))}</option><option value="published" ${(params.status || "") === "published" ? "selected" : ""}>${esc(t("status.published"))}</option><option value="draft" ${(params.status || "") === "draft" ? "selected" : ""}>${esc(t("status.draft"))}</option><option value="deleted" ${(params.status || "") === "deleted" ? "selected" : ""}>${esc(t("status.deleted"))}</option></select>
           <select class="select" id="ac_sort">${adminContentSortOptionsMarkup(params.sort || "newest")}</select>
         </div>
         <div class="actions ac-actions-row admin-song-filter-actions">
@@ -7948,6 +8094,7 @@ function adminEditorUI(song = {}, options = {}) {
   const canEditSongs = can("songs.edit");
   const canWriteSongs = isNew ? canCreateSongs : canEditSongs;
   const allowDirectSave = options.allowDirectSave === true || requestMode !== true;
+  const historyData = options.history || { items: [] };
   const forceDraftId = String(options.forceDraftId || "").trim();
   const requestKind = String(options.requestKind || "new_song").trim().toLowerCase() === "edit_song" ? "edit_song" : "new_song";
   const targetSongId = String(options.targetSongId || song.id || "").trim();
@@ -7959,7 +8106,7 @@ function adminEditorUI(song = {}, options = {}) {
   const saveButtonLabel = String(options.saveButtonLabel || "").trim() || t("common.save");
   const publishButtonLabel = String(options.publishButtonLabel || "").trim() || draftUiText("publishSong");
   const subtitle = String(options.subtitleOverride || "").trim();
-  const deleteBtn = (!canEditSongs || isNew || hideDeleteButton) ? "" : `<button class="btn danger" id="ac_delete" type="button">${esc(t("common.delete"))}</button>`;
+  const deleteBtn = (!canEditSongs || isNew || hideDeleteButton || Number(song?.is_deleted || 0) === 1) ? "" : `<button class="btn danger" id="ac_delete" type="button">${esc(t("common.delete"))}</button>`;
   const publishBtn = canWriteSongs && canPublishDraft ? `<button class="btn" id="ac_publish" type="button">${esc(publishButtonLabel)}</button>` : "";
   const title = String(options.titleOverride || "").trim() || (isNew ? t("admin.newSong") : t("admin.editor"));
   const headerSubtitle = requestMode ? "" : subtitle;
@@ -8141,6 +8288,7 @@ function adminEditorUI(song = {}, options = {}) {
           <button class="btn danger hidden" id="ac_remove_active_version" type="button">${esc(deletePageVariantLabel())}</button>
         </div>
       </div>
+      ${adminSongHistoryPanelUI(historyData, song)}
       ${footerActions}
     </div>
   `;
@@ -10576,6 +10724,9 @@ export async function render(route) {
         links: Array.isArray(song?.links) ? song.links : [],
         versions: Array.isArray(song?.versions) ? song.versions : [],
       };
+      const history = editorSongId && canLoadAdminSong
+        ? await api.adminSongHistory(editorSongId).catch(() => ({ items: [] }))
+        : { items: [] };
       return {
         html: adminEditorUI(song, {
           isNew: !editorSongId,
@@ -10587,6 +10738,7 @@ export async function render(route) {
           forceDraftId: draftId,
           canPublishDraft: String(data?.owner?.id || "") === String(state?.user?.id || ""),
           titleOverride: draftUiText("openCollaborativeDraft"),
+          history,
         }),
         ctx: {
           section: "editor",
@@ -10763,6 +10915,9 @@ export async function render(route) {
         links: Array.isArray(song?.links) ? song.links : [],
         versions: Array.isArray(song?.versions) ? song.versions : [],
       };
+      const history = editorSongId
+        ? await api.adminSongHistory(editorSongId).catch(() => ({ items: [] }))
+        : { items: [] };
       const allowDirectSave = isNew ? canCreateSongs : canEditSongs;
       const editorTitle = isNew
         ? titleText
@@ -10791,6 +10946,7 @@ export async function render(route) {
           targetSongId: "",
           forceModeratedRequest: false,
           allowDirectSave,
+          history,
         }),
         ctx: {
           isFragmentReport: false,
@@ -16077,6 +16233,66 @@ export function bind(route, ctx) {
       qs(id)?.addEventListener("change", refreshAdminDecoding);
     });
 
+    let revisionState = ctx?.history || { items: [] };
+    const revisionListNode = qs("ac_revision_list");
+    const buildEditorRefreshHash = (songIdOverride = "") => {
+      const songId = String(songIdOverride || qs("ac_id")?.value || initialSong?.id || "").trim();
+      const draftId = String(ctx?.draftId || route?.query?.draft || qs("ac_force_draft_id")?.value || "").trim();
+      if (route.name === "draft") {
+        const draftRouteId = String(ctx?.draftId || route?.id || "").trim();
+        return makeHash(`#/draft/${encodeURIComponent(draftRouteId)}`, { refresh: String(Date.now()) }, ["refresh"]);
+      }
+      return makeHash(
+        "#/request",
+        {
+          editor: "admin",
+          song_id: songId,
+          draft: draftId,
+          refresh: String(Date.now()),
+        },
+        ["editor", "song_id", "draft", "refresh"],
+      );
+    };
+    const applyRevisionSnapshotToEditor = (snapshot = {}) => {
+      fillContentEditor({
+        ...initialSong,
+        ...snapshot,
+        links: Array.isArray(snapshot?.links) ? snapshot.links : [],
+        versions: Array.isArray(snapshot?.versions) ? snapshot.versions : [],
+      });
+      editorHistoricalBinder.syncFromCountry(snapshot?.country || initialSong?.country || "");
+      wireDynamicRows(editorRoot);
+      wireAutoGrowTextareas(editorRoot);
+      syncVersionScopedEditors(editorRoot);
+      refreshAdminDecoding();
+      syncDraftState(collectContentPayload());
+    };
+    revisionListNode?.addEventListener("click", async (event) => {
+      const target = event.target;
+      if (!(target instanceof HTMLElement)) return;
+      const loadBtn = target.closest("[data-revision-load]");
+      const restoreBtn = target.closest("[data-revision-restore]");
+      if (!(loadBtn || restoreBtn)) return;
+      const revisionId = String(loadBtn?.getAttribute("data-revision-load") || restoreBtn?.getAttribute("data-revision-restore") || "").trim();
+      if (!revisionId) return;
+      const revision = (Array.isArray(revisionState?.items) ? revisionState.items : []).find((item) => String(item?.id || "") === revisionId);
+      if (!revision?.snapshot) return;
+      if (loadBtn) {
+        applyRevisionSnapshotToEditor(revision.snapshot);
+        showStatusOverlay(songRevisionLoadLabel(), "success");
+        return;
+      }
+      const songId = String(qs("ac_id")?.value || initialSong?.id || "").trim();
+      if (!songId) return;
+      try {
+        await api.adminRestoreSongRevision(songId, revisionId);
+        showStatusOverlay(songRevisionRestoreLabel(), "success");
+        location.hash = buildEditorRefreshHash(songId);
+      } catch (cause) {
+        showStatusOverlay(String(cause?.message || t("common.error")), "error");
+      }
+    });
+
     const inlineCollabRoot = qs("ac_collab_panel");
     let inlineDraftId = String(ctx?.draftId || route?.query?.draft || qs("ac_force_draft_id")?.value || "").trim();
     let inlineDraftPayload = ctx?.draftData || null;
@@ -17653,6 +17869,13 @@ export function bind(route, ctx) {
           });
           if (acSaveBtn) acSaveBtn.textContent = initialSaveText;
           if (acPublishBtn) acPublishBtn.textContent = initialPublishText;
+          if (payload.id && savedId && (ctx?.adminEditorMode === true || route.name === "draft")) {
+            const refreshHash = buildEditorRefreshHash(savedId);
+            if (location.hash !== refreshHash) {
+              location.hash = refreshHash;
+              return;
+            }
+          }
           if (!payload.id && savedId) {
             const editorHash = isRequestMode
               ? unifiedSongEditorHash({ songId: savedId, draftId: inlineDraftId || "" })
