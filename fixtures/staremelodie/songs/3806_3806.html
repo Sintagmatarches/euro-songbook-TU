@@ -1,0 +1,2540 @@
+﻿<!DOCTYPE HTML>
+<html lang="pl-PL">
+<head>
+    <script async src="https://www.googletagmanager.com/gtag/js?id=G-B2C2D0E1KM"></script>
+<script>
+  window.dataLayer = window.dataLayer || [];
+  function gtag(){dataLayer.push(arguments);}
+  gtag('js', new Date());
+
+  gtag('config', 'G-B2C2D0E1KM');
+</script>    <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+    <meta property="og:title" content="Co ty puszujesz, John? : foxtrot - Stare Melodie">
+    <meta property="og:description" content="Przecudny zgrzyt ze starych płyt">
+    <meta property="og:image" content="https://staremelodie.pl/images/image.php?id=3806">
+    <meta property="og:url" content="https://staremelodie.pl">
+    <meta property="og:site_name" content="Stare Melodie - przecudny zgrzyt ze starych płyt">
+    <meta property="og:type" content="website">
+    <meta property="fb:admins" content="1527095955">
+    
+    <meta name="twitter:card" content="summary_large_image">
+  <meta property="twitter:domain" content="staremelodie.pl">
+  <meta property="twitter:url" content="https://staremelodie.pl">
+  <meta name="twitter:title" content="Co ty puszujesz, John? : foxtrot - Stare Melodie">
+  <meta name="twitter:description" content="Wersy wśród szumu płyt">
+  <meta name="twitter:image" content="https://staremelodie.pl/images/logo.jpg">
+    
+    <link rel="shortcut icon" href="https://staremelodie.pl/favicon.ico">
+    <meta name="mobile-web-app-capable" content="yes"/>
+    <meta name="theme-color" content="#916A48"/>
+    <meta name="msapplication-navbutton-color" content="#916A48">
+    <meta name="apple-mobile-web-app-status-bar-style" content="#916A48">
+	
+	<!--meta name="viewport" content="width=device-width, initial-scale=1.0"-->
+    <!--meta http-equiv="Content-Security-Policy" content="script-src 'unsafe-inline'"-->
+
+    <link rel="alternate" type="application/rss+xml" href="https://staremelodie/rss/" title="Stare Melodie RSS kanał">
+    <title>
+        Co ty puszujesz, John?         : foxtrot - Stare Melodie</title>
+
+    <link rel="search" type="application/opensearchdescription+xml" title="StareMelodie.pl" href="https://staremelodie.pl/opensearch.xml"/>
+
+    <meta name="description" content=" - tekst piosenki">
+    <link href="/resources/staremelodie.css?ver=622189x" rel="stylesheet" type="text/css">
+    <link href="/resources/piosenka.css?ver=62212" rel="stylesheet" type="text/css">
+	
+	<link href="/resources/piosenka_header.css" rel="stylesheet" type="text/css">
+	
+    <link href="/resources/english_font.css" rel="stylesheet" type="text/css">
+    <link rel="stylesheet" type="text/css" href="/resources/video.css"/>
+
+    <script type="text/javascript" src="/resources/staremelodie.js?v=26687"></script>
+	<script type="text/javascript" src="/resources/iframes.js?v=2" defer></script>
+    <!--script type="text/javascript" async src="/resources/copy.js"></script-->
+    <style>
+		html, body {
+			scroll-padding: 34px;
+		}
+        body {
+            background-image: none;
+            quotes: '\201E' '\201D' "‘" "’";
+           /* background: linear-gradient(0deg, #d2b80d 50%, #014e9c 50%);*/
+            background-repeat: no-repeat;
+            background-attachment: fixed;
+        }
+        
+        #himg {
+            position: absolute;
+            left: -2000px;
+            max-width: 990px;
+            max-height: 990px;
+        }
+        
+        #stat {
+            vertical-align: super;
+            font-size: 12px;
+        }
+        
+        #nuty_icon a:after {
+            content: "nuty!";
+            display: block;
+            position: absolute;
+            top: 22px;
+            /* left: 10px; */
+            font-size: 17px;
+            margin-left: 20px;
+            color: rgb(73, 32, 11);
+            text-shadow: -1px -1px 1px #bfa18a, 1px -1px 1px #bfa18a;
+        }
+        
+        .popraw {
+            cursor: pointer;
+            display: inline-block;
+        }
+        
+        .cell sup {
+            border: solid thin rgb(73, 32, 11);
+            width: 12px;
+            height: 12px;
+            font-size: 10px;
+            display: inline-block;
+            line-height: 10px;
+            text-align: center;
+            border-radius: 100%;
+            background-color: rgb(236, 228, 218);
+            position: absolute;
+            cursor: help;
+        }
+        
+        .cell sup::after {
+            opacity: 0;
+        }
+        
+        .cell sup:hover:after {
+            display: block;
+            position: absolute;
+            content: attr(alt);
+            left: 10px;
+            top: 10px;
+            border: solid 1px black;
+            width: 180px;
+            font-size: 15px;
+            white-space: normal;
+            line-height: 16px;
+            border-radius: 6px;
+            background-color: rgb(231, 221, 213);
+            font-family: english;
+            padding: 3px;
+            opacity: 1;
+            box-shadow: 0px 0px 3px rgb(73, 32, 11);
+            transition: all .3s ease-in-out;
+        }
+        
+        .slide {
+            width: 50px;
+            height: 50px;
+            background-color: #714325;
+            cursor: pointer;
+            z-index: 200;
+            border-radius: 50%;
+            line-height: 42px;
+            margin: auto;
+            display: none;
+            box-shadow: 2px 2px 3px 2px #27221F;
+            color: white;
+            border: solid 3px #B8947C;
+            font-family: lo1937;
+            font-size: 74px;
+            opacity: 0;
+            transition: all 0.3s ease-out;
+        }
+        
+        .slide:hover {
+            color: #000;
+            background-color: #FFF;
+            border: solid 3px #000;
+        }
+        
+        #lewo {
+            margin-right: 10px
+        }
+        
+        #prawo {
+            margin-left: 10px
+        }
+        
+        #artist_detail {
+            min-height: 500px;
+        }
+        
+        #artist_detail hr {
+            height: 1px;
+            background-color: #742E2E;
+            margin-bottom: 10px;
+            margin-top: 11px;
+        }
+        
+        #artist_detail_name {
+            font-family: old_caption, ruskie;
+            font-size: 40px;
+            font-weight: normal;
+            margin-bottom: 10px;
+            margin-left: 0px;
+            line-height: 50px;
+            color: #49200B;
+            text-shadow: 0px 0px 1px #49200B;
+            text-align: left;
+            padding-left: 0px;
+            white-space: nowrap;
+            text-overflow: ellipsis;
+            overflow: hidden;
+        }
+        
+        .artysta_opis {
+            font-size: 20px;
+            vertical-align: middle;
+            color: #300;
+        }
+        
+        .portret {
+            display: inline-block;
+            width: 50px;
+            height: 50px;
+            /*border: solid 1px #b1a59a;*/
+            outline: 1px solid #b1a59a;
+            border-radius: 50%;
+            vertical-align: middle;
+            background-repeat: no-repeat;
+            background-position: center center;
+            background-size: cover;
+            /*box-shadow: 0px 0px 6px #331606 inset, 0px 0px 6px #331606;*/
+            margin: 0px 1px 4px 3px;
+            background-color: #331606;
+            background-blend-mode: screen;
+            overflow: hidden;
+        }
+        
+        .portret > a {
+            display: block;
+            height: 50px;
+            text-decoration: none !important;
+            border: none;
+            width: 50px;
+        }
+        
+        #keywords {
+            background-color: rgb(231, 221, 213);
+            margin: 0px 12px 12px 12px;
+            padding: 6px;
+            font-family: english;
+            font-size: 16px;
+            border-radius: 0px;
+            display: flex;
+            align-items: left;
+            /*justify-content: space-around;*/
+            /*width: 680px;*/
+        }
+        #keywords a {
+            color: black;
+            text-decoration-style: dashed;
+            text-underline-offset: 4px;
+            text-decoration-thickness: 1px;
+        }
+        #keywords a:hover {
+            text-decoration-line: none;
+        }
+        #more_info {
+            font-size: 16px;
+            color: rgb(47, 15, 0);
+        }
+        
+        .glos {
+            margin: 6px 0px 0px -28px;
+            /*text-transform: lowercase;*/
+            font-weight: bold;
+			font-variant: all-petite-caps;
+    font-size: 22px;
+        }
+        .glos::first-letter {
+            /*text-transform: capitalize;*/
+			
+        }
+        
+        .postac {
+            margin-right: 3px;
+        }
+        
+        .kwestia {
+            xcolor: brown;
+            margin-left: 30px;
+        }
+        #piosenka_big_title {
+            padding-left: 60px;
+        }
+        #piosenka_big_title:before {
+            content: open-quote;
+            font-size: 38px;
+            opacity: 0.6;
+            margin-right: 2px;
+        }
+        
+        #piosenka_big_title:after {
+            content: close-quote;
+            font-size: 38px;
+            opacity: 0.6;
+            margin-left: 2px;
+        }
+        
+        .emo {
+            font-family: emoty;
+            display: inline-block;
+            line-height: 24px;
+            width: 22px;
+            height: 22px;
+            vertical-align: middle;
+            border-radius: 50%;
+            margin: 0px 2px;
+            font-size: 22px;
+            font-weight: bold;
+            background-color: #d1c4b9;
+        }
+        
+        .smile {
+            background-position: -53px 0px;
+        }
+        
+        .wink {
+            background-position: -27px 0px;
+        }
+        
+        .bigsmile {
+            background-position: 0px 0px;
+        }
+        
+        .sad {
+            background-position: -27px -26px;
+        }
+        
+        #_articleBody3 {
+            xcounter-reset: linia;
+        }
+        
+        #_articleBody3> div,
+        #_articleBody3> span,
+        #_articleBody3> sup,
+        #_articleBody3:first-line,
+        #_articleBody3> blockquote> div {
+            xcounter-increment: linia;
+        }
+        
+        #_articleBody3> div:before,
+        #_articleBody3> span:before,
+        #_articleBody3> sup:before,
+        #_articleBody3:first-line,
+        #_articleBody3> blockquote> div:before {
+            xcontent: counter(linia);
+            position: absolute;
+            left: 40px;
+            border: solid 0px black;
+            width: 36px;
+            box-shadow: 2px 0 1px -2px #594e4b;
+        }
+        
+        a.przedstawienia {
+            text-decoration: underline !important;
+        }
+        
+        a.przedstawienia:hover {
+            text-decoration: none !important;
+        }
+        
+        abbr[data-definition] {
+            position: relative;
+            text-decoration-line: underline;
+            text-decoration-style: dashed;
+            text-decoration-color: #2f0f00;
+            text-decoration-thickness: 1px;
+            text-underline-offset: 2px;
+            cursor: help;
+        }
+        
+        abbr[data-definition]::after {
+            content: attr(data-numer);
+            position: absolute;
+            pointer-events: none;
+            font-size: 12px;
+            font-family: Arial, sans-serif;
+            bottom: 12px;
+            right: -12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            width: 18px;
+            height: 18px;
+            background-color: #e7ddd5;
+            border-radius: 50%;
+            border: solid 1px;
+            visibility: hidden;
+            opacity: 0;
+            transition: all .2s ease-out .2s;
+            
+        }
+        
+        abbr[data-definition]::before {
+            content: attr(data-definition);
+            font-size: 14px;
+            line-height: 20px;
+            position: absolute;
+            left: 0px;
+            top: 20px;
+            visibility: hidden;
+            opacity: 0;
+            border: solid 1px #2f0f00;
+            border-radius: 0px 6px 6px 6px;
+            padding: 6px;
+            /*background-color: #e7ddd5;*/
+            background-color: #3b1f17;
+            color: #e7ddd5;
+            z-index: 1000;
+            user-select: none;
+            pointer-events: none;
+            transition: all .3s ease-out;
+            width: max-content;
+            white-space: pre-line;
+            max-width: 500px;
+        }
+        
+        abbr[data-definition]:hover::before {
+            /*top: 20px;*/
+            left: calc(var(--ex) + 20px);
+            visibility: visible;
+            opacity: 1;
+        }
+        
+        abbr[data-definition]:hover:after {
+            opacity: 1;
+            visibility: visible;
+        }
+        
+        #definicje {
+            margin: 6px 12px;
+            padding: 6px;
+            background-color: rgb(231, 221, 213);
+            font-family: english;
+            font-size: 16px;
+        }
+        
+        #definicje_title {
+            margin-bottom: 6px;
+        }
+        
+        #definicje_lista {
+            display: grid;
+            gap: 12px 6px;
+            grid-template-columns: auto 8px 1fr;
+            margin-left: 12px;
+        }
+        
+        #definicje .skrot {}
+        
+        #definicje .definicja {
+			/*margin-left: 8px;*/
+    		/*white-space: pre-line;*/
+            position: relative;
+            /*top: -20px;*/
+		}
+        
+        #definicje .def_numer {
+            font-size: smaller;
+            position: relative;
+            top: -4px;
+        }
+        
+        summary {
+            list-style: none;
+            margin-left: 10px;
+            }
+        summary::marker {
+            display: none;
+            /*content: " + ";
+            color: red;
+            width: 18px;
+            height: 18px;
+            xdisplay: inline-grid;
+            place-content: center;
+            display: none;
+            transition: all .3s linear;*/
+        }
+        #definicje details[open] summary::markerx {
+            content: " - ";
+            /*color: blue;*/
+        }
+        #definicje details summary::before { 
+            content:" + "; 
+            color: #3b1f17; 
+            cursor: pointer;
+            display: inline-grid;
+            width: 18px;
+            height: 18px;
+            transition: all .3s linear;
+    
+            place-content: center;
+            margin-left: -18px;
+            }
+        details div {
+            margin-left: 9px;
+        }
+
+        #definicje details[open] summary::before{ 
+          content:" - "; 
+          /*color: red;*/
+          /*transform: rotate(90deg);*/
+        }
+        #kto_przepisal {
+            margin: 0px 12px;
+            background-color: rgb(236, 236, 227);
+            padding: 10px;
+            border-radius: 0px;
+            font-family: english;
+            font-size: 18px;
+            word-wrap: break-word;
+        }
+
+    </style>
+    <script>
+        document.onreadystatechange = function () {
+                if ( document.readyState === "interactive" ) {
+                    poka();
+                }
+            }
+            //
+        window.addEventListener( 'hashchange', poka, false );
+        //
+        function poka() {
+            if ( location.hash ) {
+                var ha = location.hash.split( '#' )[ 1 ];
+                if ( ha.split( '/' )[ 0 ] === "zoom" ) {
+                    zoom( '/etykiety_plyt/' + ha.split( '/' )[ 1 ] );
+                    console.log( "zmiana hasza" );
+                }
+            }
+        }
+
+        function popraw() {
+            var pi = dE("piosenka_text");
+            pi.style.textShadow = "none"; //"0px 0psx 0px black";
+            pi.style.color = "#000";
+            pi.style.backgroundColor = "#FFF";
+            pi.style.fontSize = "20px";
+            pi.style.lineHeight = "25px";
+        }
+        //
+        function popraw_ciut() {
+            var pi = dE("piosenka_text");
+            pi.style.textShadow = "none"; //"0px 0psx 0px black";
+            pi.style.color = "#000";
+            pi.style.fontSize = "18px";
+            pi.style.lineHeight = "22px";
+            pi.style.backgroundColor = "rgb(231, 221, 213)";
+        }
+   
+    
+    window.addEventListener("load",zaznacz);
+    window.addEventListener("hashchange",zaznacz);
+    ///
+    function zaznacz(){
+    var has_hash = window.location.hash.substring(1);
+        //console.log(window.location);
+        //de(""+has_hash+"") ? de(""+has_hash+"").scrollIntoView({behavior: "smooth", block: "center", inline: "start"}) : null;
+    }
+    
+        setTimeout(() => history.replaceState(null,null,' '),3000);
+    
+    </script>   
+    
+</head>
+
+<body>
+        <div id="bckg"></div>
+    <div id="bckg_front"></div>
+    <img src="" id="himg">
+    <div id="pokazywarka" onclick="odzoom(0)">
+        <div id="pokazywarka_img">
+            <div id="lewo" class="slide" onClick="next(-1);">&#171;</div>
+            <div id="pokazywarka_img_cell"> <img src="/images/loading.svg" id="pokazywarka_obr"> </div>
+            <div id="prawo" class="slide" onClick="next(1);">&#187;</div>
+        </div>
+        <div id="pokazywarka_video"></div>
+    </div>
+    <div id="wraper">
+        <div id="top">
+            <style>
+#fb {
+	position:absolute;
+	left: 5px;
+	bottom: 5px; 
+	border: solid 2px rgb(87, 115, 185);
+	border-radius: 50%;
+	overflow: hidden;
+	width: 34px;
+	height: 34px;	
+}
+#rss {
+	position: absolute;
+    bottom: 5px;
+    left: 45px;
+    overflow: hidden;
+    border-radius: 50%;
+    line-height: 0px;
+    font-size: 0px;
+    border: solid 2px #ff7d0b;
+    box-shadow: 0px 0px 11px 2px #e67e23 inset;
+    width: 34px;
+    height: 34px;
+}
+	
+	#paypal {
+		position: absolute;
+		right: 5px;
+		bottom: 1px;
+	}
+	#patronite {
+		display: inline-block;
+    margin-right: 6px;
+    background-color: white;
+    border-radius: 20px;
+    width: 40px;
+    height: 40px;
+    overflow: hidden;
+		transition: width 0.2s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+	}
+	#patronite a {
+		display: block;
+	}
+	#patronite:hover {
+		width: 148px;
+	}
+	#patronite img {
+		height: 52px;
+    position: relative;
+    left: -7px;
+    top: -6px;
+	}
+</style>
+<div id="fb"><a href="https://www.facebook.com/Szlagiery" target="_blank"><img src="/images/fb.png" alt="Stare Melodie na Facebook" title="Stare Melodie na FaceBook"></a></div><div id="rss"><a href="http://staremelodie.pl/rss/" target="_blank" title="StareMelodie.pl - kanał RSS" alt="StareMelodie.pl - kanał RSS"><img src="/images/rss.png" alt="StareMelodie.pl - kanał RSS"></a></div>
+<div id="paypal"><div id="patronite"><a href="https://patronite.pl/StareMelodiepl" target="_blank"><img src="/images/patronite.svg"></a></div><a href="https://www.paypal.me/StareMelodie" target="_blank"><img src="/images/paypal.me.png" style="height: 40px" title="wspomóż StareMelodie.pl"></a></div>        </div>
+        <style>
+#search_wraper {
+    position: relative;
+}
+#search_wraper label {
+    position: absolute;
+    font-size: 13px;
+    color: #9c7a63;
+    pointer-events: none;
+    top: 6px;
+    left: 5px;
+    text-shadow: none;
+    transition: all .3s cubic-bezier(0, 1.82, 1, 1);
+}
+#search_wraper input:focus + label, #search_wraper input:not(:placeholder-shown) + label {
+    top: -10px;    
+    color: #e7ddd5;
+    text-shadow: 0 0 3px #2d170c; 
+}
+	
+	#search_wraper input::placeholder {
+		color: transparent;
+		transition: color .2s linear;
+	}
+	
+	#search_wraper input:focus::placeholder {
+    color: #895a3c;
+}
+#nav > ul > li:last-child:hover {
+    background: -webkit-linear-gradient(top, #9E6F51 30%,#683A1C 100%);
+}
+</style>
+<div id="menu" class="ns">
+  
+    <nav id="nav" aria-label="nawigacja strony">
+      
+      <ul role="menubar">
+        <li> <a role="menuitem" href="/">Strona główna</a> </li>
+        
+        <li id="fonoteka"> Fonoteka
+          <ul role="menu">
+            <li role="none"> <a role="menuitem" href="/fonoteka">Piosenki od A do Ż</a> </li>
+             <li role="none"> <a role="menuitem" href="/biblioteka">Biblioteka nut</a> </li>
+             <li role="none"> <a role="menuitem" href="/radio">Radio Stare Melodie</a> </li>
+            <li role="none"> <a role="menuitem" href="/wytwornie" style="font-size: 13px">Wytwórnie fonograficzne</a> </li>
+            <li role="none"> <a role="menuitem" href="/etykiety/all">Etykiety płyt</a> </li>
+            <li role="none"> <a role="menuitem" href="/katalogi_plyt">Katalogi wytwórni</a> </li>
+            <li role="none"> <a role="menuitem" href="/bez_tekstu">Utwory bez tekstu</a> </li>
+            <li role="none"> <a role="menuitem" href="/search">Szukaj wszędzie</a> </li>
+          </ul>
+        </li>
+        
+        <li id="artysci"> Artyści
+          <ul>
+            <li role="none"> <a role="menuitem" href="/artysci">Katalog artystów</a> </li>
+            <li role="none"> <a role="menuitem" href="/dyrygenci_i_orkiestry">Dyrygenci i orkiestry</a> </li>
+            <li role="none"> <a role="menuitem" href="/sceny">Teatry i kabarety</a> </li>
+            <li role="none"> <a role="menuitem" href="/przedstawienia">Przedstawienia</a> </li>
+            <li role="none"> <a role="menuitem" href="/galeria">Fotografie</a> </li>
+          </ul>
+        </li>
+        
+         
+        
+        <li id="galeria"> <a role="menuitem" href="/zrodla/">Źródła</a> </li>
+        
+       
+        
+        <li id="kontakt"> <a role="menuitem" href="/kontakt">Kontakt</a> </li>
+        <li role="none">
+        <span id="search_wraper">
+          <input type="search" placeholder=" miłego szukania " id="all_search" tekst="wszędzie" incremental="incremental" oninput="allsearch(this.value)" style="border-radius: 12px; width: 180px;padding-left: 3px;">
+          <label for="all_search">przeszukaj teksty</label>
+          </span>
+        </li>
+      </ul>
+      
+    </nav>
+    
+  <div id="total_search"></div>
+</div>
+        <div id="content">
+            <div id="artist_detail" itemscope itemtype="http://schema.org/Article" itemref="_publisher2 _articleBody3 _datePublished4 _author5 _author6">
+                <h1 id="artist_detail_name"> <!---span class="artysta_opis">piosenka:</span-->
+                    <span itemprop="name" id="piosenka_big_title">
+                        Co ty puszujesz, John?                    </span>
+                    <span id="stat">
+                        1906
+                    </span>
+                                        <hr>
+                </h1>
+                <div id="piosenka_body">
+
+                    <div itemscope itemtype="http://schema.org/Article" id="piosenka_opis">
+                        <div id="piosenka_opis_data">
+                            <div class="row">
+                                <div class="cell data_title">tytuł:</div>
+                                                                <div itemprop="name" class="cell data_value">
+									<h2 class="data_value_title" aria-label="tytuł utworu">Co ty puszujesz, John?</h2>
+                                                                        <h3 id="piosenka_opis_alt_tytul" aria-label="inne formy tytułu">
+                                        ”Where Do You Work-a, John?”, ”Where do You Werk a John”                                    </h3>
+                                                                    </div>
+                            </div>
+
+                                                        <div class="row">
+                                <div class="cell data_title">gatunek:</div>
+                                <div class="cell data_value">
+                                    foxtrot                                </div>
+                            </div>
+                            
+                            <div class="row">
+                                <div class="cell data_title">muzyka:</div>
+                                <div class="cell data_value"> <span id="_author5" itemprop="author" itemscope itemtype="http://schema.org/Person"> <span itemprop="name">
+                 <div class="person"><div class="portret" style="background-image:url(/galeria_images/miniatury/thumb_120_120_Harry_Warren_StareMelodie.pl_1440620600.jpg)">
+                <a href="/kompozytorzy/157/Harry_Warren" alt="Harry Warren" title="Harry Warren">&nbsp;</a>
+            </div><div class="person_names"><span class="big"><a href="/kompozytorzy/157/Harry_Warren" alt="Harry Warren" title="Harry Warren">Harry Warren</a></span></div></div>                </span>
+                                
+                                    </span>
+                                </div>
+                            </div>
+                                                        <div class="row">
+                                <div class="cell data_title">oryginał z:<sup alt="W miarę możliwości rok pierwszego wykonania lub powstania oryginału">?</sup>
+                                </div>
+                                <div class="cell data_value">
+                                    1926 roku
+                                </div>
+                            </div>
+                                                        <div class="row">
+                                <div class="cell data_title">słowa: </div>
+                                <div class="cell data_value"> <span id="_author6" itemprop="author" itemscope itemtype="http://schema.org/Person"> <span itemprop="name">
+                ???                </span>
+                                
+                                    </span>
+                                </div>
+                            </div>
+
+                                                                                                            </div>
+                        <div id="piosenka_opis_tekst" style="padding-bottom: 10px">
+                            <hr style="margin-top: 16px">
+
+                            <style>
+                                #piosenka_text {
+                                    position: relative;
+                                    font-size: clamp(1.1rem, 4vw + 2px, 1.2rem);
+                                    line-height: 1.3;
+									hyphens: auto;
+    								/*text-align: justify;*/
+									
+									& div::first-letter {
+										/*color: red;*/
+									}
+                                    & .dash {
+                                        margin-left: -12px;
+                                    }
+                                }
+                                
+                                #piosenka_text::spelling-error {
+                                    background-color: red;
+                                }
+                                
+                                #piosenka_text::grammar-error {
+                                    background-color: red;
+                                }
+								
+								#lines_switch_box {
+									/*position: sticky;*/
+									/*top: 60px;*/
+								}
+                                
+                                #lines_switch {
+                                    outline: none;
+                                    position: absolute;
+                                    width: 20px;
+                                    height: 20px;
+                                    left: 12px;
+                                    top: 12px;
+                                    transform: translate(-6px, -6px);
+                                    border: solid 1px black;
+                                    border-radius: 50%;
+                                    overflow: hidden;
+                                    background: url(/images/linie.svg) no-repeat;
+                                    background-size: contain;
+                                    background-color: #ddd2c8;
+                                    cursor: pointer;
+                                    transition: all 0.2s ease-out;
+                                    user-select: none;
+                                }
+                                
+                                #lines_switch:hover {
+                                    width: 32px;
+                                    height: 32px;
+									left: 4px;
+    								top: 4px;
+                                    box-shadow: 4px 4px 8px 2px;
+                                }
+                                
+                                #lines_switch img {
+                                    width: 30px;
+                                    height: 30px;
+                                    margin-left: 3px;
+                                    margin-top: -1px;
+                                }
+                                
+                                #linie {
+                                    position: absolute;
+                                    top: 29px;
+                                    left: 0px;
+                                    counter-reset: linie;
+                                    width: 100%;
+                                    pointer-events: none;
+                                    user-select: none;
+                                }
+                                
+                                .linia {
+                                    counter-increment: linie;
+                                    box-shadow: inset 0 -1px 0px rgba(184, 148, 124, 0.5);
+                                    margin: 0px 22px 0px 28px;
+                                    color: #8a6d6d;
+                                }
+                                
+                                .linia:before {
+                                    content: counter(linie);
+                                    margin-left: -22px;
+                                }
+                                
+                                #_articleBody3 sup {
+                                    /*line-height: 8px;*/
+                                    vertical-align: middle;
+                                    position: relative;
+                                    bottom: 6px;
+                                }
+
+                            </style>
+                            <script>
+                                var on = 0;
+
+                                function linie() {
+                                    on ^= 1;
+                                    if ( on ) {
+                                        var txt_h = parseInt( window.getComputedStyle( de( "piosenka_text" ), null ).height );
+                                        var txt_lh = parseInt( window.getComputedStyle( de( "piosenka_text" ), null ).lineHeight );
+                                        var ile = ( txt_h - 90 ) / txt_lh;
+                                        var ls = "";
+                                        for ( var i = 0; i < ile; i++ ) {
+                                            ls += '<div class="linia"></div>';
+                                        }
+                                        de( "linie" ).innerHTML = ls;
+                                        de( "lines_switch" ).style.backgroundColor = "#FFF";
+                                    } else {
+                                        de( "linie" ).innerHTML = "";
+                                        de( "lines_switch" ).style.backgroundColor = "#ddd2c8";
+                                    }
+                                }
+                            </script>
+
+                            <div id="piosenka_text" aria-label="tekst piosenki">
+                                								<div id="lines_switch_box">
+                                <div id="lines_switch" onClick="linie();" title="numery linii"></div>
+								</div>
+                                <div id="linie"></div>
+                                                                <span id="_articleBody3" itemprop="articleBody">
+                                    <span class="dash">-</span> Hello, <abbr class="skrot" data-id="957" data-definition="  (ang.) Jasiu" data-numer="29">Johny</abbr>!<div><span class="dash">-</span>  <abbr class="skrot" data-id="341" data-definition="  (ang.) jak się masz?" data-numer="13">How do you do</abbr>, <abbr class="skrot" data-id="956" data-definition="  (ang.) Maria, Marysia" data-numer="28">Marrry</abbr>?</div><div><span class="dash">-</span>  Jak się masz, <abbr class="skrot" data-id="960" data-definition="  (ang.) Jan" data-numer="34">John?</abbr></div><div><span class="dash">-</span>  Bardzo <abbr class="skrot" data-id="155" data-definition="  (ang.) fajnie, klawo" data-numer="32">fine</abbr>, <abbr class="skrot" data-id="956" data-definition="  (ang.) Maria, Marysia" data-numer="28">Marrry</abbr>!</div><div><span class="dash">-</span>  <abbr class="skrot" data-id="447" data-definition="  (ang.) czy pracujesz" data-numer="14">Do you work</abbr>, <abbr class="skrot" data-id="957" data-definition="  (ang.) Jasiu" data-numer="29">Johny?</abbr></div><div><span class="dash">-</span>  <abbr class="skrot" data-id="96" data-definition="  (ang.) oczywiście, jasne - lub Sure - żydowskie imię żeńskie (od Sara)" data-numer="31">Sure</abbr>, <abbr class="skrot" data-id="446" data-definition="  (ang.) mam teraz dobrą pracę" data-numer="2">I've got a nice job now</abbr>!</div><div><span class="dash">-</span>  <abbr class="skrot" data-id="448" data-definition="  (ang.) to dobrze" data-numer="15">That’s good</abbr>!</div><div><br></div><div><abbr class="skrot" data-id="449" data-definition="  (ang.) gdzie pracujesz" data-numer="4">Where do you work</abbr>-a, <abbr class="skrot" data-id="960" data-definition="  (ang.) Jan" data-numer="34">John</abbr></div><div>Na stacji Lackawann</div><div>Co tam porabiasz, <abbr class="skrot" data-id="960" data-definition="  (ang.) Jan" data-numer="34">John</abbr></div><div><abbr class="skrot" data-id="150" data-definition="  (ang. to push) popycham, pcham" data-numer="22">Puszuję</abbr> karawan</div><div><br></div><div>Cóż to robota twa</div><div>Że <abbr class="skrot" data-id="153" data-definition="  (ang. to push) pchać, popychać" data-numer="19">puszować</abbr> ciągle trza</div><div><abbr class="skrot" data-id="956" data-definition="  (ang.) Maria, Marysia" data-numer="28">Marry</abbr>, mój <abbr class="skrot" data-id="182" data-definition="  (ang.) kochanie" data-numer="23">darling</abbr> kwiat</div><div>Dziś <abbr class="skrot" data-id="149" data-definition="  (ang. to push) pchać, popychać" data-numer="21">puszuje</abbr> cały świat</div><div><abbr class="skrot" data-id="150" data-definition="  (ang. to push) popycham, pcham" data-numer="22">Puszuję</abbr>, <abbr class="skrot" data-id="150" data-definition="  (ang. to push) popycham, pcham" data-numer="22">puszuję</abbr>, <abbr class="skrot" data-id="150" data-definition="  (ang. to push) popycham, pcham" data-numer="22">puszuję</abbr></div><div><abbr class="skrot" data-id="153" data-definition="  (ang. to push) pchać, popychać" data-numer="19">Puszować</abbr> każdy rad</div><div><br></div><div><span class="dash">-</span>  <abbr class="skrot" data-id="956" data-definition="  (ang.) Maria, Marysia" data-numer="28">Marry</abbr>!</div><div><span class="dash">-</span>  <abbr class="skrot" data-id="957" data-definition="  (ang.) Jasiu" data-numer="29">Johny</abbr>!</div><div><span class="dash">-</span>  <abbr class="skrot" data-id="956" data-definition="  (ang.) Maria, Marysia" data-numer="28">Marry</abbr>, czy ty mnie <abbr class="skrot" data-id="41" data-definition="  (ang. to like) lubić, lubi, lubię" data-numer="20">lajkujesz</abbr>?</div><div><span class="dash">-</span>  <abbr class="skrot" data-id="96" data-definition="  (ang.) oczywiście, jasne - lub Sure - żydowskie imię żeńskie (od Sara)" data-numer="31">Sure</abbr>, <abbr class="skrot" data-id="10" data-definition="  (ang.) kocham cię" data-numer="17">I love you</abbr></div><div><span class="dash">-</span>  To daj mi jednego <abbr class="skrot" data-id="50" data-definition="  (ang.) pocałunek, całus" data-numer="30">kissa</abbr>!</div><div><span class="dash">-</span>  (<abbr class="skrot" data-id="480" data-definition="  (ang.) nic" data-numer="26">Nothing</abbr> doing?), przed ślubem nic nie daję</div><div><br></div><div><abbr class="skrot" data-id="959" data-definition="  (ang. where do you work) gdzie pracujesz" data-numer="12">Wer du ju werk</abbr>, <abbr class="skrot" data-id="956" data-definition="  (ang.) Maria, Marysia" data-numer="28">Marry</abbr></div><div><abbr class="skrot" data-id="450" data-definition="  (ang.) w firmie telefonicznej" data-numer="1">In the telephone company</abbr></div><div>Cóż tam porabiasz ty</div><div><abbr class="skrot" data-id="150" data-definition="  (ang. to push) popycham, pcham" data-numer="22">Puszuję</abbr>, jak i ty</div><div><br></div><div><abbr class="skrot" data-id="451" data-definition="  (ang. what do you push) co ty pchasz/wciskasz" data-numer="7">Łot du ju pusz</abbr>, <abbr class="skrot" data-id="956" data-definition="  (ang.) Maria, Marysia" data-numer="28">Marry</abbr></div><div>Powiedz prędzej mi</div><div>Czasem jeden, czasem dwa</div><div>A czasem numera trzy</div><div><abbr class="skrot" data-id="150" data-definition="  (ang. to push) popycham, pcham" data-numer="22">Puszuję</abbr>, <abbr class="skrot" data-id="150" data-definition="  (ang. to push) popycham, pcham" data-numer="22">puszuję</abbr>, <abbr class="skrot" data-id="150" data-definition="  (ang. to push) popycham, pcham" data-numer="22">puszuję</abbr></div><div><abbr class="skrot" data-id="150" data-definition="  (ang. to push) popycham, pcham" data-numer="22">Puszuję</abbr>, jak i ty</div><div><br></div><div><span class="dash">-</span>  <abbr class="skrot" data-id="956" data-definition="  (ang.) Maria, Marysia" data-numer="28">Marry</abbr>!</div><div><span class="dash">-</span>  <abbr class="skrot" data-id="481" data-definition="  (ang.) co" data-numer="33">What</abbr>, <abbr class="skrot" data-id="957" data-definition="  (ang.) Jasiu" data-numer="29">Johny?</abbr></div><div><span class="dash">-</span>  <abbr class="skrot" data-id="452" data-definition="  (ang.) powiedz mi" data-numer="24">Tell me</abbr>, <abbr class="skrot" data-id="451" data-definition="  (ang. what do you push) co ty pchasz/wciskasz" data-numer="7">what do you push?</abbr></div><div><span class="dash">-</span>  <abbr class="skrot" data-id="453" data-definition="  (ang.) wciskam wtyczkę" data-numer="8">I push the plug</abbr>, <abbr class="skrot" data-id="957" data-definition="  (ang.) Jasiu" data-numer="29">Johny</abbr></div><div><span class="dash">-</span>  Kto cię to nauczył, <abbr class="skrot" data-id="956" data-definition="  (ang.) Maria, Marysia" data-numer="28">Marry?</abbr></div><div><span class="dash">-</span>  Śliczny chłopak telefonicznej kompanii</div><div><span class="dash">-</span>  Ohaaa, hahahahahahaha. <abbr class="skrot" data-id="956" data-definition="  (ang.) Maria, Marysia" data-numer="28">Marry</abbr>, ty <abbr class="skrot" data-id="152" data-definition="  (ang. to push the plug) wciskasz wtyczkę" data-numer="9">puszujesz plag</abbr>, a ja <abbr class="skrot" data-id="150" data-definition="  (ang. to push) popycham, pcham" data-numer="22">puszuję</abbr> trak.</div><div><br></div><div>Jak długo pracujesz, <abbr class="skrot" data-id="956" data-definition="  (ang.) Maria, Marysia" data-numer="28">Marry</abbr></div><div>Osiem godzinów, a ty</div><div>Ja <abbr class="skrot" data-id="150" data-definition="  (ang. to push) popycham, pcham" data-numer="22">puszuję</abbr> długo tak</div><div>Aż mnie trafia szlag</div><div><br></div><div><abbr class="skrot" data-id="957" data-definition="  (ang.) Jasiu" data-numer="29">Johny</abbr>, <abbr class="skrot" data-id="455" data-definition="  (ang.) ty mnie lubisz" data-numer="16">you like me?</abbr></div><div><abbr class="skrot" data-id="482" data-definition="  (ang.) o, tak" data-numer="27">Oh, yes</abbr>, moja słodka <abbr class="skrot" data-id="956" data-definition="  (ang.) Maria, Marysia" data-numer="28">Marry</abbr></div><div> To weź za żonę mnie</div><div>I nie będzie ci tak źle</div><div>Weź mnie, weź mnie, weź mnie</div><div>Nie będzie ci tak źle</div><div><br></div><div><abbr class="skrot" data-id="999" data-definition="  (int.) och!" data-numer="35">Oh</abbr>, <abbr class="skrot" data-id="154" data-definition="  poczekaj, moment (ang. wait a minute)" data-numer="18">wejdemynyt</abbr>, <abbr class="skrot" data-id="956" data-definition="  (ang.) Maria, Marysia" data-numer="28">Marry</abbr></div><div><abbr class="skrot" data-id="1189" data-definition="  (ang.) o co chodzi, co jest grane" data-numer="6">What's the matter</abbr>, <abbr class="skrot" data-id="457" data-definition="  (ang.) nie chcesz mnie poślubić" data-numer="3">don't you want marry me</abbr></div><div><abbr class="skrot" data-id="482" data-definition="  (ang.) o, tak" data-numer="27">Oh, yes</abbr>, moja słodka <abbr class="skrot" data-id="956" data-definition="  (ang.) Maria, Marysia" data-numer="28">Marry</abbr></div><div>Lecz <abbr class="skrot" data-id="456" data-definition="  (ang.) nie mam pieniędzy" data-numer="10">aj gat no mony</abbr></div><div><br></div><div><abbr class="skrot" data-id="458" data-definition="  (ang.) to nic" data-numer="11">That's nothing</abbr>, <abbr class="skrot" data-id="957" data-definition="  (ang.) Jasiu" data-numer="29">Johny</abbr></div><div>Będziem <abbr class="skrot" data-id="459" data-definition="  (ang.) pracować" data-numer="25">working</abbr>, ja i ty</div><div>Ja w <abbr class="skrot" data-id="460" data-definition="  (ang.) firma telefoniczna" data-numer="5">telephone company</abbr>, <abbr class="skrot" data-id="960" data-definition="  (ang.) Jan" data-numer="34">John</abbr></div><div>A ja na Lackawann</div><div><abbr class="skrot" data-id="153" data-definition="  (ang. to push) pchać, popychać" data-numer="19">Puszować</abbr>, <abbr class="skrot" data-id="153" data-definition="  (ang. to push) pchać, popychać" data-numer="19">puszować</abbr>, <abbr class="skrot" data-id="153" data-definition="  (ang. to push) pchać, popychać" data-numer="19">puszować</abbr></div><div><abbr class="skrot" data-id="153" data-definition="  (ang. to push) pchać, popychać" data-numer="19">Puszować</abbr> małżeński stan</div>                                </span>
+                            </div>
+
+                                                                                    <meta itemprop="dateModified" content="04-04-2023">
+                            <div id="podpis">
+                                <!--div class="popraw" onclick="popraw_ciut()"><img src="/images/okulary.png" width="35" height="15" alt="Popraw swój wzrok!" title="Popraw swój wzrok!"></div-->
+                                <!--div class="popraw" onclick="popraw()"><img src="/images/okulary.png" width="50" height="20" alt="Popraw swój wzrok!" title="Popraw swój wzrok!">
+                                </div-->
+                                <span id="_datePublished4" itemprop="datePublished" content="07.01.2018" style="font-family: english; font-size: 16px">
+                                    07.01.2018 
+                                </span>
+                            </div>
+
+                             <pre></pre>
+                            
+                            <div id="definicje">
+                                <div id="definicje_title">Objaśnienia:</div>
+                                <div id="definicje_lista">
+                                                                        <div class="skrot" id="def_1" title="450">
+                                        <span class="def_numer">
+                                        1)</span>
+                                        in the telephone company                                    </div>
+                                    <span> -</span>
+                                    <div class="definicja">
+                                        (ang.) w firmie telefonicznej                                    </div>
+                                                                        <div class="skrot" id="def_2" title="446">
+                                        <span class="def_numer">
+                                        2)</span>
+                                        I've got a nice job now                                    </div>
+                                    <span> -</span>
+                                    <div class="definicja">
+                                        (ang.) mam teraz dobrą pracę                                    </div>
+                                                                        <div class="skrot" id="def_3" title="457">
+                                        <span class="def_numer">
+                                        3)</span>
+                                        don't you want marry me                                    </div>
+                                    <span> -</span>
+                                    <div class="definicja">
+                                        (ang.) nie chcesz mnie poślubić                                    </div>
+                                                                        <div class="skrot" id="def_4" title="449">
+                                        <span class="def_numer">
+                                        4)</span>
+                                        where do you work                                    </div>
+                                    <span> -</span>
+                                    <div class="definicja">
+                                        (ang.) gdzie pracujesz                                    </div>
+                                                                        <div class="skrot" id="def_5" title="460">
+                                        <span class="def_numer">
+                                        5)</span>
+                                        telephone company                                    </div>
+                                    <span> -</span>
+                                    <div class="definicja">
+                                        (ang.) firma telefoniczna                                    </div>
+                                                                        <div class="skrot" id="def_6" title="1189">
+                                        <span class="def_numer">
+                                        6)</span>
+                                        what's the matter                                    </div>
+                                    <span> -</span>
+                                    <div class="definicja">
+                                        (ang.) o co chodzi, co jest grane                                    </div>
+                                                                        <div class="skrot" id="def_7" title="451">
+                                        <span class="def_numer">
+                                        7)</span>
+                                        what do you push                                    </div>
+                                    <span> -</span>
+                                    <div class="definicja">
+                                        (ang. what do you push) co ty pchasz/wciskasz                                    </div>
+                                                                        <div class="skrot" id="def_8" title="453">
+                                        <span class="def_numer">
+                                        8)</span>
+                                        i push the plug                                    </div>
+                                    <span> -</span>
+                                    <div class="definicja">
+                                        (ang.) wciskam wtyczkę                                    </div>
+                                                                        <div class="skrot" id="def_9" title="152">
+                                        <span class="def_numer">
+                                        9)</span>
+                                        puszujesz plag                                    </div>
+                                    <span> -</span>
+                                    <div class="definicja">
+                                        (ang. to push the plug) wciskasz wtyczkę                                    </div>
+                                                                        <div class="skrot" id="def_10" title="456">
+                                        <span class="def_numer">
+                                        10)</span>
+                                        I got no money                                    </div>
+                                    <span> -</span>
+                                    <div class="definicja">
+                                        (ang.) nie mam pieniędzy                                    </div>
+                                                                        <div class="skrot" id="def_11" title="458">
+                                        <span class="def_numer">
+                                        11)</span>
+                                        that's nothing                                    </div>
+                                    <span> -</span>
+                                    <div class="definicja">
+                                        (ang.) to nic                                    </div>
+                                                                        <div class="skrot" id="def_12" title="959">
+                                        <span class="def_numer">
+                                        12)</span>
+                                        wer du ju werk                                    </div>
+                                    <span> -</span>
+                                    <div class="definicja">
+                                        (ang. where do you work) gdzie pracujesz                                    </div>
+                                                                        <div class="skrot" id="def_13" title="341">
+                                        <span class="def_numer">
+                                        13)</span>
+                                        how do you do                                    </div>
+                                    <span> -</span>
+                                    <div class="definicja">
+                                        (ang.) jak się masz?                                    </div>
+                                                                        <div class="skrot" id="def_14" title="447">
+                                        <span class="def_numer">
+                                        14)</span>
+                                        do you work                                    </div>
+                                    <span> -</span>
+                                    <div class="definicja">
+                                        (ang.) czy pracujesz                                    </div>
+                                                                        <div class="skrot" id="def_15" title="448">
+                                        <span class="def_numer">
+                                        15)</span>
+                                        that’s good                                    </div>
+                                    <span> -</span>
+                                    <div class="definicja">
+                                        (ang.) to dobrze                                    </div>
+                                                                        <div class="skrot" id="def_16" title="455">
+                                        <span class="def_numer">
+                                        16)</span>
+                                        you like me                                    </div>
+                                    <span> -</span>
+                                    <div class="definicja">
+                                        (ang.) ty mnie lubisz                                    </div>
+                                                                        <div class="skrot" id="def_17" title="10">
+                                        <span class="def_numer">
+                                        17)</span>
+                                        I love you                                    </div>
+                                    <span> -</span>
+                                    <div class="definicja">
+                                        (ang.) kocham cię                                    </div>
+                                                                        <div class="skrot" id="def_18" title="154">
+                                        <span class="def_numer">
+                                        18)</span>
+                                        wejdemynyt                                    </div>
+                                    <span> -</span>
+                                    <div class="definicja">
+                                        poczekaj, moment (ang. wait a minute)                                    </div>
+                                                                        <div class="skrot" id="def_19" title="153">
+                                        <span class="def_numer">
+                                        19)</span>
+                                        puszować                                    </div>
+                                    <span> -</span>
+                                    <div class="definicja">
+                                        (ang. to push) pchać, popychać                                    </div>
+                                                                        <div class="skrot" id="def_20" title="41">
+                                        <span class="def_numer">
+                                        20)</span>
+                                        lajkuję                                    </div>
+                                    <span> -</span>
+                                    <div class="definicja">
+                                        (ang. to like) lubić, lubi, lubię                                    </div>
+                                                                        <div class="skrot" id="def_21" title="149">
+                                        <span class="def_numer">
+                                        21)</span>
+                                        puszuje                                    </div>
+                                    <span> -</span>
+                                    <div class="definicja">
+                                        (ang. to push) pchać, popychać                                    </div>
+                                                                        <div class="skrot" id="def_22" title="150">
+                                        <span class="def_numer">
+                                        22)</span>
+                                        puszuję                                    </div>
+                                    <span> -</span>
+                                    <div class="definicja">
+                                        (ang. to push) popycham, pcham                                    </div>
+                                                                        <div class="skrot" id="def_23" title="182">
+                                        <span class="def_numer">
+                                        23)</span>
+                                        darling                                    </div>
+                                    <span> -</span>
+                                    <div class="definicja">
+                                        (ang.) kochanie                                    </div>
+                                                                        <div class="skrot" id="def_24" title="452">
+                                        <span class="def_numer">
+                                        24)</span>
+                                        tell me                                    </div>
+                                    <span> -</span>
+                                    <div class="definicja">
+                                        (ang.) powiedz mi                                    </div>
+                                                                        <div class="skrot" id="def_25" title="459">
+                                        <span class="def_numer">
+                                        25)</span>
+                                        working                                    </div>
+                                    <span> -</span>
+                                    <div class="definicja">
+                                        (ang.) pracować                                    </div>
+                                                                        <div class="skrot" id="def_26" title="480">
+                                        <span class="def_numer">
+                                        26)</span>
+                                        nothing                                    </div>
+                                    <span> -</span>
+                                    <div class="definicja">
+                                        (ang.) nic                                    </div>
+                                                                        <div class="skrot" id="def_27" title="482">
+                                        <span class="def_numer">
+                                        27)</span>
+                                        oh, yes                                    </div>
+                                    <span> -</span>
+                                    <div class="definicja">
+                                        (ang.) o, tak                                    </div>
+                                                                        <div class="skrot" id="def_28" title="956">
+                                        <span class="def_numer">
+                                        28)</span>
+                                        Marry                                    </div>
+                                    <span> -</span>
+                                    <div class="definicja">
+                                        (ang.) Maria, Marysia                                    </div>
+                                                                        <div class="skrot" id="def_29" title="957">
+                                        <span class="def_numer">
+                                        29)</span>
+                                        Johny                                    </div>
+                                    <span> -</span>
+                                    <div class="definicja">
+                                        (ang.) Jasiu                                    </div>
+                                                                        <div class="skrot" id="def_30" title="50">
+                                        <span class="def_numer">
+                                        30)</span>
+                                        kiss                                    </div>
+                                    <span> -</span>
+                                    <div class="definicja">
+                                        (ang.) pocałunek, całus                                    </div>
+                                                                        <div class="skrot" id="def_31" title="96">
+                                        <span class="def_numer">
+                                        31)</span>
+                                        sure                                    </div>
+                                    <span> -</span>
+                                    <div class="definicja">
+                                        (ang.) oczywiście, jasne - lub Sure - żydowskie imię żeńskie (od Sara)                                    </div>
+                                                                        <div class="skrot" id="def_32" title="155">
+                                        <span class="def_numer">
+                                        32)</span>
+                                        fine                                    </div>
+                                    <span> -</span>
+                                    <div class="definicja">
+                                        (ang.) fajnie, klawo                                    </div>
+                                                                        <div class="skrot" id="def_33" title="481">
+                                        <span class="def_numer">
+                                        33)</span>
+                                        what                                    </div>
+                                    <span> -</span>
+                                    <div class="definicja">
+                                        (ang.) co                                    </div>
+                                                                        <div class="skrot" id="def_34" title="960">
+                                        <span class="def_numer">
+                                        34)</span>
+                                        John                                    </div>
+                                    <span> -</span>
+                                    <div class="definicja">
+                                        (ang.) Jan                                    </div>
+                                                                        <div class="skrot" id="def_35" title="999">
+                                        <span class="def_numer">
+                                        35)</span>
+                                        oh                                    </div>
+                                    <span> -</span>
+                                    <div class="definicja">
+                                        (int.) och!                                    </div>
+                                                                    
+                                
+                                </div>
+                            </div>
+                            
+                             <script>
+        window.addEventListener( 'DOMContentLoaded', (e) => {
+            
+            let abbrs = document.getElementsByTagName("abbr");
+            //for(a of document.getElementsByTagName("abbr")) console.log(a);
+            
+            let abbrs_arr = [];
+            let incr = 1;
+            let tagi = "";
+            let json = '{"450":{"def_numer":1,"ile":1,"list_numer":450,"skrot":"in the telephone company","alt_skrot":"","definicja":"(ang.) w firmie telefonicznej"},"446":{"def_numer":2,"ile":1,"list_numer":446,"skrot":"I\'ve got a nice job now","alt_skrot":"","definicja":"(ang.) mam teraz dobr\u0105 prac\u0119"},"457":{"def_numer":3,"ile":1,"list_numer":457,"skrot":"don\'t you want marry me","alt_skrot":"","definicja":"(ang.) nie chcesz mnie po\u015blubi\u0107"},"449":{"def_numer":4,"ile":1,"list_numer":449,"skrot":"where do you work","alt_skrot":"","definicja":"(ang.) gdzie pracujesz"},"460":{"def_numer":5,"ile":1,"list_numer":460,"skrot":"telephone company","alt_skrot":"","definicja":"(ang.) firma telefoniczna"},"1189":{"def_numer":6,"ile":1,"list_numer":1189,"skrot":"what\'s the matter","alt_skrot":"","definicja":"(ang.) o co chodzi, co jest grane"},"451":{"def_numer":7,"ile":2,"list_numer":451,"skrot":"what do you push","alt_skrot":"\u0142ot du ju pusz","definicja":"(ang. what do you push) co ty pchasz\/wciskasz"},"453":{"def_numer":8,"ile":1,"list_numer":453,"skrot":"i push the plug","alt_skrot":"","definicja":"(ang.) wciskam wtyczk\u0119"},"152":{"def_numer":9,"ile":1,"list_numer":152,"skrot":"puszujesz plag","alt_skrot":"","definicja":"(ang. to push the plug) wciskasz wtyczk\u0119"},"456":{"def_numer":10,"ile":1,"list_numer":456,"skrot":"I got no money","alt_skrot":"aj gat no mony","definicja":"(ang.) nie mam pieni\u0119dzy"},"458":{"def_numer":11,"ile":1,"list_numer":458,"skrot":"that\'s nothing","alt_skrot":"","definicja":"(ang.) to nic"},"959":{"def_numer":12,"ile":1,"list_numer":959,"skrot":"wer du ju werk","alt_skrot":"","definicja":"(ang. where do you work) gdzie pracujesz"},"341":{"def_numer":13,"ile":1,"list_numer":341,"skrot":"how do you do","alt_skrot":"How do you do do","definicja":"(ang.) jak si\u0119 masz?"},"447":{"def_numer":14,"ile":1,"list_numer":447,"skrot":"do you work","alt_skrot":"","definicja":"(ang.) czy pracujesz"},"448":{"def_numer":15,"ile":1,"list_numer":448,"skrot":"that\u2019s good","alt_skrot":"","definicja":"(ang.) to dobrze"},"455":{"def_numer":16,"ile":1,"list_numer":455,"skrot":"you like me","alt_skrot":"","definicja":"(ang.) ty mnie lubisz"},"10":{"def_numer":17,"ile":1,"list_numer":10,"skrot":"I love you","alt_skrot":null,"definicja":"(ang.) kocham ci\u0119"},"154":{"def_numer":18,"ile":1,"list_numer":154,"skrot":"wejdemynyt","alt_skrot":null,"definicja":"poczekaj, moment (ang. wait a minute)"},"153":{"def_numer":19,"ile":6,"list_numer":153,"skrot":"puszowa\u0107","alt_skrot":"","definicja":"(ang. to push) pcha\u0107, popycha\u0107"},"41":{"def_numer":20,"ile":1,"list_numer":41,"skrot":"lajkuj\u0119","alt_skrot":"lajkowa\u0107, lajkuje, lajkowa\u0142, lajkujesz","definicja":"(ang. to like) lubi\u0107, lubi, lubi\u0119"},"149":{"def_numer":21,"ile":1,"list_numer":149,"skrot":"puszuje","alt_skrot":"puszowa\u0107","definicja":"(ang. to push) pcha\u0107, popycha\u0107"},"150":{"def_numer":22,"ile":11,"list_numer":150,"skrot":"puszuj\u0119","alt_skrot":"","definicja":"(ang. to push) popycham, pcham"},"182":{"def_numer":23,"ile":1,"list_numer":182,"skrot":"darling","alt_skrot":null,"definicja":"(ang.) kochanie"},"452":{"def_numer":24,"ile":1,"list_numer":452,"skrot":"tell me","alt_skrot":"","definicja":"(ang.) powiedz mi"},"459":{"def_numer":25,"ile":1,"list_numer":459,"skrot":"working","alt_skrot":"\u0142orking","definicja":"(ang.) pracowa\u0107"},"480":{"def_numer":26,"ile":1,"list_numer":480,"skrot":"nothing","alt_skrot":"","definicja":"(ang.) nic"},"482":{"def_numer":27,"ile":2,"list_numer":482,"skrot":"oh, yes","alt_skrot":"","definicja":"(ang.) o, tak"},"956":{"def_numer":28,"ile":14,"list_numer":956,"skrot":"Marry","alt_skrot":"Marrry","definicja":"(ang.) Maria, Marysia"},"957":{"def_numer":29,"ile":7,"list_numer":957,"skrot":"Johny","alt_skrot":"Dziany","definicja":"(ang.) Jasiu"},"50":{"def_numer":30,"ile":1,"list_numer":50,"skrot":"kiss","alt_skrot":"kisa, kissa, kissach","definicja":"(ang.) poca\u0142unek, ca\u0142us"},"96":{"def_numer":31,"ile":2,"list_numer":96,"skrot":"sure","alt_skrot":"","definicja":"(ang.) oczywi\u015bcie, jasne - lub Sure - \u017cydowskie imi\u0119 \u017ce\u0144skie (od Sara)"},"155":{"def_numer":32,"ile":1,"list_numer":155,"skrot":"fine","alt_skrot":"","definicja":"(ang.) fajnie, klawo"},"481":{"def_numer":33,"ile":1,"list_numer":481,"skrot":"what","alt_skrot":"","definicja":"(ang.) co"},"960":{"def_numer":34,"ile":4,"list_numer":960,"skrot":"John","alt_skrot":"Johna","definicja":"(ang.) Jan"},"999":{"def_numer":35,"ile":1,"list_numer":999,"skrot":"oh","alt_skrot":"","definicja":"(int.) och!"}}';
+            //console.log("");
+            const json_slownik = JSON.parse(json);
+            let bylo = [];
+            //
+            if ( abbrs.length ) {
+                for ( ab of abbrs ) {
+                    // console.log(ab.dataset.numer);
+                    let num = parseInt( ab.dataset.numer, 10 );
+
+                    if (!abbrs_arr[num]) abbrs_arr[num] = incr++;
+                    //abbrs_arr[num] = null ?? incr++;
+                    ab.dataset.numer = abbrs_arr[ab.dataset.numer];
+                    
+                    if(!bylo[ab.dataset.id]){
+                    
+                    tagi += '<div class="skrot" id="def_' + ab.dataset.numer + '" title="' + ab.dataset.id + '">\n';
+                    tagi += '<span class="def_numer"> ' + ab.dataset.numer + ') </span> ';
+                    tagi += ab.textContent + " <!--" + json_slownik[ab.dataset.id]["skrot"] + "--></div>";// + ab.dataset.definition + '</div>\n';
+                    tagi += '<span> -</span>';
+                    tagi += '<div class="definicja">';
+                    if(json_slownik[ab.dataset.id]["alt_skrot"]){ // &&  json_slownik[ab.dataset.id]["alt_skrot"].indexOf(ab.textContent) <= 0){
+                    tagi += '<details><summary title="inne wystąpienia w tekstach">' + (!json_slownik[ab.dataset.id]["skrot"].match("/\b"+ab.textContent+"\b/g") ? json_slownik[ab.dataset.id]["skrot"] : ' ') + ' → ' + ab.dataset.definition + '</summary>';
+                    tagi += '<div>wystąpienia: ' + json_slownik[ab.dataset.id]["skrot"] + ', ' + json_slownik[ab.dataset.id]["alt_skrot"] + '</div>';
+                    tagi += '</details>';
+                    }else{
+                    tagi += ' ' + ab.dataset.definition;
+                    }
+                    tagi += '</div>\n';
+                    //
+                    bylo[ab.dataset.id] = 1;
+                    
+                    }
+                }
+                //console.log( bylo );
+                //console.log( json_slownik[7] );
+                //
+                de("definicje_lista").innerHTML = tagi;
+                
+                
+                //console.log('  '); //= addslashes({$data$definicje_skrotow}); ?> );
+            }
+        } );
+    </script>
+
+                                                                                    <div id="keywords">
+                                <div style="display:inline-block;width: 108px;">słowa kluczowe: </div>
+                                <div style="display:inline-block;width: 556px;vertical-align: text-top;">
+                                                                        <a href="/keywords/po_angielsku">
+                                        po angielsku                                    </a>
+                                                                        <a href="/keywords/po_amerykańsku">
+                                         po amerykańsku                                    </a>
+                                                                        <a href="/keywords/polglish">
+                                         polglish                                    </a>
+                                                                        <a href="/keywords/imię">
+                                         imię                                    </a>
+                                                                        <a href="/keywords/John">
+                                         John                                    </a>
+                                                                        <a href="/keywords/Marry">
+                                         Marry                                    </a>
+                                                                        <a href="/keywords/Merka">
+                                         Merka                                    </a>
+                                                                        <a href="/keywords/praca">
+                                         praca                                    </a>
+                                                                        <a href="/keywords/amerykańskie_klimaty">
+                                         amerykańskie klimaty                                    </a>
+                                                                    </div>
+                            </div>
+                            
+                            <hr>
+                                                                                    <div id="text_legenda"><fieldset><legend>Legenda:</legend>
+                                <div><span class="legenda_symbol">inc, incipit</span> - incipit - z braku informacji o tytule pozostaje cytat, fragment tekstu z utworu</div>
+                                <div><span class="legenda_symbol">abc (?), (abc?)</span> - tekst poprzedzający (?) jest mało czytelny (przepisywanie ze słuchu)</div>
+                                <div><span class="legenda_symbol">abc ... def</span> - tekst jest nieczytelny (przepisywanie ze słuchu)</div>
+                                <div><span class="legenda_symbol">abc/def</span> - tekst przed i po znaku / występuje zamiennie</div>
+                                <div><span class="legenda_symbol">abc <sup>(abc)</sup></span> - wyraz lub zwrot wymagający opisu, komentarza</div>
+                                <div><span class="legenda_symbol">(abc)</span> - didaskalia lub głupie komentarze kierownika</div>
+								</fieldset>
+                            </div>
+                                                        <style>
+#comments {
+	margin: 0px 12px;
+     container-type: inline-size;
+  container-name: com;
+}
+.comment {
+	background-color: #FFF;
+	margin: 6px 0px;
+	padding: 6px;
+	border-radius: 0px;
+	overflow: auto;
+   
+   
+}
+    .comment:target {
+        /*background-color: rgba(127,127,127,0.2);*/
+        outline: dotted 2px;
+    }
+ .comment:target .nick {
+        background-color: rgba(127,127,127,0.5);
+    }
+    
+   
+#form {
+	margin-bottom: 10px;	
+}
+#dod_kom {
+	font-family: old_caption;
+	font-size: 16px;
+	margin-bottom: 5px;
+}
+#nick {
+	border: solid 1px #600;	
+	padding: 5px;
+	border-radius: 10px;
+	margin-bottom: 5px;
+	width: 200px;
+	font-family: english;
+	font-size: 16px;
+}
+.nick {
+	font-family: old_caption;	
+	font-size: 16px;
+	margin-bottom: 5px;
+    padding: 2px 8px;
+}
+   
+.kom_data {
+	vertical-align: super;
+    font-size: smaller;
+	float:right;
+}
+#komentarz {
+	border: solid 1px #600;	
+	width: 100%;
+	padding: 5px;	
+	border-radius: 10px;
+	font-family: english;
+	font-size: 16px;
+	line-height: 18px;
+	background-repeat: no-repeat;
+	background-position: center center;	
+    background-size: 70px;
+	word-wrap: break-word;
+	white-space: pre-wrap;
+    overflow-wrap: break-word;
+	resize: vertical;
+	field-sizing: content;
+    min-height: 140px;
+	/*background-image: url(/images/loading.svg);*/
+	caret-color: #b8947c;
+}
+.komentarz {
+	margin-left: 15px;
+	font-size: 16px;
+	font-family: english;
+	overflow-wrap: anywhere;
+}
+    .komentarz a {
+        color: black;
+        display: inline-block;
+    }
+#but_div {
+	text-align: right;
+	margin-right: 40px;	
+}
+#send_com {
+	line-height: 24px;
+	width: 180px;
+	border: solid 1px #300;
+	cursor: pointer;
+	border-radius: 12px;
+	font-family: limelight;
+	background-color: rgb(190, 158, 123);	
+	transition: all 0.3s ease-in;
+}
+#send_com:hover {
+	background-color: rgb(124, 81, 34);
+	color: white;
+}
+#komentarze_users {
+	background-repeat: no-repeat;
+	background-position: center center;	
+}
+.komentarz iframe {
+    width: 650px;
+    aspect-ratio: 16 / 9;
+	display: block;
+	margin: 10px;
+}
+    .komentarz .archive_share {
+        text-align: center;
+        background-color: #000;
+        width: 660px;
+        padding-bottom: 1px;
+        margin-block: 6px 0px;
+    }
+    .komentarz .archive_share img {
+        border-radius: 50%;
+    }
+    .komentarz .archive_share iframe {
+        margin-inline: auto;
+        width: 620px;
+    }
+    
+    .ilustracja {
+        display: inline-block;
+        /*float: left;*/
+        
+    }
+    .ilustracja a {
+        margin-right: 12px;
+    }
+    .ilustracja:after, .ilustracja::after {
+        content: " ";
+        clear: both;
+    }
+    .ilustracja img {
+        max-height: 260px;
+        max-width: 670px;
+    }
+    .komentarz div + br {
+        clear: both;
+        display: none;
+    }
+    .komentarz div + br x {
+        display: block;
+    }
+audio, video {
+	display: block;	
+    width: 100%;
+	max-height: 380px;
+	margin-block: 6px 12px;
+	
+}
+	video {
+		background: url(/images/black_dot.png);
+	}
+	
+</style>
+<script type="text/javascript">
+var xhr = new XMLHttpRequest();
+//console.log(xhr);
+//
+function pokaz(){
+	xhr.abort();
+	//
+	var fd = new FormData();
+	//
+	fd.append("pokaz",1);
+	fd.append("id",3806);
+	//
+	xhr.open("POST","/comments.php",true);
+	//
+	xhr.onloadstart = function(){
+		dE("komentarz").style.backgroundImage = "url(/images/loading.svg)";
+	}
+	xhr.onload = function(){
+		dE("komentarz").style.backgroundImage = "none";	
+	}
+	xhr.onloadend = function(){
+		dE("komentarze_users").innerHTML = xhr.responseText;
+			setTimeout(function(){	
+			dE("send_com").removeAttribute("disabled");
+			}, 3000);
+	}
+	xhr.send(fd);
+}
+	//
+	function fix_it(co){
+		var to = co.replaceAll("#","&num;");
+			/*to = co.replaceAll("...","ÃƒÂ¢Ã¢â€šÂ¬Ã‚Â¦");*/
+		return to;
+	}
+//
+function dodaj(){
+	xhr.abort();
+	//
+	if(dE("nick").value.trim() == ""){
+		dE("nick").placeholder = "Podpisz się!";
+	} else if(dE("komentarz").value.trim() == ""){
+		dE("komentarz").placeholder = "Wpisz coś, zanim wyślesz!";
+	} else {
+		dE("send_com").setAttribute("disabled","disabled");
+	//
+		const d = new Date();
+  d.setTime(d.getTime() + (100*24*60*60*1000));
+  let expires = "expires="+ d.toUTCString();
+	document.cookie = "nick=" + dE("nick").value.trim() + ";" + expires;
+		//
+	var fd = new FormData();
+	fd.append("dodaj",1);
+	fd.append("id", 3806);
+	fd.append("czek",dE("czek").value);
+	fd.append("nick",dE("nick").value);
+	fd.append("komentarz",fix_it(dE("komentarz").value));
+	//
+	xhr.open("POST","/comments.php",true);
+	//
+	xhr.onloadstart = function(){
+		dE("komentarz").style.backgroundImage = "url(/images/loading.svg)";
+	}
+	//
+	xhr.onloadend = function(){
+		dE("send_com").setAttribute("disabled","true");
+		dE("komentarz").style.backgroundImage = "none";
+	}
+	//
+	xhr.onload = function(){
+		if(xhr.responseText == 1){
+		pokaz();
+		dE("komentarz").value = "";
+	} else {
+	dE("komentarze_users").innerHTML = "Oj... " + xhr.responseText;
+	};	
+	}
+	//
+	xhr.send(fd);
+	}
+	
+}
+//
+/*document.onreadystatechange = function () {
+  if (document.readyState == "interactive") {
+//	pokaz();  
+  }
+}*/
+    /*
+    document.getElementById('pasteArea').onpaste = function (event) {
+  // use event.originalEvent.clipboard for newer chrome versions
+  var items = (event.clipboardData  || event.originalEvent.clipboardData).items;
+  console.log(JSON.stringify(items)); // will give you the mime types
+  // find pasted image among pasted items
+  var blob = null;
+  for (var i = 0; i < items.length; i++) {
+    if (items[i].type.indexOf("image") === 0) {
+      blob = items[i].getAsFile();
+    }
+  }
+  // load image if there is a pasted image
+  if (blob !== null) {
+    var reader = new FileReader();
+    reader.onload = function(event) {
+      console.log(event.target.result); // data url!
+      document.getElementById("pastedImage").src = event.target.result;
+    };
+    reader.readAsDataURL(blob);
+  }
+}
+*/
+</script>
+<hr>
+<div id="comments">
+  <div id="komentarze_users">
+            <div id="comment_14792" name="comment_14792" class="comment">
+      <div id="nick_14792" class="nick">
+        Basia        <span class="kom_data">
+        2018-01-09 13:41        </span></div>
+      <div id="kom_14792" class="komentarz">
+        Marja Marjewska z Orkiestrą<br />
+<a href="https://archive.org/details/78_burkiet-roz-corka-dla-matki-slowa-brominskiego---cesc-2_marja-marjewska-z-orkiest_gbia0010209/01+-+Na+Dzien+Matki+Powinszowania+-+Marja+Marjewska+z+Orkiestra.flac" target="_blank">https://archive.org/details/78_burkiet-roz-corka-dla-matki-slowa-brominskiego---cesc-2_marja-marjewska-z-orkiest_gbia0010209/01+-+Na+Dzien+Matki+Powinszowania+-+Marja+Marjewska+z+Orkiestra.flac</a><div class="archive_share"><br />
+         <a href="https://archive.org/details/78_burkiet-roz-corka-dla-matki-slowa-brominskiego---cesc-2_marja-marjewska-z-orkiest_gbia0010209/01+-+Na+Dzien+Matki+Powinszowania+-+Marja+Marjewska+z+Orkiestra.flac" target="_blank"><img src="https://archive.org/services/img/78_burkiet-roz-corka-dla-matki-slowa-brominskiego---cesc-2_marja-marjewska-z-orkiest_gbia0010209/01+-+Na+Dzien+Matki+Powinszowania+-+Marja+Marjewska+z+Orkiestra.flac"></a><br />
+         <iframe class="ifr" src="" data-src="https://archive.org/embed/78_burkiet-roz-corka-dla-matki-slowa-brominskiego---cesc-2_marja-marjewska-z-orkiest_gbia0010209/01+-+Na+Dzien+Matki+Powinszowania+-+Marja+Marjewska+z+Orkiestra.flac" width="650" height="30" loading="lazy" frameborder="0" webkitallowfullscreen="true" mozallowfullscreen="true" allowfullscreen></iframe></div><br />
+<br />
+      </div>
+    </div>
+            <div id="comment_33877" name="comment_33877" class="comment">
+      <div id="nick_33877" class="nick">
+        M. G. J.        <span class="kom_data">
+        2023-03-19 22:43        </span></div>
+      <div id="kom_33877" class="komentarz">
+        24: John -> Sure<br />
+28: Wer du ju werk (= Where do you work, objaśnienie #7)<br />
+49: godzinów -> godzin<br />
+65: nothnig -> nothing      </div>
+    </div>
+            <div id="comment_34061" name="comment_34061" class="comment">
+      <div id="nick_34061" class="nick">
+        M. G. J.        <span class="kom_data">
+        2023-04-03 05:57        </span></div>
+      <div id="kom_34061" class="komentarz">
+        Bardzo krótka wersja (~2 zwrótki) na Actuelle Record. Etykieta:<br />
+<br />
+6302<br />
+Where do You Werk a John<br />
+Co robisz Janku<br />
+foxtrott ze śpiewem<br />
+(Weinberg-Marks-Warren)<br />
+Phil Napoleon orch.<br />
+107266<br />
+<br />
+Wypresowano: N-107266      </div>
+    </div>
+      </div>
+      <div id="dod_kom">Dodaj komentarz</div>
+  <div id="form">
+    <div id="czek_div" style="display:none">
+      <input type="text" id="czek">
+    </div>
+    <div id="nick_div">
+      <input type="text" id="nick" placeholder="podaj imię/nick" value="">
+    </div>
+    <div id="komentarz_div">
+      <textarea id="komentarz" placeholder="wpisz uwagi" rows="7" oninput="powieksz(this)"></textarea>
+    </div>
+    <div id="but_div">
+      <input type="button" id="send_com" value="dodaj swój komentarz" onClick="dodaj();">
+    </div>
+  </div>
+    </div>
+<script>
+function powieksz(k){
+	console.log(k);
+	var sh = k.scrollHeight;
+	var szukane = /\n/g;
+	var trafiony, trafione = [];
+	while(trafiony = szukane.exec(k.value) != null){
+		trafione.push(trafiony);
+	}
+	var linie = trafione.length;
+	//
+	linie > 6 ?	k.rows = linie + 1 : k.rows = 7;	
+	
+	if(sh > 138){
+		//k.style.height = sh + 2 + "px";
+	}
+}
+</script>                        </div>
+                    </div>
+
+                    <div id="piosenka_right">
+                        <style type="text/css">
+#szukaj_tytul {
+	background-color: rgb(236, 228, 218);
+	padding-bottom: 10px;
+	margin-bottom: 10px;
+	width: 100%;
+	border-radius: 12px;
+	text-shadow: none;	
+	line-height: 0px;
+    position: sticky;
+    top: 36px;
+    z-index: 16;
+}
+#szukaj_tytul_head {
+	font-size: 18px;
+	line-height: 24px;
+	font-family: old_caption;
+	text-align: center;
+	color: #000;
+}
+#szukaj_tytul_tb {
+	width: 280px;
+	margin: auto;	
+	border-width: 0px;
+	border-collapse: collapse;
+}
+#szukaj_tytul_tb input, #szukaj_tytul_tb select {
+	font-size: 14px;	
+	border: solid 1px black;
+}
+#szukaj_tytul_tb input {
+	height: 20px;
+	width: 180px;
+	border-radius: 10px 0px 0px 10px;
+	padding-left: 5px;
+}
+#input_trim {
+    position: relative;
+    display: flex;
+    flex-direction: row;
+}
+#input_trim label {
+    position: absolute;
+    top: 10px;
+    left: 6px;
+    font-family: 'old_caption';
+    font-size: 14px;
+    color: #895a3c;
+    pointer-events: none;
+    transition: all .3s cubic-bezier(0, 1.82, 1, 1);
+}
+#input_trim input:focus + label, #input_trim input:not(:placeholder-shown) + label {
+    top: -8px;    
+    color: #4f2f20;
+}
+	#input_trim input:focus::placeholder {
+		color: #895a3c;
+        
+	}
+	#input_trim input::placeholder {
+		color: transparent;
+        font-family: "english";
+		transition: color .2s linear;
+	}
+#szukaj_tytul_tb select {
+	height: 20px;
+	width: 105px;
+	border-radius: 0px 10px 10px 0px;
+	font-family: old_caption;
+}
+#szukaj_tytul_tb option:checked {
+  xbackground: red linear-gradient(0deg, red 0%, red 100%);
+}
+#wynik {
+	overflow: auto;
+	text-shadow: none;	
+	line-height: 20px;
+	font-size: 12px;
+    max-height: calc(100vh - 95px);
+    position: absolute;
+    background-color: #ece4da;
+    width: 100%;
+    border-radius: 0px 0px 12px 12px;
+}
+#wynik .trim {
+	font-size: 12px;	
+	overflow: hidden;
+    max-width: 120px;
+}
+    #wynik a {
+        color: #000;
+    }
+    #wynik a sup {
+        font-size: 10px;
+        position: absolute;
+    left: -8px;
+    }
+#szukanie_brak {
+	text-align:center;	
+	font-size: 18px;
+	font-family: old_caption;
+	line-height: 22px;
+	color: #c00;
+	margin-top: 6px;
+}
+.recent_songs {
+	width: 98%;
+	white-space: nowrap;
+	border-collapse: collapse;
+}
+.recent_songs:nth-child(even) {
+	margin: 3px;	
+}
+.recent_songs:nth-child(odd) {
+	background-color: rgb(221, 209, 193);
+	border-radius: 10px;
+	margin: 3px;
+	box-shadow: 0px 0px 10px rgb(139, 114, 97) inset;
+}
+.recent_img {
+	width: 40px;
+	height: 40px;	
+}
+.recent_img img {
+	width: 38px;
+	/*height: 38px;*/
+}
+.recent_title {
+    position: relative;
+	font-family: old_caption, ruskie;	
+	font-size: 18px;
+	white-space: nowrap;
+	padding-top: 3px;
+}
+.recent_alt_title {
+	font-family: old_caption, ruskie;	
+	font-size: 14px;
+	white-space: nowrap;
+}
+.recent_title a, .recent_alt_title a {
+	overflow: hidden;
+	text-overflow: ellipsis;
+	display: block;
+	width: 235px;	
+	text-decoration: none;
+}
+.recent_title a:hover, .recent_alt_title a:hover {	
+	text-decoration: underline !important;
+}
+.recent_title a .znalezione, .recent_alt_title a .znalezione {
+	font-weight: normal;	
+}
+.recent_autors {
+	
+}
+.recent_muzyka, .recent_slowa  {
+	white-space: nowrap;
+	font-family: old_caption, ruskie;
+	width: 120px;
+	color: rgb(53, 22, 10);
+}
+.trim {
+	overflow: hidden;
+	text-overflow: ellipsis;
+	display:block;
+	width: 100%;
+}
+.recent_muzyka a, .recent_slowa a {
+	/*overflow: hidden;
+	text-overflow: ellipsis;
+	color: rgb(53, 22, 10) !important;*/
+	/*text-decoration: none;		*/
+}
+.recent_muzyka a:hover, .recent_slowa a:hover {
+	text-decoration: underline;
+}
+.audio_ico {
+	text-align:center;
+	width: 18px;
+	height: 18px;
+    xborder: solid 1px black;
+    xborder-radius: 10px;
+    padding: 0px 0px;
+    margin: 0px auto;
+    line-height: 16px;
+    font-size: 10px;
+	xbackground-color: white;
+    xbox-shadow: 0px 0px 3px black inset;	
+	-webkit-touch-callout: none;
+    -webkit-user-select: none;
+    -khtml-user-select: none;
+    -moz-user-select: none;
+    -ms-user-select: none;
+    user-select: none;
+}
+.pers_pic {
+	 background-color:black;
+	 width:46px;
+	 height:46px;
+	 border-radius:50%;
+	 background: no-repeat center center #19201e;
+	 background-size: cover;
+}
+	.tytul_gatunek {
+		font-size: 12px;
+		font-weight: normal;
+	}
+#info {
+	color:#CC0000;
+	text-align:center;
+	font-size: 18px;
+	font-family:old_caption;
+	margin-top: 6px;	
+}
+#info img {
+	width: 32px;
+    vertical-align: middle;
+    margin-left: 6px;	
+}
+input[type="search"]::-webkit-search-decoration,
+input[type="search"]::-webkit-search-cancel-button,
+input[type="search"]::-webkit-search-results-button,
+input[type="search"]::-webkit-search-results-decoration {
+  /*display: none;*/
+}
+input[type="search"]::-webkit-search-cancel-button {
+	-webkit-appearance: none;  
+    content: "clear";
+  /*background: url(/images/clear.png) no-repeat center center;*/
+  height: 20px;
+  width: 36px;
+  xborder-radius: 1.5px;
+  border: solid 0px #8C4600;
+  cursor: pointer;
+  background-color: #CCC;
+  position: relative;
+  top: 0px;
+  right: -3px;
+}
+input[type="search"]::-webkit-search-cancel-button:after {
+    content: " clear ";
+    position: absolute;
+    right: 0px;
+    width:  30px;
+    height: 20px;
+    display: block;
+}
+#czy {
+	text-align: center;	
+	font-family: old_caption;
+    font-size: 16px;
+}
+.amozeto {
+	cursor: pointer;
+	font-family: old_caption;
+    font-size: 18px;
+    white-space: nowrap;
+	margin: 0px 4px 4px 4px;
+	padding: 4px;
+	overflow: hidden;
+	text-overflow: ellipsis;
+	width: 98%;
+	max-width: 282px;
+}
+.amozeto_alt {
+	font-size: 16px;
+	overflow: hidden;
+	text-overflow: ellipsis;
+	width: 98%;	
+}
+.amozeto:nth-child(even) {
+	background-color: rgb(221, 209, 193);
+    border-radius: 10px;
+    margin: 0px 4px 4px 4px;
+	padding: 4px;
+    box-shadow: 0px 0px 10px rgb(139, 114, 97) inset;
+}
+.blad {
+color: #C00;
+}
+</style>
+<div id="szukaj_tytul">
+<div id="szukaj_tytul_head">Szukaj tytułu lub osoby</div>
+<table id="szukaj_tytul_tb">
+<tr><td><span id="input_trim"><input type="search" id="ser" name="ser" placeholder=" wpisz fraze " results="5" oninput="szukaj_tego(this.value)" title="to nie jest google, sorry..." spellcheck="true"><label for="ser">wyszukaj</label></span></td>
+<td><select id="where" onChange="szukaj_tego(de('ser').value)">
+	<option value="tytul">tytuł piosenki</option>
+    <option value="piosenkarze">wykonawca</option>
+    <option value="chory">chór</option>
+    <option value="kompozytorzy">kompozytor</option>
+    <option value="teksciarze">autor tekstu</option>
+</select>
+</td>
+</tr>
+</table>
+	<!--div>xxx</div-->
+<div id="wynik"></div>
+</div>
+<script type="text/javascript">
+var cxhr = new XMLHttpRequest();
+//
+function szukaj_tego(fraza){
+    if(cxhr.status){
+		cxhr.abort();
+        }
+	//console.log(fraza,de("where").value);
+	//
+	if(fraza.trim() != "") { // && fraza.trim().length >= 3){
+		//
+		var fd = new FormData();
+		fd.append("q",fraza);
+		fd.append("where",de("where").value);
+		//
+		cxhr = new XMLHttpRequest();
+		//
+		cxhr.open("POST","/custom_search.php",true);
+		//
+		cxhr.onload = function(){
+			//console.log(xhr.responseText);
+			de("wynik").innerHTML = cxhr.responseText;	
+		}
+		//
+		cxhr.onloadend = function(){
+			Array.from(document.getElementsByClassName("amozeto")).forEach(function(x){
+		x.addEventListener("click",function(){
+			de("ser").value = this.innerText;// this.dataset.tytul;
+			de("ser").oninput();
+		});
+	});
+		}
+		//
+		cxhr.onerror = function(){
+			console.log("error:",cxhr.responseText);	
+		}
+		//
+		cxhr.ontimeout = function(){
+			de("wynik").innerHTML = '<div id="info">timeout...</div>';
+		}
+		//
+		cxhr.onloadstart = function(){
+			de("wynik").innerHTML = '<div id="info">szukam... <img src="/images/loading.svg"></div>';
+		}
+		//
+		cxhr.send(fd);
+		//
+} else {
+	de("wynik").innerHTML = "";	
+}}
+</script>                                                <h3 id="piosenka_spiewali" aria-label="lista wykonawców">
+							
+                            <div class="spiewali_pojemnik"><div class="limelight text16 mb5 center" style="color:#FFF;/*text-shadow: 1px 1px 1px black;*/border-radius: 6px 6px 0px 0px;
+background-color: var(--ciemny-brazowy);
+/*width: 290px;*/
+padding: 3px;
+margin: auto;">Wykonawcy:</div><div class="lista_wykonawcow"><div class="lista_wykonawcow_row"><div class="lista_wykonawcow_icon">
+	<a class="icon" href="/piosenkarze/496/Dwojka_Warszawska" style="background-image:url(/galeria_images/miniatury/thumb_120_120_no_image.jpg)" title="Dwójka Warszawska
+Józef Kallini, Marja Marjewska
+">
+	</a>
+	</div><div class="lista_wykonawcow_name""><a href="/piosenkarze/496/Dwojka_Warszawska" title="Dwójka Warszawska
+Józef Kallini, Marja Marjewska
+">Dwójka Warszawska<div class="lista_wykonawcow_name_other">Józef Kallini, Marja Marjewska</div></a></div></div></div></div>								
+							
+                            							
+                        </h3>
+                                                                        <style>
+.zyt_item {
+	margin-bottom: 6px;	
+	padding-top: 3px;
+	box-shadow: 0px 0px 1px #635447 inset;
+    border-radius: 10px;
+    padding-bottom: 2px;
+	background-color: #E7DCD1;
+}
+.zyt_oryginal {
+	background-color: #C3AE9B;
+    border-radius: 10px;
+    /*box-shadow: 0px 0px 0px 2px #D1C2B4 inset;*/
+    padding-bottom: 4px;
+}
+.zyt_td {
+	text-overflow: ellipsis;
+    width: 300px;
+    white-space: nowrap;	
+}
+.zyt_a {
+	font-size: 14px;	
+}
+.yt_opis {
+	text-align: center;
+	font-family: old_caption, ruskie, "Arial", sans-serif;
+	line-height: 0px;
+	color: #3D2518;
+}
+.yt_opis_cap, .dyryguje {
+	font-size: 12px !important;
+	line-height: 14px !important;
+	margin-bottom: 2px;
+}
+.yt_opis a {
+	color: #3d2518 !important;
+    text-decoration-color: #3d2518;
+    text-decoration-line: underline;
+    text-decoration-style: dashed;
+    text-decoration-thickness: 1px;
+    text-underline-offset: 2px;
+}
+	.yt_opis a:hover {
+		text-decoration-line: none;
+	}
+.yt_opis div {
+	font-size: 16px;
+	line-height: 22px;	
+}
+.yt_opis .singer {
+	font-size: 28px;
+    line-height: 30px;	
+}
+.yt_komentarz {
+	text-align: center;
+	padding: 0px 3px;	
+}
+.yt_mx_kat {
+	
+}
+.yt_druga_strona {
+	display: block;
+	text-align: center;
+	font-family: old_caption;
+	color: #513b2f !important;	
+	border: solid thin #a59589;
+	background-color: rgba(0, 0, 0, 0.1);
+	border-radius: 10px;
+	text-decoration: none;
+	line-height: 18px;
+    margin: auto;
+    width: 296px;
+}
+a.yt_druga_strona:hover {
+    text-decoration: underline !important;
+}
+.yt_druga_strona_tytul {
+	font-family: limelight;
+    /* font-weight: lighter; */
+    color: #2d1b12;
+	font-size: 14px;
+	/*text-shadow: 0px 0px 3px #8b7f78;*/
+	margin-bottom: 4px;
+}
+#zyt {
+	width: 300px;	
+	background-color: rgb(209, 194, 180);
+	border-radius: 10px;
+	margin-top: 10px;
+}
+#zyt_naglowek {
+	text-align: center;
+	font-family: old_caption;
+	
+	font-size: 16px;
+	line-height: 26px;
+	text-shadow: 0px 0px 1px rgb(116, 88, 83);
+	color: ;
+	/*background-color: rgb(221, 210, 200);*/
+	border-radius: 10px 10px 0px 0px;
+}
+.zyt_link {
+	margin: 3px;
+	/*background-image: url(../images/klatka.jpg);
+	background-repeat: no-repeat;
+	background-position: center center;	*/
+	/*width: 120px;
+	height: 90px;*/
+}
+.zyt_link img {
+	width: 294px;
+	height: 216px;
+	vertical-align: middle;
+	border-radius: 12px;
+    box-shadow: 0px 0px 2px 1px #6F4123;
+}
+.ytvideo {
+	display: block;	
+}
+.ytvideoplay {
+	position: relative;	
+}
+.ytvideoplay:after {
+	position: absolute;
+	content: " ";
+	width: 52px;
+	height: 40px;
+	border: none 1px red;
+	right: calc(50% - 26px);
+    bottom: calc(50% - 20px);
+	background: url(/images/yt_play.png) no-repeat center center;
+	opacity: 0.4;
+	transition: opacity 0.3s ease;
+}
+.ytonly:after {
+	background: url(/images/yt_only_small.png) no-repeat center center;
+}
+.ytvideoplay:hover:after {
+	opacity: 1;
+}
+.zyt_td {
+	overflow: hidden;	
+	text-align: center;
+	padding: 0px 2px;
+}
+.zyt_a {
+	font-family: old_caption, ruskie;
+	font-size: 16px;
+	line-height: 18px;	
+	/*white-space: nowrap;*/
+	text-overflow: ellipsis;
+	text-decoration: none;
+	/*width: 240px;*/
+	display: block;
+	overflow: hidden;
+	text-decoration:none;
+	color: #3D2518 !important;
+}
+.zyt_col {
+	font-family: old_caption;
+	color: #3D2518 !important;
+}
+    .zyt_col a {
+        color: #000;
+        text-decoration-line: underline;
+        text-decoration-style: dashed;
+        text-decoration-color: #3d2518;
+        
+        text-underline-offset: 2px;
+    }
+.zyt_a:hover {
+	text-decoration: underline;
+}
+</style>
+
+<div id="zyt">
+  <h3 id="zyt_naglowek" aria-label="Lista publikacji YouTube">Posłuchaj na <img src="/images/yt_logo.png" style="vertical-align:sub"></h3>
+  <div class="yt_items">
+               <div style="text-align: center;line-height: 0px;"> </div>
+      	<div class="zyt_item">
+	
+    <h4 class="yt_opis">
+    <div><!--div class="yt_opis_cap">wykonuje</div-->
+	<div style="margin-bottom:6px"><div class="singer"><a href="/piosenkarze/496/Dwojka_Warszawska">Dwójka Warszawska</a></div></div></div>      
+      
+
+
+          </h4>
+    
+    <div class="zyt_oryginal">
+    
+   <div class="zyt_link"> <a class="ytvideoplay ytvideo"" href="https://www.youtube.com/watch?v=ksQ1nqXJRj8&autoplay=1&start=4&t=4&end=177&" vid="ksQ1nqXJRj8?start=4&end=177&"><img src="https://img.youtube.com/vi/ksQ1nqXJRj8/0.jpg" title='' alt=''></a> 
+	
+	    
+	</div>
+    <div class="zyt_td">
+            <a class="zyt_a ytvideo"" href="https://www.youtube.com/watch?v=ksQ1nqXJRj8&autoplay=1&origin=http://staremelodie.pl&start=4&end=177" title="">
+      Polish 78rpm recordings, 1927. OKeh 11321. Co Ty Puszujesz John? {Where Do You Work-a John?}      </a>
+      <div class="zyt_col" style="font-family: old_caption;">z kanału: <a href="https://www.youtube.com/channel/UCOD7T9n8HHPXHYNEa_pk0cA" target="_blank">
+        Walter Maksimovich        </a></div>
+    </div>
+    
+    </div>
+    
+    <div class="yt_opis">
+            
+            
+            
+      <div><span class="yt_opis_cap"> ⋯ ※ ⋯ </span><br><a href="/nagrania_wytworni/65/OKeh/1927">OKeh</a></div>      
+            <div style="font-size:12px">
+        
+          
+          
+        kat: <span class="yt_mx_kat"><a href="/nagrania_wytworni/65/OKeh/1927#11321_W81005">11321</a></span>        mx: <span class="yt_mx_kat"><a href="/nagrania_wytworni/65/OKeh/1927#11321_W81005">W81005</a></span>      </div>
+            <div><a href="/nagrania_wytworni/65/OKeh/1927#11321_W81005">1927 rok</a></div>    </div>
+    
+    
+    
+    <div>
+			<a href="/piosenka/3807/Zale_dziadowskie" class="yt_druga_strona" title="Żale dziadowskie – 11321">druga strona  YouTube: 
+			<div class="yt_druga_strona_tytul"><span style="width: 280px; white-space:nowrap;overflow:hidden;display: inline-block;text-overflow: ellipsis; vertical-align: top;">„Żale dziadowskie”</span></div></a>
+			</div>
+		    </div>
+      </div>
+</div>
+						
+                        <style>
+#etykiety_plyt {
+	width: 300px;
+	background-color: rgb(209, 194, 180);
+	border-radius: 10px;
+	margin-top: 10px;
+	font-family: old_caption;
+	color: rgb(46, 15, 9);	
+	padding-bottom: 1px;
+	overflow: hidden;
+}
+#etykiety_title {
+	text-align: center;
+	font-size: 18px;
+	border-bottom: solid 1px rgb(46, 15, 9);
+	padding: 5px 0px;
+	text-shadow: 0px 0px 1px rgb(116, 88, 83);	
+	background-color: rgb(221, 210, 200);
+}
+#etykiety_box {
+	margin: 3px;
+    padding-block: 12px;
+	background-color: #0C0C0C;
+	box-shadow: 0px 0px 5px #0C0C0C;
+	border-radius: 8px;
+	box-shadow: 0px 0px 5px #0C0C0C, 0px 0px 2px 3px black inset, 0px 0px 0px 3px #DDD2C8 inset;
+	display: flex;
+    flex-wrap: wrap;
+	justify-content: space-around;
+}
+.etykieta *::selection {
+    background: white;
+    color: black;
+}
+.etykieta {
+	width: 145px;
+	min-height: 258px;
+}
+.etykieta_border {
+	border-radius: 50%;
+	overflow: hidden;
+	height: 145px;
+	width: 145px;	
+	display: table-cell;
+	vertical-align: middle;
+	/*border: solid 1px red;*/
+}
+.etykieta_img {
+	cursor: url(/resources/zoomin.cur), zoom-in;
+}
+.e_data {
+	color: white;	
+	font-family: Times;
+	text-align: center;
+	line-height: 13px;
+	font-size: 12px;
+	text-overflow: ellipsis;
+    /* overflow: hidden; */
+    width: 145px;
+    overflow: hidden;
+    white-space: nowrap;
+}
+.e_data a {
+	color: white !important;	
+}
+.other_sides {
+	text-align: center;
+	margin-top: 2px;
+}
+.other_side {
+    /*float: left;*/
+	display: inline-block;
+	border-radius: 50%;
+	width: 44px;
+	height: 44px;
+	overflow: hidden;
+	margin-right: 2px;
+}
+.other_side img {
+	/*cursor: zoom-in;
+	cursor: -webkit-zoom-in;*/
+}
+</style>
+<div id="etykiety_plyt">
+<div id="etykiety_title">Etykiety płyt</div>
+<div id="etykiety_box">
+	
+	 	
+	<div class="etykieta"><div style="width:145px;height:145px;overflow:hidden;border-radius:50%;text-align:center;"><div class="etykieta_border">
+    <img src="/etykiety_plyt/miniatury/thumb_145_145_Co_ty_puszujesz_John_StareMelodie.pl_1515352747.jpg" 
+         onclick="zoom('/etykiety_plyt/Co_ty_puszujesz_John_StareMelodie.pl_1515352747.jpg',0,'Co ty puszujesz, John? OKeh 11321 81005')" class="etykieta_img" data-img="Co_ty_puszujesz_John_StareMelodie.pl_1515352747.jpg" alt="Co ty puszujesz, John?" title="Co ty puszujesz, John? OKeh 11321 81005" loading="lazy" lazyload="on"></div></div>
+    		    <div class="e_data">
+		<a href="/nagrania_wytworni/65/OKeh" target="_blank">OKeh</a>		</div>
+		
+    <div class="e_data" style="font-size: 11px">		
+		K<sup>t</sup>: 11321 <br>M<sup>x</sup>: 81005  
+		
+		</div>
+   
+    <div class="e_data" style="overflow: hidden;text-overflow: ellipsis;width: 140px;white-space: nowrap;" title="kolekcja: www.lemko.org">kolekcja: www.lemko.org</div>
+    <div style="color:white"><div class="other_sides">			<div class="other_side">
+            <a href="/piosenka/3807/Zale_dziadowskie#etykiety_plyt">
+            <img src="/etykiety_plyt/miniatury/thumb_45_45_Zale_dziadowskie_StareMelodie.pl_1515352406.jpg" title="druga strona: Żale dziadowskie OKeh 11321 81008" loading="lazy" lazyload="on"> 
+            </a>
+            </div>
+		</div></div>
+    
+    </div>
+</div>
+</div>
+                                                                        <div id="podobne">
+                            <div id="podobne_naglowek">Podobne teksty:</div>
+                            <style>
+#podobne {
+	background-color: rgb(209, 194, 180);
+	border-radius: 10px;
+	margin-top: 10px;
+	font-family: old_caption, ruskie;
+	color: rgb(46, 15, 9);
+	overflow: hidden;
+	box-shadow: 0px 0px 2px 3px #D1C2B4 inset, 0px 0px 0px 3px #2E0F09 inset;
+}
+#podobne_naglowek {
+	text-align: center;	
+	font-size: 18px;
+	border-bottom: solid 1px rgb(46, 15, 9);
+	padding: 5px 0px;
+	text-shadow: 0px 0px 1px rgb(116, 88, 83);
+    background-color: rgba(221, 210, 200, 0.6);
+}
+#podobne table {
+	width: 100%;
+	
+	white-space: nowrap;
+}
+#podobne td {
+	height: 22px;
+	font-size: 18px;	
+}
+#podobne .img {
+	width: 22px;
+	height: 22px;	
+	overflow: hidden;
+}
+#podobne .img a {
+	width: 22px;
+	height: 22px;	
+	overflow: hidden;
+}
+#podobne  a {
+	text-decoration: none;	
+	overflow: hidden;
+	text-overflow: ellipsis;
+	display: block;
+	width: 270px;
+	color: rgb(46, 15, 9);
+}
+#podobne a:hover {
+	text-decoration: underline !important;
+}
+    #podobne .ile {
+        font-size:12px;
+        vertical-align: super;
+    }
+</style>
+<table>
+    <tr><td class="img"><a href="/piosenka/3271/Cialy Merce dawał rajda"><img src="/images/shellac.svg"></a></td><td><a class="" href="/piosenka/3271/Cialy Merce dawał rajda" title="4: polglish, Marry, Merka, amerykańskie klimaty">Cialy Merce dawał rajda <span class="ile">4</span></a></td></tr>
+    <tr><td class="img"><a href="/piosenka/3262/Jak się z Kejdą nie ożenię"><img src="/images/shellac.svg"></a></td><td><a class="" href="/piosenka/3262/Jak się z Kejdą nie ożenię" title="4: po angielsku, po amerykańsku, polglish, amerykańskie klimaty">Jak się z Kejdą nie ożenię <span class="ile">4</span></a></td></tr>
+    <tr><td class="img"><a href="/piosenka/5505/Antek Amerykan w karczmie"><img src="/images/shellac.svg"></a></td><td><a class="" href="/piosenka/5505/Antek Amerykan w karczmie" title="3: po amerykańsku, polglish, imię">Antek Amerykan w karczmie <span class="ile">3</span></a></td></tr>
+    <tr><td class="img"><a href="/piosenka/5329/Zdradzony mąż"><img src="/images/shellac.svg"></a></td><td><a class="" href="/piosenka/5329/Zdradzony mąż" title="3: po amerykańsku, polglish, amerykańskie klimaty">Zdradzony mąż <span class="ile">3</span></a></td></tr>
+    <tr><td class="img"><a href="/piosenka/4695/Po północy"><img src="/images/shellac.svg"></a></td><td><a class="" href="/piosenka/4695/Po północy" title="3: po amerykańsku, polglish, amerykańskie klimaty">Po północy <span class="ile">3</span></a></td></tr>
+    <tr><td class="img"><a href="/piosenka/4564/Bo was miłuję"><img src="/images/shellac.svg"></a></td><td><a class="" href="/piosenka/4564/Bo was miłuję" title="3: po amerykańsku, polglish, amerykańskie klimaty">Bo was miłuję <span class="ile">3</span></a></td></tr>
+    <tr><td class="img"><a href="/piosenka/4097/Dzień urodzin"><img src="/images/shellac.svg"></a></td><td><a class="" href="/piosenka/4097/Dzień urodzin" title="3: po angielsku, po amerykańsku, polglish">Dzień urodzin <span class="ile">3</span></a></td></tr>
+    <tr><td class="img"><a href="/piosenka/4087/Amerykańska girl"><img src="/images/shellac.svg"></a></td><td><a class="" href="/piosenka/4087/Amerykańska girl" title="3: po angielsku, po amerykańsku, amerykańskie klimaty">Amerykańska girl <span class="ile">3</span></a></td></tr>
+
+</table>                        </div>
+                                                                        <style>
+#nuty {
+	margin-top: 6px;
+	background-color: rgb(209, 194, 180);
+	border-radius: 10px;
+	font-family: old_caption;
+	color: rgb(46, 15, 9);
+	overflow: hidden;
+	text-align: center;
+	padding-bottom: 10px;
+}
+#nuty_contener {
+	display: flex;
+	width: 300px;	
+	align-content: space-around;
+    justify-content: space-evenly;
+    align-items: center;
+    flex-wrap: wrap;
+}
+.nutka {
+	display: block;
+	margin: 6px 0px;
+	max-width: 140px;
+    box-shadow: 0px 0px 3px #2E0F09;
+    position: relative;
+    overflow: hidden;
+}
+.nutka a {
+	display: block;	
+	line-height: 0px;
+}
+.nutka a img {
+	max-width: 140px;	
+}
+.nutka .nutka_info {
+    position: absolute;
+    top: 20px;
+    background-color: #faf3e3;
+    opacity: 0;
+    pointer-events: none;
+    width: 140px;
+    height: 190px;
+    font-size: 14px;
+    padding: 2px;
+    transition: all .3s ease-in-out;
+}
+.nutka:hover .nutka_info {
+    top: 0px;
+    opacity: 1;
+}
+</style>
+                    </div>
+
+                </div>
+            </div>
+        </div>
+        <div id="clear"></div>
+    </div>
+    </div>
+    <div id="footer">
+        <style>
+#footer {
+	width: 1080px;
+	margin: 20px auto 0px auto;
+	border-radius: 15px 15px 0px 0px;
+	padding-inline: 26px;
+	line-height: 24px;
+	box-shadow: 0px 0px 10px black;
+	font-size: 14px;
+	font-family: "Courier New", Courier, monospace;
+	background-color: #BFA48C;
+	display: flex;
+    flex-flow: row wrap;
+    justify-content: space-evenly;
+    align-content: stretch;
+    align-items: stretch;
+}
+	#footer #flogo {
+		width: 100%;
+    margin: 3px auto 0px auto;
+	}
+#footer img {
+	vertical-align: text-bottom;
+	width: 20px;
+	height: 20px;
+	border-radius: 50%;
+	box-shadow: 0px 0px 3px 1px black inset;
+}
+#footer a {
+	color: #000;
+	font-family: old_caption, Tahoma, Geneva, sans-serif;
+	text-decoration: none;
+}
+	#footer a:hover {
+		text-decoration: underline;
+	}
+#footer .column {
+	display: flex;
+    flex-flow: column;
+    align-items: start;
+	flex: 3;
+    padding: 12px;
+	font-family: old_caption;
+}
+</style>
+<div id="flogo"><img src="/images/footer.jpg" alt="Stare Melodie"> <span style="font-family:'Limelight';font-size: 18px;
+  text-shadow: 1px 1px 1px rgb(221, 210, 200);">Stare Melodie</span></div>
+<div class="column">
+	
+	<div><a href="/kontakt">Kontakt</a></div>
+</div>
+<div class="column">
+
+<a href="/o_stronie">o stronie</a> 
+<a href="https://www.youtube.com/c/StareMelodie" target="_blank">kanał YouTube</a> 
+<a href="https://www.paypal.me/StareMelodie" target="_blank">PayPal.me - wspomóż StareMelodie.pl</a>
+</div>
+<div class="column">
+	<a href="http://syrena-record.pl" target="_blank">Syrena-Record.pl</a>
+<a href="http://melodje.pl" target="_blank">Melodje.pl</a> 
+
+<div style="position:absolute;left: -2000px">
+<a href="http://naked.ukulele.pl" title="naked ukulele / ukulele na golasa">ukulele na golasa / naked ukulele</a>
+</div>
+	
+</div>
+<script>
+	
+  (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
+  (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
+  m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
+  })(window,document,'script','//www.google-analytics.com/analytics.js','ga');
+
+  ga('create', 'UA-2171453-12', 'staremelodie.pl');
+  ga('require', 'displayfeatures');
+  ga('send', 'pageview');
+
+</script>
+<script>
+function yt(vid){
+var vkod = vid.match(/(?:youtube(?:-nocookie)?\.com\/(?:[^\/]+\/.+\/|(?:v|e(?:mbed)?)\/|.*[?&]v=)|youtu\.be\/)([^"&?\/ ]{11})/i);
+return vkod[1];	
+}
+//
+function playVid(kto){
+	dE("pokazywarka_video").style.display = "flex";
+	var ytid = kto.getAttribute("href");
+	//
+	var adr = yt(ytid);
+	var dane = {};
+	var ciach = ytid.split("&");
+	for(var i = 0; i < ciach.length; i++){
+		vars = ciach[i].split("=");
+		dane[vars[0]] = vars[1];
+	}
+	//
+	dE("pokazywarka").style.display = "block";
+	var str = dane["start"] ? "&start=" + dane["start"] : "";
+	var end = dane["end"] ? "&end=" + dane["end"] : "";
+	var ytifr = '<div id="pokazywarka_video_cell"><iframe width="590" height="430" src="https://www.youtube.com/embed/' + adr + '?autoplay=1&autohide=1&mute=0&rel=0&showinfo=0' + str + end + '" frameborder="0" allowfullscreen allow="autoplay"></iframe></div>';
+	dE("pokazywarka_obr").style.display = "none";
+	dE("pokazywarka_video").innerHTML = ytifr;
+}
+//
+var vi = document.getElementsByClassName("ytvideo");
+var vil = vi.length;
+//console.log(vil);
+for(var i =0; i < vil; i++){
+	vi[i].onclick = function(e) { 
+	e.preventDefault();
+	playVid(this); 
+	}
+}
+//
+//setTimeout(function(){window.scrollBy(0,200);}, 1000);
+//window.scrollBy(0,20);
+</script>    </div>
+    </body>
+</html>

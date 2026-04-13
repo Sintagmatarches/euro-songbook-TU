@@ -447,4 +447,4 @@ def main() -> None:
 
 
 if __name__ == "__main__":
-    main()
+    raise SystemExit("This script is disabled: verified_translation may only be set manually by an administrator.")

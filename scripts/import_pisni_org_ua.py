@@ -95,6 +95,15 @@ FOLK_SLUGS = {
 MODERN_SLUGS = {"ato", "euromaydan"}
 UPR_SLUGS = {"strilecki", "kruty", "uss"}
 SOVIETISH_SLUGS = {"povstanski", "holodomor", "ussr"}
+STRONG_MODERN_SOURCE_RE = re.compile(
+    r"(авторське\s+подання|літопис\s+авторської\s+пісні\s+україни|інформаційний\s+бюлетень|"
+    r"\bікаапу\b|poetryclub|poetry\s+club|chatgpt|suno|штучн(?:ий|ого)\s+інтелект)",
+    re.IGNORECASE,
+)
+DIRECT_SUBMISSION_RE = re.compile(
+    r"(авторське\s+подання|poetryclub|poetry\s+club|chatgpt|suno|штучн(?:ий|ого)\s+інтелект)",
+    re.IGNORECASE,
+)
 FOLK_CREDIT_VALUES = {
     "народні",
     "народна",
@@ -581,6 +590,41 @@ def infer_country(
     return "ukraine_1991"
 
 
+def should_skip_nonhistorical_song(
+    *,
+    year_text: str | None,
+    categories: set[CategoryRef],
+    subtitle: str,
+    source: str,
+    notes: str,
+    words: str,
+    music: str,
+    title: str,
+) -> bool:
+    year = int(year_text) if year_text and year_text.isdigit() else None
+    slugs = {cat.slug for cat in categories}
+    scope = "\n".join([title, subtitle, source, notes, words, music]).lower()
+    folk_hint = "народна пісня" in subtitle.lower()
+    archival_folk_hint = any(
+        token in scope
+        for token in (
+            "фольклорний архів",
+            "народна пісня",
+            "народні пісні",
+        )
+    )
+    historicalish = bool(slugs & (FOLK_SLUGS | UPR_SLUGS | SOVIETISH_SLUGS)) or folk_hint or archival_folk_hint
+    has_named_authors = bool(words or music) and not (is_folk_credit(words) and is_folk_credit(music))
+
+    if year is not None and year >= 2000:
+        return True
+    if STRONG_MODERN_SOURCE_RE.search(scope) and not historicalish:
+        return True
+    if has_named_authors and DIRECT_SUBMISSION_RE.search(scope) and not historicalish:
+        return True
+    return False
+
+
 def process_song(sid: str, categories: set[CategoryRef], *, refresh: bool) -> SongPayload | None:
     fixtures_root = ROOT / "fixtures" / "pisni_org_ua"
     mobile_text = fetch_text(MOBILE_URL_TEMPLATE.format(sid=sid), fixtures_root / "mobile" / f"{sid}.html", refresh=refresh)
@@ -627,6 +671,17 @@ def process_song(sid: str, categories: set[CategoryRef], *, refresh: bool) -> So
     )
     year = infer_year(title, subtitle, source, notes, categories)
     country = infer_country(year, categories, subtitle, source, notes, words, music)
+    if should_skip_nonhistorical_song(
+        year_text=year,
+        categories=categories,
+        subtitle=subtitle,
+        source=source,
+        notes=notes,
+        words=words,
+        music=music,
+        title=title,
+    ):
+        return None
     tags = [SITE_TAG, *[f"cat:{cat.slug}" for cat in sorted(categories, key=lambda c: c.slug)], *[cat.title for cat in sorted(categories, key=lambda c: c.slug)]]
     links = extract_desktop_links(desktop_text, f"{ID_PREFIX}_{sid}")
 

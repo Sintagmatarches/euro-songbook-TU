@@ -1,0 +1,11 @@
+name = "euro-songbook"
+compatibility_date = "2026-01-01"
+pages_build_output_dir = "."
+
+[vars]
+ENABLE_SETUP = "0"
+
+[[d1_databases]]
+binding = "DB"
+database_name = "euro-songbook-db"
+database_id = "f8968daf-9b02-434e-84c4-cadf863dd792"

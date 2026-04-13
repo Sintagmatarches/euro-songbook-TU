@@ -75,6 +75,12 @@ DATE_LINE_RE = re.compile(
     r"(1[6-9]\d{2}|20\d{2})(?:\s*[-–—]\s*(1[6-9]\d{2}|20\d{2}))?)$",
     re.IGNORECASE,
 )
+SUBMISSION_META_RE = re.compile(
+    r"(сообщ(?:ено|ил(?:а)?|или)?|прислан(?:о|а)?|прислал|прислала|получен(?:о|а)?|"
+    r"коммент(?:арий)?|facebook|livejournal|\bжж\b|youtube|youtu\.be|vk\.com|вконтакте|"
+    r"telegram|телеграм|e-?mail|posted|added|updated)",
+    re.IGNORECASE,
+)
 WW2_MATERIALS_MARK_RE = re.compile(r"МАТЕРИАЛЫ\s+О\s+ВТОРОЙ\s+МИРОВОЙ\s+ВОЙНЕ", re.IGNORECASE)
 
 LANG_HINTS: list[tuple[str, re.Pattern[str]]] = [
@@ -946,6 +952,11 @@ def infer_song_year(source: str, notes: str, lyrics: str) -> str | None:
         for line in lines:
             clean = normalize_line(line)
             if not clean:
+                continue
+            years = [int(match.group(1)) for match in YEAR_RE.finditer(clean) if YEAR_MIN <= int(match.group(1)) <= YEAR_MAX]
+            if years and SUBMISSION_META_RE.search(clean):
+                # Ignore report/comment timestamps like "прислано 16.11.2009":
+                # they frequently push old songs into modern-state buckets.
                 continue
             if is_date_line(clean):
                 year = extract_year_from_line(clean)

@@ -21,6 +21,9 @@ const menuUserChip = document.getElementById("menuUserChip");
 const topSearchWrap = document.getElementById("topSearchWrap");
 const topSearchInput = document.getElementById("topSearchInput");
 const topSearchBtn = document.getElementById("topSearchBtn");
+const topbarLogo = document.querySelector(".topbar .brand > .logo");
+const topbarBrandText = document.querySelector(".topbar .brand > .brandText");
+const mobileNav = document.getElementById("mobileNav");
 const appBootSplash = document.getElementById("appBootSplash");
 const appBootSplashTitle = document.getElementById("appBootSplashTitle");
 const appBootSplashSubtitle = document.getElementById("appBootSplashSubtitle");
@@ -42,7 +45,8 @@ const authRegisterPasswordConfirm = document.getElementById("authRegisterPasswor
 const authMsg = document.getElementById("authMsg");
 const doLogin = document.getElementById("doLogin");
 const doRegister = document.getElementById("doRegister");
-const localeSwitch = document.getElementById("localeSwitch");
+const localeSwitchMenu = document.getElementById("localeSwitchMenu");
+const localeSwitches = [localeSwitchMenu].filter(Boolean);
 
 const THEME_KEY = "ui_theme";
 const SUPPORTED_THEMES = ["dark", "white"];
@@ -55,14 +59,21 @@ let deferredInstallPrompt = null;
 let authViewportCleanup = null;
 let authViewportRaf = 0;
 let authDialogMode = "login";
-const MOTION_MEDIUM_MS = 240;
-const MENU_DRAWER_MOTION_MS = 1220;
-const MENU_BACKDROP_MOTION_MS = 980;
-const DIALOG_MOTION_MS = 980;
-const PAGE_CURTAIN_MOTION_MS = 920;
+const MOTION_MEDIUM_MS = 150;
+const MENU_DRAWER_MOTION_MS = 260;
+const MENU_BACKDROP_MOTION_MS = 180;
+const DIALOG_MOTION_MS = 200;
+const PAGE_CURTAIN_MOTION_MS = 320;
+const PAGE_ENTER_ACTIVATE_DELAY_MS = 70;
+const STAGED_REVEAL_MOTION_MS = 420;
+const STAGED_REVEAL_ACTIVATE_DELAY_MS = 90;
+const STAGED_REVEAL_STEP_MS = 52;
+const STAGED_REVEAL_MAX_INDEX = 16;
 const activeTransitions = new WeakMap();
 let pageEnterTimer = 0;
+let pageEnterActivateTimer = 0;
 let stagedRevealTimer = 0;
+let stagedRevealActivateTimer = 0;
 let pendingAdminRequestsCount = 0;
 let pendingAdminRequestsFetchedAt = 0;
 let pendingAdminRequestsUserKey = "";
@@ -75,6 +86,7 @@ let songPageBgParallaxLastMeasureAt = 0;
 let songPageBgParallaxLastShiftPx = Number.NaN;
 let globalWallpaperLastShiftPx = Number.NaN;
 let activeRouteRenderToken = 0;
+let mobileNavViewportRaf = 0;
 const SONG_PAGE_BG_PARALLAX_MIN_PX = 180;
 const SONG_PAGE_BG_PARALLAX_MAX_PX = 560;
 const SONG_PAGE_BG_PARALLAX_VIEWPORT_RATIO = 0.52;
@@ -95,8 +107,9 @@ const GLOBAL_WALLPAPER_ASSET_URLS = [
   "./picture/AdobeStock_479740218.jpeg",
   "./picture/phone_wallpaper.jpg",
 ];
+const AUTH_HINT_COOKIE_NAME = "songbook_session_hint";
 let globalWallpaperAssetsPreloaded = false;
-const STAGED_REVEAL_SELECTOR = ".card, .songCard, .yt-card, .pill, .badge, .song-version-btn, .pager-shell .btn";
+const STAGED_REVEAL_SELECTOR = ".card, .songCard, .yt-card, .home-language-card, .home-country-card, .home-country-group-card, .request-section, .request-repeater, .ss_link_row, .ss_version_row, .ac_item, .ab-flag-range-row, .pill, .badge, .song-version-btn, .pager-shell .btn, .song-aux-panel, .song-tools-panel, .yt-chips, .ac-editor-optional-menu, .ig-drawer-header, .ig-drawer-group, .ig-drawer-link, .ig-drawer-button, .ig-drawer .user-chip-drawer";
 
 function safeStorageGet(key) {
   try {
@@ -112,9 +125,39 @@ function safeStorageSet(key, value) {
   } catch {}
 }
 
-function readAuthToken() {
-  if (typeof api?.getToken === "function") return api.getToken();
-  return safeStorageGet("token");
+function readCookie(name) {
+  const target = String(name || "").trim();
+  if (!target) return "";
+  try {
+    const parts = String(document.cookie || "").split(";");
+    for (const part of parts) {
+      const [rawKey, ...rawValue] = String(part || "").trim().split("=");
+      if (String(rawKey || "").trim() !== target) continue;
+      return rawValue.join("=");
+    }
+  } catch {}
+  return "";
+}
+
+function hasAuthSessionHint() {
+  return readCookie(AUTH_HINT_COOKIE_NAME) === "1";
+}
+
+function clearAuthSessionHint() {
+  document.cookie = `${AUTH_HINT_COOKIE_NAME}=; Path=/; Max-Age=0; Expires=Thu, 01 Jan 1970 00:00:00 GMT; SameSite=Lax`;
+}
+
+function rememberAuthSessionHint() {
+  document.cookie = `${AUTH_HINT_COOKIE_NAME}=1; Path=/; SameSite=Lax`;
+}
+
+function shouldBootstrapAuthOnLoad() {
+  if (hasAuthSessionHint()) return true;
+  const hash = String(location.hash || "#/").trim().toLowerCase();
+  return hash.startsWith("#/request")
+    || hash.startsWith("#/favorites")
+    || hash.startsWith("#/draft")
+    || hash.startsWith("#/admin");
 }
 
 function hideAppBootSplash() {
@@ -236,18 +279,22 @@ function closeDialogAnimated(dialog) {
 function animateAppEnter(container) {
   if (!container || prefersReducedMotion()) return;
   clearTimeout(pageEnterTimer);
+  clearTimeout(pageEnterActivateTimer);
   container.classList.remove("page-enter", "page-enter-active");
   requestAnimationFrame(() => {
     container.classList.add("page-enter");
-    requestAnimationFrame(() => container.classList.add("page-enter-active"));
+    pageEnterActivateTimer = setTimeout(() => {
+      requestAnimationFrame(() => container.classList.add("page-enter-active"));
+    }, PAGE_ENTER_ACTIVATE_DELAY_MS);
   });
   pageEnterTimer = setTimeout(() => {
     container.classList.remove("page-enter", "page-enter-active");
-  }, motionDuration(PAGE_CURTAIN_MOTION_MS) + 140);
+  }, PAGE_ENTER_ACTIVATE_DELAY_MS + motionDuration(PAGE_CURTAIN_MOTION_MS) + 120);
 }
 
 function clearStagedReveal(container) {
   clearTimeout(stagedRevealTimer);
+  clearTimeout(stagedRevealActivateTimer);
   if (!container) return;
   container.classList.remove("stagger-ready");
   container.querySelectorAll(".stagger-item").forEach((node) => {
@@ -269,12 +316,22 @@ function animateStagedReveal(container) {
 
   nodes.forEach((node, index) => {
     node.classList.add("stagger-item");
-    node.style.setProperty("--stagger-index", String(Math.min(index, 16)));
+    node.style.setProperty("--stagger-index", String(Math.min(index, STAGED_REVEAL_MAX_INDEX)));
   });
 
-  requestAnimationFrame(() => container.classList.add("stagger-ready"));
-  stagedRevealTimer = setTimeout(() => clearStagedReveal(container), motionDuration(620) + 140);
+  stagedRevealActivateTimer = setTimeout(() => {
+    requestAnimationFrame(() => container.classList.add("stagger-ready"));
+  }, STAGED_REVEAL_ACTIVATE_DELAY_MS);
+  const lastDelayMs = Math.min(Math.max(nodes.length - 1, 0), STAGED_REVEAL_MAX_INDEX) * STAGED_REVEAL_STEP_MS;
+  stagedRevealTimer = setTimeout(
+    () => clearStagedReveal(container),
+    STAGED_REVEAL_ACTIVATE_DELAY_MS + lastDelayMs + motionDuration(STAGED_REVEAL_MOTION_MS) + 180
+  );
 }
+
+window.__applyStagedReveal = (container) => {
+  animateStagedReveal(container);
+};
 
 function resetSongPageBackgroundParallaxCache() {
   songPageBgParallaxMetrics = null;
@@ -517,6 +574,37 @@ function setAuthKeyboardOffset(px = 0) {
   document.documentElement.style.setProperty("--auth-kb-offset", `${Math.max(0, Math.round(px))}px`);
 }
 
+function setMobileNavViewportOffset(px = 0) {
+  document.documentElement.style.setProperty("--mobile-nav-viewport-offset", `${Math.max(0, Math.round(px))}px`);
+}
+
+function syncMobileNavViewportOffset() {
+  if (!mobileNav || !window.matchMedia("(max-width: 960px)").matches) {
+    setMobileNavViewportOffset(0);
+    return;
+  }
+  const vv = window.visualViewport;
+  if (!vv) {
+    setMobileNavViewportOffset(0);
+    return;
+  }
+  const layoutHeight = Math.max(
+    Number(window.innerHeight || 0),
+    Number(document.documentElement?.clientHeight || 0),
+  );
+  const visualBottom = Number(vv.height || 0) + Number(vv.offsetTop || 0);
+  const viewportOffset = Math.max(0, layoutHeight - visualBottom);
+  setMobileNavViewportOffset(viewportOffset);
+}
+
+function scheduleMobileNavViewportOffsetSync() {
+  if (mobileNavViewportRaf) cancelAnimationFrame(mobileNavViewportRaf);
+  mobileNavViewportRaf = requestAnimationFrame(() => {
+    mobileNavViewportRaf = 0;
+    syncMobileNavViewportOffset();
+  });
+}
+
 function stopAuthViewportSync() {
   if (authViewportCleanup) {
     authViewportCleanup();
@@ -528,6 +616,18 @@ function stopAuthViewportSync() {
   }
   setAuthKeyboardOffset(0);
   document.body.classList.remove("auth-dialog-open");
+}
+
+function isMobileEditorInput(node) {
+  if (!(node instanceof HTMLInputElement || node instanceof HTMLTextAreaElement || node instanceof HTMLSelectElement)) {
+    return false;
+  }
+  if (!window.matchMedia("(max-width: 960px)").matches) return false;
+  return !!node.closest("#ac_editor, #requestForm, #songToolsPanel");
+}
+
+function syncMobileEditorFocusState() {
+  document.body.classList.toggle("mobile-editor-focus", isMobileEditorInput(document.activeElement));
 }
 
 function startAuthViewportSync() {
@@ -672,6 +772,28 @@ function setTopSearchState(route) {
   if (query.q !== undefined) topSearchInput.value = query.q || "";
 }
 
+function setTopbarLogoVisibility(route) {
+  if (!(topbarLogo instanceof HTMLElement)) return;
+  const shouldHideLogo = String(route?.name || "").trim() === "song";
+  if (shouldHideLogo) {
+    topbarLogo.hidden = true;
+    topbarLogo.setAttribute("aria-hidden", "true");
+    topbarLogo.setAttribute("tabindex", "-1");
+    topbarLogo.style.display = "none";
+    if (topbarBrandText instanceof HTMLElement) {
+      topbarBrandText.style.marginLeft = "12px";
+    }
+    return;
+  }
+  topbarLogo.hidden = false;
+  topbarLogo.removeAttribute("aria-hidden");
+  topbarLogo.removeAttribute("tabindex");
+  topbarLogo.style.removeProperty("display");
+  if (topbarBrandText instanceof HTMLElement) {
+    topbarBrandText.style.removeProperty("margin-left");
+  }
+}
+
 function runTopSearch() {
   const q = (topSearchInput?.value || "").trim();
   const next = new URLSearchParams();
@@ -754,6 +876,7 @@ function hasPermission(permission) {
 
 function hasAnyAdminAccess() {
   return hasPermission("songs.edit")
+    || hasPermission("songs.bulk_import")
     || hasPermission("proposals.review")
     || !!(state.user && state.user.role === "super_admin");
 }
@@ -884,6 +1007,7 @@ function applyStaticTexts() {
   setTextById("menuTitle", t("menu.title"));
   setTextById("menuMainLabel", t("menu.sections"));
   setTextById("menuSettingsLabel", t("menu.settings"));
+  setTextById("menuLocaleLabel", t("home.lang"));
 
   if (btnSidebarToggle) btnSidebarToggle.setAttribute("aria-label", t("menu.open"));
   if (btnMenuClose) btnMenuClose.setAttribute("aria-label", t("menu.close"));
@@ -919,12 +1043,14 @@ function applyStaticTexts() {
   if (btnInstallApp) btnInstallApp.textContent = installButtonText();
   syncThemeToggleButton();
 
-  if (localeSwitch) {
+  if (localeSwitches.length) {
     const labels = { ru: "Rus", et: "Est", en: "Eng", uk: "Ukr" };
-    Array.from(localeSwitch.options).forEach((option) => {
-      option.textContent = labels[option.value] || option.textContent;
+    localeSwitches.forEach((switchEl) => {
+      Array.from(switchEl.options).forEach((option) => {
+        option.textContent = labels[option.value] || option.textContent;
+      });
+      switchEl.value = state.locale;
     });
-    localeSwitch.value = state.locale;
   }
   applyAdminAttentionLabels();
   updateUserChip();
@@ -1009,6 +1135,7 @@ function setMenuOpen(open) {
   if (open) {
     animateElementOpen(menuBackdrop);
     animateElementOpen(menuDrawer);
+    animateStagedReveal(menuDrawer);
     menuDrawer.setAttribute("aria-hidden", "false");
     document.body.classList.add("menu-open");
     return;
@@ -1028,13 +1155,14 @@ function setActiveNav() {
 
   const canSeeUser = !!state.user;
   const canEditSongs = hasPermission("songs.edit");
+  const canBulkImportSongs = hasPermission("songs.bulk_import");
   const canReviewRequests = hasPermission("proposals.review");
   const isSuperAdmin = !!(state.user && state.user.role === "super_admin");
   const canSeeAdmin = hasAnyAdminAccess();
 
   ["navFav", "mNavFav", "dNavFav", "navDrafts", "mNavDrafts", "dNavDrafts"].forEach((id) => document.getElementById(id)?.classList.toggle("hidden", !canSeeUser));
   ["navAdmin", "mNavAdmin", "dNavAdmin", "menuAdminGroup"].forEach((id) => document.getElementById(id)?.classList.toggle("hidden", !canSeeAdmin));
-  document.getElementById("dNavAdminContent")?.classList.toggle("hidden", !canEditSongs);
+  document.getElementById("dNavAdminContent")?.classList.toggle("hidden", !(canEditSongs || canBulkImportSongs));
   document.getElementById("dNavAdminRequests")?.classList.toggle("hidden", !canReviewRequests);
   document.getElementById("dNavAdminUsers")?.classList.toggle("hidden", !isSuperAdmin);
   menuSettingsGroup?.classList.remove("hidden");
@@ -1053,15 +1181,11 @@ function setActiveNav() {
 }
 
 async function refreshMe() {
-  const token = readAuthToken();
-  if (!token) {
-    state.user = null;
-    setActiveNav();
-    return;
-  }
   try {
     state.user = await api.me();
+    if (state.user) rememberAuthSessionHint();
   } catch {
+    clearAuthSessionHint();
     state.user = null;
   }
   setActiveNav();
@@ -1080,13 +1204,13 @@ applyStaticTexts();
 setupInstallPrompt();
 void registerServiceWorker();
 
-if (localeSwitch) {
-  localeSwitch.addEventListener("change", () => {
-    setLocale(localeSwitch.value);
+localeSwitches.forEach((switchEl) => {
+  switchEl.addEventListener("change", () => {
+    setLocale(switchEl.value);
     applyStaticTexts();
     refreshRoute();
   });
-}
+});
 
 btnThemeToggle?.addEventListener("click", () => {
   applyTheme(activeTheme === "white" ? "dark" : "white");
@@ -1127,7 +1251,7 @@ window.addEventListener("keydown", (e) => {
   if (e.key === "Escape") setMenuOpen(false);
 });
 
-btnLogin?.addEventListener("click", () => {
+function openAuthDialog(mode = "login") {
   if (authMsg) authMsg.textContent = "";
   if (authLoginNickname) authLoginNickname.value = state.lastNickname || "";
   if (authLoginPassword) authLoginPassword.value = "";
@@ -1135,9 +1259,13 @@ btnLogin?.addEventListener("click", () => {
   if (authRegisterEmail) authRegisterEmail.value = "";
   if (authRegisterPassword) authRegisterPassword.value = "";
   if (authRegisterPasswordConfirm) authRegisterPasswordConfirm.value = "";
-  setAuthDialogMode("login");
+  setAuthDialogMode(mode === "register" ? "register" : "login");
   openDialogAnimated(dlgAuth);
   startAuthViewportSync();
+}
+
+btnLogin?.addEventListener("click", () => {
+  openAuthDialog("login");
 });
 authModeLogin?.addEventListener("click", () => setAuthDialogMode("login"));
 authModeRegister?.addEventListener("click", () => setAuthDialogMode("register"));
@@ -1165,6 +1293,13 @@ dlgAuth?.addEventListener("close", () => {
   clearPendingTransition(dlgAuth);
   dlgAuth.classList.remove("is-open", "is-closing");
   stopAuthViewportSync();
+});
+document.addEventListener("click", (event) => {
+  const trigger = event.target instanceof HTMLElement ? event.target.closest("[data-auth-dialog]") : null;
+  if (!trigger) return;
+  event.preventDefault();
+  const mode = String(trigger.getAttribute("data-auth-dialog") || "login").trim().toLowerCase();
+  openAuthDialog(mode);
 });
 
 async function doLogout() {
@@ -1230,12 +1365,13 @@ doRegister?.addEventListener("click", async (e) => {
 });
 
 function shouldUseFastSearchMotion(route) {
-  return route?.name === "home" && String(route?.query?.searched || "") === "1";
+  return false;
 }
 
 router.on(async (route) => {
   const renderToken = ++activeRouteRenderToken;
   setTopSearchState(route);
+  setTopbarLogoVisibility(route);
   setActiveNav();
   const app = document.getElementById("app");
   app.classList.toggle("song-layout", route?.name === "song");
@@ -1247,6 +1383,9 @@ router.on(async (route) => {
     if (renderToken !== activeRouteRenderToken) return;
     app.innerHTML = out.html;
     bind(route, out.ctx);
+    if (route?.name === "request") {
+      window.scrollTo({ top: 0, left: 0, behavior: "auto" });
+    }
     if (route?.name === "admin" && route?.section === "editor") {
       window.scrollTo({ top: 0, left: 0, behavior: "auto" });
     }
@@ -1277,6 +1416,8 @@ router.on(async (route) => {
   void refreshAdminRequestsAttention();
   resetSongPageBackgroundParallaxCache();
   scheduleSongPageBackgroundParallax();
+  syncMobileEditorFocusState();
+  scheduleMobileNavViewportOffsetSync();
   hideAppBootSplash();
 });
 
@@ -1285,17 +1426,38 @@ window.addEventListener("hashchange", () => {
   router.handle();
   resetSongPageBackgroundParallaxCache();
   scheduleSongPageBackgroundParallax();
+  syncMobileEditorFocusState();
+  scheduleMobileNavViewportOffsetSync();
 });
 
 // Keep parallax synced to scroll/viewport changes.
 window.addEventListener("scroll", scheduleSongPageBackgroundParallax, { passive: true });
 window.addEventListener("resize", handleSongPageBackgroundParallaxViewportChange);
 window.visualViewport?.addEventListener?.("resize", handleSongPageBackgroundParallaxViewportChange);
+window.addEventListener("resize", syncMobileEditorFocusState, { passive: true });
+window.visualViewport?.addEventListener?.("resize", syncMobileEditorFocusState, { passive: true });
+window.addEventListener("resize", scheduleMobileNavViewportOffsetSync, { passive: true });
+window.addEventListener("orientationchange", scheduleMobileNavViewportOffsetSync);
+window.addEventListener("scroll", scheduleMobileNavViewportOffsetSync, { passive: true });
+window.visualViewport?.addEventListener?.("resize", scheduleMobileNavViewportOffsetSync, { passive: true });
+window.visualViewport?.addEventListener?.("scroll", scheduleMobileNavViewportOffsetSync, { passive: true });
+document.addEventListener("focusin", syncMobileEditorFocusState);
+document.addEventListener("focusout", () => {
+  requestAnimationFrame(syncMobileEditorFocusState);
+  scheduleMobileNavViewportOffsetSync();
+});
 
 preloadGlobalWallpaperAssets();
-await refreshMe();
+if (shouldBootstrapAuthOnLoad()) {
+  await refreshMe();
+} else {
+  state.user = null;
+  setActiveNav();
+}
 router.handle();
 resetSongPageBackgroundParallaxCache();
 scheduleSongPageBackgroundParallax();
-setTimeout(hideAppBootSplash, 5200);
+syncMobileEditorFocusState();
+scheduleMobileNavViewportOffsetSync();
+setTimeout(hideAppBootSplash, 700);
 

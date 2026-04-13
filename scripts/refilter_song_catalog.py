@@ -52,6 +52,13 @@ BIO_EVENT_RE = re.compile(
     re.IGNORECASE,
 )
 DERIVATIVE_RE = re.compile(r"(на\s+основе|по\s+стихотворени|стихотворени\w+)", re.IGNORECASE)
+SUBMISSION_META_RE = re.compile(
+    r"(сообщ(?:ено|ил(?:а)?|или)?|прислан(?:о|а)?|прислал|прислала|получен(?:о|а)?|"
+    r"коммент(?:арий)?|facebook|livejournal|\bжж\b|youtube|youtu\.be|vk\.com|вконтакте|"
+    r"telegram|телеграм|e-?mail|posted|added|updated|авторське\s+подання|poetryclub|"
+    r"poetry\s+club|chatgpt|suno|штучн(?:ий|ого)\s+інтелект)",
+    re.IGNORECASE,
+)
 LIFESPAN_RE = re.compile(r"\b(1[6-9]\d{2}|20\d{2})\s*[-–—]\s*(1[6-9]\d{2}|20\d{2})\b")
 BIRTH_RE = re.compile(r"(\bг\.\s*р\.\b|род\.?|born|умер|died)", re.IGNORECASE)
 MANUSCRIPT_RE = re.compile(
@@ -67,6 +74,11 @@ IMPORT_META_LINE_RE = re.compile(r"^\s*(date:|message_id:|import_source:|added:|
 IMPORT_META_INLINE_RE = re.compile(r"(date:\s*\d{4}-\d{2}-\d{2}|message_id:\s*\d+|import_source:|merged_versions:\s*\d+)", re.IGNORECASE)
 IMPORT_META_SEGMENT_RE = re.compile(
     r"(date:\s*[^|]+|message_id:\s*\d+|import_source:\s*[^|]+|added:\s*[^|]+|updated:\s*[^|]+|merged_versions:\s*[^|]+)",
+    re.IGNORECASE,
+)
+PISNIUA_STRONG_MODERN_SOURCE_RE = re.compile(
+    r"(авторське\s+подання|літопис\s+авторської\s+пісні\s+україни|інформаційний\s+бюлетень|"
+    r"\bікаапу\b|poetryclub|poetry\s+club|chatgpt|suno|штучн(?:ий|ого)\s+інтелект)",
     re.IGNORECASE,
 )
 WORD_RE = re.compile(r"[0-9A-Za-z\u00C0-\u024F\u0400-\u052f]+")
@@ -279,6 +291,7 @@ MOVEMENT_COUNTRIES = {
     "forest_brothers",
     "chetniks",
     "ira_1919_1922",
+    "ira_1922_1969",
     "ira_1969_2005",
     "ira",
     "ukrainian_insurgent_army",
@@ -307,8 +320,8 @@ MOLDOVA_RE = re.compile(r"(молдов\w+|moldov\w+|кишин[её]в|chișin�
 TRANSCAUCASIA_RE = re.compile(r"(закавказ|тсфср|зсфср|transcaucas|tsfsr)", re.IGNORECASE)
 
 COUNTRY_BOUNDS: dict[str, tuple[int | None, int | None]] = {
-    "russian_empire_1900_1917": (1900, 1917),
-    "russian_republic_1917": (1917, 1917),
+    "russian_empire_1900_1917": (1721, 1917),
+    "russian_republic_1917": (1917, 1918),
     "russian_civil_war_1917_1922": (1917, 1922),
     "rsfsr_1917_1922": (1917, 1922),
     "ussr": (1922, 1991),
@@ -322,24 +335,25 @@ COUNTRY_BOUNDS: dict[str, tuple[int | None, int | None]] = {
     "second_polish_republic_1918_1939": (1918, 1939),
     "polish_peoples_republic_1952_1989": (1952, 1989),
     "poland_1989": (1989, None),
-    "german_empire_1900_1918": (1900, 1918),
-    "weimar_republic_1918_1933": (1918, 1933),
+    "german_empire_1900_1918": (1871, 1918),
+    "weimar_republic_1918_1933": (1919, 1933),
     "third_reich_1933_1945": (1933, 1945),
     "gdr_1949_1990": (1949, 1990),
     "frg_1949": (1949, 1990),
     "germany_1990": (1990, None),
-    "narodnaya_volya": (1879, 1883),
+    "narodnaya_volya": (1879, 1882),
     "armia_krajowa": (1942, 1945),
     "armia_ludowa": (1944, 1945),
     "forest_brothers": (1940, 1956),
     "chetniks": (1941, 1945),
     "ira_1919_1922": (1919, 1922),
+    "ira_1922_1969": (1922, 1969),
     "ira_1969_2005": (1969, 2005),
-    "ukrainian_insurgent_army": (1942, 1956),
+    "ukrainian_insurgent_army": (1942, 1959),
     "organization_of_ukrainian_nationalists": (1929, None),
     "russian_liberation_army": (1944, 1945),
     "german_collaborators": (1933, 1945),
-    "white_emigration": (1920, 1950),
+    "white_emigration": (1917, None),
     "russo_japanese_war_1904_1905": (1904, 1905),
     "uzbek_ssr_1924_1991": (1924, 1991),
     "uzbekistan_1991": (1991, None),
@@ -647,7 +661,12 @@ def build_country_aliases(country_values: set[str]) -> dict[str, str]:
             "other_country": "other_countries",
             "другие_страны": "other_countries",
             "other_movements": "other_movements",
-            "ira": "ira_1969_2005",
+            "ira": "ira",
+            "anti_treaty_ira": "ira_1922_1969",
+            "anti_treaty_irish_republican_army": "ira_1922_1969",
+            "антидоговорная_ира": "ira_1922_1969",
+            "provisional_ira": "ira_1969_2005",
+            "временная_ира": "ira_1969_2005",
             "kingdom_of_poland_within_russian_empire_1815_1915": "kingdom_of_poland_within_russian_empire_1900_1915",
             "north_macedonia_1991": "republic_of_macedonia_1991_2019",
             "kingdom_of_greece_1900_1973": "kingdom_of_greece_restoration_1935_1973",
@@ -1045,6 +1064,9 @@ def extract_year_candidates(text: str, origin: str) -> list[YearCandidate]:
                 if seg_record or RECORD_RE.search(ctx):
                     score += 1
                     tags.append("record")
+                if SUBMISSION_META_RE.search(ctx):
+                    score -= 10
+                    tags.append("submission_meta")
                 if RELATIVE_YEAR_PREFIX_RE.search(before):
                     score -= 7
                     tags.append("relative")
@@ -1666,9 +1688,11 @@ def movement_country(scope: str, year: int | None, country_values: set[str]) -> 
     if IRA_RE.search(s):
         if year is not None and 1919 <= year <= 1922:
             return pick_existing(country_values, "ira_1919_1922", "ira")
+        if year is not None and 1922 <= year <= 1969:
+            return pick_existing(country_values, "ira_1922_1969", "ira")
         if year is not None and 1969 <= year <= 2005:
             return pick_existing(country_values, "ira_1969_2005", "ira")
-        return pick_existing(country_values, "ira_1969_2005", "ira")
+        return pick_existing(country_values, "ira", "ira_1969_2005")
     for code, patt in MOVEMENT_PATTERNS:
         if patt.search(s):
             if code == "russo_japanese_war_1904_1905" and year is not None and not (1904 <= year <= 1905):
@@ -1723,6 +1747,8 @@ def timeline_france(year: int | None, country_values: set[str]) -> str:
 
 
 def timeline_italy(year: int | None, country_values: set[str]) -> str:
+    if year is not None and year < 1900:
+        return pick_existing(country_values, "italy_before_1900")
     if year is not None and year <= 1946:
         return pick_existing(country_values, "kingdom_of_italy_1900_1946")
     return pick_existing(country_values, "italian_republic_1946")
@@ -2125,6 +2151,52 @@ def forced_country_by_id(song_id: str, country_values: set[str]) -> str | None:
     return None
 
 
+def forced_country_by_source(
+    row: SongRow,
+    signals: RowSignals,
+    lang: str,
+    year: int | None,
+    country_values: set[str],
+    policy: FilterPolicy,
+) -> tuple[str, str] | None:
+    sid = norm_text(row.id).lower()
+    if sid.startswith("cdf_") and lang != "fr":
+        forced = timeline_country_for_lang(
+            lang,
+            year,
+            signals.scope_short,
+            country_values,
+            allow_movement_countries=policy.allow_movement_countries,
+        )
+        if forced in country_values and forced != "other_countries":
+            return forced, "cdf_nonfr_reclassified"
+    return None
+
+
+def should_draft_current_period_song(
+    row: SongRow,
+    signals: RowSignals,
+    country: str,
+    year: int | None,
+) -> tuple[bool, str]:
+    sid = norm_text(row.id).lower()
+    modern_scope = "\n".join(
+        [
+            signals.title_norm,
+            signals.subtitle_norm,
+            signals.source_norm,
+            signals.notes_norm,
+        ]
+    )
+    if country == "russian_federation_1991" and year is not None and year >= 1992:
+        return True, "russia_modern_period"
+    if country == "ukraine_1991" and year is not None and year >= 2000:
+        return True, "ukraine_modern_period"
+    if sid.startswith("pisniua_") and PISNIUA_STRONG_MODERN_SOURCE_RE.search(modern_scope):
+        return True, "pisniua_modern_submission"
+    return False, ""
+
+
 def classify_country(
     row: SongRow,
     signals: RowSignals,
@@ -2141,6 +2213,10 @@ def classify_country(
         forced = forced_country_by_id(row.id, country_values)
         if forced:
             return forced, "country_forced_by_id", False, False
+
+    forced_source = forced_country_by_source(row, signals, lang, year, country_values, policy)
+    if forced_source:
+        return forced_source[0], forced_source[1], False, False
 
     new_country = timeline_country_for_lang(
         lang,
@@ -2356,6 +2432,16 @@ def build_updates(
         elif row.id in duplicate_drops:
             new_status = "draft"
             status_reason = "duplicate"
+        else:
+            draft_current_period, current_period_reason = should_draft_current_period_song(
+                row_clean,
+                clean_signals,
+                new_country,
+                new_year,
+            )
+            if draft_current_period:
+                new_status = "draft"
+                status_reason = current_period_reason
 
         set_parts: list[str] = []
         if final_lang != old_lang:

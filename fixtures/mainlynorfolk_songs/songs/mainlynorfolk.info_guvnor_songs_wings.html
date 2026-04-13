@@ -1,0 +1,241 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+
+
+<!-- set var="mustradbase" value="https://www.mustrad.org.uk/" -->
+
+
+
+<meta charset="utf-8">
+
+<link rel="stylesheet" href="/css/folk.css" type="text/css" media="all">
+<link rel="stylesheet" href="local.css" type="text/css" media="all">
+
+<title>Wings [Ashley Hutchings, Ken Nicol]</title>
+</head>
+
+<body>
+
+
+<!-- set var="mustradbase" value="https://www.mustrad.org.uk/" -->
+
+
+<header id="pageHeader"><span id="head"></span>
+<a href="javascript:toggleNav();"><img id="togglenav" src="/images/menutoggle.png" alt="Hide navigation column" title="Hide navigation column"></a>
+<script>// <![CDATA[
+// check all or clear all checkboxes; argument is true|false
+const mediaQuery = window.matchMedia('(min-width: 768px)');
+// var showNav = window.innerWidth > 980;
+var showNav = mediaQuery.matches;
+function handleWindowChange(e) {
+   var button = document.getElementById("togglenav");
+   var mainnav = document.getElementById("mainNav");
+   var body = document.getElementsByTagName("body")[0];
+   if (e.matches) {
+      button.style.display = "inline";
+      if (showNav) {
+         mainnav.style.display = "block";
+         body.style.gridTemplateColumns = "12rem 1fr";
+         button.title = button.alt = "Hide navigation column";
+      } else {
+         mainnav.style.display = "none";
+         body.style.gridTemplateColumns = "0 1fr";
+         button.title = button.alt = "Show navigation column";
+      }
+   } else {
+      mainnav.style.display = "block";
+      body.style.gridTemplateColumns = "1fr";
+      button.style.display = "none";
+   }
+}
+// Register event listener
+mediaQuery.addListener(handleWindowChange);
+// Initial check
+handleWindowChange(mediaQuery);
+// show or not show navigation
+function toggleNav() {
+   if (mediaQuery.matches) {
+      showNav = ! showNav;
+      handleWindowChange(mediaQuery);
+   }
+}
+// ]]></script>
+<a href="/peter.bellamy/records/mainlynorfolk.html#mainlynorfolk"><img src="/peter.bellamy/images/smallrec/mainlynorfolk_xtra1060.jpg" alt="Peter Bellamy: Mainly Norfolk" title="Peter Bellamy: Mainly Norfolk (Transatlantic XTRA 1060)"></a>
+<h1>Mainly Norfolk: English
+<!-- addtitle addition disabled as it's too wide for mobile devices -->
+
+Folk and Other Good Music</h1>
+
+
+
+
+</header>
+<!-- not include virtual="navigation.shtml" -->
+<article id="mainArticle">
+
+<p class="reference">&gt;
+<a href="../index.html">Ashley Hutchings and The Albion Band</a> &gt;
+<a href="index.html">Songs</a> &gt;
+<strong>Wings</strong>
+<h1>Wings</h1>
+
+<p>[Ashley Hutchings, Ken Nicol]</p>
+
+<p>This biographical song is the Albion Bandâs signature song now
+like the earlier
+<em><a href="../../richard.thompson/songs/albionsunrise.html">Albion Sunrise</a></em>.
+Itâs earliest known recording from 1996 is by the songwriters -
+Ashley Hutchings and Ken Nicol - themselves and was released on
+<cite><a href="../records/guvnor.html#vol4">The Guvânor Vol.&nbsp;4</a></cite>.
+Ashley Hutchings sang <em>Wings</em> with a classic Fairport Convention line-up
+- Simon Nicol, Richard Thompson and Dave Mattacks - at Cropredy â97;
+this was published on
+<cite><a href="../../fairport/records/thecropredybox.html">The Cropredy Box</a></cite>.
+Then the Albion Band recorded it in 1998 as title track of their CD single
+<cite><a href="../records/wings.html">Wings</a></cite>
+and for their CD
+<cite><a href="../records/happyaccident.html">Happy Accident</a></cite>.
+The single version has later been reissued on the compilations
+<cite><a href="../records/thehtdyears.html">The HTD Years</a></cite>,
+<cite><a href="../records/albionsunrise.html">Albion Sunrise</a></cite>,
+and
+<cite><a href="../records/burningbright.html">Burning Bright</a></cite>,
+while the CD version was added to the compilation CD
+<cite><a href="../records/albionheartcompilation.html">Albion Heart</a></cite>.
+A live recording from 2000 or 2001 can be found on both
+<cite><a href="../records/aneveningwiththealbionband.html">An Evening With the Albion Band</a></cite>
+and the Ashley Hutchings / Albion Band compilation
+<cite><a href="../records/nosurrender.html">No Surrender</a></cite>.</p>
+
+<h2 id="lyrics">Lyrics</h2>
+
+<p>When the Byrds flew in then the dance began<br>
+We all were lifted up on Californian wings<br>
+And over London streets in the drizzling rain<br>
+Well we danced to the sound of Rickenbacker strings<br>
+It was the kickstart that our young and precious lives needed then<br>
+And so we started on our long and winding trail<br>
+We played</p>
+
+<p>Soon we found we could fly ourselves<br>
+We all were lifted up on sturdy home-made wings<br>
+And in sixty-nine in the summertime<br>
+Well we danced to the sound of Swarbâs flying fiddle strings<br>
+And all the rules and safety first were left unheeded then<br>
+And with the confidence of youth well we couldnât fail<br>
+No more</p>
+
+<p>Now the years have flown and our lives have grown<br>
+And weâre held aloft by torn and tattered wings<br>
+And over city streets in the pouring rain<br>
+We still dance to the sound of thumb-and-fingered strings<br>
+Now the screams are where our children make their music now<br>
+But soon enough theyâll find their fledgling wings<br>
+And theyâll play</p>
+
+<h2>Acknowledgements</h2>
+
+<p>Transcribed by Reinhard Zierke.
+Thanks to Garry Gillard for corrections.</p>
+
+</article> <!-- id="mainArticle" -->
+<!-- Google Chrome in version 77 needed this up in nav.shtml -->
+<nav id="mainNav">
+<div id="folk">
+ <p class="reference"><a href="/folk/">English Folk Music</a>
+  <ul>
+   <li><form method="post" accept-charset="UTF-8" action="/folk/records/search.php">
+     <a style="display: inline;" class="records" href="/folk/records/">Discography</a>&nbsp;
+     <input class="navartistinput" type="text" name="artist" size="10" title="Enter artist, album name, or part of those; wildcard * at the end is allowed">
+     </form></li>
+   <li><a class="newreleases" href="/folk/records/newreleases.html">New Releases</a></li>
+
+
+   <li><a class="favourites" href="/folk/favourites.html">Favourite Albums of 2025</a></li>
+<!--
+   <li><a class="missing" href="/folk/missing.html">Looking for albums &amp; books</a></li>
+-->
+  </ul>
+  <ul>
+   <li><a class="fellside" href="/folk/records/fellside.html">Fellside Discography</a></li>
+   <li><a class="fledgling" href="/folk/records/fledgling.html">Fledg'ling Discography</a></li>
+   <li><a class="foresttracks" href="/folk/records/foresttracks.html">Forest Tracks Discography</a></li>
+   <li><a class="freereed" href="/folk/records/freereed.html">Free Reed Discography</a></li>
+   <li><a class="greentrax" href="/folk/records/greentrax.html">Greentrax Discography</a></li>
+   <li><a class="greenwichvillage" href="/folk/records/greenwichvillage.html">Greenwich Village Discogr.</a></li>
+   <li><a class="hudson" href="/folk/records/hudson.html">Hudson Discography</a></li>
+   <li><a class="kyloe" href="/folk/records/kyloe.html">Kyloe Discography</a></li>
+   <li><a class="leadertrailer" href="/folk/records/leadertrailer.html">Leader/Trailer Discography</a></li>
+   <li><a class="musicaltraditions" href="/folk/records/musicaltraditions.html">Musical Traditions Discogr.</a></li>
+   <li><a class="nomasters" href="/folk/records/nomasters.html">No Masters Discography</a></li>
+   <li><a class="rootbeat" href="/folk/records/rootbeat.html">RootBeat Discography</a></li>
+   <li><a class="springthyme" href="/folk/records/springthyme.html">Springthyme Discography</a></li>
+   <li><a class="topic" href="/folk/records/topic.html">Topic Discography: Records</a></li>
+   <li><a class="topiccd" href="/folk/records/topiccd.html">Topic Discography: CDs</a></li>
+   <li><a class="traditionbearers" href="/folk/records/traditionbearers.html">Tradition Bearers Discogr.</a></li>
+   <li><a class="traditionalsound" href="/folk/records/traditionalsound.html">Traditional Sound Discogr.</a></li>
+   <li><a class="veteran" href="/folk/records/veteran.html">Veteran Discography</a></li>
+   <li><a class="wildgoose" href="/folk/records/wildgoose.html">WildGoose Discography</a></li>
+  </ul>
+  <ul>
+   <li><form method="post" accept-charset="UTF-8" action="/folk/songs/search.php">
+     <a style="display: inline;" class="songs" href="/folk/songs/">Song Index</a>&nbsp;
+     <input class="navsonginput" type="text" name="song" size="10" title="Enter song title or part of it (wildcard * at the end is allowed) or 'Roud nn' or 'Child nn'">
+     </form></li>
+   <li><a class="child" href="/folk/songs/childindex.html">Child Index</a></li>
+   <li><a class="laws" href="/folk/songs/lawsindex.html">Laws Index</a></li>
+   <li><a class="books" href="/folk/books/">Bibliography</a></li>
+  </ul>
+  <ul>
+   <li><a class="latestchanges" href="/folk/latestchanges.html">Latest Changes</a></li>
+  </ul>
+ </div>
+
+
+ <div>
+ <p class="reference"><a href="/guvnor/">Ashley Hutchings</a></p>
+  <ul>
+   <li><a class="records" href="/guvnor/records/">Discography</a></li>
+   <li><a class="songs" href="/guvnor/songs/">Songs and Tunes</a></li>
+   <li><a class="songbooks" href="/guvnor/songbooks.html">Songbooks</a></li>
+  </ul>
+ </div>
+
+
+
+
+<div id="links">
+<p class="reference">Related Sites</p>
+  <p style="text-align: center;"><a href="https://mustrad.mainlynorfolk.info/"><img src="/images/mustrad.gif" width="100" height="100" alt="Musical Traditions" title="Musical Traditions"></a></p>
+<!-- if expr='-R "127.0.0.0/8" || -R "::1"' -->
+
+<!-- endif -->
+<hr>
+  <p style="text-align: center;"><a href="https://folkinfo.mainlynorfolk.info/"><img src="/images/folkinfo.gif" width="162" height="113" alt="folkinfo.org" title="folkinfo.org"></a></p>
+</div> 
+</nav>
+
+
+<footer id="pageFooter">
+<span id="contact"><a href="/folk/about.html">About / Impressum</a></span>
+<span id="updated">
+<!-- Server: -->
+<!-- echo var="SERVER_ADDR" -->
+<!-- ; -->
+Last updated
+Sat Jun 03, 2023
+by
+<script>
+<!--
+document.write('<a href="mailto:'+'reinhard'+unescape('%2E')+'zierke'+unescape('%40')+'mailbox'+unescape('%2E')+'org">'+'Reinhard Zierke<\/a>');
+-->
+</script>
+<noscript>Reinhard Zierke</noscript>
+</span> <!-- id="updated" -->
+</footer>
+
+
+</body>
+</html>

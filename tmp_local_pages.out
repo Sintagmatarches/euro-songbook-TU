@@ -1,0 +1,41 @@
+
+ ⛅️ wrangler 4.73.0
+───────────────────
+✨ Compiled Worker successfully
+✨ Parsed 6 valid header rules.
+Using secrets defined in .dev.vars
+Your Worker has access to the following bindings:
+Binding                                                                   Resource                  Mode
+env.DB (euro-songbook-db)                                                 D1 Database               local
+env.CF_PAGES ("1")                                                        Environment Variable      local
+env.CF_PAGES_BRANCH ("codex/unify-song-editor")                           Environment Variable      local
+env.CF_PAGES_COMMIT_SHA ("feaf7d4bdab70fdf8eb029de6027a31046501...")      Environment Variable      local
+env.CF_PAGES_URL ("https://feaf7d4b.euro-songbook.pages....")             Environment Variable      local
+env.ENABLE_SETUP ("(hidden)")                                             Environment Variable      local
+env.JWT_SECRET ("(hidden)")                                               Environment Variable      local
+env.SETUP_TOKEN ("(hidden)")                                              Environment Variable      local
+
+⎔ Starting local server...
+[wrangler:info] Ready on http://127.0.0.1:8788
+[wrangler:info] GET / 200 OK (35ms)
+[wrangler:info] GET /ui/assets/logo-sticker-20260221.png 200 OK (13ms)
+[wrangler:info] GET /app.css 200 OK (16ms)
+[wrangler:info] GET /app.js 200 OK (25ms)
+[wrangler:info] GET /ui/assets/pwa-icon-192-20260221.png 200 OK (26ms)
+[wrangler:info] GET /ui/assets/ussr-hero.jpg 200 OK (39ms)
+[wrangler:info] GET /picture/AdobeStock_479740218.jpeg 200 OK (71ms)
+[wrangler:info] GET /ui/api.js 200 OK (111ms)
+[wrangler:info] GET /ui/render.js 200 OK (111ms)
+[wrangler:info] GET /ui/router.js 200 OK (114ms)
+[wrangler:info] GET /ui/state.js 200 OK (145ms)
+[wrangler:info] GET /ui/i18n.js 200 OK (72ms)
+[wrangler:info] GET /ui/assets/drafts-stack-icon.png 200 OK (109ms)
+[wrangler:info] GET /shared/historical-affiliations.js 200 OK (84ms)
+[wrangler:info] GET /shared/admin-permissions.js 200 OK (89ms)
+[wrangler:info] GET /shared/lyrics-confidence.js 200 OK (92ms)
+[wrangler:info] GET /shared/song-catalogs.js 200 OK (73ms)
+[wrangler:info] GET /shared/song-visuals.js 200 OK (93ms)
+[wrangler:info] GET /shared/songbook-import.js 200 OK (103ms)
+[wrangler:info] POST /api/auth/register 200 OK (147ms)
+[wrangler:info] POST /api/auth/register 200 OK (94ms)
+[wrangler:info] GET /api/me 200 OK (11ms)
