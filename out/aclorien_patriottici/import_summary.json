@@ -1,0 +1,151 @@
+{
+  "site": "aclorien.it/archiviocantipatriottici",
+  "letters": [
+    "0",
+    "a",
+    "b",
+    "c",
+    "d",
+    "e",
+    "f",
+    "g",
+    "h",
+    "i",
+    "inno",
+    "j",
+    "k",
+    "l",
+    "m",
+    "n",
+    "o",
+    "p",
+    "poesia",
+    "q",
+    "r",
+    "s",
+    "t",
+    "u",
+    "v",
+    "w",
+    "x",
+    "y",
+    "z"
+  ],
+  "skipped_letters": [
+    "discorsi"
+  ],
+  "requested": 200,
+  "kept": 153,
+  "reasons": {
+    "empty_lyrics": 35,
+    "error:500 Server Error: Internal Server Error for url: https://web.archive.org/web/20250824153224/https://www.aclorien.it/arch": 1,
+    "kept": 153,
+    "missing_archive": 11
+  },
+  "samples": {
+    "kept": [
+      {
+        "song_id": "154",
+        "title": "CANTO DEI VOLONTARI",
+        "year": "1935"
+      },
+      {
+        "song_id": "179",
+        "title": "CANTO DELLE LAVANDAIE DEL VOMERO",
+        "year": "1250"
+      },
+      {
+        "song_id": "294",
+        "title": "AVANTI GLORIOSE SCHIERE",
+        "year": "1936"
+      },
+      {
+        "song_id": "369",
+        "title": "COMBATTENTI A NOI",
+        "year": "1935"
+      },
+      {
+        "song_id": "375",
+        "title": "ADUA",
+        "year": "1935"
+      }
+    ],
+    "empty_lyrics": [
+      {
+        "song_id": "508",
+        "title": "ALA FASCISTA",
+        "year": ""
+      },
+      {
+        "song_id": "1392",
+        "title": "VITTORIA",
+        "year": "1936"
+      },
+      {
+        "song_id": "1393",
+        "title": "BATTAGLIONI \"M\"",
+        "year": "1941"
+      },
+      {
+        "song_id": "2796",
+        "title": "ALL'ARMI [INNO UFFICIALE DEI FASCISTI]",
+        "year": "1923"
+      },
+      {
+        "song_id": "4627",
+        "title": "MAMMA BISOGNA VINCERE!",
+        "year": "1942"
+      }
+    ],
+    "missing_archive": [
+      {
+        "song_id": "1462",
+        "title": "IL VOLO DELLE ANATRE",
+        "year": "1978"
+      },
+      {
+        "song_id": "1559",
+        "title": "IL VECCHIO E IL BAMBINO",
+        "year": "1972"
+      },
+      {
+        "song_id": "2974",
+        "title": "IL VENTO SOFFIA ANCORA",
+        "year": "1975"
+      },
+      {
+        "song_id": "5743",
+        "title": "BELL'ITALIA",
+        "year": "1800"
+      },
+      {
+        "song_id": "5757",
+        "title": "DAL TUO STELLATO SOGLIO",
+        "year": "1818"
+      }
+    ],
+    "error:500 Server Error: Internal Server Error for url: https://web.archive.org/web/20250824153224/https://www.aclorien.it/arch": [
+      {
+        "song_id": "5826",
+        "title": "PATER NOSTER [DEI MILANESI]",
+        "year": "1848"
+      }
+    ]
+  },
+  "country_counts": {
+    "italian_republic_1946": 31,
+    "italy_before_1900": 78,
+    "kingdom_of_italy_1900_1946": 44
+  },
+  "lang_counts": {
+    "es": 1,
+    "fr": 1,
+    "it": 149,
+    "lb": 1,
+    "ro": 1
+  },
+  "chunk_paths": [
+    "out/aclorien_patriottici/chunks/chunk_0001.json",
+    "out/aclorien_patriottici/chunks/chunk_0002.json"
+  ]
+}

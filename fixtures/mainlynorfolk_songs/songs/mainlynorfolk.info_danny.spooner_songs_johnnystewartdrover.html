@@ -1,0 +1,242 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+
+
+<!-- set var="mustradbase" value="https://www.mustrad.org.uk/" -->
+
+
+
+<meta charset="utf-8">
+
+<link rel="stylesheet" href="/css/folk.css" type="text/css" media="all">
+<link rel="stylesheet" href="local.css" type="text/css" media="all">
+
+<title>Johnny Stewart, Drover [Chris Buch]</title>
+</head>
+
+<body>
+
+
+<!-- set var="mustradbase" value="https://www.mustrad.org.uk/" -->
+
+
+<header id="pageHeader"><span id="head"></span>
+<a href="javascript:toggleNav();"><img id="togglenav" src="/images/menutoggle.png" alt="Hide navigation column" title="Hide navigation column"></a>
+<script>// <![CDATA[
+// check all or clear all checkboxes; argument is true|false
+const mediaQuery = window.matchMedia('(min-width: 768px)');
+// var showNav = window.innerWidth > 980;
+var showNav = mediaQuery.matches;
+function handleWindowChange(e) {
+   var button = document.getElementById("togglenav");
+   var mainnav = document.getElementById("mainNav");
+   var body = document.getElementsByTagName("body")[0];
+   if (e.matches) {
+      button.style.display = "inline";
+      if (showNav) {
+         mainnav.style.display = "block";
+         body.style.gridTemplateColumns = "12rem 1fr";
+         button.title = button.alt = "Hide navigation column";
+      } else {
+         mainnav.style.display = "none";
+         body.style.gridTemplateColumns = "0 1fr";
+         button.title = button.alt = "Show navigation column";
+      }
+   } else {
+      mainnav.style.display = "block";
+      body.style.gridTemplateColumns = "1fr";
+      button.style.display = "none";
+   }
+}
+// Register event listener
+mediaQuery.addListener(handleWindowChange);
+// Initial check
+handleWindowChange(mediaQuery);
+// show or not show navigation
+function toggleNav() {
+   if (mediaQuery.matches) {
+      showNav = ! showNav;
+      handleWindowChange(mediaQuery);
+   }
+}
+// ]]></script>
+<a href="/peter.bellamy/records/mainlynorfolk.html#mainlynorfolk"><img src="/peter.bellamy/images/smallrec/mainlynorfolk_xtra1060.jpg" alt="Peter Bellamy: Mainly Norfolk" title="Peter Bellamy: Mainly Norfolk (Transatlantic XTRA 1060)"></a>
+<h1>Mainly Norfolk: English
+<!-- addtitle addition disabled as it's too wide for mobile devices -->
+
+Folk and Other Good Music</h1>
+
+
+
+
+</header>
+<!-- not include virtual="navigation.shtml" -->
+<article id="mainArticle">
+
+<article>
+<p class="reference">&gt;
+<a href="../index.html">Danny Spooner</a> &gt;
+<a href="index.html">Songs</a> &gt;
+<strong>Johnny Stewart, Drover</strong>
+</p>
+<h1>Johnny Stewart, Drover</h1>
+
+<p>[Chris Buch]</p>
+
+<p>Danny Spooner sang Chris Buchâs song <em>Johnny Stewart, Drover</em>
+in 2008 on his CD
+<cite><a href="../records/braveboldboys.html">Brave Bold Boys</a></cite>.
+He noted:</p>
+<blockquote>
+<p>Chris Buch came to Australia from London in 1967 seeking the Australian
+Legend. He found it in 1981 when he was encouraged to join Johnny Stewart
+droving fifteen hundred head of cattle from Rocklands down along the Georgina
+River across the Diamantina River to a station on the Cooper River, a journey
+that took Johnny thirteen weeks. Chris joined the drove for ten days but the
+experience was enough to create this cracking song about an Australia which
+is sadly passing into history.</p>
+</blockquote>
+
+<h2>Lyrics</h2>
+
+<h3>Danny Spooner sings <em>Johnny Stewart, Drover</em></h3>
+
+<p>The mob is dipped, the plant is moving out,<br>
+Theyâre leaving Rocklandâs dusty yards behind them.<br>
+The whips are cracking and the drovers shout;<br>
+Along the Queensland stock-roads you will find them.</p>
+
+<p>Droving ways have been like this for years,<br>
+Modern times donât mean those days are over.<br>
+For the diesel road trains cannot know the steers<br>
+Or walk them down like Johnny Stewart, drover.</p>
+
+<p class="chorus"><em>Chorus (after every other verse):</em><br>
+On the banks of the Georgina, down the Diamantina,<br>
+To where the grass is greener, down in New South Wales.<br>
+Johnny Stewart, drover, taking cattle over,<br>
+His life story moving on miles of dusty trails.</p>
+
+<p>The cook is busy by the campfire light,<br>
+Above the coals a billy gently swinging.<br>
+The mob is settled quiet for the night<br>
+And Johnny Stewart rides around and singing.</p>
+
+<p>Johnny doesnât spend much time in town,<br>
+Impatient for the wet to be over.<br>
+Most of the year heâs just walking cattle down,<br>
+Stock roads are home for Johnny Stewart, drover.</p>
+
+<p>Well, dawn will surely bring another day,<br>
+The sun still chasing moon, never caught her.<br>
+Morning light will see them on their way,<br>
+Another push to reach the welcome water.</p>
+
+<p>Well, theyâre counted in now, Johnnyâs work is done,<br>
+Fifteen hundred head are counted over.<br>
+Itâs into town now for a little run<br>
+And a beer or two for Johnny Stewart, drover.</p>
+
+</article>
+
+</article> <!-- id="mainArticle" -->
+<!-- Google Chrome in version 77 needed this up in nav.shtml -->
+<nav id="mainNav">
+<div id="folk">
+ <p class="reference"><a href="/folk/">English Folk Music</a>
+  <ul>
+   <li><form method="post" accept-charset="UTF-8" action="/folk/records/search.php">
+     <a style="display: inline;" class="records" href="/folk/records/">Discography</a>&nbsp;
+     <input class="navartistinput" type="text" name="artist" size="10" title="Enter artist, album name, or part of those; wildcard * at the end is allowed">
+     </form></li>
+   <li><a class="newreleases" href="/folk/records/newreleases.html">New Releases</a></li>
+
+
+   <li><a class="favourites" href="/folk/favourites.html">Favourite Albums of 2025</a></li>
+<!--
+   <li><a class="missing" href="/folk/missing.html">Looking for albums &amp; books</a></li>
+-->
+  </ul>
+  <ul>
+   <li><a class="fellside" href="/folk/records/fellside.html">Fellside Discography</a></li>
+   <li><a class="fledgling" href="/folk/records/fledgling.html">Fledg'ling Discography</a></li>
+   <li><a class="foresttracks" href="/folk/records/foresttracks.html">Forest Tracks Discography</a></li>
+   <li><a class="freereed" href="/folk/records/freereed.html">Free Reed Discography</a></li>
+   <li><a class="greentrax" href="/folk/records/greentrax.html">Greentrax Discography</a></li>
+   <li><a class="greenwichvillage" href="/folk/records/greenwichvillage.html">Greenwich Village Discogr.</a></li>
+   <li><a class="hudson" href="/folk/records/hudson.html">Hudson Discography</a></li>
+   <li><a class="kyloe" href="/folk/records/kyloe.html">Kyloe Discography</a></li>
+   <li><a class="leadertrailer" href="/folk/records/leadertrailer.html">Leader/Trailer Discography</a></li>
+   <li><a class="musicaltraditions" href="/folk/records/musicaltraditions.html">Musical Traditions Discogr.</a></li>
+   <li><a class="nomasters" href="/folk/records/nomasters.html">No Masters Discography</a></li>
+   <li><a class="rootbeat" href="/folk/records/rootbeat.html">RootBeat Discography</a></li>
+   <li><a class="springthyme" href="/folk/records/springthyme.html">Springthyme Discography</a></li>
+   <li><a class="topic" href="/folk/records/topic.html">Topic Discography: Records</a></li>
+   <li><a class="topiccd" href="/folk/records/topiccd.html">Topic Discography: CDs</a></li>
+   <li><a class="traditionbearers" href="/folk/records/traditionbearers.html">Tradition Bearers Discogr.</a></li>
+   <li><a class="traditionalsound" href="/folk/records/traditionalsound.html">Traditional Sound Discogr.</a></li>
+   <li><a class="veteran" href="/folk/records/veteran.html">Veteran Discography</a></li>
+   <li><a class="wildgoose" href="/folk/records/wildgoose.html">WildGoose Discography</a></li>
+  </ul>
+  <ul>
+   <li><form method="post" accept-charset="UTF-8" action="/folk/songs/search.php">
+     <a style="display: inline;" class="songs" href="/folk/songs/">Song Index</a>&nbsp;
+     <input class="navsonginput" type="text" name="song" size="10" title="Enter song title or part of it (wildcard * at the end is allowed) or 'Roud nn' or 'Child nn'">
+     </form></li>
+   <li><a class="child" href="/folk/songs/childindex.html">Child Index</a></li>
+   <li><a class="laws" href="/folk/songs/lawsindex.html">Laws Index</a></li>
+   <li><a class="books" href="/folk/books/">Bibliography</a></li>
+  </ul>
+  <ul>
+   <li><a class="latestchanges" href="/folk/latestchanges.html">Latest Changes</a></li>
+  </ul>
+ </div>
+
+
+ <div>
+ <p class="reference"><a href="/danny.spooner/">Danny Spooner</a></p>
+  <ul>
+   <li><a class="biography" href="/danny.spooner/biography.html">Biography</a></li>
+   <li><a class="records" href="/danny.spooner/records/">Discography</a></li>
+   <li><a class="songs" href="/danny.spooner/songs/">Songs</a></li>
+  </ul>
+ </div> 
+
+
+
+
+<div id="links">
+<p class="reference">Related Sites</p>
+  <p style="text-align: center;"><a href="https://mustrad.mainlynorfolk.info/"><img src="/images/mustrad.gif" width="100" height="100" alt="Musical Traditions" title="Musical Traditions"></a></p>
+<!-- if expr='-R "127.0.0.0/8" || -R "::1"' -->
+
+<!-- endif -->
+<hr>
+  <p style="text-align: center;"><a href="https://folkinfo.mainlynorfolk.info/"><img src="/images/folkinfo.gif" width="162" height="113" alt="folkinfo.org" title="folkinfo.org"></a></p>
+</div> 
+</nav>
+
+
+<footer id="pageFooter">
+<span id="contact"><a href="/folk/about.html">About / Impressum</a></span>
+<span id="updated">
+<!-- Server: -->
+<!-- echo var="SERVER_ADDR" -->
+<!-- ; -->
+Last updated
+Sat Jun 03, 2023
+by
+<script>
+<!--
+document.write('<a href="mailto:'+'reinhard'+unescape('%2E')+'zierke'+unescape('%40')+'mailbox'+unescape('%2E')+'org">'+'Reinhard Zierke<\/a>');
+-->
+</script>
+<noscript>Reinhard Zierke</noscript>
+</span> <!-- id="updated" -->
+</footer>
+
+
+</body>
+</html>

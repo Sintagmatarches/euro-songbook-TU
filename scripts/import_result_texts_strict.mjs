@@ -2,8 +2,10 @@ import fs from "node:fs";
 import path from "node:path";
 import { TextDecoder } from "node:util";
 import {
+  isPeriodAllowedForCountry,
   normalizeSongCountry,
   normalizeSongLanguage,
+  normalizeSongPeriod,
 } from "../shared/song-catalogs.js";
 
 const inputPath = process.argv[2]
@@ -278,9 +280,8 @@ function detectLanguage(text, title = "", metaLines = []) {
 
 function periodForUssr(year) {
   if (!Number.isFinite(year)) return null;
-  if (year >= 1922 && year <= 1940) return "ussr_1922_1940";
-  if (year >= 1941 && year <= 1945) return "ussr_1941_1945";
-  if (year >= 1946 && year <= 1953) return "ussr_1946_1953";
+  if (year >= 1928 && year <= 1941) return "ussr_1928_1941";
+  if (year >= 1942 && year <= 1953) return "ussr_1941_1953";
   if (year >= 1954 && year <= 1964) return "ussr_1953_1964";
   if (year >= 1965 && year <= 1985) return "ussr_1964_1985";
   if (year >= 1986 && year <= 1991) return "ussr_1985_1991";
@@ -292,6 +293,9 @@ function mapCountryByLangAndYear(lang, year) {
   if (lang === "ru") {
     if (!y) return { country: "ussr", period: null };
     if (y <= 1917) return { country: "russian_empire_1900_1917", period: null };
+    if (y <= 1918) return { country: "russian_republic_1917", period: "russia_republic_1917_1918" };
+    if (y <= 1921) return { country: "rsfsr_1917_1922", period: "rsfsr_war_1918_1921" };
+    if (y <= 1928) return { country: "rsfsr_1917_1991", period: "rsfsr_nep_1921_1928" };
     if (y <= 1991) return { country: "ussr", period: periodForUssr(y) };
     return { country: "russian_federation_1991", period: null };
   }
@@ -518,7 +522,10 @@ function parseMessage(msg) {
   const lang = normalizeSongLanguage(langRaw) || "en";
   const mapped = mapCountryByLangAndYear(lang, year);
   const country = mapped.country ? (normalizeSongCountry(mapped.country) || null) : null;
-  const period = country === "ussr" ? mapped.period : null;
+  const normalizedPeriod = mapped.period ? (normalizeSongPeriod(mapped.period) || null) : null;
+  const period = country && normalizedPeriod && isPeriodAllowedForCountry(country, normalizedPeriod)
+    ? normalizedPeriod
+    : null;
 
   return {
     ok: true,

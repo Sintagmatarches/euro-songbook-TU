@@ -208,7 +208,12 @@ def fixture_name_from_url(url: str) -> str:
     parsed = urlparse(url)
     path = parsed.path.strip("/") or "index"
     safe = re.sub(r"[^0-9A-Za-z._-]+", "__", path)
-    return safe + ".html"
+    filename = safe + ".html"
+    if len(filename) <= 120:
+        return filename
+    digest = hashlib.sha1(path.encode("utf-8")).hexdigest()[:12]
+    trimmed = safe[:100].rstrip("._-")
+    return f"{trimmed}__{digest}.html"
 
 
 def strip_noise(html_text: str) -> str:

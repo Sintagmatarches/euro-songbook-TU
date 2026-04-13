@@ -1,0 +1,78 @@
+{
+  "tested": 10,
+  "success": 9,
+  "fail": 1,
+  "elapsed_total_s": 23.32,
+  "results": [
+    {
+      "site_id": "213",
+      "title": "Ciemna noc",
+      "ok": false,
+      "elapsed_s": 4.1,
+      "error": "fetch failed: https://staremelodie.pl/piosenka/213/Ciemna_noc: 410 Client Error:  for url: https://staremelodie.pl/piosenka/213/Ciemna_noc"
+    },
+    {
+      "site_id": "987",
+      "title": "A ja sobie gram na banjo!",
+      "ok": true,
+      "elapsed_s": 2.41,
+      "size": 123642
+    },
+    {
+      "site_id": "996",
+      "title": "Królewna Śnieżka (wiązanka piosenek)",
+      "ok": true,
+      "elapsed_s": 2.49,
+      "size": 199216
+    },
+    {
+      "site_id": "1001",
+      "title": "Zwiędłe liście (Kosma – Rostworowski)",
+      "ok": true,
+      "elapsed_s": 2.15,
+      "size": 103115
+    },
+    {
+      "site_id": "1002",
+      "title": "Wystarczy jedna chwila!",
+      "ok": true,
+      "elapsed_s": 2.08,
+      "size": 123968
+    },
+    {
+      "site_id": "1004",
+      "title": "Znów minie dużo lat",
+      "ok": true,
+      "elapsed_s": 1.88,
+      "size": 76378
+    },
+    {
+      "site_id": "1005",
+      "title": "Czy słyszysz? / Piosnkę znam tylko jedną",
+      "ok": true,
+      "elapsed_s": 2.1,
+      "size": 185903
+    },
+    {
+      "site_id": "1006",
+      "title": "Adios!",
+      "ok": true,
+      "elapsed_s": 2.08,
+      "size": 79203
+    },
+    {
+      "site_id": "1007",
+      "title": "Cicha woda brzegi rwie",
+      "ok": true,
+      "elapsed_s": 2.13,
+      "size": 125939
+    },
+    {
+      "site_id": "1008",
+      "title": "Żegnaj (Mierzejewski – Brodziński, Krzewiński)",
+      "ok": true,
+      "elapsed_s": 1.9,
+      "size": 73262
+    }
+  ]
+}

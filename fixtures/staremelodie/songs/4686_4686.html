@@ -1,0 +1,3116 @@
+﻿<!DOCTYPE HTML>
+<html lang="pl-PL">
+<head>
+    <script async src="https://www.googletagmanager.com/gtag/js?id=G-B2C2D0E1KM"></script>
+<script>
+  window.dataLayer = window.dataLayer || [];
+  function gtag(){dataLayer.push(arguments);}
+  gtag('js', new Date());
+
+  gtag('config', 'G-B2C2D0E1KM');
+</script>    <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+    <meta property="og:title" content="Ha! Ha! Ha! : shimmy-foxtrot - Stare Melodie">
+    <meta property="og:description" content="Przecudny zgrzyt ze starych płyt">
+    <meta property="og:image" content="https://staremelodie.pl/images/image.php?id=4686">
+    <meta property="og:url" content="https://staremelodie.pl">
+    <meta property="og:site_name" content="Stare Melodie - przecudny zgrzyt ze starych płyt">
+    <meta property="og:type" content="website">
+    <meta property="fb:admins" content="1527095955">
+    
+    <meta name="twitter:card" content="summary_large_image">
+  <meta property="twitter:domain" content="staremelodie.pl">
+  <meta property="twitter:url" content="https://staremelodie.pl">
+  <meta name="twitter:title" content="Ha! Ha! Ha! : shimmy-foxtrot - Stare Melodie">
+  <meta name="twitter:description" content="Wersy wśród szumu płyt">
+  <meta name="twitter:image" content="https://staremelodie.pl/images/logo.jpg">
+    
+    <link rel="shortcut icon" href="https://staremelodie.pl/favicon.ico">
+    <meta name="mobile-web-app-capable" content="yes"/>
+    <meta name="theme-color" content="#916A48"/>
+    <meta name="msapplication-navbutton-color" content="#916A48">
+    <meta name="apple-mobile-web-app-status-bar-style" content="#916A48">
+	
+	<!--meta name="viewport" content="width=device-width, initial-scale=1.0"-->
+    <!--meta http-equiv="Content-Security-Policy" content="script-src 'unsafe-inline'"-->
+
+    <link rel="alternate" type="application/rss+xml" href="https://staremelodie/rss/" title="Stare Melodie RSS kanał">
+    <title>
+        Ha! Ha! Ha!         : shimmy-foxtrot - Stare Melodie</title>
+
+    <link rel="search" type="application/opensearchdescription+xml" title="StareMelodie.pl" href="https://staremelodie.pl/opensearch.xml"/>
+
+    <meta name="description" content=" - tekst piosenki">
+    <link href="/resources/staremelodie.css?ver=622189x" rel="stylesheet" type="text/css">
+    <link href="/resources/piosenka.css?ver=62212" rel="stylesheet" type="text/css">
+	
+	<link href="/resources/piosenka_header.css" rel="stylesheet" type="text/css">
+	
+    <link href="/resources/english_font.css" rel="stylesheet" type="text/css">
+    <link rel="stylesheet" type="text/css" href="/resources/video.css"/>
+
+    <script type="text/javascript" src="/resources/staremelodie.js?v=26687"></script>
+	<script type="text/javascript" src="/resources/iframes.js?v=2" defer></script>
+    <!--script type="text/javascript" async src="/resources/copy.js"></script-->
+    <style>
+		html, body {
+			scroll-padding: 34px;
+		}
+        body {
+            background-image: none;
+            quotes: '\201E' '\201D' "‘" "’";
+           /* background: linear-gradient(0deg, #d2b80d 50%, #014e9c 50%);*/
+            background-repeat: no-repeat;
+            background-attachment: fixed;
+        }
+        
+        #himg {
+            position: absolute;
+            left: -2000px;
+            max-width: 990px;
+            max-height: 990px;
+        }
+        
+        #stat {
+            vertical-align: super;
+            font-size: 12px;
+        }
+        
+        #nuty_icon a:after {
+            content: "nuty!";
+            display: block;
+            position: absolute;
+            top: 22px;
+            /* left: 10px; */
+            font-size: 17px;
+            margin-left: 20px;
+            color: rgb(73, 32, 11);
+            text-shadow: -1px -1px 1px #bfa18a, 1px -1px 1px #bfa18a;
+        }
+        
+        .popraw {
+            cursor: pointer;
+            display: inline-block;
+        }
+        
+        .cell sup {
+            border: solid thin rgb(73, 32, 11);
+            width: 12px;
+            height: 12px;
+            font-size: 10px;
+            display: inline-block;
+            line-height: 10px;
+            text-align: center;
+            border-radius: 100%;
+            background-color: rgb(236, 228, 218);
+            position: absolute;
+            cursor: help;
+        }
+        
+        .cell sup::after {
+            opacity: 0;
+        }
+        
+        .cell sup:hover:after {
+            display: block;
+            position: absolute;
+            content: attr(alt);
+            left: 10px;
+            top: 10px;
+            border: solid 1px black;
+            width: 180px;
+            font-size: 15px;
+            white-space: normal;
+            line-height: 16px;
+            border-radius: 6px;
+            background-color: rgb(231, 221, 213);
+            font-family: english;
+            padding: 3px;
+            opacity: 1;
+            box-shadow: 0px 0px 3px rgb(73, 32, 11);
+            transition: all .3s ease-in-out;
+        }
+        
+        .slide {
+            width: 50px;
+            height: 50px;
+            background-color: #714325;
+            cursor: pointer;
+            z-index: 200;
+            border-radius: 50%;
+            line-height: 42px;
+            margin: auto;
+            display: none;
+            box-shadow: 2px 2px 3px 2px #27221F;
+            color: white;
+            border: solid 3px #B8947C;
+            font-family: lo1937;
+            font-size: 74px;
+            opacity: 0;
+            transition: all 0.3s ease-out;
+        }
+        
+        .slide:hover {
+            color: #000;
+            background-color: #FFF;
+            border: solid 3px #000;
+        }
+        
+        #lewo {
+            margin-right: 10px
+        }
+        
+        #prawo {
+            margin-left: 10px
+        }
+        
+        #artist_detail {
+            min-height: 500px;
+        }
+        
+        #artist_detail hr {
+            height: 1px;
+            background-color: #742E2E;
+            margin-bottom: 10px;
+            margin-top: 11px;
+        }
+        
+        #artist_detail_name {
+            font-family: old_caption, ruskie;
+            font-size: 40px;
+            font-weight: normal;
+            margin-bottom: 10px;
+            margin-left: 0px;
+            line-height: 50px;
+            color: #49200B;
+            text-shadow: 0px 0px 1px #49200B;
+            text-align: left;
+            padding-left: 0px;
+            white-space: nowrap;
+            text-overflow: ellipsis;
+            overflow: hidden;
+        }
+        
+        .artysta_opis {
+            font-size: 20px;
+            vertical-align: middle;
+            color: #300;
+        }
+        
+        .portret {
+            display: inline-block;
+            width: 50px;
+            height: 50px;
+            /*border: solid 1px #b1a59a;*/
+            outline: 1px solid #b1a59a;
+            border-radius: 50%;
+            vertical-align: middle;
+            background-repeat: no-repeat;
+            background-position: center center;
+            background-size: cover;
+            /*box-shadow: 0px 0px 6px #331606 inset, 0px 0px 6px #331606;*/
+            margin: 0px 1px 4px 3px;
+            background-color: #331606;
+            background-blend-mode: screen;
+            overflow: hidden;
+        }
+        
+        .portret > a {
+            display: block;
+            height: 50px;
+            text-decoration: none !important;
+            border: none;
+            width: 50px;
+        }
+        
+        #keywords {
+            background-color: rgb(231, 221, 213);
+            margin: 0px 12px 12px 12px;
+            padding: 6px;
+            font-family: english;
+            font-size: 16px;
+            border-radius: 0px;
+            display: flex;
+            align-items: left;
+            /*justify-content: space-around;*/
+            /*width: 680px;*/
+        }
+        #keywords a {
+            color: black;
+            text-decoration-style: dashed;
+            text-underline-offset: 4px;
+            text-decoration-thickness: 1px;
+        }
+        #keywords a:hover {
+            text-decoration-line: none;
+        }
+        #more_info {
+            font-size: 16px;
+            color: rgb(47, 15, 0);
+        }
+        
+        .glos {
+            margin: 6px 0px 0px -28px;
+            /*text-transform: lowercase;*/
+            font-weight: bold;
+			font-variant: all-petite-caps;
+    font-size: 22px;
+        }
+        .glos::first-letter {
+            /*text-transform: capitalize;*/
+			
+        }
+        
+        .postac {
+            margin-right: 3px;
+        }
+        
+        .kwestia {
+            xcolor: brown;
+            margin-left: 30px;
+        }
+        #piosenka_big_title {
+            padding-left: 60px;
+        }
+        #piosenka_big_title:before {
+            content: open-quote;
+            font-size: 38px;
+            opacity: 0.6;
+            margin-right: 2px;
+        }
+        
+        #piosenka_big_title:after {
+            content: close-quote;
+            font-size: 38px;
+            opacity: 0.6;
+            margin-left: 2px;
+        }
+        
+        .emo {
+            font-family: emoty;
+            display: inline-block;
+            line-height: 24px;
+            width: 22px;
+            height: 22px;
+            vertical-align: middle;
+            border-radius: 50%;
+            margin: 0px 2px;
+            font-size: 22px;
+            font-weight: bold;
+            background-color: #d1c4b9;
+        }
+        
+        .smile {
+            background-position: -53px 0px;
+        }
+        
+        .wink {
+            background-position: -27px 0px;
+        }
+        
+        .bigsmile {
+            background-position: 0px 0px;
+        }
+        
+        .sad {
+            background-position: -27px -26px;
+        }
+        
+        #_articleBody3 {
+            xcounter-reset: linia;
+        }
+        
+        #_articleBody3> div,
+        #_articleBody3> span,
+        #_articleBody3> sup,
+        #_articleBody3:first-line,
+        #_articleBody3> blockquote> div {
+            xcounter-increment: linia;
+        }
+        
+        #_articleBody3> div:before,
+        #_articleBody3> span:before,
+        #_articleBody3> sup:before,
+        #_articleBody3:first-line,
+        #_articleBody3> blockquote> div:before {
+            xcontent: counter(linia);
+            position: absolute;
+            left: 40px;
+            border: solid 0px black;
+            width: 36px;
+            box-shadow: 2px 0 1px -2px #594e4b;
+        }
+        
+        a.przedstawienia {
+            text-decoration: underline !important;
+        }
+        
+        a.przedstawienia:hover {
+            text-decoration: none !important;
+        }
+        
+        abbr[data-definition] {
+            position: relative;
+            text-decoration-line: underline;
+            text-decoration-style: dashed;
+            text-decoration-color: #2f0f00;
+            text-decoration-thickness: 1px;
+            text-underline-offset: 2px;
+            cursor: help;
+        }
+        
+        abbr[data-definition]::after {
+            content: attr(data-numer);
+            position: absolute;
+            pointer-events: none;
+            font-size: 12px;
+            font-family: Arial, sans-serif;
+            bottom: 12px;
+            right: -12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            width: 18px;
+            height: 18px;
+            background-color: #e7ddd5;
+            border-radius: 50%;
+            border: solid 1px;
+            visibility: hidden;
+            opacity: 0;
+            transition: all .2s ease-out .2s;
+            
+        }
+        
+        abbr[data-definition]::before {
+            content: attr(data-definition);
+            font-size: 14px;
+            line-height: 20px;
+            position: absolute;
+            left: 0px;
+            top: 20px;
+            visibility: hidden;
+            opacity: 0;
+            border: solid 1px #2f0f00;
+            border-radius: 0px 6px 6px 6px;
+            padding: 6px;
+            /*background-color: #e7ddd5;*/
+            background-color: #3b1f17;
+            color: #e7ddd5;
+            z-index: 1000;
+            user-select: none;
+            pointer-events: none;
+            transition: all .3s ease-out;
+            width: max-content;
+            white-space: pre-line;
+            max-width: 500px;
+        }
+        
+        abbr[data-definition]:hover::before {
+            /*top: 20px;*/
+            left: calc(var(--ex) + 20px);
+            visibility: visible;
+            opacity: 1;
+        }
+        
+        abbr[data-definition]:hover:after {
+            opacity: 1;
+            visibility: visible;
+        }
+        
+        #definicje {
+            margin: 6px 12px;
+            padding: 6px;
+            background-color: rgb(231, 221, 213);
+            font-family: english;
+            font-size: 16px;
+        }
+        
+        #definicje_title {
+            margin-bottom: 6px;
+        }
+        
+        #definicje_lista {
+            display: grid;
+            gap: 12px 6px;
+            grid-template-columns: auto 8px 1fr;
+            margin-left: 12px;
+        }
+        
+        #definicje .skrot {}
+        
+        #definicje .definicja {
+			/*margin-left: 8px;*/
+    		/*white-space: pre-line;*/
+            position: relative;
+            /*top: -20px;*/
+		}
+        
+        #definicje .def_numer {
+            font-size: smaller;
+            position: relative;
+            top: -4px;
+        }
+        
+        summary {
+            list-style: none;
+            margin-left: 10px;
+            }
+        summary::marker {
+            display: none;
+            /*content: " + ";
+            color: red;
+            width: 18px;
+            height: 18px;
+            xdisplay: inline-grid;
+            place-content: center;
+            display: none;
+            transition: all .3s linear;*/
+        }
+        #definicje details[open] summary::markerx {
+            content: " - ";
+            /*color: blue;*/
+        }
+        #definicje details summary::before { 
+            content:" + "; 
+            color: #3b1f17; 
+            cursor: pointer;
+            display: inline-grid;
+            width: 18px;
+            height: 18px;
+            transition: all .3s linear;
+    
+            place-content: center;
+            margin-left: -18px;
+            }
+        details div {
+            margin-left: 9px;
+        }
+
+        #definicje details[open] summary::before{ 
+          content:" - "; 
+          /*color: red;*/
+          /*transform: rotate(90deg);*/
+        }
+        #kto_przepisal {
+            margin: 0px 12px;
+            background-color: rgb(236, 236, 227);
+            padding: 10px;
+            border-radius: 0px;
+            font-family: english;
+            font-size: 18px;
+            word-wrap: break-word;
+        }
+
+    </style>
+    <script>
+        document.onreadystatechange = function () {
+                if ( document.readyState === "interactive" ) {
+                    poka();
+                }
+            }
+            //
+        window.addEventListener( 'hashchange', poka, false );
+        //
+        function poka() {
+            if ( location.hash ) {
+                var ha = location.hash.split( '#' )[ 1 ];
+                if ( ha.split( '/' )[ 0 ] === "zoom" ) {
+                    zoom( '/etykiety_plyt/' + ha.split( '/' )[ 1 ] );
+                    console.log( "zmiana hasza" );
+                }
+            }
+        }
+
+        function popraw() {
+            var pi = dE("piosenka_text");
+            pi.style.textShadow = "none"; //"0px 0psx 0px black";
+            pi.style.color = "#000";
+            pi.style.backgroundColor = "#FFF";
+            pi.style.fontSize = "20px";
+            pi.style.lineHeight = "25px";
+        }
+        //
+        function popraw_ciut() {
+            var pi = dE("piosenka_text");
+            pi.style.textShadow = "none"; //"0px 0psx 0px black";
+            pi.style.color = "#000";
+            pi.style.fontSize = "18px";
+            pi.style.lineHeight = "22px";
+            pi.style.backgroundColor = "rgb(231, 221, 213)";
+        }
+   
+    
+    window.addEventListener("load",zaznacz);
+    window.addEventListener("hashchange",zaznacz);
+    ///
+    function zaznacz(){
+    var has_hash = window.location.hash.substring(1);
+        //console.log(window.location);
+        //de(""+has_hash+"") ? de(""+has_hash+"").scrollIntoView({behavior: "smooth", block: "center", inline: "start"}) : null;
+    }
+    
+        setTimeout(() => history.replaceState(null,null,' '),3000);
+    
+    </script>   
+    
+</head>
+
+<body>
+        <div id="bckg"></div>
+    <div id="bckg_front"></div>
+    <img src="" id="himg">
+    <div id="pokazywarka" onclick="odzoom(0)">
+        <div id="pokazywarka_img">
+            <div id="lewo" class="slide" onClick="next(-1);">&#171;</div>
+            <div id="pokazywarka_img_cell"> <img src="/images/loading.svg" id="pokazywarka_obr"> </div>
+            <div id="prawo" class="slide" onClick="next(1);">&#187;</div>
+        </div>
+        <div id="pokazywarka_video"></div>
+    </div>
+    <div id="wraper">
+        <div id="top">
+            <style>
+#fb {
+	position:absolute;
+	left: 5px;
+	bottom: 5px; 
+	border: solid 2px rgb(87, 115, 185);
+	border-radius: 50%;
+	overflow: hidden;
+	width: 34px;
+	height: 34px;	
+}
+#rss {
+	position: absolute;
+    bottom: 5px;
+    left: 45px;
+    overflow: hidden;
+    border-radius: 50%;
+    line-height: 0px;
+    font-size: 0px;
+    border: solid 2px #ff7d0b;
+    box-shadow: 0px 0px 11px 2px #e67e23 inset;
+    width: 34px;
+    height: 34px;
+}
+	
+	#paypal {
+		position: absolute;
+		right: 5px;
+		bottom: 1px;
+	}
+	#patronite {
+		display: inline-block;
+    margin-right: 6px;
+    background-color: white;
+    border-radius: 20px;
+    width: 40px;
+    height: 40px;
+    overflow: hidden;
+		transition: width 0.2s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+	}
+	#patronite a {
+		display: block;
+	}
+	#patronite:hover {
+		width: 148px;
+	}
+	#patronite img {
+		height: 52px;
+    position: relative;
+    left: -7px;
+    top: -6px;
+	}
+</style>
+<div id="fb"><a href="https://www.facebook.com/Szlagiery" target="_blank"><img src="/images/fb.png" alt="Stare Melodie na Facebook" title="Stare Melodie na FaceBook"></a></div><div id="rss"><a href="http://staremelodie.pl/rss/" target="_blank" title="StareMelodie.pl - kanał RSS" alt="StareMelodie.pl - kanał RSS"><img src="/images/rss.png" alt="StareMelodie.pl - kanał RSS"></a></div>
+<div id="paypal"><div id="patronite"><a href="https://patronite.pl/StareMelodiepl" target="_blank"><img src="/images/patronite.svg"></a></div><a href="https://www.paypal.me/StareMelodie" target="_blank"><img src="/images/paypal.me.png" style="height: 40px" title="wspomóż StareMelodie.pl"></a></div>        </div>
+        <style>
+#search_wraper {
+    position: relative;
+}
+#search_wraper label {
+    position: absolute;
+    font-size: 13px;
+    color: #9c7a63;
+    pointer-events: none;
+    top: 6px;
+    left: 5px;
+    text-shadow: none;
+    transition: all .3s cubic-bezier(0, 1.82, 1, 1);
+}
+#search_wraper input:focus + label, #search_wraper input:not(:placeholder-shown) + label {
+    top: -10px;    
+    color: #e7ddd5;
+    text-shadow: 0 0 3px #2d170c; 
+}
+	
+	#search_wraper input::placeholder {
+		color: transparent;
+		transition: color .2s linear;
+	}
+	
+	#search_wraper input:focus::placeholder {
+    color: #895a3c;
+}
+#nav > ul > li:last-child:hover {
+    background: -webkit-linear-gradient(top, #9E6F51 30%,#683A1C 100%);
+}
+</style>
+<div id="menu" class="ns">
+  
+    <nav id="nav" aria-label="nawigacja strony">
+      
+      <ul role="menubar">
+        <li> <a role="menuitem" href="/">Strona główna</a> </li>
+        
+        <li id="fonoteka"> Fonoteka
+          <ul role="menu">
+            <li role="none"> <a role="menuitem" href="/fonoteka">Piosenki od A do Ż</a> </li>
+             <li role="none"> <a role="menuitem" href="/biblioteka">Biblioteka nut</a> </li>
+             <li role="none"> <a role="menuitem" href="/radio">Radio Stare Melodie</a> </li>
+            <li role="none"> <a role="menuitem" href="/wytwornie" style="font-size: 13px">Wytwórnie fonograficzne</a> </li>
+            <li role="none"> <a role="menuitem" href="/etykiety/all">Etykiety płyt</a> </li>
+            <li role="none"> <a role="menuitem" href="/katalogi_plyt">Katalogi wytwórni</a> </li>
+            <li role="none"> <a role="menuitem" href="/bez_tekstu">Utwory bez tekstu</a> </li>
+            <li role="none"> <a role="menuitem" href="/search">Szukaj wszędzie</a> </li>
+          </ul>
+        </li>
+        
+        <li id="artysci"> Artyści
+          <ul>
+            <li role="none"> <a role="menuitem" href="/artysci">Katalog artystów</a> </li>
+            <li role="none"> <a role="menuitem" href="/dyrygenci_i_orkiestry">Dyrygenci i orkiestry</a> </li>
+            <li role="none"> <a role="menuitem" href="/sceny">Teatry i kabarety</a> </li>
+            <li role="none"> <a role="menuitem" href="/przedstawienia">Przedstawienia</a> </li>
+            <li role="none"> <a role="menuitem" href="/galeria">Fotografie</a> </li>
+          </ul>
+        </li>
+        
+         
+        
+        <li id="galeria"> <a role="menuitem" href="/zrodla/">Źródła</a> </li>
+        
+       
+        
+        <li id="kontakt"> <a role="menuitem" href="/kontakt">Kontakt</a> </li>
+        <li role="none">
+        <span id="search_wraper">
+          <input type="search" placeholder=" miłego szukania " id="all_search" tekst="wszędzie" incremental="incremental" oninput="allsearch(this.value)" style="border-radius: 12px; width: 180px;padding-left: 3px;">
+          <label for="all_search">przeszukaj teksty</label>
+          </span>
+        </li>
+      </ul>
+      
+    </nav>
+    
+  <div id="total_search"></div>
+</div>
+        <div id="content">
+            <div id="artist_detail" itemscope itemtype="http://schema.org/Article" itemref="_publisher2 _articleBody3 _datePublished4 _author5 _author6">
+                <h1 id="artist_detail_name"> <!---span class="artysta_opis">piosenka:</span-->
+                    <span itemprop="name" id="piosenka_big_title">
+                        Ha! Ha! Ha!                    </span>
+                    <span id="stat">
+                        2901
+                    </span>
+                                        <span id="nuty_icon" style="margin-left: 10px;width: 40px; height:40px;display: inline-block;overflow:hidden;border-radius: 50%;box-shadow: 0px 0px 3px black;"><a href="/piosenka/4686/Ha_Ha_Ha#nuty"><img src="/images/nuty.jpg" alt="nuty" title="nuty"></a></span>
+                                        <hr>
+                </h1>
+                <div id="piosenka_body">
+
+                    <div itemscope itemtype="http://schema.org/Article" id="piosenka_opis">
+                        <div id="piosenka_opis_data">
+                            <div class="row">
+                                <div class="cell data_title">tytuł:</div>
+                                                                <div itemprop="name" class="cell data_value">
+									<h2 class="data_value_title" aria-label="tytuł utworu">Ha! Ha! Ha!</h2>
+                                                                    </div>
+                            </div>
+
+                                                        <div class="row">
+                                <div class="cell data_title">gatunek:</div>
+                                <div class="cell data_value">
+                                    shimmy-foxtrot                                </div>
+                            </div>
+                            
+                            <div class="row">
+                                <div class="cell data_title">muzyka:</div>
+                                <div class="cell data_value"> <span id="_author5" itemprop="author" itemscope itemtype="http://schema.org/Person"> <span itemprop="name">
+                 <div class="person"><div class="portret" style="background-image:url(/galeria_images/miniatury/thumb_120_120_Szymon_Kataszek_StareMelodie.pl_1589371356.jpg)">
+                <a href="/kompozytorzy/24/Szymon_Kataszek" alt="Szymon Kataszek" title="Szymon Kataszek">&nbsp;</a>
+            </div><div class="person_names"><span class="big"><a href="/kompozytorzy/24/Szymon_Kataszek" alt="Szymon Kataszek" title="Szymon Kataszek">Szymon Kataszek</a></span> <span class="small"><a href="/kompozytorzy/24/Szymon_Kataszek" alt="Szymon Kataszek" title="Szymon Kataszek" style="color: #623e2a !important;">Boruch Szymon Kataszek</a></span></div></div>                </span>
+                                
+                                    </span>
+                                </div>
+                            </div>
+                                                        <div class="row">
+                                <div class="cell data_title">oryginał z:<sup alt="W miarę możliwości rok pierwszego wykonania lub powstania oryginału">?</sup>
+                                </div>
+                                <div class="cell data_value">
+                                    1925 roku
+                                </div>
+                            </div>
+                                                        <div class="row">
+                                <div class="cell data_title">słowa: </div>
+                                <div class="cell data_value"> <span id="_author6" itemprop="author" itemscope itemtype="http://schema.org/Person"> <span itemprop="name">
+                 <div class="person"><div class="portret" style="background-image:url(/galeria_images/miniatury/thumb_120_120_andrzej_wlast.jpg)">
+                <a href="/teksciarze/4/Andrzej_Wlast" alt="Andrzej Włast" title="Andrzej Włast">&nbsp;</a>
+            </div><div class="person_names"><span class="big"><a href="/teksciarze/4/Andrzej_Wlast" alt="Andrzej Włast" title="Andrzej Włast">Andrzej Włast</a></span> <span class="small"><a href="/teksciarze/4/Andrzej_Wlast" alt="Andrzej Włast" title="Andrzej Włast" style="color: #623e2a !important;">Gustaw Baumritter<br>ps. Willy, Will, Willi, H. Mlet, p. Olak</a></span></div></div>                </span>
+                                
+                                    </span>
+                                </div>
+                            </div>
+
+                                                                                                            </div>
+                        <div id="piosenka_opis_tekst" style="padding-bottom: 10px">
+                            <hr style="margin-top: 16px">
+
+                            <style>
+                                #piosenka_text {
+                                    position: relative;
+                                    font-size: clamp(1.1rem, 4vw + 2px, 1.2rem);
+                                    line-height: 1.3;
+									hyphens: auto;
+    								/*text-align: justify;*/
+									
+									& div::first-letter {
+										/*color: red;*/
+									}
+                                    & .dash {
+                                        margin-left: -12px;
+                                    }
+                                }
+                                
+                                #piosenka_text::spelling-error {
+                                    background-color: red;
+                                }
+                                
+                                #piosenka_text::grammar-error {
+                                    background-color: red;
+                                }
+								
+								#lines_switch_box {
+									/*position: sticky;*/
+									/*top: 60px;*/
+								}
+                                
+                                #lines_switch {
+                                    outline: none;
+                                    position: absolute;
+                                    width: 20px;
+                                    height: 20px;
+                                    left: 12px;
+                                    top: 12px;
+                                    transform: translate(-6px, -6px);
+                                    border: solid 1px black;
+                                    border-radius: 50%;
+                                    overflow: hidden;
+                                    background: url(/images/linie.svg) no-repeat;
+                                    background-size: contain;
+                                    background-color: #ddd2c8;
+                                    cursor: pointer;
+                                    transition: all 0.2s ease-out;
+                                    user-select: none;
+                                }
+                                
+                                #lines_switch:hover {
+                                    width: 32px;
+                                    height: 32px;
+									left: 4px;
+    								top: 4px;
+                                    box-shadow: 4px 4px 8px 2px;
+                                }
+                                
+                                #lines_switch img {
+                                    width: 30px;
+                                    height: 30px;
+                                    margin-left: 3px;
+                                    margin-top: -1px;
+                                }
+                                
+                                #linie {
+                                    position: absolute;
+                                    top: 29px;
+                                    left: 0px;
+                                    counter-reset: linie;
+                                    width: 100%;
+                                    pointer-events: none;
+                                    user-select: none;
+                                }
+                                
+                                .linia {
+                                    counter-increment: linie;
+                                    box-shadow: inset 0 -1px 0px rgba(184, 148, 124, 0.5);
+                                    margin: 0px 22px 0px 28px;
+                                    color: #8a6d6d;
+                                }
+                                
+                                .linia:before {
+                                    content: counter(linie);
+                                    margin-left: -22px;
+                                }
+                                
+                                #_articleBody3 sup {
+                                    /*line-height: 8px;*/
+                                    vertical-align: middle;
+                                    position: relative;
+                                    bottom: 6px;
+                                }
+
+                            </style>
+                            <script>
+                                var on = 0;
+
+                                function linie() {
+                                    on ^= 1;
+                                    if ( on ) {
+                                        var txt_h = parseInt( window.getComputedStyle( de( "piosenka_text" ), null ).height );
+                                        var txt_lh = parseInt( window.getComputedStyle( de( "piosenka_text" ), null ).lineHeight );
+                                        var ile = ( txt_h - 90 ) / txt_lh;
+                                        var ls = "";
+                                        for ( var i = 0; i < ile; i++ ) {
+                                            ls += '<div class="linia"></div>';
+                                        }
+                                        de( "linie" ).innerHTML = ls;
+                                        de( "lines_switch" ).style.backgroundColor = "#FFF";
+                                    } else {
+                                        de( "linie" ).innerHTML = "";
+                                        de( "lines_switch" ).style.backgroundColor = "#ddd2c8";
+                                    }
+                                }
+                            </script>
+
+                            <div id="piosenka_text" aria-label="tekst piosenki">
+                                								<div id="lines_switch_box">
+                                <div id="lines_switch" onClick="linie();" title="numery linii"></div>
+								</div>
+                                <div id="linie"></div>
+                                                                <span id="_articleBody3" itemprop="articleBody">
+                                    Martwi się człek i kłopoce<div>Gnębi go pech dni i noce</div><div><abbr class="skrot" data-id="679" data-definition="  pieniądze, forsa - jeśli nie chodzi o okręty" data-numer="3">Floty</abbr> brak, co dalej?</div><div>Co dzień bank się wali</div><div><abbr class="skrot" data-id="633" data-definition="  (niem. Wechsel - zmiana) zobowiązanie zapłaty" data-numer="2">Weksli</abbr> pełna łapa<br></div><div>Słowem klapa</div><div><br></div><div>Największy <abbr class="skrot" data-id="511" data-definition="  (gw. lw.) wielki pan (ros.) hrabia" data-numer="4">graf</abbr> zszedł na psy</div><div>Spekulant cham chodzi zły</div><div>Żona klnie: Mąż jutro</div><div>Miał mi dać na futro</div><div>Lecz na łzy tych osób</div><div>Ja mam sposób</div><div><br></div><blockquote><div>Ha! ha! ha!</div><div>Ach, śmiej się, śmiej</div><div>Ha! ha! ha!</div><div>Myśl jak najlżej!</div><div><br></div><div>Tylko śmiech, śmiech boski</div><div>Lekiem jest na troski</div><div>Niech je ma <abbr class="skrot" data-id="666" data-definition="  człowiek ograniczony, bez wyższych aspiracji, o zakłamanej moralności, daw. członek korporacji akademickiej niebędący studentem" data-numer="1">filister</abbr></div><div>I minister!</div><div><br></div><div>Ha! ha! ha!</div><div>Ach, śmiej się, śmiej</div><div>Ha! ha! ha!<br></div><div>Drwij z doli złej</div><div><br></div><div>Grunt się nie przejmować</div><div>Śmiać się i całować</div><div>Życie brać najlżej!</div></blockquote><div><br></div><div>Przedwczoraj, gdy szłam do kina</div><div>Słyszę: swój los ktoś przeklina</div><div>To Stach za mną kroczy</div><div>Łez ma pełne oczy</div><div>Płacze  i powiada</div><div>Skandal! zdrada!</div><div><br></div><div>Zdradziła mnie żona ma</div><div>Rzuciła mnie tak, jak psa</div><div>Co mam robić, powiedz</div><div>Żywy trup i wdowiec?</div><div>A ja na to: Stachu</div><div>Słuchaj, brachu</div><div><br></div><div><br></div><div>A teraz wam powiem szczerze:</div><div>Siedzicie, jak na operze</div><div>Blada twarz, jak płótno</div><div>Długi nos na smutno</div><div>Jeden patrzy w ziemię</div><div>Drugi drzemie</div><div><br></div><div>Powaga to śmieszna rzecz</div><div>Niech smutek więc idzie precz</div><div>Ruszcie że się, proszę</div><div>Mruki i truposze</div><div>Hej, karawaniarze</div><div>W górę twarze!</div>                                </span>
+                            </div>
+
+                                                                                    <meta itemprop="dateModified" content="18-02-2019">
+                            <div id="podpis">
+                                <!--div class="popraw" onclick="popraw_ciut()"><img src="/images/okulary.png" width="35" height="15" alt="Popraw swój wzrok!" title="Popraw swój wzrok!"></div-->
+                                <!--div class="popraw" onclick="popraw()"><img src="/images/okulary.png" width="50" height="20" alt="Popraw swój wzrok!" title="Popraw swój wzrok!">
+                                </div-->
+                                <span id="_datePublished4" itemprop="datePublished" content="17.02.2019" style="font-family: english; font-size: 16px">
+                                    17.02.2019 
+                                </span>
+                            </div>
+
+                             <pre></pre>
+                            
+                            <div id="definicje">
+                                <div id="definicje_title">Objaśnienia:</div>
+                                <div id="definicje_lista">
+                                                                        <div class="skrot" id="def_1" title="666">
+                                        <span class="def_numer">
+                                        1)</span>
+                                        filister                                    </div>
+                                    <span> -</span>
+                                    <div class="definicja">
+                                        człowiek ograniczony, bez wyższych aspiracji, o zakłamanej moralności, daw. członek korporacji akademickiej niebędący studentem                                    </div>
+                                                                        <div class="skrot" id="def_2" title="633">
+                                        <span class="def_numer">
+                                        2)</span>
+                                        weksel                                    </div>
+                                    <span> -</span>
+                                    <div class="definicja">
+                                        (niem. Wechsel - zmiana) zobowiązanie zapłaty                                    </div>
+                                                                        <div class="skrot" id="def_3" title="679">
+                                        <span class="def_numer">
+                                        3)</span>
+                                        flota                                    </div>
+                                    <span> -</span>
+                                    <div class="definicja">
+                                        pieniądze, forsa - jeśli nie chodzi o okręty                                    </div>
+                                                                        <div class="skrot" id="def_4" title="511">
+                                        <span class="def_numer">
+                                        4)</span>
+                                        graf                                    </div>
+                                    <span> -</span>
+                                    <div class="definicja">
+                                        (gw. lw.) wielki pan (ros.) hrabia                                    </div>
+                                                                    
+                                
+                                </div>
+                            </div>
+                            
+                             <script>
+        window.addEventListener( 'DOMContentLoaded', (e) => {
+            
+            let abbrs = document.getElementsByTagName("abbr");
+            //for(a of document.getElementsByTagName("abbr")) console.log(a);
+            
+            let abbrs_arr = [];
+            let incr = 1;
+            let tagi = "";
+            let json = '{"666":{"def_numer":1,"ile":1,"list_numer":666,"skrot":"filister","alt_skrot":"filistrem","definicja":"cz\u0142owiek ograniczony, bez wy\u017cszych aspiracji, o zak\u0142amanej moralno\u015bci, daw. cz\u0142onek korporacji akademickiej nieb\u0119d\u0105cy studentem"},"633":{"def_numer":2,"ile":1,"list_numer":633,"skrot":"weksel","alt_skrot":"wekselek, weksle, wekslowe, weksli, weksel\u00f3w, wekselki","definicja":"(niem. Wechsel - zmiana) zobowi\u0105zanie zap\u0142aty"},"679":{"def_numer":3,"ile":1,"list_numer":679,"skrot":"flota","alt_skrot":"floty, flot\u0119","definicja":"pieni\u0105dze, forsa - je\u015bli nie chodzi o okr\u0119ty"},"511":{"def_numer":4,"ile":1,"list_numer":511,"skrot":"graf","alt_skrot":"","definicja":"(gw. lw.) wielki pan (ros.) hrabia"}}';
+            //console.log("");
+            const json_slownik = JSON.parse(json);
+            let bylo = [];
+            //
+            if ( abbrs.length ) {
+                for ( ab of abbrs ) {
+                    // console.log(ab.dataset.numer);
+                    let num = parseInt( ab.dataset.numer, 10 );
+
+                    if (!abbrs_arr[num]) abbrs_arr[num] = incr++;
+                    //abbrs_arr[num] = null ?? incr++;
+                    ab.dataset.numer = abbrs_arr[ab.dataset.numer];
+                    
+                    if(!bylo[ab.dataset.id]){
+                    
+                    tagi += '<div class="skrot" id="def_' + ab.dataset.numer + '" title="' + ab.dataset.id + '">\n';
+                    tagi += '<span class="def_numer"> ' + ab.dataset.numer + ') </span> ';
+                    tagi += ab.textContent + " <!--" + json_slownik[ab.dataset.id]["skrot"] + "--></div>";// + ab.dataset.definition + '</div>\n';
+                    tagi += '<span> -</span>';
+                    tagi += '<div class="definicja">';
+                    if(json_slownik[ab.dataset.id]["alt_skrot"]){ // &&  json_slownik[ab.dataset.id]["alt_skrot"].indexOf(ab.textContent) <= 0){
+                    tagi += '<details><summary title="inne wystąpienia w tekstach">' + (!json_slownik[ab.dataset.id]["skrot"].match("/\b"+ab.textContent+"\b/g") ? json_slownik[ab.dataset.id]["skrot"] : ' ') + ' → ' + ab.dataset.definition + '</summary>';
+                    tagi += '<div>wystąpienia: ' + json_slownik[ab.dataset.id]["skrot"] + ', ' + json_slownik[ab.dataset.id]["alt_skrot"] + '</div>';
+                    tagi += '</details>';
+                    }else{
+                    tagi += ' ' + ab.dataset.definition;
+                    }
+                    tagi += '</div>\n';
+                    //
+                    bylo[ab.dataset.id] = 1;
+                    
+                    }
+                }
+                //console.log( bylo );
+                //console.log( json_slownik[7] );
+                //
+                de("definicje_lista").innerHTML = tagi;
+                
+                
+                //console.log('  '); //= addslashes({$data$definicje_skrotow}); ?> );
+            }
+        } );
+    </script>
+
+                                                                                    <div id="keywords">
+                                <div style="display:inline-block;width: 108px;">słowa kluczowe: </div>
+                                <div style="display:inline-block;width: 556px;vertical-align: text-top;">
+                                                                        <a href="/keywords/sposób">
+                                        sposób                                    </a>
+                                                                        <a href="/keywords/rada">
+                                         rada                                    </a>
+                                                                        <a href="/keywords/śmiech">
+                                         śmiech                                    </a>
+                                                                        <a href="/keywords/sposób_na_troski">
+                                         sposób na troski                                    </a>
+                                                                    </div>
+                            </div>
+                            
+                            <hr>
+                                                        <div id="kto_przepisal">
+
+                                Tekst z:&nbsp;<a href="https://bibliotekapiosenki.pl/publikacje/Kataszek_Stanislaw_Ha_Ha_Ha_shimmy-fox">https://bibliotekapiosenki.pl/publikacje/Kataszek_Stanislaw_Ha_Ha_Ha_shimmy-fox</a>                            </div>
+                            <hr>
+                                                                                    <div id="text_legenda"><fieldset><legend>Legenda:</legend>
+                                <div><span class="legenda_symbol">inc, incipit</span> - incipit - z braku informacji o tytule pozostaje cytat, fragment tekstu z utworu</div>
+                                <div><span class="legenda_symbol">abc (?), (abc?)</span> - tekst poprzedzający (?) jest mało czytelny (przepisywanie ze słuchu)</div>
+                                <div><span class="legenda_symbol">abc ... def</span> - tekst jest nieczytelny (przepisywanie ze słuchu)</div>
+                                <div><span class="legenda_symbol">abc/def</span> - tekst przed i po znaku / występuje zamiennie</div>
+                                <div><span class="legenda_symbol">abc <sup>(abc)</sup></span> - wyraz lub zwrot wymagający opisu, komentarza</div>
+                                <div><span class="legenda_symbol">(abc)</span> - didaskalia lub głupie komentarze kierownika</div>
+								</fieldset>
+                            </div>
+                                                        <style>
+#comments {
+	margin: 0px 12px;
+     container-type: inline-size;
+  container-name: com;
+}
+.comment {
+	background-color: #FFF;
+	margin: 6px 0px;
+	padding: 6px;
+	border-radius: 0px;
+	overflow: auto;
+   
+   
+}
+    .comment:target {
+        /*background-color: rgba(127,127,127,0.2);*/
+        outline: dotted 2px;
+    }
+ .comment:target .nick {
+        background-color: rgba(127,127,127,0.5);
+    }
+    
+   
+#form {
+	margin-bottom: 10px;	
+}
+#dod_kom {
+	font-family: old_caption;
+	font-size: 16px;
+	margin-bottom: 5px;
+}
+#nick {
+	border: solid 1px #600;	
+	padding: 5px;
+	border-radius: 10px;
+	margin-bottom: 5px;
+	width: 200px;
+	font-family: english;
+	font-size: 16px;
+}
+.nick {
+	font-family: old_caption;	
+	font-size: 16px;
+	margin-bottom: 5px;
+    padding: 2px 8px;
+}
+   
+.kom_data {
+	vertical-align: super;
+    font-size: smaller;
+	float:right;
+}
+#komentarz {
+	border: solid 1px #600;	
+	width: 100%;
+	padding: 5px;	
+	border-radius: 10px;
+	font-family: english;
+	font-size: 16px;
+	line-height: 18px;
+	background-repeat: no-repeat;
+	background-position: center center;	
+    background-size: 70px;
+	word-wrap: break-word;
+	white-space: pre-wrap;
+    overflow-wrap: break-word;
+	resize: vertical;
+	field-sizing: content;
+    min-height: 140px;
+	/*background-image: url(/images/loading.svg);*/
+	caret-color: #b8947c;
+}
+.komentarz {
+	margin-left: 15px;
+	font-size: 16px;
+	font-family: english;
+	overflow-wrap: anywhere;
+}
+    .komentarz a {
+        color: black;
+        display: inline-block;
+    }
+#but_div {
+	text-align: right;
+	margin-right: 40px;	
+}
+#send_com {
+	line-height: 24px;
+	width: 180px;
+	border: solid 1px #300;
+	cursor: pointer;
+	border-radius: 12px;
+	font-family: limelight;
+	background-color: rgb(190, 158, 123);	
+	transition: all 0.3s ease-in;
+}
+#send_com:hover {
+	background-color: rgb(124, 81, 34);
+	color: white;
+}
+#komentarze_users {
+	background-repeat: no-repeat;
+	background-position: center center;	
+}
+.komentarz iframe {
+    width: 650px;
+    aspect-ratio: 16 / 9;
+	display: block;
+	margin: 10px;
+}
+    .komentarz .archive_share {
+        text-align: center;
+        background-color: #000;
+        width: 660px;
+        padding-bottom: 1px;
+        margin-block: 6px 0px;
+    }
+    .komentarz .archive_share img {
+        border-radius: 50%;
+    }
+    .komentarz .archive_share iframe {
+        margin-inline: auto;
+        width: 620px;
+    }
+    
+    .ilustracja {
+        display: inline-block;
+        /*float: left;*/
+        
+    }
+    .ilustracja a {
+        margin-right: 12px;
+    }
+    .ilustracja:after, .ilustracja::after {
+        content: " ";
+        clear: both;
+    }
+    .ilustracja img {
+        max-height: 260px;
+        max-width: 670px;
+    }
+    .komentarz div + br {
+        clear: both;
+        display: none;
+    }
+    .komentarz div + br x {
+        display: block;
+    }
+audio, video {
+	display: block;	
+    width: 100%;
+	max-height: 380px;
+	margin-block: 6px 12px;
+	
+}
+	video {
+		background: url(/images/black_dot.png);
+	}
+	
+</style>
+<script type="text/javascript">
+var xhr = new XMLHttpRequest();
+//console.log(xhr);
+//
+function pokaz(){
+	xhr.abort();
+	//
+	var fd = new FormData();
+	//
+	fd.append("pokaz",1);
+	fd.append("id",4686);
+	//
+	xhr.open("POST","/comments.php",true);
+	//
+	xhr.onloadstart = function(){
+		dE("komentarz").style.backgroundImage = "url(/images/loading.svg)";
+	}
+	xhr.onload = function(){
+		dE("komentarz").style.backgroundImage = "none";	
+	}
+	xhr.onloadend = function(){
+		dE("komentarze_users").innerHTML = xhr.responseText;
+			setTimeout(function(){	
+			dE("send_com").removeAttribute("disabled");
+			}, 3000);
+	}
+	xhr.send(fd);
+}
+	//
+	function fix_it(co){
+		var to = co.replaceAll("#","&num;");
+			/*to = co.replaceAll("...","ÃƒÂ¢Ã¢â€šÂ¬Ã‚Â¦");*/
+		return to;
+	}
+//
+function dodaj(){
+	xhr.abort();
+	//
+	if(dE("nick").value.trim() == ""){
+		dE("nick").placeholder = "Podpisz się!";
+	} else if(dE("komentarz").value.trim() == ""){
+		dE("komentarz").placeholder = "Wpisz coś, zanim wyślesz!";
+	} else {
+		dE("send_com").setAttribute("disabled","disabled");
+	//
+		const d = new Date();
+  d.setTime(d.getTime() + (100*24*60*60*1000));
+  let expires = "expires="+ d.toUTCString();
+	document.cookie = "nick=" + dE("nick").value.trim() + ";" + expires;
+		//
+	var fd = new FormData();
+	fd.append("dodaj",1);
+	fd.append("id", 4686);
+	fd.append("czek",dE("czek").value);
+	fd.append("nick",dE("nick").value);
+	fd.append("komentarz",fix_it(dE("komentarz").value));
+	//
+	xhr.open("POST","/comments.php",true);
+	//
+	xhr.onloadstart = function(){
+		dE("komentarz").style.backgroundImage = "url(/images/loading.svg)";
+	}
+	//
+	xhr.onloadend = function(){
+		dE("send_com").setAttribute("disabled","true");
+		dE("komentarz").style.backgroundImage = "none";
+	}
+	//
+	xhr.onload = function(){
+		if(xhr.responseText == 1){
+		pokaz();
+		dE("komentarz").value = "";
+	} else {
+	dE("komentarze_users").innerHTML = "Oj... " + xhr.responseText;
+	};	
+	}
+	//
+	xhr.send(fd);
+	}
+	
+}
+//
+/*document.onreadystatechange = function () {
+  if (document.readyState == "interactive") {
+//	pokaz();  
+  }
+}*/
+    /*
+    document.getElementById('pasteArea').onpaste = function (event) {
+  // use event.originalEvent.clipboard for newer chrome versions
+  var items = (event.clipboardData  || event.originalEvent.clipboardData).items;
+  console.log(JSON.stringify(items)); // will give you the mime types
+  // find pasted image among pasted items
+  var blob = null;
+  for (var i = 0; i < items.length; i++) {
+    if (items[i].type.indexOf("image") === 0) {
+      blob = items[i].getAsFile();
+    }
+  }
+  // load image if there is a pasted image
+  if (blob !== null) {
+    var reader = new FileReader();
+    reader.onload = function(event) {
+      console.log(event.target.result); // data url!
+      document.getElementById("pastedImage").src = event.target.result;
+    };
+    reader.readAsDataURL(blob);
+  }
+}
+*/
+</script>
+<hr>
+<div id="comments">
+  <div id="komentarze_users">
+            <div id="comment_18848" name="comment_18848" class="comment">
+      <div id="nick_18848" class="nick">
+        Andrzej        <span class="kom_data">
+        2019-02-18 09:12        </span></div>
+      <div id="kom_18848" class="komentarz">
+        shimmy - foxtrot (tak jest w nutach)<br />
+1925<br />
+słowa Włast<br />
+<br />
+śpiewała też Ordonka<br />
+<br />
+przepisze wieczorem (o ile znajde czas)      </div>
+    </div>
+            <div id="comment_18849" name="comment_18849" class="comment">
+      <div id="nick_18849" class="nick">
+        Andrzej        <span class="kom_data">
+        2019-02-18 09:15        </span></div>
+      <div id="kom_18849" class="komentarz">
+        aha - nuty tam gdzie pan nie pamiętasz<br />
+<br />
+<a href="https://bibliotekapiosenki.pl/publikacje/Kataszek_Stanislaw_Ha_Ha_Ha_shimmy-fox" target="_blank">https://bibliotekapiosenki.pl/publikacje/Kataszek_Stanislaw_Ha_Ha_Ha_shimmy-fox</a><br />
+<br />
+to jak juz dałem linke to niech inni spisują, ja się od kieriownictwa zaraziłem leniem <span class="emox">😋</span>       </div>
+    </div>
+            <div id="comment_18851" name="comment_18851" class="comment">
+      <div id="nick_18851" class="nick">
+        kierownik        <span class="kom_data">
+        2019-02-18 14:46        </span></div>
+      <div id="kom_18851" class="komentarz">
+        Dzięki. <span class="emox">😉</span>       </div>
+    </div>
+      </div>
+      <div id="dod_kom">Dodaj komentarz</div>
+  <div id="form">
+    <div id="czek_div" style="display:none">
+      <input type="text" id="czek">
+    </div>
+    <div id="nick_div">
+      <input type="text" id="nick" placeholder="podaj imię/nick" value="">
+    </div>
+    <div id="komentarz_div">
+      <textarea id="komentarz" placeholder="wpisz uwagi" rows="7" oninput="powieksz(this)"></textarea>
+    </div>
+    <div id="but_div">
+      <input type="button" id="send_com" value="dodaj swój komentarz" onClick="dodaj();">
+    </div>
+  </div>
+    </div>
+<script>
+function powieksz(k){
+	console.log(k);
+	var sh = k.scrollHeight;
+	var szukane = /\n/g;
+	var trafiony, trafione = [];
+	while(trafiony = szukane.exec(k.value) != null){
+		trafione.push(trafiony);
+	}
+	var linie = trafione.length;
+	//
+	linie > 6 ?	k.rows = linie + 1 : k.rows = 7;	
+	
+	if(sh > 138){
+		//k.style.height = sh + 2 + "px";
+	}
+}
+</script>                        </div>
+                    </div>
+
+                    <div id="piosenka_right">
+                        <style type="text/css">
+#szukaj_tytul {
+	background-color: rgb(236, 228, 218);
+	padding-bottom: 10px;
+	margin-bottom: 10px;
+	width: 100%;
+	border-radius: 12px;
+	text-shadow: none;	
+	line-height: 0px;
+    position: sticky;
+    top: 36px;
+    z-index: 16;
+}
+#szukaj_tytul_head {
+	font-size: 18px;
+	line-height: 24px;
+	font-family: old_caption;
+	text-align: center;
+	color: #000;
+}
+#szukaj_tytul_tb {
+	width: 280px;
+	margin: auto;	
+	border-width: 0px;
+	border-collapse: collapse;
+}
+#szukaj_tytul_tb input, #szukaj_tytul_tb select {
+	font-size: 14px;	
+	border: solid 1px black;
+}
+#szukaj_tytul_tb input {
+	height: 20px;
+	width: 180px;
+	border-radius: 10px 0px 0px 10px;
+	padding-left: 5px;
+}
+#input_trim {
+    position: relative;
+    display: flex;
+    flex-direction: row;
+}
+#input_trim label {
+    position: absolute;
+    top: 10px;
+    left: 6px;
+    font-family: 'old_caption';
+    font-size: 14px;
+    color: #895a3c;
+    pointer-events: none;
+    transition: all .3s cubic-bezier(0, 1.82, 1, 1);
+}
+#input_trim input:focus + label, #input_trim input:not(:placeholder-shown) + label {
+    top: -8px;    
+    color: #4f2f20;
+}
+	#input_trim input:focus::placeholder {
+		color: #895a3c;
+        
+	}
+	#input_trim input::placeholder {
+		color: transparent;
+        font-family: "english";
+		transition: color .2s linear;
+	}
+#szukaj_tytul_tb select {
+	height: 20px;
+	width: 105px;
+	border-radius: 0px 10px 10px 0px;
+	font-family: old_caption;
+}
+#szukaj_tytul_tb option:checked {
+  xbackground: red linear-gradient(0deg, red 0%, red 100%);
+}
+#wynik {
+	overflow: auto;
+	text-shadow: none;	
+	line-height: 20px;
+	font-size: 12px;
+    max-height: calc(100vh - 95px);
+    position: absolute;
+    background-color: #ece4da;
+    width: 100%;
+    border-radius: 0px 0px 12px 12px;
+}
+#wynik .trim {
+	font-size: 12px;	
+	overflow: hidden;
+    max-width: 120px;
+}
+    #wynik a {
+        color: #000;
+    }
+    #wynik a sup {
+        font-size: 10px;
+        position: absolute;
+    left: -8px;
+    }
+#szukanie_brak {
+	text-align:center;	
+	font-size: 18px;
+	font-family: old_caption;
+	line-height: 22px;
+	color: #c00;
+	margin-top: 6px;
+}
+.recent_songs {
+	width: 98%;
+	white-space: nowrap;
+	border-collapse: collapse;
+}
+.recent_songs:nth-child(even) {
+	margin: 3px;	
+}
+.recent_songs:nth-child(odd) {
+	background-color: rgb(221, 209, 193);
+	border-radius: 10px;
+	margin: 3px;
+	box-shadow: 0px 0px 10px rgb(139, 114, 97) inset;
+}
+.recent_img {
+	width: 40px;
+	height: 40px;	
+}
+.recent_img img {
+	width: 38px;
+	/*height: 38px;*/
+}
+.recent_title {
+    position: relative;
+	font-family: old_caption, ruskie;	
+	font-size: 18px;
+	white-space: nowrap;
+	padding-top: 3px;
+}
+.recent_alt_title {
+	font-family: old_caption, ruskie;	
+	font-size: 14px;
+	white-space: nowrap;
+}
+.recent_title a, .recent_alt_title a {
+	overflow: hidden;
+	text-overflow: ellipsis;
+	display: block;
+	width: 235px;	
+	text-decoration: none;
+}
+.recent_title a:hover, .recent_alt_title a:hover {	
+	text-decoration: underline !important;
+}
+.recent_title a .znalezione, .recent_alt_title a .znalezione {
+	font-weight: normal;	
+}
+.recent_autors {
+	
+}
+.recent_muzyka, .recent_slowa  {
+	white-space: nowrap;
+	font-family: old_caption, ruskie;
+	width: 120px;
+	color: rgb(53, 22, 10);
+}
+.trim {
+	overflow: hidden;
+	text-overflow: ellipsis;
+	display:block;
+	width: 100%;
+}
+.recent_muzyka a, .recent_slowa a {
+	/*overflow: hidden;
+	text-overflow: ellipsis;
+	color: rgb(53, 22, 10) !important;*/
+	/*text-decoration: none;		*/
+}
+.recent_muzyka a:hover, .recent_slowa a:hover {
+	text-decoration: underline;
+}
+.audio_ico {
+	text-align:center;
+	width: 18px;
+	height: 18px;
+    xborder: solid 1px black;
+    xborder-radius: 10px;
+    padding: 0px 0px;
+    margin: 0px auto;
+    line-height: 16px;
+    font-size: 10px;
+	xbackground-color: white;
+    xbox-shadow: 0px 0px 3px black inset;	
+	-webkit-touch-callout: none;
+    -webkit-user-select: none;
+    -khtml-user-select: none;
+    -moz-user-select: none;
+    -ms-user-select: none;
+    user-select: none;
+}
+.pers_pic {
+	 background-color:black;
+	 width:46px;
+	 height:46px;
+	 border-radius:50%;
+	 background: no-repeat center center #19201e;
+	 background-size: cover;
+}
+	.tytul_gatunek {
+		font-size: 12px;
+		font-weight: normal;
+	}
+#info {
+	color:#CC0000;
+	text-align:center;
+	font-size: 18px;
+	font-family:old_caption;
+	margin-top: 6px;	
+}
+#info img {
+	width: 32px;
+    vertical-align: middle;
+    margin-left: 6px;	
+}
+input[type="search"]::-webkit-search-decoration,
+input[type="search"]::-webkit-search-cancel-button,
+input[type="search"]::-webkit-search-results-button,
+input[type="search"]::-webkit-search-results-decoration {
+  /*display: none;*/
+}
+input[type="search"]::-webkit-search-cancel-button {
+	-webkit-appearance: none;  
+    content: "clear";
+  /*background: url(/images/clear.png) no-repeat center center;*/
+  height: 20px;
+  width: 36px;
+  xborder-radius: 1.5px;
+  border: solid 0px #8C4600;
+  cursor: pointer;
+  background-color: #CCC;
+  position: relative;
+  top: 0px;
+  right: -3px;
+}
+input[type="search"]::-webkit-search-cancel-button:after {
+    content: " clear ";
+    position: absolute;
+    right: 0px;
+    width:  30px;
+    height: 20px;
+    display: block;
+}
+#czy {
+	text-align: center;	
+	font-family: old_caption;
+    font-size: 16px;
+}
+.amozeto {
+	cursor: pointer;
+	font-family: old_caption;
+    font-size: 18px;
+    white-space: nowrap;
+	margin: 0px 4px 4px 4px;
+	padding: 4px;
+	overflow: hidden;
+	text-overflow: ellipsis;
+	width: 98%;
+	max-width: 282px;
+}
+.amozeto_alt {
+	font-size: 16px;
+	overflow: hidden;
+	text-overflow: ellipsis;
+	width: 98%;	
+}
+.amozeto:nth-child(even) {
+	background-color: rgb(221, 209, 193);
+    border-radius: 10px;
+    margin: 0px 4px 4px 4px;
+	padding: 4px;
+    box-shadow: 0px 0px 10px rgb(139, 114, 97) inset;
+}
+.blad {
+color: #C00;
+}
+</style>
+<div id="szukaj_tytul">
+<div id="szukaj_tytul_head">Szukaj tytułu lub osoby</div>
+<table id="szukaj_tytul_tb">
+<tr><td><span id="input_trim"><input type="search" id="ser" name="ser" placeholder=" wpisz fraze " results="5" oninput="szukaj_tego(this.value)" title="to nie jest google, sorry..." spellcheck="true"><label for="ser">wyszukaj</label></span></td>
+<td><select id="where" onChange="szukaj_tego(de('ser').value)">
+	<option value="tytul">tytuł piosenki</option>
+    <option value="piosenkarze">wykonawca</option>
+    <option value="chory">chór</option>
+    <option value="kompozytorzy">kompozytor</option>
+    <option value="teksciarze">autor tekstu</option>
+</select>
+</td>
+</tr>
+</table>
+	<!--div>xxx</div-->
+<div id="wynik"></div>
+</div>
+<script type="text/javascript">
+var cxhr = new XMLHttpRequest();
+//
+function szukaj_tego(fraza){
+    if(cxhr.status){
+		cxhr.abort();
+        }
+	//console.log(fraza,de("where").value);
+	//
+	if(fraza.trim() != "") { // && fraza.trim().length >= 3){
+		//
+		var fd = new FormData();
+		fd.append("q",fraza);
+		fd.append("where",de("where").value);
+		//
+		cxhr = new XMLHttpRequest();
+		//
+		cxhr.open("POST","/custom_search.php",true);
+		//
+		cxhr.onload = function(){
+			//console.log(xhr.responseText);
+			de("wynik").innerHTML = cxhr.responseText;	
+		}
+		//
+		cxhr.onloadend = function(){
+			Array.from(document.getElementsByClassName("amozeto")).forEach(function(x){
+		x.addEventListener("click",function(){
+			de("ser").value = this.innerText;// this.dataset.tytul;
+			de("ser").oninput();
+		});
+	});
+		}
+		//
+		cxhr.onerror = function(){
+			console.log("error:",cxhr.responseText);	
+		}
+		//
+		cxhr.ontimeout = function(){
+			de("wynik").innerHTML = '<div id="info">timeout...</div>';
+		}
+		//
+		cxhr.onloadstart = function(){
+			de("wynik").innerHTML = '<div id="info">szukam... <img src="/images/loading.svg"></div>';
+		}
+		//
+		cxhr.send(fd);
+		//
+} else {
+	de("wynik").innerHTML = "";	
+}}
+</script>                                                <h3 id="piosenka_spiewali" aria-label="lista wykonawców">
+							
+                            <div class="spiewali_pojemnik"><div class="limelight text16 mb5 center" style="color:#FFF;/*text-shadow: 1px 1px 1px black;*/border-radius: 6px 6px 0px 0px;
+background-color: var(--ciemny-brazowy);
+/*width: 290px;*/
+padding: 3px;
+margin: auto;">Wykonawcy:</div><div class="lista_wykonawcow"><div class="lista_wykonawcow_row"><div class="lista_wykonawcow_icon">
+	<a class="icon" href="/piosenkarze/6/Hanka_Ordonowna" style="background-image:url(/galeria_images/miniatury/thumb_120_120_Hanka_Ordonowna_StareMelodie.pl_1462479754.jpg)" title="Hanka Ordonówna
+Maria Anna Tyszkiewicz, z domu Pietruszyńska
+Ordonka, Weronika Hort">
+	</a>
+	</div><div class="lista_wykonawcow_name""><a href="/piosenkarze/6/Hanka_Ordonowna" title="Hanka Ordonówna
+Maria Anna Tyszkiewicz, z domu Pietruszyńska
+Ordonka, Weronika Hort">Hanka Ordonówna<div class="lista_wykonawcow_name_other">Maria Anna Tyszkiewicz, z domu Pietruszyńska</div><div class="lista_wykonawcow_name_other">Ordonka, Weronika Hort</div></a></div></div><div class="lista_wykonawcow_row"><div class="lista_wykonawcow_icon">
+	<a class="icon" href="/piosenkarze/244/Marek_Windheim" style="background-image:url(/galeria_images/miniatury/thumb_120_120_Marek_Windheim_StareMelodie.pl_1440424242.jpg)" title="Marek Windheim
+Vitoff
+">
+	</a>
+	</div><div class="lista_wykonawcow_name""><a href="/piosenkarze/244/Marek_Windheim" title="Marek Windheim
+Vitoff
+">Marek Windheim<div class="lista_wykonawcow_name_other">Vitoff</div></a></div></div></div></div>								
+							
+                            							
+                        </h3>
+                                                	<style type="text/css">
+		#mp3 {
+			text-align: center;
+			/*margin-top: 10px;*/
+			width: 300px;
+			border-radius: 10px;
+			/*background:#60766B;*/
+			background: #6e625e7a;
+			min-height: 70px;
+			padding-bottom: 1px;
+		}
+		
+		#mp3title {
+			font-size: 20px;
+			font-family: limelight;
+			color: rgb(231, 221, 213);
+			padding: 5px;
+			text-shadow: 2px 2px 1px black;
+		}
+		.opisy {
+			z-index: 12;
+    position: relative;
+		}
+        .opisy > div {
+            
+        }
+		.player {
+			width: 290px;
+			/*background-color: rgb(67, 81, 73);*/
+			background-color: rgb(89, 78, 75);
+			margin: auto;
+			border-radius: 10px;
+			padding-top: 5px;
+			margin-bottom: 10px;
+		}
+		
+		.mp3_img {
+			width: 70px;
+			height: 70px;
+			background-position: center center;
+			background-repeat: no-repeat;
+			float: left;
+			/*box-shadow: 0px 0px 6px 3px #2f2621;*/
+			margin-left: 5px;
+			border-radius: 50%;
+			background-size: cover;
+			background-color: #2f2621;
+			background-blend-mode: screen;
+		}
+		
+		.names {
+			color: #e4d6c9;
+			font-family: english;
+			font-size: 15px;
+			margin-left: 70px;
+            margin-top: 3px;
+		}
+        .names .singer {
+            margin-bottom: 6px;
+        }
+		.names .singer a {
+			color: #e6e0db;
+            text-decoration-color: #b7a9a5;
+    text-decoration-line: underline;
+    text-decoration-style: dashed;
+    text-decoration-thickness: 1px;
+    text-underline-offset: 3px;
+		}
+		.names  a:hover {
+            text-decoration: none;
+        }
+		.sings {
+			font-size: 21px;
+			text-shadow: 2px 2px 5px black;
+			font-variant: small-caps;
+		}
+		
+		.data {
+			text-shadow: 0px 0px 3px black;
+			/*overflow: hidden;*/
+			/*white-space:nowrap;*/
+			/*text-overflow: ellipsis;*/
+			line-height: 16px;
+		}
+        .mp3_komentarz {
+            line-height: 20px;
+            padding: 5px 0px 4px 0px;
+        }
+		.names.data a {
+            text-decoration-color: #b7a9a5;
+    text-decoration-line: underline;
+    text-decoration-style: dashed;
+    text-decoration-thickness: 1px;
+    text-underline-offset: 2px;
+}
+        .names.data a:hover {
+            text-decoration: none;
+        }
+		.mp3_komentarz {
+			margin: 5px 0px 0px 0px;
+			font-size: 13px;
+			margin-left: 70px;
+		}
+		
+		.dyryguje {
+			font-size: 12px;
+		}
+		
+		.audio {
+			width: 280px;
+		}
+		
+		.can {
+			width: 280px;
+			height: 60px;
+			position: absolute;
+			left: 0px;
+			/* border: solid 0px black; */
+			top: -60px;
+			background-color: #594e4b;
+		}
+		
+		.aPlayer {
+			position: relative;
+			margin: 5px;
+			padding-bottom: 3px;
+			z-index: 10;
+		}
+		
+		.prog {
+			width: 280px;
+			border: solid 1px black;
+			height: 8px;
+			border-radius: 5px;
+			overflow: hidden;
+			position: relative;
+			margin-bottom: 3px;
+			box-shadow: 0px 0px 2px black;
+			background: linear-gradient(top, #272727 0%, #525252 50%, #272727 100%);
+			background: -webkit-linear-gradient(top, #272727 0%, #525252 50%, #272727 100%);
+			background: -moz-linear-gradient(top, #272727 0%, #525252 50%, #272727 100%);
+			background: -ms-linear-gradient(top, #272727 0%, #525252 50%, #272727 100%);
+		}
+		
+		.bar {
+			width: 0px;
+			background: #C00;
+			background: linear-gradient(top, #800 0%, #FF5E5E 50%, #800 100%);
+			background: -webkit-linear-gradient(top, #800 0%, #FF5E5E 50%, #800 100%);
+			background: -moz-linear-gradient(top, #800 0%, #FF5E5E 50%, #800 100%);
+			background: -ms-linear-gradient(top, #800 0%, #FF5E5E 50%, #800 100%);
+			height: 6px;
+			border-radius: 0px 5px 5px 0px;
+			border: solid 1px #800;
+			position: absolute;
+		}
+		
+		.buf {
+			width: 0px;
+			background: #CCC;
+			background: linear-gradient(top, #4C4C4C 0%, #CFCFCF 50%, #4C4C4C 100%);
+			background: -webkit-linear-gradient(top, #4C4C4C 0%, #CFCFCF 50%, #4C4C4C 100%);
+			background: -moz-linear-gradient(top, #4C4C4C 0%, #CFCFCF 50%, #4C4C4C 100%);
+			background: -ms-linear-gradient(top, #4C4C4C 0%, #CFCFCF 50%, #4C4C4C 100%);
+			height: 6px;
+			border-radius: 0px 5px 5px 0px;
+		}
+		
+		.counter {
+			color: white;
+			font-family: poor;
+			font-size: 16px;
+			width: 46px;
+			text-shadow: 2px 2px 2px black;
+		}
+		
+		.audio_to_go {
+			float: left;
+			margin-left: 5px;
+		}
+		
+		.audio_total {
+			float: right;
+			margin-right: 5px;
+		}
+		
+		.mp3_play {
+			width: 80px;
+			height: 20px;
+			line-height: 20px;
+			font-family: limelight;
+			font-size: 16px;
+			color: white;
+			background: linear-gradient(top, #272727 0%, #525252 50%, #272727 100%);
+			background: -webkit-linear-gradient(top, #272727 0%, #525252 50%, #272727 100%);
+			background: -moz-linear-gradient(top, #272727 0%, #525252 50%, #272727 100%);
+			background: -ms-linear-gradient(top, #272727 0%, #525252 50%, #272727 100%);
+			cursor: pointer;
+		}
+		
+		.skip {
+			height: 20px;
+			line-height: 20px;
+			font-family: limelight;
+			font-size: 16px;
+			color: white;
+			width: 40px;
+			font-weight: bold;
+			background: linear-gradient(top, #272727 0%, #525252 50%, #272727 100%);
+			background: -webkit-linear-gradient(top, #272727 0%, #525252 50%, #272727 100%);
+			background: -moz-linear-gradient(top, #272727 0%, #525252 50%, #272727 100%);
+			background: -ms-linear-gradient(top, #272727 0%, #525252 50%, #272727 100%);
+			cursor: pointer;
+		}
+		
+		.skip:hover,
+		.mp3_play:hover {
+			background: linear-gradient(top, #000 0%, #525252 50%, #000 100%);
+			background: -webkit-linear-gradient(top, #000 0%, #525252 50%, #000 100%);
+			background: -moz-linear-gradient(top, #000 0%, #525252 50%, #000 100%);
+			background: -ms-linear-gradient(top, #000 0%, #525252 50%, #000 100%);
+		}
+		
+		.bw {
+			border-radius: 10px 0px 0px 10px;
+		}
+		
+		.fw {
+			border-radius: 0px 10px 10px 0px;
+		}
+		
+		.cyfry {
+			font-size: 12px;
+			font-family: serif;
+		}
+		
+		.mp3_bg {
+			background-repeat: no-repeat;
+			/* background-size: contain; */
+			width: 290px;
+			height: 200px;
+			position: absolute;
+			z-index: 0;
+		}
+		
+		.mp3_druga_strona {
+			color: white !important;
+			font-family: english !important;
+			font-size: 14px;
+			display: block;
+			border-top: solid thin #6e625e;
+			background-color: rgba(0, 0, 0, 0.1);
+			border-radius: 10px;
+			text-decoration: none;
+			line-height: 18px;
+		}
+		
+		.names a {
+			color: #e4d6c9 !important;
+		}
+		
+		a.mp3_druga_strona:hover {
+			text-decoration: underline !important;
+		}
+		
+		.mp3_druga_strona_tytul {
+			font-family: limelight;
+			/* font-weight: lighter; */
+			color: #d1c2b4;
+			text-shadow: 0px 0px 3px black;
+		}
+		.spid_opis {
+			color: #b7a9a5;
+			margin-top: 8px;
+			display: inline-block;
+		}
+		.spid {
+			display: inline-block;
+			width: 26px;
+			color: white;
+			white-space: nowrap;
+			text-align: left;
+		}
+		
+		.audio_ops summary {
+			color: #e6ddd5;
+			cursor: pointer;
+			margin-top: 6px;
+		}
+		.audio_ops summary::before {
+			color: #b9a7a1;
+			width: 140px;
+			content: "+ opcje odtwarzania";
+		}
+		.audio_ops[open] summary::before {
+			content: "- zamknij opcje…";
+			color: white;
+			width: 200px;
+		}
+        .slider {
+            -webkit-appearance: none;
+			-moz-appearance:initial;
+          appearance: none;
+          /*background: transparent;*/
+            position: relative;
+            background-color: black;
+  			height: 3px;       
+            width: 252px;
+			margin-bottom: 0px;
+        }
+		.slider::before {
+			/*content: " ";
+			display: block;
+			background-color: #000000;
+			height: 3px;
+			width: 3px;
+			border-radius: 50% 0px 0px 50%;*/
+		}
+		
+		.tone {
+			-moz-appearance:initial;
+			-webkit-appearance: none;
+			top: -11px;
+			left: -10px;
+			width: 40px;
+			position: relative;
+			display: inline-block;
+			cursor: pointer;
+			&::before {
+				content: " ";
+				width: 28px;
+				  height:14px;
+				  background:#d0c2b5;
+				  border-radius:50px;
+				  position:absolute;
+				border: solid 1px black;
+				  right:0;
+				transition: background .3s cubic-bezier(0.45, 1.9, 0.58, 1);
+			}
+			&::after {
+				content: " ";
+				  width:10px;
+				  height:10px;
+				  background:#333;
+				  border-radius:50px;
+				  position:absolute;
+				  right:16px;
+				  top: 2px;
+				transition: right .2s cubic-bezier(0.45, 1.9, 0.58, 1);
+				
+			}
+			&:checked:after {
+				right: 2px;
+			}
+			&:checked:before {
+				background-color: #b6947d;
+			}
+		}
+		
+        datalist {
+            display: flex;
+            justify-content: space-between;
+            font-size: 10px;
+            
+            & option {
+                padding: 0;
+            }
+        }
+        .slider::-webkit-slider-runnable-track {
+  background: #000;
+  height: 3px;
+			
+}
+		.slider::-webkit-slider-runnable-track::before {
+			content: " ";
+			display: block;
+			height: 6px;
+		}
+        .slider::-webkit-slider-thumb {
+		   -webkit-appearance: none; /* Override default look */
+		   appearance: none;
+		   margin-top: -6px; /* Centers thumb on the track */
+		   background-color: #cfc2b6;
+		   height: 14px;
+		   width: 14px; 
+           border-radius: 50%;
+           cursor: pointer;
+			border: solid 1px black;
+			box-shadow: 4px 5px 3px 2px #24242499;
+}
+		.slider::-moz-range-thumb {
+			background-color: #cfc2b6;
+			border: solid 1px black;
+			height: 14px;
+		   width: 14px; 
+			cursor: pointer;
+		}
+		.player fieldset {
+			border-width: 1px;
+			border-color: #a19491;
+			border-radius: 10px;
+		}
+		.player fieldset.eq {
+			margin-top: 6px;
+			background-image: var(--szum);
+			background-color: #3c2f2c;
+		}
+		.player legend {
+			padding-inline: 8px;
+			line-height: 14px;
+			color: #cfc2b6;
+			user-select: none;
+			margin: auto;
+		}
+		.player .mainEQ {
+			
+			background-color: #594e4b;
+    border-radius: 8px;
+    line-height: 20px;
+			}
+		.pokretla {
+			margin-inline: 4px;
+    margin-block: 4px 0px;
+    		display: flex;
+			flex-direction: row;
+			/*gap: 3px;*/
+			padding-bottom: 8px;
+			justify-content: space-around;
+			
+			.pokretlo {
+				flex: 0 0 74px;
+				user-select: none;
+			}
+		}
+/*//////////////////////////////////////////////////////////////////////////////////////////////////////////////*/		
+		.pokretlo .eqSlider {
+			/*transform: rotate(-90deg);*/
+			display: none;
+			
+			writing-mode: vertical-lr; 
+			direction: rtl;
+			appearance: none;
+    width: 12px;
+    background: #000000;
+    box-shadow: #594e4b 0px 0px 0px 4px inset;
+			
+			&::-webkit-slider-thumb {
+				-webkit-appearance: none; /* Override default look */
+			   appearance: none;
+			   margin-top: -6px; /* Centers thumb on the track */
+			   background-color: #cfc2b6;
+			   height: 14px;
+			   width: 14px; 
+			   border-radius: 50%;
+			   cursor: pointer;
+			   border: solid 1px black;
+				box-shadow: 4px 5px 3px 2px #24242499; 
+			}
+		}
+		.pokretlo .eqSlider::-webkit-slider-runnable-track {
+      height: 10px;
+      -webkit-appearance: none;
+      color: #13bba4;
+			/*pointer-events: none;
+    		user-select: none;*/
+		}
+		
+		#sliders input::-webkit-slider-thumb {
+			cursor: pointer;
+			background: red;
+		}
+		
+		.knob-container {
+			display: flex;
+			gap: 100px;
+		}
+		
+		@media (pointer: coarse) {
+			.knob {
+				display: none;
+			}
+				.eqSlider {
+					display: block !important;
+				}
+		}
+
+		.fmeter {
+			margin-inline: 4px;
+			margin-block: 0px 5px;
+		}
+		.fmeter meter {
+			width: 240px;
+			border-radius: 12px;
+			container-type: inline-size;
+		}
+		meter::-webkit-meter-bar {
+			border-radius: 4px;
+    background: #cfc2b6;
+    background-image: var(--szum);
+    box-shadow: 0px 0px 3px 0px black inset;
+    height: 8px;
+		}
+		meter::-webkit-meter-optimum-value, meter::-webkit-meter-suboptimum-value, meter::-webkit-meter-even-less-good-value {
+			border-radius: 4px;
+			background-image: linear-gradient(black, transparent,black), linear-gradient(to right, black 0% 0%, #0c0 2% 88%, #cc0 90% 93%, #c00 95% 100%);
+			background-size: 100cqi;
+		}
+		meter::-moz-meter-bar {
+			background-image: linear-gradient(black, transparent,black), linear-gradient(to right, black 0% 0%, #0c0 2% 88%, #cc0 90% 93%, #c00 95% 100%);
+			background-size: 100cqi;
+		}
+		.volumeter {
+			position:relative;
+			box-sizing: content-box;
+			--volumeter_w: 250px;
+--circle: 240px;
+			--scale_top: 10px;
+			height: 132px;
+    width: var(--volumeter_w);
+    margin: auto;
+    border: solid 1px #a09491;
+    border-radius: 12px;
+    background-color: #594c48;
+    background-image: var(--szum);
+			overflow: hidden;
+			margin-bottom: 12px;
+		.scale {
+		display: grid;
+        place-content: center;
+        border-radius: 50%;
+        /* border: solid 1px red; */
+        --ccircle: 322px;
+        width: var(--circle);
+        height: var(--circle);
+        background: #e7dbdb;
+        background: var(--szum), conic-gradient(from 280deg, #ece4da 40%, 41%, #f2ee0a 42%, 43%, red 44%, 45%, #1d1c1c33 40%);
+        position: absolute;
+        top: var(--scale_top);
+        left: calc((var(--volumeter_w) - var(--circle)) / 2);
+        margin: auto;
+		}		
+		.scale_mask {
+			margin: auto;
+			width: calc(var(--circle) / 1.2);
+        height: calc(var(--circle) / 1.2);
+    background: #584d4a;
+	background-image: var(--szum);
+    border-radius: 50%;
+		}
+		.volume_ind {
+		margin: auto;
+        position: absolute;
+        /* place-content: normal; */
+        --width: 10px;
+        width: var(--width);
+        height: calc((var(--circle) / 2));
+        left: calc(50% - (var(--width) / 2));
+        top: calc(var(--scale_top));
+        /* padding-top: 0px; */
+        /*background: #beb6ae;*/
+        
+        /* background-image: var(--szum); */
+        transform-origin: bottom;
+        
+		}
+			.volume_ind_color {
+				/*margin: auto;
+				margin-top: 5px;
+				width: inherit;
+				height: inherit;
+				background: linear-gradient(#45281b 10%, transparent 10%, #beb6ae 90%);
+				border-radius: 5px;
+        corner-shape: bevel;*/
+				margin: auto;
+        margin-top: 3px;
+        width: 2px;
+        height: inherit;
+        background: linear-gradient(#ff4f00 10%, #000000 10%, #000000 90%);
+        border-radius: 5px;
+        corner-shape: bevel;
+			}	
+		.volume_ind::after {
+		content: "⚫";/*●*/
+    width: 20px;
+    height: 20px;
+    display: flex;
+    flex-wrap: wrap;
+    place-content: center;
+    background: #beb6ae;
+    border-radius: 50%;
+    position: absolute;
+    left: -5px;
+    bottom: -8px;
+		}}
+	</style>
+	<script type="text/javascript">
+		//const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+		//await audioCtx.audioWorklet.addModule('/resources/pitch-processor.js');
+		let w = 280;
+		//
+		function de( kto ) {
+			return document.getElementById( kto );
+		}
+
+		function playTo( kogo, but ) {
+			var tego = de( kogo );
+            tego.preservesPitch = false;
+			if ( tego.paused ) {
+				//tego.playbackRate = 0.8;
+				tego.play();
+				but.value = "pauza";
+			} else {
+				tego.pause();
+				but.value = "graj";
+			}
+		}
+		//
+        function changeSpeed(czyj,val,aid){
+            var tyn = de(czyj);
+            tyn.playbackRate = val;
+            var czas = tyn.duration / tyn.playbackRate;
+            //console.log(Math.floor(czas / 60), Math.floor(czas) % 60);
+            de("total_" + aid).textContent = Math.floor(czas / 60) + " : " + Math.floor(czas) % 60;
+        }
+        //
+		function forword( kogo, ile ) {
+			de( kogo ).currentTime += ile;
+		}
+		//
+		function progress( czyj, aid ) {
+			dur = czyj.duration;
+			cTime = czyj.currentTime;
+			tot = dur / w;
+			cur = cTime / tot;
+			de('mp3_bar_' + aid).style.width = Math.floor( cur ) + "px";
+			//
+			//console.log(czyj.buffered.length);
+			//
+			if ( dur > 1 && czyj.buffered.length ) {
+				buf = czyj.buffered.end( czyj.buffered.length - 1 );
+				//buf = czyj.buffered.end(0) / czyj.duration;//czyj.buffered.length - 1);
+				//de('mp3_buf_'+aid).style.width = Math.floor(buf) * 100 + "%";//(buf / dur) * 100) + "%";
+				de( 'mp3_buf_' + aid ).style.width = Math.floor( ( buf / dur ) * 100 ) + "%";
+				//ms = Math.floor(cTime * 10) % 10;
+				sec = Math.floor( cTime ) % 60;
+				sec < 10 ? secs = "0" + sec : secs = sec;
+				//secs = sec.padStart(2, '0');
+				minuts = Math.floor( cTime / 60 );
+				de( 'ile_' + aid ).innerHTML = minuts + " : " + secs; // + "<sup>" + ms + "</sup>";
+			}
+		}
+		//
+		function setPos( e, who ) {
+			var ev = e || window.event;
+			var eoffx = ev.offsetX || ev.layerX;
+			de( who ).currentTime = de( who ).duration / w * eoffx;
+		}
+		//
+		function koniec( kogo ) {
+			console.log( kogo );
+			de( "pb_" + kogo ).value = "jeszcze?";
+		}
+		//
+		function aLoaded( kto, aid ) {
+			progress( kto, aid );
+			//
+			//console.log(kto.duration);
+			//
+			dur = kto.duration;
+			minutes = Math.floor( dur / 60 );
+			sec = Math.floor( dur ) % 60;
+			sec < 10 ? secs = "0" + sec : secs = sec;
+			de( "total_" + aid ).innerHTML = minutes + " : " + secs;
+		}
+	</script>
+	<div id="mp3">
+		<h3 id="mp3title" aria-label="lista nagrań">Posłuchaj sobie</h3>
+        
+				<style>
+		.knobCont0 {
+			border: solid 0px red;
+			border-radius: 50%;
+			box-shadow: 4px 5px 3px 2px #24242499;
+			width: 30px;
+			height: 30px;
+			display: flex;
+			flex-wrap: wrap;
+			place-content: center;
+			margin: auto;
+			margin-block: 2px;
+			
+			.knob {
+				outline: 2px dashed #212121;
+        		border: 1px solid black;
+        		background-color: #252424;
+				width: 30px;
+				height: 30px;
+				border-radius: 50%;
+				position: relative;
+				margin-inline: auto;
+				margin-block: 5px;
+				/*display: none;*/
+				background-image: var(--szum);
+			}
+			.knob::after {
+				position: absolute;
+				content: "";
+				top: 1px;
+				left: 50%;
+				transform: translateX(-50%);
+				width: 4px;
+				height: 6px;
+				border-radius: 50%;
+				corner-shape: squircle;
+				line-height: 8px;
+				font-size: 14px;
+				background: #ccc;
+				cursor: pointer;
+			}
+		}
+			@media (pointer: coarse) {
+				.knobCont0 {
+					height: auto;
+        			box-shadow: none;
+				}
+			}
+			
+		</style>
+		<div class="player">
+
+			<div class="opisy">
+
+				<div class="mp3_img" style="background-image:url(/galeria_images/miniatury/thumb_120_120_Marek_Windheim_StareMelodie.pl_1440424242.jpg)"></div>
+				<div class="names sings">
+					<div class="singer"><a href="/piosenkarze/244/Marek_Windheim">Marek Windheim</a></div>				</div>
+								<div class="names sings">
+									</div>
+				<!--div class="names data">shimmy-foxtrot</div-->
+				<div class="names data">
+									</div>
+				<div class="names data">
+									</div>
+
+				<div class="names data mp3_komentarz">nagrano ok. 1924-26 r.</div>
+				<div class="names data">
+					
+					 					
+					<div class="dyryguje"> ⋯ ※ ⋯ </div><a href="/nagrania_wytworni/22/Syrena-Grand-Record/#No_17592/17593_17592" target="_blank">Syrena-Grand-Record</a>				</div>
+				<div class="names data dyryguje">
+                    
+                   
+                    
+					kat: <span class="cyfry"><a href="/nagrania_wytworni/22/Syrena-Grand-Record#No_17592/17593_17592" target="_blank">No 17592/17593</a></span>					
+					
+					mx: <span class="cyfry"><a href="/nagrania_wytworni/22/Syrena-Grand-Record#No_17592/17593_17592" target="_blank">17592</a></span>				</div>
+				<div class="names data">
+									</div>
+				<div class="names data">
+									</div>
+				<div style="clear:both"></div>
+</div>
+				<div class="aPlayer">
+					<canvas class="can" id="can_4215"></canvas>
+					<audio src="/mp3/Ha_ha_ha_1550439631.mp3" id="audio_4215" class="audio" preservesPitch="false" onTimeUpdate="progress(this,4215)" onProgress="progress(this,4215)" onended="koniec(4215)" onloadedmetadata="aLoaded(this,4215)" onpause="de('pb_4215').value = 'zagraj';gra_4215=false;" onplay="de('pb_4215').value = 'pauza?';gra_4215=true;" onwaiting="de('pb_4215').value = 'moment…'" onplaying="de('pb_4215').value = 'pauza'" type="audio/mpeg" preload="metadata" playsinline>Niestety, nie da się tego tutaj posłuchać.</audio>
+				
+
+					<div class="prog" id="mp3_4215" onclick="setPos(event,'audio_4215')">
+						<div class="bar" id="mp3_bar_4215"></div>
+						<div class="buf" id="mp3_buf_4215"></div>
+					</div>
+					<div class="counter audio_to_go" id="ile_4215">0:00</div>
+					<div class="counter audio_total" id="total_4215">0:00</div>
+
+					<div style="display: inline-block;" class="ns">
+						<input type="button" class="skip bw" value="<<" aria-label="przewiń wstecz" onClick="forword('audio_4215',-5)"><input id="pb_4215" type="button" class="mp3_play" value="zagraj" aria-label="odtwórz nagranie" onClick="playTo('audio_4215',this)"><input type="button" class="skip fw" value=">>" aria-label="przewiń do przodu" onClick="forword('audio_4215',5)">
+                        </div>
+					
+					
+					<details class="audio_ops">
+						<summary> </summary>
+                        <div id="spid_opis" class="spid_opis">prędkość odtwarzania: <span class="spid" id="spid_4215">× 1</span>&nbsp;<span id="audioSpid_4215"> </span></div>
+                        <input type="range" class="slider" min="0.07" max="3" value="1" step=".01" list="spid" title="prędkość odtwarzania" oninput="changeSpeed('audio_4215',this.value,4215);de('spid_4215').innerHTML='× ' + this.value;" ondblclick="this.value=1;this.oninput();">
+						<!--datalist id="xspid">
+						<option value="50">|</option>
+							<option value="10">10</option>
+							<option value="30">|</option>
+						</datalist-->
+                        
+                           
+                      <div id="picz" class="spid_opis"><span>stała wysokosć dźwięku:</span><input type="checkbox" class="tone" onchange="de('audio_4215').preservesPitch=this.checked;"></div>    
+						
+						
+						
+	<!--input type="range" class="slider" min="-3" max="3" value="0" step=".5" list="spid" title="transpozycja" oninput="changeTune(source0,this.value);" ondblclick="this.value=0;this.oninput();"-->
+						
+						<fieldset class="eq">
+							<legend class="mainEQ">Korektor EQ</legend>
+							<div class="pokretla">
+						<fieldset class="pokretlo">
+							<legend>niskie</legend>
+							<div class="knobCont0">
+		<div id="knob" class="knob" data-id="1"></div>
+		<input type="range" class="eqSlider" id="lowSlider0" min="-20" step="1" max="20" value="0" oninput="updateEQ0('audio_4215')">
+	</div>
+							</fieldset>
+						
+						<fieldset class="pokretlo">
+							<legend>średnie</legend>
+							<div class="knobCont0">
+		<div id="knob" class="knob" data-id="1"></div>
+		<input type="range" class="eqSlider" id="midSlider0" min="-20" step="1" max="20" value="0" oninput="updateEQ0('audio_4215')">
+	</div>
+							</fieldset>
+						
+					<fieldset class="pokretlo">
+							<legend>wysokie</legend>
+							<div class="knobCont0">
+		<div id="knob" class="knob" data-id="1" title="xxx"></div>
+		<input type="range" class="eqSlider" id="highSlider0" min="-20" step="1" max="20" value="0" oninput="updateEQ0('audio_4215')">
+	</div>
+							</fieldset>
+						
+					</div>
+							<fieldset class="fmeter"><legend>głośność</legend>
+							<meter id="meter0" min="0" max="1" low=".9" high=".95" optimum=".8" title="-dB"></meter>
+								<div class="volumeter">
+									<div class="scale"><div class="scale_mask"></div></div>
+									<div class="volume_ind" id="volume_0" style="rotate: 280deg"><div class="volume_ind_color"></div></div>
+								</div>
+								<input type="range" class="slider" min="0" max="1" step=".01" value="1" oninput="scisz0(this.value)" style="width: 242px; margin-block: 12px 20px">
+								</fieldset>
+							</fieldset>
+						
+					</details>
+
+						  
+				</div>
+
+				<div>
+			<a href="/piosenka/1586/Gdy_zobaczysz_ciotke_ma" class="mp3_druga_strona" title="Gdy zobaczysz ciotkę mą – No 17592/17593">druga strona  audio: 
+			<div class="mp3_druga_strona_tytul"><span style="width: 280px; white-space:nowrap;overflow:hidden;display: inline-block;text-overflow: ellipsis; vertical-align: top;">„Gdy zobaczysz ciotkę mą”</span></div></a>
+			</div>
+		
+			
+
+		</div>
+		
+		
+		<script>
+			var gra_4215 = false;
+			//
+			function isSafari() {
+					  const ua = navigator.userAgent;
+					  const iOS = /iPad|iPhone|iPod/.test(ua);
+					  const webkit = /WebKit/.test(ua);
+					  const isChrome = /CriOS/.test(ua);
+					  const isFirefox = /FxiOS/.test(ua);
+
+					  return iOS && webkit && !isChrome && !isFirefox;
+				}
+			
+		if (!isSafari()) {
+			console.log("nie iOS");
+			let pitchNode0;
+        const context0 = new (window.AudioContext || window.webkitAudioContext)();
+			////
+			
+			//
+		const audio0 = document.getElementById('audio_4215');
+        let source0 = context0.createMediaElementSource(audio0), lowFilter0, midFilter0, highFilter0;
+		const analyser0 = context0.createAnalyser();
+		analyser0.fftSize = 8192;//4096;//2048;//1024;
+		let gainNode0 = context0.createGain();
+		gainNode0.gain.value = 1;
+		const buffer0 = new Uint8Array(analyser0.fftSize);
+		const meter0 = document.getElementById("meter0");
+			//
+		
+		
+		
+			//
+		function setupEQ0() {
+			// Create nodes
+			//console.log("Test: " + source0);
+            //source0 = context0.createMediaElementSource(audio0);
+			//console.log("A teraz: " + source0);
+			////
+			
+			//
+            lowFilter0 = context0.createBiquadFilter();
+            midFilter0 = context0.createBiquadFilter();
+            highFilter0 = context0.createBiquadFilter();
+
+            // Configure filters
+            lowFilter0.type = 'lowshelf';
+            lowFilter0.frequency.value = 250; // Cutoff for low frequencies
+
+            midFilter0.type = 'peaking';
+            midFilter0.frequency.value = 3000; // Center for mid frequencies
+			midFilter0.Q.value = 0.7;
+			//console.log("Q: " + midFilter.Q.value);
+            highFilter0.type = 'highshelf';
+            highFilter0.frequency.value = 3000; // Cutoff for high frequencies
+			//
+			//console.log(lowFilter0.gain.value);
+			//console.log(midFilter0.gain.value);
+			//
+			lowFilter0.gain.value = 0;
+            midFilter0.gain.value = 0;
+            highFilter0.gain.value = 0;
+			//
+			
+			//
+			
+            // Connect nodes in series
+            source0.connect(gainNode0);//pitchNode0);
+			//pitchNode0.connect(gainNode0);//gainNode();//connect(lowFilter0);
+			gainNode0.connect(lowFilter0);
+            lowFilter0.connect(midFilter0);
+            midFilter0.connect(highFilter0);
+            highFilter0.connect(analyser0);
+			analyser0.connect(context0.destination);//.connect(gainNode0);
+			//gainNode0.connect(context0.destination);
+			
+			
+        }
+		//
+			function drawMeter() {
+				  analyser0.getByteTimeDomainData(buffer0);
+
+				  // RMS
+				  let sum = 0;
+				  for (let i = 0; i < buffer0.length; i++) {
+					const v = (buffer0[i] - 128) / 128;
+					sum += v * v;
+				  }
+								const rms = Math.sqrt(sum / buffer0.length);
+
+				  // dBFS (przybliżone)
+				  const db = 20 * Math.log10(rms || 0.00001);
+
+				  if(gra_4215) { render(db); }
+				  requestAnimationFrame(drawMeter);
+				}
+			//
+			drawMeter();
+			//
+			function render(db) {
+  //ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+  // zakres np. -60 dBFS → 0 dBFS
+  const minDb = -60;
+  const clamped = Math.max(minDb, db);
+  const norm = (clamped - minDb) / Math.abs(minDb);
+
+  const height = 1000 * norm;
+				//console.log(height);
+				meter0.value = norm;
+				document.getElementById("volume_0").style.rotate = 280 + (160 * norm) + "deg";
+/*const height = canvas.height * norm;*/
+  /*ctx.fillStyle = '#0f0';
+  ctx.fillRect(
+    0,
+    canvas.height - height,
+    canvas.width,
+    height
+  );*/
+}
+			//
+			function dbToGain(db) {
+				
+				//if (db <= 0) return 0;
+  				return Math.pow(10, (db * -60) / 20);
+				
+			  //return Math.pow(10, db / 20);
+			}
+			//
+			function scisz0(ile){
+				gainNode0.gain.value = ile;//setTargetAtTime(dbToGain(ile),context0.currentTime,0.02);
+				//console.log(Math.pow(10, (ile * -60) / 20));
+			}
+			//
+        function updateEQ0() {
+			
+            lowFilter0.gain.value = document.getElementById('lowSlider0').value;
+            midFilter0.gain.value = document.getElementById('midSlider0').value;
+            highFilter0.gain.value = document.getElementById('highSlider0').value;
+        }
+
+        // Start EQ when audio context is ready (user interaction usually required)
+        audio0.addEventListener('play', () => {
+            if (context0.state === 'suspended') {
+                context0.resume();
+            }
+            if (!source0) {
+               //setupEQ0();
+            }
+            updateEQ0();
+        });
+		//
+			function changeTune(src,val){
+				console.log(source0);//.playbackRate);// = val;
+			}
+			
+		//
+        // Handle new audio file loads
+        audio0.addEventListener('loadedmetadata', () => {
+            //source0 = null; // Reset source for new file
+            //setupEQ0();
+        });
+
+        // Initial setup (if audio plays automatically)
+        setupEQ0();
+        updateEQ0();
+		//
+		const sliders0 = document.getElementsByClassName("eqSlider");
+		Array.from(sliders0).forEach((el) => {
+			//console.log(el);
+			el.addEventListener("dblclick", function(el) {
+				//console.log(el);
+			this.value = 0;
+		});
+		});	
+			
+			
+			
+		const minValue0 = -20;
+		const maxValue0 = 20;
+		const minAngle0 = -130;
+		const maxAngle0 = 130;
+
+		const wheelStep0 = 10;
+		const fineStep0 = 10;
+
+		let activeKnob0 = null;
+
+function angleToValue(angle) {
+    return (
+        ((angle - minAngle0) / (maxAngle0 - minAngle0)) *
+        (maxValue0 - minValue0) + minValue0    );
+}
+
+function valueToAngle(value) {
+    return (
+        ((value - minValue0) / (maxValue0 - minValue0)) *
+        (maxAngle0 - minAngle0) + minAngle0    );
+}
+
+function clamp(val, min, max) {
+    return Math.max(min, Math.min(max, val));
+}
+
+document.querySelectorAll(".knobCont0").forEach(container => {
+    const knob0 = container.querySelector(".knob");
+    const valueDisplay = container.querySelector(".eqSlider");
+
+    let angle = 0;
+    let value = 0;
+
+    function update(newAngle) {
+        angle = clamp(newAngle, minAngle0, maxAngle0);
+        value = Math.round(angleToValue(angle) * 10) / 10;
+
+        knob0.style.transform = "rotate("+angle+"deg)";
+        valueDisplay.value = value;
+    }
+
+    knob0.addEventListener("mousedown", () => {
+        activeKnob0 = { knob0, update };
+    });
+	knob0.addEventListener("dblclick", () => {
+       update(valueToAngle(0));
+		updateEQ0();
+    });
+    knob0.addEventListener("wheel", (e) => {
+        e.preventDefault();
+
+        const step0 = e.shiftKey ? fineStep0 : wheelStep0;
+        const delta0 = e.deltaY < 0 ? step0 : -step0;
+
+        update(valueToAngle(value + delta0));
+    }, { passive: false });
+
+    update(valueToAngle(0));
+});
+
+document.addEventListener("mouseup", () => activeKnob0 = null);
+
+document.addEventListener("mousemove", (e) => {
+    if (!activeKnob0) return;
+
+    const rect = activeKnob0.knob0.getBoundingClientRect();
+    const cx = rect.left + rect.width / 2;
+    const cy = rect.top + rect.height / 2;
+
+    const dx = e.clientX - cx;
+    const dy = cy - e.clientY;
+
+    const angle = Math.atan2(dx, dy) * 180 / Math.PI;
+    activeKnob0.update(angle);
+	updateEQ0();
+});
+		}
+///////////////////////
+	document.addEventListener('touchstart', function() {
+					  if (context0.state === 'suspended') {
+							context0.resume();
+					  }
+							/*document.getElementById('lowSlider0').style.display = "block";
+						  	document.getElementById('midSlider0').style.display = "block";
+						  	document.getElementById('highSlider0').style.display = "block";
+						  const cols = document.getElementsByClassName('knob');
+						  for(i = 0; i < cols.length; i++) {
+							cols[i].style.display = "none";
+						  }*/
+			});
+		</script>
+		
+				
+	</div>
+	                        						
+                                                                                                <div id="podobne">
+                            <div id="podobne_naglowek">Podobne teksty:</div>
+                            <style>
+#podobne {
+	background-color: rgb(209, 194, 180);
+	border-radius: 10px;
+	margin-top: 10px;
+	font-family: old_caption, ruskie;
+	color: rgb(46, 15, 9);
+	overflow: hidden;
+	box-shadow: 0px 0px 2px 3px #D1C2B4 inset, 0px 0px 0px 3px #2E0F09 inset;
+}
+#podobne_naglowek {
+	text-align: center;	
+	font-size: 18px;
+	border-bottom: solid 1px rgb(46, 15, 9);
+	padding: 5px 0px;
+	text-shadow: 0px 0px 1px rgb(116, 88, 83);
+    background-color: rgba(221, 210, 200, 0.6);
+}
+#podobne table {
+	width: 100%;
+	
+	white-space: nowrap;
+}
+#podobne td {
+	height: 22px;
+	font-size: 18px;	
+}
+#podobne .img {
+	width: 22px;
+	height: 22px;	
+	overflow: hidden;
+}
+#podobne .img a {
+	width: 22px;
+	height: 22px;	
+	overflow: hidden;
+}
+#podobne  a {
+	text-decoration: none;	
+	overflow: hidden;
+	text-overflow: ellipsis;
+	display: block;
+	width: 270px;
+	color: rgb(46, 15, 9);
+}
+#podobne a:hover {
+	text-decoration: underline !important;
+}
+    #podobne .ile {
+        font-size:12px;
+        vertical-align: super;
+    }
+</style>
+<table>
+    <tr><td class="img"><a href="/piosenka/3942/Daj chłopcze mi na szczęście rękę"><img src="/images/shellac.svg"></a></td><td><a class="" href="/piosenka/3942/Daj chłopcze mi na szczęście rękę" title="2: rada, sposób na troski">Daj chłopcze mi na szczęście rękę <span class="ile">2</span></a></td></tr>
+    <tr><td class="img"><a href="/piosenka/3048/Śmiejący się policjant"><img src="/images/shellac.svg"></a></td><td><a class="" href="/piosenka/3048/Śmiejący się policjant" title="2: rada, śmiech">Śmiejący się policjant <span class="ile">2</span></a></td></tr>
+    <tr><td class="img"><a href="/piosenka/2947/Możesz się śmiać, dziewczyno"><img src="/images/shellac.svg"></a></td><td><a class="" href="/piosenka/2947/Możesz się śmiać, dziewczyno" title="2: rada, śmiech">Możesz się śmiać, dziewczyno <span class="ile">2</span></a></td></tr>
+    <tr><td class="img"><a href="/piosenka/1645/Na Bielany"><img src="/images/shellac.svg"></a></td><td><a class="" href="/piosenka/1645/Na Bielany" title="2: rada, sposób na troski">Na Bielany <span class="ile">2</span></a></td></tr>
+    <tr><td class="img"><a href="/piosenka/1636/Śmiej się (Karr)"><img src="/images/shellac.svg"></a></td><td><a class="" href="/piosenka/1636/Śmiej się (Karr)" title="2: rada, śmiech">Śmiej się (Karr) <span class="ile">2</span></a></td></tr>
+    <tr><td class="img"><a href="/piosenka/1172/Czy ty wiesz, mój kochany"><img src="/images/shellac.svg"></a></td><td><a class="" href="/piosenka/1172/Czy ty wiesz, mój kochany" title="2: rada, śmiech">Czy ty wiesz, mój kochany <span class="ile">2</span></a></td></tr>
+    <tr><td class="img"><a href="/piosenka/4747/Kłopoty w domu"><img src="/images/shellac.svg"></a></td><td><a class="" href="/piosenka/4747/Kłopoty w domu" title="2: sposób, śmiech">Kłopoty w domu <span class="ile">2</span></a></td></tr>
+    <tr><td class="img"><a href="/piosenka/3107/Feluś"><img src="/images/shellac.svg"></a></td><td><a class="" href="/piosenka/3107/Feluś" title="2: sposób, rada">Feluś <span class="ile">2</span></a></td></tr>
+
+</table>                        </div>
+                                                                        <style>
+#nuty {
+	margin-top: 6px;
+	background-color: rgb(209, 194, 180);
+	border-radius: 10px;
+	font-family: old_caption;
+	color: rgb(46, 15, 9);
+	overflow: hidden;
+	text-align: center;
+	padding-bottom: 10px;
+}
+#nuty_contener {
+	display: flex;
+	width: 300px;	
+	align-content: space-around;
+    justify-content: space-evenly;
+    align-items: center;
+    flex-wrap: wrap;
+}
+.nutka {
+	display: block;
+	margin: 6px 0px;
+	max-width: 140px;
+    box-shadow: 0px 0px 3px #2E0F09;
+    position: relative;
+    overflow: hidden;
+}
+.nutka a {
+	display: block;	
+	line-height: 0px;
+}
+.nutka a img {
+	max-width: 140px;	
+}
+.nutka .nutka_info {
+    position: absolute;
+    top: 20px;
+    background-color: #faf3e3;
+    opacity: 0;
+    pointer-events: none;
+    width: 140px;
+    height: 190px;
+    font-size: 14px;
+    padding: 2px;
+    transition: all .3s ease-in-out;
+}
+.nutka:hover .nutka_info {
+    top: 0px;
+    opacity: 1;
+}
+</style>
+<div id="nuty">
+<div style="text-align: center;font-size: 18px;border-bottom: solid 1px rgb(46, 15, 9);padding: 5px 0px;text-shadow: 0px 0px 1px rgb(116, 88, 83);background-color: rgb(221, 210, 200);">Nuty</div>
+<div id="nuty_contener">
+<div class="nutka"><a href="/nuty/ha_ha_ha-shimmy-foxtrot.pdf" target="_blank"><img src="/nuty/miniatury/thumb_140_190_ha_ha_ha-shimmy-foxtrot.jpg" alt="Ha! Ha! Ha! - shimmy-foxtrot
+muz. Szymon Kataszek
+sł. Andrzej Włast" title="Ha! Ha! Ha! - shimmy-foxtrot
+muz. Szymon Kataszek
+sł. Andrzej Włast"></a>
+<div class="nutka_info">Ha! Ha! Ha! - shimmy-foxtrot<br />
+muz. Szymon Kataszek<br />
+sł. Andrzej Włast</div>
+</div>
+</div>
+</div>
+                    </div>
+
+                </div>
+            </div>
+        </div>
+        <div id="clear"></div>
+    </div>
+    </div>
+    <div id="footer">
+        <style>
+#footer {
+	width: 1080px;
+	margin: 20px auto 0px auto;
+	border-radius: 15px 15px 0px 0px;
+	padding-inline: 26px;
+	line-height: 24px;
+	box-shadow: 0px 0px 10px black;
+	font-size: 14px;
+	font-family: "Courier New", Courier, monospace;
+	background-color: #BFA48C;
+	display: flex;
+    flex-flow: row wrap;
+    justify-content: space-evenly;
+    align-content: stretch;
+    align-items: stretch;
+}
+	#footer #flogo {
+		width: 100%;
+    margin: 3px auto 0px auto;
+	}
+#footer img {
+	vertical-align: text-bottom;
+	width: 20px;
+	height: 20px;
+	border-radius: 50%;
+	box-shadow: 0px 0px 3px 1px black inset;
+}
+#footer a {
+	color: #000;
+	font-family: old_caption, Tahoma, Geneva, sans-serif;
+	text-decoration: none;
+}
+	#footer a:hover {
+		text-decoration: underline;
+	}
+#footer .column {
+	display: flex;
+    flex-flow: column;
+    align-items: start;
+	flex: 3;
+    padding: 12px;
+	font-family: old_caption;
+}
+</style>
+<div id="flogo"><img src="/images/footer.jpg" alt="Stare Melodie"> <span style="font-family:'Limelight';font-size: 18px;
+  text-shadow: 1px 1px 1px rgb(221, 210, 200);">Stare Melodie</span></div>
+<div class="column">
+	
+	<div><a href="/kontakt">Kontakt</a></div>
+</div>
+<div class="column">
+
+<a href="/o_stronie">o stronie</a> 
+<a href="https://www.youtube.com/c/StareMelodie" target="_blank">kanał YouTube</a> 
+<a href="https://www.paypal.me/StareMelodie" target="_blank">PayPal.me - wspomóż StareMelodie.pl</a>
+</div>
+<div class="column">
+	<a href="http://syrena-record.pl" target="_blank">Syrena-Record.pl</a>
+<a href="http://melodje.pl" target="_blank">Melodje.pl</a> 
+
+<div style="position:absolute;left: -2000px">
+<a href="http://naked.ukulele.pl" title="naked ukulele / ukulele na golasa">ukulele na golasa / naked ukulele</a>
+</div>
+	
+</div>
+<script>
+	
+  (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
+  (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
+  m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
+  })(window,document,'script','//www.google-analytics.com/analytics.js','ga');
+
+  ga('create', 'UA-2171453-12', 'staremelodie.pl');
+  ga('require', 'displayfeatures');
+  ga('send', 'pageview');
+
+</script>
+<script>
+function yt(vid){
+var vkod = vid.match(/(?:youtube(?:-nocookie)?\.com\/(?:[^\/]+\/.+\/|(?:v|e(?:mbed)?)\/|.*[?&]v=)|youtu\.be\/)([^"&?\/ ]{11})/i);
+return vkod[1];	
+}
+//
+function playVid(kto){
+	dE("pokazywarka_video").style.display = "flex";
+	var ytid = kto.getAttribute("href");
+	//
+	var adr = yt(ytid);
+	var dane = {};
+	var ciach = ytid.split("&");
+	for(var i = 0; i < ciach.length; i++){
+		vars = ciach[i].split("=");
+		dane[vars[0]] = vars[1];
+	}
+	//
+	dE("pokazywarka").style.display = "block";
+	var str = dane["start"] ? "&start=" + dane["start"] : "";
+	var end = dane["end"] ? "&end=" + dane["end"] : "";
+	var ytifr = '<div id="pokazywarka_video_cell"><iframe width="590" height="430" src="https://www.youtube.com/embed/' + adr + '?autoplay=1&autohide=1&mute=0&rel=0&showinfo=0' + str + end + '" frameborder="0" allowfullscreen allow="autoplay"></iframe></div>';
+	dE("pokazywarka_obr").style.display = "none";
+	dE("pokazywarka_video").innerHTML = ytifr;
+}
+//
+var vi = document.getElementsByClassName("ytvideo");
+var vil = vi.length;
+//console.log(vil);
+for(var i =0; i < vil; i++){
+	vi[i].onclick = function(e) { 
+	e.preventDefault();
+	playVid(this); 
+	}
+}
+//
+//setTimeout(function(){window.scrollBy(0,200);}, 1000);
+//window.scrollBy(0,20);
+</script>    </div>
+    </body>
+</html>

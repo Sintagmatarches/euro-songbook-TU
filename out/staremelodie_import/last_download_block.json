@@ -1,0 +1,36 @@
+{
+  "target_successes": 100,
+  "success_count": 0,
+  "failure_count": 3,
+  "new_gone_count": 0,
+  "elapsed_total_s": 11.58,
+  "elapsed_per_success_s": null,
+  "cached_before": 7076,
+  "cached_after": 7076,
+  "downloaded_this_block": 0,
+  "new_gone": [],
+  "sample_successes": [],
+  "sample_failures": [
+    {
+      "site_id": "4050",
+      "title": "O tem potem",
+      "url": "https://staremelodie.pl/piosenka/4050/O_tem_potem",
+      "status": null,
+      "error": "fetch failed: https://staremelodie.pl/piosenka/4050/O_tem_potem: 500 Server Error:  for url: https://staremelodie.pl/piosenka/4050/O_tem_potem"
+    },
+    {
+      "site_id": "5079",
+      "title": "Polka farmerka",
+      "url": "https://staremelodie.pl/piosenka/5079/Polka_farmerka",
+      "status": null,
+      "error": "fetch failed: https://staremelodie.pl/piosenka/5079/Polka_farmerka: 500 Server Error:  for url: https://staremelodie.pl/piosenka/5079/Polka_farmerka"
+    },
+    {
+      "site_id": "5841",
+      "title": "Ruda rodzina",
+      "url": "https://staremelodie.pl/piosenka/5841/Ruda_rodzina",
+      "status": null,
+      "error": "fetch failed: https://staremelodie.pl/piosenka/5841/Ruda_rodzina: 500 Server Error:  for url: https://staremelodie.pl/piosenka/5841/Ruda_rodzina"
+    }
+  ]
+}

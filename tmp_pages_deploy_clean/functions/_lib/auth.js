@@ -1,4 +1,7 @@
 // Minimal JWT (HS256) using WebCrypto. For Cloudflare Workers runtime.
+const AUTH_COOKIE_NAME = "songbook_session";
+const AUTH_HINT_COOKIE_NAME = "songbook_session_hint";
+
 function b64urlEncode(bytes) {
   let str = "";
   bytes = new Uint8Array(bytes);
@@ -58,4 +61,88 @@ export function getBearer(req){
   const h = req.headers.get("Authorization") || "";
   const m = h.match(/^Bearer\s+(.+)$/i);
   return m ? m[1] : null;
+}
+
+function parseCookies(cookieHeader = "") {
+  return String(cookieHeader || "")
+    .split(";")
+    .map((part) => String(part || "").trim())
+    .filter(Boolean)
+    .reduce((acc, part) => {
+      const eqIndex = part.indexOf("=");
+      if (eqIndex <= 0) return acc;
+      const key = part.slice(0, eqIndex).trim();
+      const value = part.slice(eqIndex + 1).trim();
+      if (!key) return acc;
+      acc[key] = value;
+      return acc;
+    }, {});
+}
+
+export function getAuthCookie(req) {
+  const cookies = parseCookies(req.headers.get("Cookie") || "");
+  const raw = cookies[AUTH_COOKIE_NAME];
+  if (!raw) return null;
+  try {
+    return decodeURIComponent(raw);
+  } catch {
+    return raw;
+  }
+}
+
+export function getAuthToken(req) {
+  return getBearer(req) || getAuthCookie(req) || null;
+}
+
+function authCookieBase(request) {
+  const secure = new URL(request.url).protocol === "https:";
+  return [
+    `${AUTH_COOKIE_NAME}=`,
+    "Path=/",
+    "HttpOnly",
+    "SameSite=Lax",
+    secure ? "Secure" : "",
+  ].filter(Boolean);
+}
+
+function authHintCookieBase(request) {
+  const secure = new URL(request.url).protocol === "https:";
+  return [
+    `${AUTH_HINT_COOKIE_NAME}=`,
+    "Path=/",
+    "SameSite=Lax",
+    secure ? "Secure" : "",
+  ].filter(Boolean);
+}
+
+export function buildAuthCookie(request, token, ttlSeconds = 60 * 60 * 24 * 14) {
+  return [
+    `${AUTH_COOKIE_NAME}=${encodeURIComponent(String(token || ""))}`,
+    ...authCookieBase(request).slice(1),
+    `Max-Age=${Math.max(0, Number(ttlSeconds || 0))}`,
+  ].join("; ");
+}
+
+export function buildAuthHintCookie(request, ttlSeconds = 60 * 60 * 24 * 14) {
+  return [
+    `${AUTH_HINT_COOKIE_NAME}=1`,
+    ...authHintCookieBase(request).slice(1),
+    `Max-Age=${Math.max(0, Number(ttlSeconds || 0))}`,
+  ].join("; ");
+}
+
+export function clearAuthCookie(request) {
+  return [
+    ...authCookieBase(request),
+    "Max-Age=0",
+    "Expires=Thu, 01 Jan 1970 00:00:00 GMT",
+  ].join("; ");
+}
+
+export function clearAuthHintCookie(request) {
+  return [
+    ...authHintCookieBase(request),
+    "Max-Age=0",
+    "Expires=Thu, 01 Jan 1970 00:00:00 GMT",
+  ].join("; ");
 }
