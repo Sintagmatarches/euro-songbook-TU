@@ -4759,6 +4759,17 @@ pre.lyrics {
   margin: 0 auto;
 }
 
+.home-country-feed-historical-list .home-country-card {
+  aspect-ratio: auto;
+  min-height: 132px;
+  height: 132px;
+}
+
+.home-country-feed-historical-list .home-country-card-label {
+  -webkit-line-clamp: 3;
+  line-height: 1.18;
+}
+
 .ac-revision-panel {
   display: grid;
   gap: 12px;

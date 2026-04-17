@@ -4,46 +4,79 @@ import { ensureSchemaAndSeed } from "../../_lib/schema.js";
 import { normalizeSongCatalogInput, normalizeSongCountry } from "../../../shared/song-catalogs.js";
 import { syncSongSearchIndex } from "../../_lib/song-search.mjs";
 import { sanitizeSongLinks } from "../../_lib/link-safety.js";
+import { readSongSnapshot, recordSongRevision, replaceSongLinks, replaceSongVersions } from "../../_lib/song-audit.js";
 
 function normStr(v){ v = (v ?? "").toString().trim(); return v || null; }
-function normLinkVersion(v){ v = (v ?? "").toString().trim(); return v || null; }
 function toAdminContentFlag(v){ return v === true || v === 1 || String(v || "").trim().toLowerCase() === "1" || String(v || "").trim().toLowerCase() === "true"; }
 function toIntBool(v){ return v === true || v === 1 || String(v || "").trim().toLowerCase() === "1" || String(v || "").trim().toLowerCase() === "true" ? 1 : 0; }
 function clamp(n, a, b){ n = parseInt(n||"1",10); if(Number.isNaN(n)) n=1; return Math.max(a, Math.min(b, n)); }
 const GERMAN_COLLABORATORS_FILTER_VALUES = ["german_collaborators", "latvian_ss_legion", "estonian_ss_division"];
 
-async function replaceLinks(env, songId, links){
-  await dbRun(env, `DELETE FROM song_links WHERE song_id=?`, [songId]);
-  if(!Array.isArray(links)) return;
-  let order = 0;
-  for(const l of links){
-    if(!l?.url) continue;
-    await dbRun(env, `INSERT INTO song_links (id,song_id,title,url,kind,version_id,sort_order) VALUES (?,?,?,?,?,?,?)`,
-      [makeId("l"), songId, normStr(l.title), String(l.url), normStr(l.kind), normLinkVersion(l.version_id ?? l.versionId), order++]
-    );
+function deletedSongsBaseWhere({ q = "", recent = "", allowAdminContent = true } = {}) {
+  const where = [
+    `r.revision_seq = (SELECT MAX(r2.revision_seq) FROM song_revisions r2 WHERE r2.song_id = r.song_id)`,
+    `json_extract(r.snapshot_json, '$.is_deleted') = 1`,
+    `NOT EXISTS (SELECT 1 FROM songs s WHERE s.id = r.song_id)`,
+  ];
+  const params = [];
+  if (!allowAdminContent) {
+    where.push(`COALESCE(json_extract(r.snapshot_json, '$.is_admin_content'), 0) = 0`);
   }
+  if (recent === "1") {
+    where.push(`datetime(r.created_at) >= datetime('now','-30 day')`);
+  }
+  if (q) {
+    const like = `%${q}%`;
+    where.push(`(
+      COALESCE(json_extract(r.snapshot_json, '$.title'), '') LIKE ?
+      OR COALESCE(json_extract(r.snapshot_json, '$.lyrics'), '') LIKE ?
+    )`);
+    params.push(like, like);
+  }
+  return { where, params };
 }
 
-async function replaceVersions(env, songId, versions){
-  await dbRun(env, `DELETE FROM song_versions WHERE song_id=?`, [songId]);
-  if(!Array.isArray(versions)) return;
-  let order = 0;
-  for(const v of versions){
-    if(!v?.lyrics) continue;
-    const versionId = normStr(v.id) || makeId("v");
-    await dbRun(env, `INSERT INTO song_versions (id,song_id,title,lang,lyrics,lyrics_meta_json,source,sort_order) VALUES (?,?,?,?,?,?,?,?)`,
-      [
-        versionId,
-        songId,
-        normStr(v.title),
-        normStr(v.lang),
-        String(v.lyrics),
-        JSON.stringify(v.lyrics_meta_json || v.lyrics_meta || {}),
-        normStr(v.source),
-        order++,
-      ]
-    );
-  }
+async function listDeletedSongs(env, { q = "", recent = "", sort = "newest", page = 1, per = 20, allowAdminContent = true } = {}) {
+  const offset = Math.max(0, (Math.max(1, Number(page) || 1) - 1) * per);
+  const { where, params } = deletedSongsBaseWhere({ q, recent, allowAdminContent });
+  const count = await dbGet(
+    env,
+    `SELECT COUNT(*) AS c
+     FROM song_revisions r
+     WHERE ${where.join(" AND ")}`,
+    params
+  );
+  const total = Number(count?.c || 0);
+  const pages = Math.max(1, Math.ceil(total / per));
+  const orderBy = sort === "oldest"
+    ? "datetime(r.created_at) ASC, lower(coalesce(json_extract(r.snapshot_json, '$.title'), '')) ASC"
+    : "datetime(r.created_at) DESC, lower(coalesce(json_extract(r.snapshot_json, '$.title'), '')) ASC";
+  const rows = await dbAll(
+    env,
+    `SELECT
+       r.song_id AS id,
+       COALESCE(json_extract(r.snapshot_json, '$.title'), '') AS title,
+       json_extract(r.snapshot_json, '$.subtitle') AS subtitle,
+       COALESCE(json_extract(r.snapshot_json, '$.lang'), '') AS lang,
+       json_extract(r.snapshot_json, '$.country') AS country,
+       json_extract(r.snapshot_json, '$.period') AS period,
+       json_extract(r.snapshot_json, '$.region') AS region,
+       json_extract(r.snapshot_json, '$.event') AS event,
+       json_extract(r.snapshot_json, '$.theme') AS theme,
+       COALESCE(json_extract(r.snapshot_json, '$.year'), '') AS year,
+       COALESCE(json_extract(r.snapshot_json, '$.is_admin_content'), 0) AS is_admin_content,
+       COALESCE(json_extract(r.snapshot_json, '$.created_at'), r.created_at) AS created_at,
+       r.created_at AS updated_at,
+       substr(trim(COALESCE(json_extract(r.snapshot_json, '$.lyrics'), '')), 1, 280) AS snippet,
+       CASE WHEN datetime(r.created_at) >= datetime('now','-30 day') THEN 1 ELSE 0 END AS is_recent,
+       'deleted' AS status
+     FROM song_revisions r
+     WHERE ${where.join(" AND ")}
+     ORDER BY ${orderBy}
+     LIMIT ? OFFSET ?`,
+    [...params, per, offset]
+  );
+  return { items: rows || [], total, page: Math.max(1, Number(page) || 1), pages };
 }
 
 export async function onRequestGet({ env, request }){
@@ -79,6 +112,20 @@ export async function onRequestGet({ env, request }){
     ? access.scopeLanguages.map((v) => String(v || "").trim().toLowerCase()).filter(Boolean)
     : [];
   const hasAllLangScope = access?.role === "super_admin" || scopeLanguages.includes("*");
+  if (status === "deleted") {
+    if (!hasAllLangScope) {
+      return json({ items: [], total: 0, page, pages: 1 });
+    }
+    const deletedData = await listDeletedSongs(env, {
+      q,
+      recent,
+      sort,
+      page,
+      per,
+      allowAdminContent,
+    });
+    return json(deletedData);
+  }
   if (!hasAllLangScope) {
     if (!scopeLanguages.length) {
       return json({ items: [], total: 0, page, pages: 1 });
@@ -207,8 +254,17 @@ export async function onRequestPost({ env, request }){
     subtitle: body.subtitle,
     lyrics: body.lyrics,
   });
-  await replaceLinks(env, id, safeLinks);
-  await replaceVersions(env, id, body.versions);
+  await replaceSongLinks(env, id, safeLinks);
+  await replaceSongVersions(env, id, body.versions);
+  const savedSnapshot = await readSongSnapshot(env, id);
+  if (savedSnapshot) {
+    await recordSongRevision(env, {
+      songId: id,
+      action: "create",
+      actorUserId: access.id,
+      snapshot: savedSnapshot,
+    });
+  }
   return json({
     id,
     status,

@@ -1547,6 +1547,8 @@ function homeCountrySongsCountLabel(count) {
   return `${n} songs`;
 }
 
+const HOME_MENU_MIN_SONGS = 40;
+
 function uiNumberLocale() {
   if (uiLocale() === "ru") return "ru-RU";
   if (uiLocale() === "uk") return "uk-UA";
@@ -1811,7 +1813,7 @@ function renderHomeCatalogCard(item = {}) {
       ${style ? `style="${esc(style)}"` : ""}
     >
       ${renderHomeCountryCardLabel(String(item?.label || item?.title || "").trim())}
-      <span class="home-country-card-count">${esc(homeCountrySongsCountLabel(item?.count))}</span>
+      ${item?.hideCount ? "" : `<span class="home-country-card-count">${esc(homeCountrySongsCountLabel(item?.count))}</span>`}
     </a>
   `;
 }
@@ -2512,6 +2514,7 @@ function homeUI(data, params, homeExtras = {}) {
         isActive: lang === langKey && !country,
       };
     })
+    .filter((item) => Number(item?.count || 0) >= HOME_MENU_MIN_SONGS)
     .sort((a, b) => (Number(b.count) || 0) - (Number(a.count) || 0) || a.title.localeCompare(b.title, localeForSort));
 
   const selectedLangBucket = lang ? langCountryMap.get(lang) : null;
@@ -2521,10 +2524,18 @@ function homeUI(data, params, homeExtras = {}) {
         const background = backgroundsByCountry.get(countryKey) || {};
         const previewYear = historicalFlagYear(countryKey, formatCountry(countryKey));
         const resolvedBackground = normalizeCountryBackground(background, countryKey, { year: previewYear });
-        const historicalYears = historicalYearsMeta(countryKey, formatCountry(countryKey));
+        const countryTitle = historicalCardTitle(
+          formatCountry(countryKey),
+          historicalYearsMeta(countryKey, formatCountry(countryKey)).display
+        );
+        const yearsLabel = historicalYearsMeta(countryKey, formatCountry(countryKey)).display;
+        const inlineLabel = [countryTitle, yearsLabel, homeCountrySongsCountLabel(totalCount)]
+          .map((part) => String(part || "").trim())
+          .filter(Boolean)
+          .join(". ");
         const flagUrl = resolveVisualSymbolUrl(resolvedBackground?.visual_profile || {}, {
           year: previewYear,
-          kind: "long",
+          kind: "square",
           device: "desktop",
         });
         const periodEntries = Array.from(langCountryPeriodMap.get(`${lang}::${countryKey}`)?.entries() || [])
@@ -2538,24 +2549,18 @@ function homeUI(data, params, homeExtras = {}) {
           });
         return {
           key: countryKey,
-          label: formatCountry(countryKey),
-          title: formatCountry(countryKey),
+          label: inlineLabel,
+          title: inlineLabel,
           count: totalCount,
           href: catalogHashForSongFilter({ lang, country: countryKey, searched: periodEntries.length ? "0" : "1", adv: "0", page: "1" }),
           previewBg: String(resolvedBackground?.desktop_image_url || resolvedBackground?.mobile_image_url || "").trim(),
           wallBg: String(resolvedBackground?.desktop_image_url || resolvedBackground?.mobile_image_url || "").trim(),
           flagBg: flagUrl,
-          year: String(historicalYears?.display || "").trim(),
+          hideCount: true,
           lang,
           country: countryKey,
-          previewLines: [
-            homePickerDetailLine(t("home.period"), periodEntries.slice(0, 2).map(([periodKey]) => formatPeriod(periodKey)).join(" · ")),
-            homeCountrySongsCountLabel(totalCount),
-          ],
           isActive: country === countryKey && !didSearch,
           sortOrder: homePickerCountrySortOrder(countryKey),
-          layout: "historical-country",
-          historicalMeta: getHistoricalAffiliationMeta(countryKey),
         };
       })
       .sort((a, b) => (Number(b?.count || 0) - Number(a?.count || 0)) || compareCountries(a, b))
@@ -16154,19 +16159,6 @@ export function bind(route, ctx) {
     if (!isRequestMode) {
       setupContentDraftExitPersistence(() => (hasDiffFromBase ? collectContentPayload() : null));
     }
-    qs("ac_save_draft")?.addEventListener("click", () => {
-      const payload = collectContentPayload();
-      if (!computeDiffFromBase(payload) && !savedDraftSignature) {
-        setDraftBannerVisible(false, { tone: "unsaved" });
-        return;
-      }
-      saveContentDraft(payload);
-      savedDraftSignature = contentDraftComparableSignature(payload);
-      hasDiffFromBase = computeDiffFromBase(payload);
-      setDraftBannerVisible(true, { tone: "saved", text: requestDraftSavedBannerText() });
-      showStatusOverlay(requestDraftSavedBannerText(), "success");
-    });
-
     const appendEditorLinkRow = (initial = {}) => {
       const versionsRoot = qs("ac_versions");
       const editorActiveSource = String(editorRoot?.dataset.activeVariantSource || "").trim();
@@ -16996,14 +16988,6 @@ export function bind(route, ctx) {
       const payload = collectContentPayload();
       let createdDraftId = String(qs("ac_force_draft_id")?.value || "").trim();
       const songId = String(payload?.id || "").trim();
-      if (!createdDraftId && songId) {
-        const draftsPayload = await api.drafts({ status: "draft" });
-        const items = Array.isArray(draftsPayload?.items) ? draftsPayload.items : [];
-        const existing = items
-          .filter((item) => String(item?.song_id || "").trim() === songId && String(item?.status || "draft").trim() === "draft")
-          .sort((a, b) => String(b?.updated_at || "").localeCompare(String(a?.updated_at || "")))[0];
-        createdDraftId = String(existing?.id || "").trim();
-      }
       if (!createdDraftId) {
         const requestPayload = songId ? { song_id: songId } : { seed: payload };
         const out = await api.createDraft(requestPayload);
@@ -17016,17 +17000,26 @@ export function bind(route, ctx) {
       if (forceDraftNode) forceDraftNode.value = inlineDraftId;
       return inlineDraftId;
     };
+    const inlineSyncDraftHash = () => {
+      if (!isRequestMode || !inlineDraftId) return;
+      const currentSongId = String(qs("ac_id")?.value || "").trim();
+      const nextHash = unifiedSongEditorHash({ songId: currentSongId, draftId: inlineDraftId || "" });
+      if (!nextHash || location.hash === nextHash) return;
+      const nextUrl = `${location.pathname}${location.search}${nextHash}`;
+      try {
+        window.history.replaceState(window.history.state, "", nextUrl);
+      } catch {}
+    };
     const inlineFlushAutosave = async (options = {}) => {
       if (!inlineDraftId) return;
-      try {
-        const out = await api.draftAutosave(inlineDraftId, {
-          meta: inlineCurrentMetaPayload(),
-          lyrics: inlineCurrentLyricsPayload(),
-          client_op_id: `flush_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`,
-        }, { keepalive: options.keepalive === true });
-        const nextVersion = Number(out?.version || 0);
-        if (nextVersion > 0) inlineVersion = Math.max(inlineVersion, nextVersion);
-      } catch {}
+      const out = await api.draftAutosave(inlineDraftId, {
+        meta: inlineCurrentMetaPayload(),
+        lyrics: inlineCurrentLyricsPayload(),
+        client_op_id: `flush_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`,
+      }, { keepalive: options.keepalive === true });
+      const nextVersion = Number(out?.version || 0);
+      if (nextVersion > 0) inlineVersion = Math.max(inlineVersion, nextVersion);
+      return out;
     };
     const inlineQueueStructureSync = () => {
       if (!inlineDraftId) return;
@@ -17753,6 +17746,31 @@ export function bind(route, ctx) {
     if (acSaveBtn || acPublishBtn) {
       let savePending = false;
       let lastTriggerAt = 0;
+      const saveRequestDraftToServer = async () => {
+        const payload = collectContentPayload();
+        if (!payload.title || !String(payload.lyrics || "").trim()) {
+          throw new Error(t("request.required"));
+        }
+        saveContentDraft(payload);
+        const hadDraftId = !!inlineDraftId;
+        await inlineEnsureDraftForCollab();
+        if (hadDraftId) {
+          await inlineFlushAutosave({ keepalive: false });
+        }
+        inlineSyncDraftHash();
+        savedDraftSignature = contentDraftComparableSignature(payload);
+        hasDiffFromBase = computeDiffFromBase(payload);
+        setDraftBannerVisible(true, { tone: "saved", text: requestDraftSavedBannerText() });
+        return { payload, draftId: inlineDraftId };
+      };
+      qs("ac_save_draft")?.addEventListener("click", async () => {
+        try {
+          await saveRequestDraftToServer();
+          showStatusOverlay(requestDraftSavedBannerText(), "success");
+        } catch (cause) {
+          showStatusOverlay(String(cause?.message || t("common.error")), "error");
+        }
+      });
       const runAdminSave = async (event, options = {}) => {
         event?.preventDefault?.();
         const now = Date.now();
@@ -17810,6 +17828,19 @@ export function bind(route, ctx) {
           }
           if (acInlineError) acInlineError.classList.add("hidden");
           const oldIdentity = contentDraftIdentity();
+          if (isRequestMode && forcedStatus !== "published") {
+            await saveRequestDraftToServer();
+            showStatusOverlay(requestDraftSavedBannerText(), "success");
+            savePending = false;
+            [acSaveBtn, acPublishBtn].forEach((btn) => {
+              if (!btn) return;
+              btn.disabled = false;
+              btn.classList.remove("is-busy");
+            });
+            if (acSaveBtn) acSaveBtn.textContent = initialSaveText;
+            if (acPublishBtn) acPublishBtn.textContent = initialPublishText;
+            return;
+          }
           if (!canDirectCreate && isRequestMode) {
             const out = await api.createRequest(payload);
             clearContentDraft(oldIdentity);

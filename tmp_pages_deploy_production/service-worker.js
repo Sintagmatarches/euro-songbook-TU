@@ -1,4 +1,4 @@
-const CACHE_VERSION = "v38";
+const CACHE_VERSION = "v39";
 const CACHE_NAME = `songbook-app-${CACHE_VERSION}`;
 
 function scopeUrl(path) {
@@ -13,7 +13,6 @@ const CORE_ASSETS = [
   scopeUrl("./ui/assets/songbook-logo-ui-64.png"),
   scopeUrl("./ui/assets/songbook-logo-ui-192.png"),
   scopeUrl("./ui/assets/songbook-logo-ui-384.png"),
-  scopeUrl("./ui/assets/ussr-hero.jpg"),
 ];
 
 self.addEventListener("install", (event) => {

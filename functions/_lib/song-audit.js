@@ -1,6 +1,10 @@
 import { dbAll, dbGet, dbRun } from "./db.js";
 import { makeId, nowISO } from "./utils.js";
 
+function isMissingSongRevisionsTable(cause) {
+  return /no such table: song_revisions/i.test(String(cause?.message || cause || ""));
+}
+
 function normStr(value) {
   const text = String(value ?? "").trim();
   return text || null;
@@ -175,15 +179,21 @@ export async function readSongSnapshot(env, songId) {
 }
 
 export async function findSongRevisionById(env, songId, revisionId) {
-  const row = await dbGet(
-    env,
-    `SELECT r.id, r.song_id, r.revision_seq, r.action, r.actor_user_id, r.restored_from_revision_id, r.snapshot_json, r.created_at,
-            u.email AS actor_email, u.nickname AS actor_nickname
-     FROM song_revisions r
-     LEFT JOIN users u ON u.id = r.actor_user_id
-     WHERE r.song_id=? AND r.id=?`,
-    [songId, revisionId]
-  );
+  let row = null;
+  try {
+    row = await dbGet(
+      env,
+      `SELECT r.id, r.song_id, r.revision_seq, r.action, r.actor_user_id, r.restored_from_revision_id, r.snapshot_json, r.created_at,
+              u.email AS actor_email, u.nickname AS actor_nickname
+       FROM song_revisions r
+       LEFT JOIN users u ON u.id = r.actor_user_id
+       WHERE r.song_id=? AND r.id=?`,
+      [songId, revisionId]
+    );
+  } catch (cause) {
+    if (isMissingSongRevisionsTable(cause)) return null;
+    throw cause;
+  }
   if (!row) return null;
   return {
     ...row,
@@ -192,17 +202,23 @@ export async function findSongRevisionById(env, songId, revisionId) {
 }
 
 export async function getLatestSongRevision(env, songId) {
-  const row = await dbGet(
-    env,
-    `SELECT r.id, r.song_id, r.revision_seq, r.action, r.actor_user_id, r.restored_from_revision_id, r.snapshot_json, r.created_at,
-            u.email AS actor_email, u.nickname AS actor_nickname
-     FROM song_revisions r
-     LEFT JOIN users u ON u.id = r.actor_user_id
-     WHERE r.song_id=?
-     ORDER BY r.revision_seq DESC
-     LIMIT 1`,
-    [songId]
-  );
+  let row = null;
+  try {
+    row = await dbGet(
+      env,
+      `SELECT r.id, r.song_id, r.revision_seq, r.action, r.actor_user_id, r.restored_from_revision_id, r.snapshot_json, r.created_at,
+              u.email AS actor_email, u.nickname AS actor_nickname
+       FROM song_revisions r
+       LEFT JOIN users u ON u.id = r.actor_user_id
+       WHERE r.song_id=?
+       ORDER BY r.revision_seq DESC
+       LIMIT 1`,
+      [songId]
+    );
+  } catch (cause) {
+    if (isMissingSongRevisionsTable(cause)) return null;
+    throw cause;
+  }
   if (!row) return null;
   return {
     ...row,
@@ -211,17 +227,23 @@ export async function getLatestSongRevision(env, songId) {
 }
 
 export async function listSongRevisions(env, songId, limit = 80) {
-  const rows = await dbAll(
-    env,
-    `SELECT r.id, r.song_id, r.revision_seq, r.action, r.actor_user_id, r.restored_from_revision_id, r.snapshot_json, r.created_at,
-            u.email AS actor_email, u.nickname AS actor_nickname
-     FROM song_revisions r
-     LEFT JOIN users u ON u.id = r.actor_user_id
-     WHERE r.song_id=?
-     ORDER BY r.revision_seq DESC
-     LIMIT ?`,
-    [songId, Math.max(1, Math.min(200, Number(limit) || 80))]
-  );
+  let rows = [];
+  try {
+    rows = await dbAll(
+      env,
+      `SELECT r.id, r.song_id, r.revision_seq, r.action, r.actor_user_id, r.restored_from_revision_id, r.snapshot_json, r.created_at,
+              u.email AS actor_email, u.nickname AS actor_nickname
+       FROM song_revisions r
+       LEFT JOIN users u ON u.id = r.actor_user_id
+       WHERE r.song_id=?
+       ORDER BY r.revision_seq DESC
+       LIMIT ?`,
+      [songId, Math.max(1, Math.min(200, Number(limit) || 80))]
+    );
+  } catch (cause) {
+    if (isMissingSongRevisionsTable(cause)) return [];
+    throw cause;
+  }
   return (rows || []).map((row) => ({
     ...row,
     snapshot: normalizeSongSnapshot(parseJson(row.snapshot_json, {}), row.song_id),
@@ -229,7 +251,13 @@ export async function listSongRevisions(env, songId, limit = 80) {
 }
 
 export async function ensureSongHistoryBaseline(env, songId, actorUserId = null) {
-  const existing = await dbGet(env, `SELECT id FROM song_revisions WHERE song_id=? LIMIT 1`, [songId]);
+  let existing = null;
+  try {
+    existing = await dbGet(env, `SELECT id FROM song_revisions WHERE song_id=? LIMIT 1`, [songId]);
+  } catch (cause) {
+    if (isMissingSongRevisionsTable(cause)) return null;
+    throw cause;
+  }
   if (existing?.id) return existing.id;
   const snapshot = await readSongSnapshot(env, songId);
   if (!snapshot) return null;
@@ -245,32 +273,63 @@ export async function ensureSongHistoryBaseline(env, songId, actorUserId = null)
 export async function recordSongRevision(env, { songId, action = "update", actorUserId = null, snapshot = {}, restoredFromRevisionId = null }) {
   const normalized = normalizeSongSnapshot(snapshot, songId);
   if (!normalized.id) throw new Error("Song revision requires song id");
-  const row = await dbGet(
-    env,
-    `SELECT COALESCE(MAX(revision_seq), 0) + 1 AS next_seq
-     FROM song_revisions
-     WHERE song_id=?`,
-    [normalized.id]
-  );
+  let row = null;
+  try {
+    row = await dbGet(
+      env,
+      `SELECT COALESCE(MAX(revision_seq), 0) + 1 AS next_seq
+       FROM song_revisions
+       WHERE song_id=?`,
+      [normalized.id]
+    );
+  } catch (cause) {
+    if (isMissingSongRevisionsTable(cause)) {
+      return {
+        id: null,
+        song_id: normalized.id,
+        revision_seq: 0,
+        action: String(action || "update"),
+        actor_user_id: actorUserId || null,
+        restored_from_revision_id: restoredFromRevisionId || null,
+        snapshot: normalized,
+      };
+    }
+    throw cause;
+  }
   const revisionId = makeId("rev");
   const revisionSeq = Number(row?.next_seq || 1);
-  await dbRun(
-    env,
-    `INSERT INTO song_revisions (
-       id, song_id, revision_seq, action, actor_user_id, restored_from_revision_id, snapshot_json, created_at
-     )
-     VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
-    [
-      revisionId,
-      normalized.id,
-      revisionSeq,
-      String(action || "update"),
-      actorUserId || null,
-      restoredFromRevisionId || null,
-      JSON.stringify(normalized),
-      nowISO(),
-    ]
-  );
+  try {
+    await dbRun(
+      env,
+      `INSERT INTO song_revisions (
+         id, song_id, revision_seq, action, actor_user_id, restored_from_revision_id, snapshot_json, created_at
+       )
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
+      [
+        revisionId,
+        normalized.id,
+        revisionSeq,
+        String(action || "update"),
+        actorUserId || null,
+        restoredFromRevisionId || null,
+        JSON.stringify(normalized),
+        nowISO(),
+      ]
+    );
+  } catch (cause) {
+    if (isMissingSongRevisionsTable(cause)) {
+      return {
+        id: null,
+        song_id: normalized.id,
+        revision_seq: 0,
+        action: String(action || "update"),
+        actor_user_id: actorUserId || null,
+        restored_from_revision_id: restoredFromRevisionId || null,
+        snapshot: normalized,
+      };
+    }
+    throw cause;
+  }
   return {
     id: revisionId,
     song_id: normalized.id,

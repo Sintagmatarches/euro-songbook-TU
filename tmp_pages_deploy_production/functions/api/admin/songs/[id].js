@@ -1,112 +1,28 @@
-import { json, err, readJSON, makeId } from "../../../_lib/utils.js";
-import { requirePermission, dbRun, dbGet, dbAll, assertScopeForLang, canViewAdminContent } from "../../../_lib/db.js";
+import { json, err, readJSON } from "../../../_lib/utils.js";
+import { requirePermission, dbGet, assertScopeForLang, canViewAdminContent } from "../../../_lib/db.js";
 import { ensureSchemaAndSeed } from "../../../_lib/schema.js";
 import { normalizeSongCatalogInput } from "../../../../shared/song-catalogs.js";
 import { syncSongSearchIndex, deleteSongSearchIndex } from "../../../_lib/song-search.mjs";
 import { sanitizeSongLinks } from "../../../_lib/link-safety.js";
+import {
+  applySongSnapshot,
+  getLatestSongRevision,
+  readSongSnapshot,
+  recordSongRevision,
+} from "../../../_lib/song-audit.js";
 
 function normStr(v){ v = (v ?? "").toString().trim(); return v || null; }
-function normLinkVersion(v){ v = (v ?? "").toString().trim(); return v || null; }
 function toAdminContentFlag(v){ return v === true || v === 1 || String(v || "").trim().toLowerCase() === "1" || String(v || "").trim().toLowerCase() === "true"; }
 function toIntBool(v){ return v === true || v === 1 || String(v || "").trim().toLowerCase() === "1" || String(v || "").trim().toLowerCase() === "true" ? 1 : 0; }
 function isSuperAdminRole(role){ return role === "super_admin"; }
-function parseJSON(text, fallback){
+
+async function userEmailById(env, userId) {
+  if (!userId) return "";
   try {
-    return text ? JSON.parse(text) : fallback;
+    const row = await dbGet(env, `SELECT email FROM users WHERE id=?`, [userId]);
+    return String(row?.email || "");
   } catch {
-    return fallback;
-  }
-}
-
-async function tableColumns(env, tableName) {
-  try {
-    const rows = await dbAll(env, `PRAGMA table_info(${tableName})`);
-    return new Set((rows || []).map((row) => String(row?.name || "").trim()).filter(Boolean));
-  } catch {
-    return new Set();
-  }
-}
-
-async function listSongLinks(env, songId) {
-  const cols = await tableColumns(env, "song_links");
-  if (!cols.size || !cols.has("id") || !cols.has("song_id") || !cols.has("url")) return [];
-  const hasSort = cols.has("sort_order");
-  const hasTitle = cols.has("title");
-  const hasKind = cols.has("kind");
-  const hasVersionId = cols.has("version_id");
-  const selectSql = `
-    SELECT
-      id,
-      ${hasTitle ? "title" : "NULL AS title"},
-      url,
-      ${hasKind ? "kind" : "NULL AS kind"},
-      ${hasVersionId ? "version_id" : "NULL AS version_id"}
-    FROM song_links
-    WHERE song_id=?
-    ORDER BY ${hasSort ? "sort_order ASC, " : ""}id ASC
-  `;
-  return dbAll(env, selectSql, [songId]);
-}
-
-async function listSongVersions(env, songId) {
-  const cols = await tableColumns(env, "song_versions");
-  if (!cols.size || !cols.has("id") || !cols.has("song_id")) return [];
-  const hasSort = cols.has("sort_order");
-  const hasTitle = cols.has("title");
-  const hasLang = cols.has("lang");
-  const hasLyrics = cols.has("lyrics");
-  const hasLyricsMeta = cols.has("lyrics_meta_json");
-  const hasSource = cols.has("source");
-  const selectSql = `
-    SELECT
-      id,
-      ${hasTitle ? "title" : "NULL AS title"},
-      ${hasLang ? "lang" : "NULL AS lang"},
-      ${hasLyrics ? "lyrics" : "'' AS lyrics"},
-      ${hasLyricsMeta ? "lyrics_meta_json" : "'{}' AS lyrics_meta_json"},
-      ${hasSource ? "source" : "NULL AS source"}
-    FROM song_versions
-    WHERE song_id=?
-    ORDER BY ${hasSort ? "sort_order ASC, " : ""}id ASC
-  `;
-  const rows = await dbAll(env, selectSql, [songId]);
-  return (rows || []).map((row) => ({
-    ...row,
-    lyrics_meta_json: parseJSON(row?.lyrics_meta_json, {}),
-  }));
-}
-
-async function replaceLinks(env, songId, links){
-  await dbRun(env, `DELETE FROM song_links WHERE song_id=?`, [songId]);
-  if(!Array.isArray(links)) return;
-  let order = 0;
-  for(const l of links){
-    if(!l?.url) continue;
-    await dbRun(env, `INSERT INTO song_links (id,song_id,title,url,kind,version_id,sort_order) VALUES (?,?,?,?,?,?,?)`,
-      [makeId("l"), songId, normStr(l.title), String(l.url), normStr(l.kind), normLinkVersion(l.version_id ?? l.versionId), order++]
-    );
-  }
-}
-
-async function replaceVersions(env, songId, versions){
-  await dbRun(env, `DELETE FROM song_versions WHERE song_id=?`, [songId]);
-  if(!Array.isArray(versions)) return;
-  let order = 0;
-  for(const v of versions){
-    if(!v?.lyrics) continue;
-    const versionId = normStr(v.id) || makeId("v");
-    await dbRun(env, `INSERT INTO song_versions (id,song_id,title,lang,lyrics,lyrics_meta_json,source,sort_order) VALUES (?,?,?,?,?,?,?,?)`,
-      [
-        versionId,
-        songId,
-        normStr(v.title),
-        normStr(v.lang),
-        String(v.lyrics),
-        JSON.stringify(v.lyrics_meta_json || v.lyrics_meta || {}),
-        normStr(v.source),
-        order++,
-      ]
-    );
+    return "";
   }
 }
 
@@ -115,57 +31,53 @@ export async function onRequestGet({ env, request, params }){
     await ensureSchemaAndSeed(env);
     const access = await requirePermission(env, request, "songs.edit");
     if (access instanceof Response) return access;
+
     const id = params.id;
-    const song = await dbGet(env, `SELECT * FROM songs WHERE id=?`, [id]);
-    if(!song) return err("Not found", 404);
-    if(Number(song.is_admin_content || 0) === 1 && !canViewAdminContent(access)) return err("Not found", 404);
-    const editPerm = await requirePermission(env, request, "songs.edit", { lang: song.lang });
+    const currentSnapshot = await readSongSnapshot(env, id);
+    const latestRevision = currentSnapshot ? null : await getLatestSongRevision(env, id);
+    const snapshot = currentSnapshot || latestRevision?.snapshot || null;
+    if (!snapshot) return err("Not found", 404);
+    if (Number(snapshot.is_admin_content || 0) === 1 && !canViewAdminContent(access)) return err("Not found", 404);
+
+    const editPerm = await requirePermission(env, request, "songs.edit", { lang: snapshot.lang });
     if (editPerm instanceof Response) return editPerm;
-    assertScopeForLang(access, song.lang);
-    const versions = await listSongVersions(env, id);
-    const links = await listSongLinks(env, id);
-    const tags = parseJSON(song.tags_json, []);
+    assertScopeForLang(access, snapshot.lang);
+
     const isSuperAdmin = isSuperAdminRole(access.role);
-    let createdByEmail = "";
-    let updatedByEmail = "";
-    if (isSuperAdmin && song.created_by) {
-      try {
-        const row = await dbGet(env, `SELECT email FROM users WHERE id=?`, [song.created_by]);
-        createdByEmail = String(row?.email || "");
-      } catch {}
-    }
-    if (isSuperAdmin && song.updated_by) {
-      try {
-        const row = await dbGet(env, `SELECT email FROM users WHERE id=?`, [song.updated_by]);
-        updatedByEmail = String(row?.email || "");
-      } catch {}
-    }
+    const createdByEmail = isSuperAdmin ? await userEmailById(env, snapshot.created_by) : "";
+    const updatedByEmail = isSuperAdmin ? await userEmailById(env, snapshot.updated_by) : "";
+
     return json({
-      id: song.id,
-      title: song.title,
-      subtitle: song.subtitle,
-      lang: song.lang,
-      country: song.country,
-      period: song.period,
-      region: song.region,
-      event: song.event,
-      theme: song.theme,
-      verified: false,
-      year: song.year,
-      source: song.source,
-      notes: song.notes,
-      verified_translation: String(song.verified_translation || ""),
-      is_admin_content: Number(song.is_admin_content || 0) === 1,
-      status: song.status,
-      tags,
-      lyrics: song.lyrics,
-      lyrics_meta_json: parseJSON(song.lyrics_meta_json, {}),
-      versions,
-      links,
-      created_by: isSuperAdmin ? normStr(song.created_by) : undefined,
-      updated_by: isSuperAdmin ? normStr(song.updated_by) : undefined,
+      id: snapshot.id,
+      title: snapshot.title,
+      subtitle: snapshot.subtitle,
+      lang: snapshot.lang,
+      country: snapshot.country,
+      period: snapshot.period,
+      region: snapshot.region,
+      event: snapshot.event,
+      theme: snapshot.theme,
+      verified: Number(snapshot.verified || 0) === 1,
+      year: snapshot.year,
+      source: snapshot.source,
+      notes: snapshot.notes,
+      verified_translation: String(snapshot.verified_translation || ""),
+      is_admin_content: Number(snapshot.is_admin_content || 0) === 1,
+      status: snapshot.status,
+      tags: Array.isArray(snapshot.tags) ? snapshot.tags : [],
+      lyrics: snapshot.lyrics,
+      lyrics_meta_json: snapshot.lyrics_meta_json || {},
+      versions: Array.isArray(snapshot.versions) ? snapshot.versions : [],
+      links: Array.isArray(snapshot.links) ? snapshot.links : [],
+      created_by: isSuperAdmin ? normStr(snapshot.created_by) : undefined,
+      updated_by: isSuperAdmin ? normStr(snapshot.updated_by) : undefined,
       created_by_email: isSuperAdmin ? (normStr(createdByEmail) || undefined) : undefined,
       updated_by_email: isSuperAdmin ? (normStr(updatedByEmail) || undefined) : undefined,
+      created_at: snapshot.created_at || undefined,
+      updated_at: snapshot.updated_at || undefined,
+      lang_locked: Number(snapshot.lang_locked || 0) === 1,
+      is_deleted: Number(snapshot.is_deleted || 0) === 1,
+      deleted_at: Number(snapshot.is_deleted || 0) === 1 ? (latestRevision?.created_at || undefined) : undefined,
     });
   } catch (cause) {
     if (cause instanceof Response) return cause;
@@ -177,145 +89,175 @@ export async function onRequestPut({ env, request, params }){
   await ensureSchemaAndSeed(env);
   const access = await requirePermission(env, request, "songs.edit");
   if (access instanceof Response) return access;
+
   const id = params.id;
   const body = await readJSON(request);
+  const hasOwn = (key) => Object.prototype.hasOwnProperty.call(body || {}, key);
+
   let safeLinks = null;
-  if (Object.prototype.hasOwnProperty.call(body || {}, "links")) {
+  if (hasOwn("links")) {
     try {
       safeLinks = sanitizeSongLinks(body?.links, { fieldName: "links" });
     } catch (cause) {
       return err(String(cause?.message || "invalid links"), 400);
     }
   }
-  const currentSong = await dbGet(env, `SELECT * FROM songs WHERE id=?`, [id]);
-  if(!currentSong) return err("Not found", 404);
-  if(Number(currentSong.is_admin_content || 0) === 1 && !canViewAdminContent(access)) return err("Not found", 404);
 
-  const hasOwn = (key) => Object.prototype.hasOwnProperty.call(body || {}, key);
+  const currentSnapshot = await readSongSnapshot(env, id);
+  const latestRevision = currentSnapshot ? null : await getLatestSongRevision(env, id);
+  const sourceSnapshot = currentSnapshot || latestRevision?.snapshot || null;
+  if (!sourceSnapshot) return err("Not found", 404);
+  if (Number(sourceSnapshot.is_admin_content || 0) === 1 && !canViewAdminContent(access)) return err("Not found", 404);
+
   const normalizedCatalog = normalizeSongCatalogInput({
-    lang: hasOwn("lang") ? body.lang : currentSong.lang,
-    country: hasOwn("country") ? body.country : currentSong.country,
-    period: hasOwn("period") ? body.period : currentSong.period,
+    lang: hasOwn("lang") ? body.lang : sourceSnapshot.lang,
+    country: hasOwn("country") ? body.country : sourceSnapshot.country,
+    period: hasOwn("period") ? body.period : sourceSnapshot.period,
   }, { allowEmptyLang: true });
   if (!normalizedCatalog.ok) return err(normalizedCatalog.error, 400);
 
-  const currentLang = String(currentSong.lang || "");
+  const currentLang = String(sourceSnapshot.lang || "");
   const nextLang = normalizedCatalog.value.lang || "";
   const isSuperAdmin = isSuperAdminRole(access.role);
-  const currentLangLocked = Number(currentSong.lang_locked || 0) === 1;
+  const currentLangLocked = Number(sourceSnapshot.lang_locked || 0) === 1;
   const nextAdminContent = hasOwn("is_admin_content") || hasOwn("isAdminContent")
     ? toAdminContentFlag(body?.is_admin_content ?? body?.isAdminContent)
-    : Number(currentSong.is_admin_content || 0) === 1;
+    : Number(sourceSnapshot.is_admin_content || 0) === 1;
   const requestedStatus = hasOwn("status")
     ? (body.status === "draft" ? "draft" : "published")
-    : currentSong.status;
+    : sourceSnapshot.status;
   const wasEverPublished = currentLangLocked
-    || String(currentSong.status || "").trim().toLowerCase() === "published";
+    || String(sourceSnapshot.status || "").trim().toLowerCase() === "published";
   const status = wasEverPublished ? "published" : requestedStatus;
   const nextLangLocked = wasEverPublished || status === "published";
-  if(nextLang !== currentLang && nextLangLocked && !isSuperAdmin) {
+
+  if (nextLang !== currentLang && nextLangLocked && !isSuperAdmin) {
     return err("Forbidden: cannot change song language after publication", 403);
   }
+
   assertScopeForLang(access, currentLang);
   assertScopeForLang(access, nextLang);
-  if(nextAdminContent && !canViewAdminContent(access)) {
+
+  if (nextAdminContent && !canViewAdminContent(access)) {
     return err("Forbidden: missing permission songs.view_admin_content", 403);
   }
 
   const editCurrent = await requirePermission(env, request, "songs.edit", { lang: currentLang });
   if (editCurrent instanceof Response) return editCurrent;
-  if(nextLang !== currentLang) {
+  if (nextLang !== currentLang) {
     const editNext = await requirePermission(env, request, "songs.edit", { lang: nextLang });
     if (editNext instanceof Response) return editNext;
   }
-  if(hasOwn("links")) {
+  if (hasOwn("links")) {
     const linksPerm = await requirePermission(env, request, "links.manage", { lang: nextLang });
     if (linksPerm instanceof Response) return linksPerm;
   }
-  if(hasOwn("versions")) {
+  if (hasOwn("versions")) {
     const verPerm = await requirePermission(env, request, "variants.manage", { lang: nextLang });
     if (verPerm instanceof Response) return verPerm;
   }
 
-  const title = hasOwn("title") ? normStr(body.title) : currentSong.title;
-  const subtitle = hasOwn("subtitle") ? normStr(body.subtitle) : currentSong.subtitle;
-  const year = hasOwn("year") ? normStr(body.year) : currentSong.year;
-  const region = hasOwn("region") ? normStr(body.region) : currentSong.region;
-  const event = hasOwn("event") ? normStr(body.event) : currentSong.event;
-  const theme = hasOwn("theme") ? normStr(body.theme) : currentSong.theme;
-  const verified = hasOwn("verified") ? toIntBool(body.verified) : Number(currentSong.verified || 0);
-  const source = hasOwn("source") ? normStr(body.source) : currentSong.source;
-  const notes = hasOwn("notes") ? normStr(body.notes) : currentSong.notes;
+  const title = hasOwn("title") ? normStr(body.title) : sourceSnapshot.title;
+  const subtitle = hasOwn("subtitle") ? normStr(body.subtitle) : sourceSnapshot.subtitle;
+  const year = hasOwn("year") ? normStr(body.year) : sourceSnapshot.year;
+  const region = hasOwn("region") ? normStr(body.region) : sourceSnapshot.region;
+  const event = hasOwn("event") ? normStr(body.event) : sourceSnapshot.event;
+  const theme = hasOwn("theme") ? normStr(body.theme) : sourceSnapshot.theme;
+  const verified = hasOwn("verified") ? toIntBool(body.verified) : Number(sourceSnapshot.verified || 0);
+  const source = hasOwn("source") ? normStr(body.source) : sourceSnapshot.source;
+  const notes = hasOwn("notes") ? normStr(body.notes) : sourceSnapshot.notes;
   const verifiedTranslation = hasOwn("verified_translation")
     ? String(body.verified_translation ?? "").trim() || null
-    : (currentSong.verified_translation ?? null);
-  const lyrics = hasOwn("lyrics") ? String(body.lyrics ?? "") : currentSong.lyrics;
+    : (sourceSnapshot.verified_translation ?? null);
+  const lyrics = hasOwn("lyrics") ? String(body.lyrics ?? "") : sourceSnapshot.lyrics;
   const lyricsMetaJson = hasOwn("lyrics_meta_json") || hasOwn("lyrics_meta")
-    ? JSON.stringify(body.lyrics_meta_json || body.lyrics_meta || {})
-    : String(currentSong.lyrics_meta_json || "{}");
-  const tags_json = hasOwn("tags")
-    ? JSON.stringify(Array.isArray(body.tags) ? body.tags : [])
-    : currentSong.tags_json;
+    ? (body.lyrics_meta_json || body.lyrics_meta || {})
+    : (sourceSnapshot.lyrics_meta_json || {});
+  const tags = hasOwn("tags")
+    ? (Array.isArray(body.tags) ? body.tags : [])
+    : (Array.isArray(sourceSnapshot.tags) ? sourceSnapshot.tags : []);
+  const versions = hasOwn("versions")
+    ? (Array.isArray(body.versions) ? body.versions : [])
+    : (Array.isArray(sourceSnapshot.versions) ? sourceSnapshot.versions : []);
+  const links = hasOwn("links")
+    ? safeLinks
+    : (Array.isArray(sourceSnapshot.links) ? sourceSnapshot.links : []);
 
   if (!title || !String(lyrics || "").trim()) return err("title, lyrics required", 400);
 
-  await dbRun(env, `
-    UPDATE songs SET
-      title=?, subtitle=?, lang=?, country=?, period=?, region=?, event=?, theme=?, verified=?, year=?,
-      source=?, notes=?, verified_translation=?, lyrics=?, lyrics_meta_json=?, tags_json=?, is_admin_content=?, status=?, lang_locked=?, updated_by=?, updated_at=datetime('now')
-    WHERE id=?
-  `, [
+  const nextSnapshot = {
+    ...sourceSnapshot,
+    id,
     title,
     subtitle,
-    normalizedCatalog.value.lang || "",
-    normalizedCatalog.value.country,
-    normalizedCatalog.value.period,
+    lang: normalizedCatalog.value.lang || "",
+    country: normalizedCatalog.value.country,
+    period: normalizedCatalog.value.period,
     region,
     event,
     theme,
-    verified ? 1 : 0,
+    verified: verified ? 1 : 0,
     year,
     source,
     notes,
-    verifiedTranslation,
+    verified_translation: verifiedTranslation,
     lyrics,
-    lyricsMetaJson,
-    tags_json,
-    nextAdminContent ? 1 : 0,
+    lyrics_meta_json: lyricsMetaJson,
+    tags,
+    is_admin_content: nextAdminContent ? 1 : 0,
     status,
-    nextLangLocked ? 1 : 0,
-    access.id,
-    id
-  ]);
+    lang_locked: nextLangLocked ? 1 : 0,
+    updated_by: access.id,
+    versions,
+    links,
+    is_deleted: 0,
+  };
 
+  const savedSnapshot = await applySongSnapshot(env, nextSnapshot);
   await syncSongSearchIndex(env, {
     id,
     title,
     subtitle,
     lyrics,
   });
-  if (hasOwn("links")) await replaceLinks(env, id, safeLinks);
-  if (hasOwn("versions")) await replaceVersions(env, id, body.versions);
+  await recordSongRevision(env, {
+    songId: id,
+    action: currentSnapshot ? "update" : "restore",
+    actorUserId: access.id,
+    snapshot: savedSnapshot,
+  });
+
   return json({
     id,
     status,
     lang_locked: nextLangLocked ? 1 : 0,
+    is_deleted: false,
   });
 }
 
 export async function onRequestDelete({ env, request, params }){
   await ensureSchemaAndSeed(env);
   const id = params.id;
-  const song = await dbGet(env, `SELECT lang, is_admin_content FROM songs WHERE id=?`, [id]);
-  if(!song) return err("Not found", 404);
-  const access = await requirePermission(env, request, "songs.delete", { lang: song.lang });
+  const currentSnapshot = await readSongSnapshot(env, id);
+  if (!currentSnapshot) return err("Not found", 404);
+
+  const access = await requirePermission(env, request, "songs.delete", { lang: currentSnapshot.lang });
   if (access instanceof Response) return access;
-  if(Number(song.is_admin_content || 0) === 1 && !canViewAdminContent(access)) return err("Not found", 404);
-  assertScopeForLang(access, song.lang);
-  await dbRun(env, `DELETE FROM song_versions WHERE song_id=?`, [id]);
-  await dbRun(env, `DELETE FROM song_links WHERE song_id=?`, [id]);
-  await dbRun(env, `DELETE FROM favorites WHERE song_id=?`, [id]);
+  if (Number(currentSnapshot.is_admin_content || 0) === 1 && !canViewAdminContent(access)) return err("Not found", 404);
+
+  assertScopeForLang(access, currentSnapshot.lang);
+  const deletedSnapshot = {
+    ...currentSnapshot,
+    is_deleted: 1,
+    updated_by: access.id,
+  };
+  await applySongSnapshot(env, deletedSnapshot);
   await deleteSongSearchIndex(env, id);
-  await dbRun(env, `DELETE FROM songs WHERE id=?`, [id]);
-  return json({ ok:true });
+  await recordSongRevision(env, {
+    songId: id,
+    action: "delete",
+    actorUserId: access.id,
+    snapshot: deletedSnapshot,
+  });
+  return json({ ok: true });
 }

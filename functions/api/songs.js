@@ -1,5 +1,6 @@
 ﻿import { json } from "../_lib/utils.js";
 import { dbAll, dbGet, getOptionalUserAccess, canViewAdminContent } from "../_lib/db.js";
+import { SONG_DUPLICATE_KEY_SQL } from "../_lib/song-dedupe.js";
 import { ensureSchemaAndSeed } from "../_lib/schema.js";
 import { normalizeSongCountry, normalizeSongLanguage, normalizeSongPeriod } from "../../shared/song-catalogs.js";
 import {
@@ -9,18 +10,6 @@ import {
 
 const GERMAN_COLLABORATORS_FILTER_VALUES = ["german_collaborators", "latvian_ss_legion", "estonian_ss_division"];
 const SONGS_PAGE_SIZE = 10;
-const SONG_DUPLICATE_KEY_SQL = `
-  lower(trim(coalesce(s.title, ''))) || '|' ||
-  lower(trim(coalesce(s.subtitle, ''))) || '|' ||
-  lower(trim(coalesce(s.lang, ''))) || '|' ||
-  lower(trim(coalesce(s.country, ''))) || '|' ||
-  lower(trim(coalesce(s.period, ''))) || '|' ||
-  trim(coalesce(s.year, '')) || '|' ||
-  lower(trim(coalesce(s.region, ''))) || '|' ||
-  lower(trim(coalesce(s.event, ''))) || '|' ||
-  lower(trim(coalesce(s.theme, ''))) || '|' ||
-  replace(coalesce(s.lyrics, ''), char(13), '')
-`;
 
 function buildCreditSearchPatterns(value = "", kind = "words") {
   const needle = String(value || "").trim().toLowerCase();
@@ -178,7 +167,6 @@ export async function onRequestGet({ env, request }) {
         GROUP BY song_id
       ) vc ON vc.song_id = s.id
     `;
-
     if (q) {
       const countryValues = country === "german_collaborators"
         ? [...GERMAN_COLLABORATORS_FILTER_VALUES]

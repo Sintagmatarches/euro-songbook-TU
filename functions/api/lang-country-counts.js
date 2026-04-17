@@ -1,5 +1,6 @@
 import { json } from "../_lib/utils.js";
 import { dbAll, getOptionalUserAccess, canViewAdminContent } from "../_lib/db.js";
+import { SONG_DUPLICATE_KEY_SQL } from "../_lib/song-dedupe.js";
 import { ensureSchemaAndSeed } from "../_lib/schema.js";
 import { normalizeSongCountry, normalizeSongLanguage } from "../../shared/song-catalogs.js";
 
@@ -8,17 +9,26 @@ export async function onRequestGet({ env, request }) {
   const access = await getOptionalUserAccess(env, request);
   const includeAdminContent = canViewAdminContent(access);
 
-  const where = ["status='published'"];
+  const where = ["s.status='published'"];
   if (!includeAdminContent) where.push("coalesce(is_admin_content,0)=0");
 
   const rows = await dbAll(
     env,
-    `SELECT lower(trim(coalesce(lang, ''))) AS lang,
-            lower(trim(coalesce(country, ''))) AS country,
-            COUNT(*) AS count
-       FROM songs
+    `WITH ranked AS (
+       SELECT
+         lower(trim(coalesce(s.lang, ''))) AS lang,
+         lower(trim(coalesce(s.country, ''))) AS country,
+         ROW_NUMBER() OVER (
+           PARTITION BY ${SONG_DUPLICATE_KEY_SQL}
+           ORDER BY datetime(s.created_at) DESC, s.id ASC
+         ) AS duplicate_rank
+       FROM songs s
       WHERE ${where.join(" AND ")}
-   GROUP BY lower(trim(coalesce(lang, ''))), lower(trim(coalesce(country, '')))`
+     )
+     SELECT lang, country, COUNT(*) AS count
+       FROM ranked
+      WHERE duplicate_rank = 1
+   GROUP BY lang, country`
   );
 
   const byLangCountry = new Map();
@@ -44,4 +54,3 @@ export async function onRequestGet({ env, request }) {
 
   return json({ items });
 }
-

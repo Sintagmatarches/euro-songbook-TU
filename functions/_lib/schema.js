@@ -182,6 +182,11 @@ async function hasFreshFullSchema(env) {
   return true;
 }
 
+function isD1SizeLimitError(cause) {
+  const message = String(cause?.message || cause || "");
+  return /Exceeded maximum DB size/i.test(message);
+}
+
 async function hasFreshAuthSchema(env) {
   if (await hasFreshFullSchema(env)) return true;
   const marker = await readSchemaMarker(env, AUTH_SCHEMA_MARKER_KEY);
@@ -259,19 +264,43 @@ async function ensureSongsAuditColumns(env) {
 }
 
 async function ensureSongRevisionsTable(env) {
-  await dbRun(
-    env,
-    `CREATE TABLE IF NOT EXISTS song_revisions (
-      id TEXT PRIMARY KEY,
-      song_id TEXT NOT NULL,
-      revision_seq INTEGER NOT NULL,
-      action TEXT NOT NULL CHECK(action IN ('create','update','delete','restore','snapshot')),
-      actor_user_id TEXT REFERENCES users(id) ON DELETE SET NULL,
-      restored_from_revision_id TEXT,
-      snapshot_json TEXT NOT NULL,
-      created_at TEXT NOT NULL
-    )`
-  );
+  try {
+    await dbRun(
+      env,
+      `CREATE TABLE IF NOT EXISTS song_revisions (
+        id TEXT PRIMARY KEY,
+        song_id TEXT NOT NULL,
+        revision_seq INTEGER NOT NULL,
+        action TEXT NOT NULL CHECK(action IN ('create','update','delete','restore','snapshot')),
+        actor_user_id TEXT REFERENCES users(id) ON DELETE SET NULL,
+        restored_from_revision_id TEXT,
+        snapshot_json TEXT NOT NULL,
+        created_at TEXT NOT NULL
+      )`
+    );
+  } catch (cause) {
+    if (isD1SizeLimitError(cause)) return false;
+    throw cause;
+  }
+  return true;
+}
+
+async function ensureSongRevisionIndexes(env) {
+  try {
+    await dbRun(env, `CREATE UNIQUE INDEX IF NOT EXISTS idx_song_revisions_song_seq ON song_revisions(song_id, revision_seq)`);
+    await dbRun(env, `CREATE INDEX IF NOT EXISTS idx_song_revisions_song_created ON song_revisions(song_id, created_at DESC)`);
+    await dbRun(env, `CREATE INDEX IF NOT EXISTS idx_song_revisions_created ON song_revisions(created_at DESC)`);
+  } catch (cause) {
+    const message = String(cause?.message || cause || "");
+    if (isD1SizeLimitError(cause)) return false;
+    if (!message.includes("no such table: song_revisions")) throw cause;
+    const created = await ensureSongRevisionsTable(env);
+    if (!created) return false;
+    await dbRun(env, `CREATE UNIQUE INDEX IF NOT EXISTS idx_song_revisions_song_seq ON song_revisions(song_id, revision_seq)`);
+    await dbRun(env, `CREATE INDEX IF NOT EXISTS idx_song_revisions_song_created ON song_revisions(song_id, created_at DESC)`);
+    await dbRun(env, `CREATE INDEX IF NOT EXISTS idx_song_revisions_created ON song_revisions(created_at DESC)`);
+  }
+  return true;
 }
 
 async function ensureCountryBackgroundColumns(env) {
@@ -1051,9 +1080,7 @@ export async function ensureSchema(env) {
   await dbRun(env, `CREATE INDEX IF NOT EXISTS idx_songs_region ON songs(region)`);
   await dbRun(env, `CREATE INDEX IF NOT EXISTS idx_songs_event ON songs(event)`);
   await dbRun(env, `CREATE INDEX IF NOT EXISTS idx_songs_theme ON songs(theme)`);
-  await dbRun(env, `CREATE UNIQUE INDEX IF NOT EXISTS idx_song_revisions_song_seq ON song_revisions(song_id, revision_seq)`);
-  await dbRun(env, `CREATE INDEX IF NOT EXISTS idx_song_revisions_song_created ON song_revisions(song_id, created_at DESC)`);
-  await dbRun(env, `CREATE INDEX IF NOT EXISTS idx_song_revisions_created ON song_revisions(created_at DESC)`);
+  await ensureSongRevisionIndexes(env);
   try {
     await dbRun(env, `CREATE INDEX IF NOT EXISTS idx_song_links_song_version_sort ON song_links(song_id, version_id, sort_order)`);
   } catch (cause) {

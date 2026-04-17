@@ -4759,6 +4759,123 @@ pre.lyrics {
   margin: 0 auto;
 }
 
+.home-country-feed-historical-list .home-country-card {
+  aspect-ratio: auto;
+  min-height: 132px;
+  height: 132px;
+}
+
+.home-country-feed-historical-list .home-country-card-label {
+  -webkit-line-clamp: 3;
+  line-height: 1.18;
+}
+
+.ac-revision-panel {
+  display: grid;
+  gap: 12px;
+  margin-top: 12px;
+  padding: 16px;
+  border-color: rgba(84, 139, 255, 0.4);
+  background:
+    linear-gradient(180deg, rgba(11, 32, 104, 0.92), rgba(7, 21, 76, 0.9));
+}
+
+.ac-revision-panel-head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.ac-revision-panel-title {
+  margin: 0;
+}
+
+.ac-revision-panel-subtitle {
+  max-width: 780px;
+}
+
+.ac-revision-deleted-note {
+  padding: 10px 12px;
+  border: 1px solid rgba(255, 211, 92, 0.38);
+  border-left: 3px solid rgba(255, 211, 92, 0.88);
+  border-radius: 12px;
+  background: rgba(56, 38, 7, 0.42);
+  color: #ffe2a0;
+  font-size: 13px;
+  line-height: 1.45;
+}
+
+.ac-revision-list {
+  display: grid;
+  gap: 10px;
+}
+
+.ac-revision-item {
+  display: grid;
+  gap: 10px;
+  padding: 14px;
+  border-color: rgba(57, 113, 225, 0.5);
+  background: rgba(6, 18, 66, 0.7);
+}
+
+.ac-revision-item.is-current {
+  border-color: rgba(74, 223, 161, 0.76);
+  box-shadow: 0 0 0 1px rgba(74, 223, 161, 0.16) inset;
+}
+
+.ac-revision-item-head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.ac-revision-title {
+  line-height: 1.24;
+}
+
+.ac-revision-meta {
+  margin-top: 6px;
+  white-space: normal;
+}
+
+.ac-revision-badges {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: 6px;
+}
+
+.ac-revision-snippet {
+  white-space: pre-wrap;
+  line-height: 1.5;
+}
+
+.ac-revision-actions {
+  gap: 8px;
+  margin-top: 0;
+}
+
+@media (max-width: 760px) {
+  .ac-revision-panel {
+    padding: 14px;
+  }
+
+  .ac-revision-panel-head,
+  .ac-revision-item-head {
+    flex-direction: column;
+  }
+
+  .ac-revision-badges {
+    justify-content: flex-start;
+  }
+
+  .ac-revision-actions .btn {
+    flex: 1 1 180px;
+  }
+}
+
 .ac-draft-banner {
   margin-top: 4px;
   margin-bottom: 6px;
@@ -19315,6 +19432,25 @@ html[data-theme="white"] .home-country-feed-historical-list .yt-card.yt-card-his
 
 html[data-theme="white"] .home-country-feed-historical-list .yt-card.yt-card-historical-country::before {
   opacity: 0.42 !important;
+}
+
+html[data-theme="white"] .ac-revision-panel,
+html[data-theme="white"] .ac-revision-item {
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.98), rgba(241, 246, 255, 0.98)) !important;
+  border-color: rgba(29, 57, 221, 0.14) !important;
+}
+
+html[data-theme="white"] .ac-revision-item.is-current {
+  border-color: rgba(29, 159, 97, 0.34) !important;
+  box-shadow: 0 0 0 1px rgba(29, 159, 97, 0.12) inset, var(--white-shadow-sm) !important;
+}
+
+html[data-theme="white"] .ac-revision-deleted-note {
+  background: rgba(255, 245, 214, 0.9) !important;
+  border-color: rgba(214, 165, 24, 0.34) !important;
+  border-left-color: rgba(214, 165, 24, 0.76) !important;
+  color: #8a5c00 !important;
 }
 
 html[data-theme="white"] .yt-card-historical-media {
