@@ -2450,7 +2450,7 @@ function homeUI(data, params, homeExtras = {}) {
   const availableCountriesByLang = buildLangCountryAvailabilityMap(langCountryItems);
   const availablePeriodsByLangCountry = buildLangCountryPeriodAvailabilityMap(langCountryPeriodItems);
 
-  const localeForSort = uiLocale() === "ru" ? "ru" : uiLocale() === "uk" ? "uk" : "en";
+  const localeForSort = uiLocale() === "ru" ? "ru" : uiLocale() === "uk" ? "uk" : uiLocale() === "et" ? "et" : "en";
   const periodOrderMap = new Map(
     getCatalogOptions("period", uiLocale(), "")
       .map((option, index) => [String(option?.value || "").trim(), index])
@@ -5496,7 +5496,7 @@ function lyricsComposerInsertLabel() {
 function lyricsComposerSelectLabel() {
   if (uiLocale() === "ru") return "Тип блока";
   if (uiLocale() === "uk") return "Тип блоку";
-  if (uiLocale() === "et") return "Ploki tuup";
+  if (uiLocale() === "et") return "Ploki tüüp";
   return "Block type";
 }
 
@@ -19008,7 +19008,9 @@ export function bind(route, ctx) {
             ? `Нужен формат ${FLAG_CARD_STANDARDS.desktopLong.width}x${FLAG_CARD_STANDARDS.desktopLong.height} или более широкий (обрезка только по бокам).`
             : uiLocale() === "uk"
               ? `Потрібен формат ${FLAG_CARD_STANDARDS.desktopLong.width}x${FLAG_CARD_STANDARDS.desktopLong.height} або ширший (обрізка лише по боках).`
-            : invalidImageText;
+              : uiLocale() === "et"
+                ? `Vajalik on vorming ${FLAG_CARD_STANDARDS.desktopLong.width}x${FLAG_CARD_STANDARDS.desktopLong.height} või laiem pilt (kärbitakse ainult külgedelt).`
+                : invalidImageText;
           showStatusOverlay(msg, "error");
         }
       });
@@ -19029,7 +19031,9 @@ export function bind(route, ctx) {
             ? `Нужен формат ${FLAG_CARD_STANDARDS.mobileLong.width}x${FLAG_CARD_STANDARDS.mobileLong.height} или более широкий (обрезка только по бокам).`
             : uiLocale() === "uk"
               ? `Потрібен формат ${FLAG_CARD_STANDARDS.mobileLong.width}x${FLAG_CARD_STANDARDS.mobileLong.height} або ширший (обрізка лише по боках).`
-            : invalidImageText;
+              : uiLocale() === "et"
+                ? `Vajalik on vorming ${FLAG_CARD_STANDARDS.mobileLong.width}x${FLAG_CARD_STANDARDS.mobileLong.height} või laiem pilt (kärbitakse ainult külgedelt).`
+                : invalidImageText;
           showStatusOverlay(msg, "error");
         }
       });

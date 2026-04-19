@@ -568,7 +568,7 @@ const dict = {
     "auth.error.passwordMismatch": "Paroolid ei ühti.",
     "topSearch.placeholder": "Otsi…",
     "topSearch.actions": "Otsingu tegevused",
-    "topSearch.advanced": "Tapsem otsing",
+    "topSearch.advanced": "Täpsem otsing",
     "topSearch.advancedHide": "Peida detailid",
     "topSearch.recent": "Hiljuti lisatud laulud",
     "app.install": "Paigalda rakendus",
