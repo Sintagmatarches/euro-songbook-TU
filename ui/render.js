@@ -1997,20 +1997,6 @@ function searchBucketLabel(bucket = "") {
   return "Fuzzy matches";
 }
 
-function searchDidYouMeanTitle() {
-  if (uiLocale() === "ru") return "\u0412\u043e\u0437\u043c\u043e\u0436\u043d\u043e, \u0432\u044b \u0438\u043c\u0435\u043b\u0438 \u0432 \u0432\u0438\u0434\u0443";
-  if (uiLocale() === "uk") return "\u041c\u043e\u0436\u043b\u0438\u0432\u043e, \u0432\u0438 \u043c\u0430\u043b\u0438 \u043d\u0430 \u0443\u0432\u0430\u0437\u0456";
-  if (uiLocale() === "et") return "Võib-olla otsisite";
-  return "Maybe you meant";
-}
-
-function searchSuggestionsHintText() {
-  if (uiLocale() === "ru") return "\u0418\u0441\u0445\u043e\u0434\u043d\u044b\u0439 \u0437\u0430\u043f\u0440\u043e\u0441 \u0441\u043e\u0445\u0440\u0430\u043d\u0451\u043d. \u042d\u0442\u043e \u0442\u043e\u043b\u044c\u043a\u043e \u043f\u043e\u0434\u0441\u043a\u0430\u0437\u043a\u0438.";
-  if (uiLocale() === "uk") return "\u041f\u043e\u0447\u0430\u0442\u043a\u043e\u0432\u0438\u0439 \u0437\u0430\u043f\u0438\u0442 \u0437\u0431\u0435\u0440\u0435\u0436\u0435\u043d\u043e. \u0426\u0435 \u043b\u0438\u0448\u0435 \u043f\u0456\u0434\u043a\u0430\u0437\u043a\u0438.";
-  if (uiLocale() === "et") return "Algne päring jäi alles. Need on ainult soovitused.";
-  return "Your original query stays unchanged. These are only suggestions.";
-}
-
 function renderSearchBucketSummary(bucketCounts = {}) {
   void bucketCounts;
   return "";
@@ -2615,33 +2601,8 @@ function homeUI(data, params, homeExtras = {}) {
     </div>
   `;
   const hasExactResults = (data.items || []).length > 0;
-  const didYouMean = Array.isArray(data?.did_you_mean) ? data.did_you_mean : [];
-  const hasDidYouMean = didYouMean.length > 0;
   const bucketSummaryMarkup = hasTextQuery
     ? renderSearchBucketSummary(data?.bucket_counts || {})
-    : "";
-  const didYouMeanMarkup = hasDidYouMean
-    ? `<div class="card home-search-suggestion-card">
-        <div class="h2">${esc(searchDidYouMeanTitle())}</div>
-        <div class="muted">${esc(searchSuggestionsHintText())}</div>
-        <div class="home-search-suggestion-chips">
-          ${didYouMean.map((item) => `<a class="btn ghost home-search-suggestion-chip" href="${esc(catalogHashForSongFilter({
-            q: item?.query || "",
-            lang,
-            country,
-            words_author: wordsAuthor,
-            music_author: musicAuthor,
-            verified: verified ? "1" : "",
-            recent: recent ? "1" : "",
-            multi_versions: multiVersions ? "1" : "",
-            performer,
-            year,
-            searched: "1",
-            adv: showAdvanced ? "1" : "0",
-            page: "1",
-          }))}">${esc(item?.query || "")}</a>`).join("")}
-        </div>
-      </div>`
     : "";
   const maybeYouSearchedTitle = uiLocale() === "ru"
     ? "\u0412\u043e\u0437\u043c\u043e\u0436\u043d\u043e, \u0432\u044b \u0438\u0441\u043a\u0430\u043b\u0438"
@@ -2752,17 +2713,12 @@ function homeUI(data, params, homeExtras = {}) {
             <div class="h1">${esc(homeResultsTitle())}</div>
           </div>
         </div>
-        ${didYouMeanMarkup}
         ${hasExactResults ? `
           ${bucketSummaryMarkup}
           ${resultLoadingScreenMarkup}
           <div class="yt-feed yt-feed-progressive is-chunk-loading" id="yt_results_feed" data-feed-mode="exact">
           </div>
           ${renderPager("yt", page, pages)}
-        ` : hasDidYouMean ? `
-          <div class="card home-search-hint">
-            <div class="muted">${esc(exactNotFoundText)}</div>
-          </div>
         ` : `
           <div class="yt-feed">
             <div class="card"><div class="muted">${esc(t("home.nothing"))}</div><div class="actions" style="margin-top:10px"><a class="btn ghost" href="${esc(makeHash("#/fragment-reports", { new: "1", fragment: q || "" }, ["new", "fragment"]))}">${esc(homeReportFragmentLabel())}</a></div></div>
