@@ -2234,7 +2234,11 @@ function renderHomeSongCard(song = {}, options = {}) {
       ${hasFlag ? `<div class="yt-card-flag-wrap"><span class="yt-card-flag"${flagStyle}></span></div>` : ``}
     </div>
   `;
-  const href = String(options.href || `#/song/${encodeURIComponent(song.id)}`).trim() || "#/";
+  const matchedVersionId = normalizeVersionIdentifier(song?.matched_version_id);
+  const defaultHref = matchedVersionId
+    ? makeHash(`#/song/${encodeURIComponent(song.id)}`, { version: matchedVersionId }, ["version"])
+    : `#/song/${encodeURIComponent(song.id)}`;
+  const href = String(options.href || defaultHref).trim() || "#/";
   const extraClass = String(options.extraClass || "").trim();
   const inlineStyle = String(options.inlineStyle || "").trim();
   const historicalCountNumber = formatUiInteger(song?.count || 0);
@@ -2284,7 +2288,11 @@ function renderHomeSongCard(song = {}, options = {}) {
 }
 
 function renderHomeSongCardFallback(song = {}, options = {}) {
-  const href = String(options.href || `#/song/${encodeURIComponent(song?.id || "")}`).trim() || "#/";
+  const matchedVersionId = normalizeVersionIdentifier(song?.matched_version_id);
+  const defaultHref = matchedVersionId
+    ? makeHash(`#/song/${encodeURIComponent(song?.id || "")}`, { version: matchedVersionId }, ["version"])
+    : `#/song/${encodeURIComponent(song?.id || "")}`;
+  const href = String(options.href || defaultHref).trim() || "#/";
   const yearValue = getPublicSongYear(song?.year || "");
   const langValue = String(song?.lang ? formatLang(song.lang) : "").trim();
   const countryValue = compactHistoricalCountryLabel(song?.country || "");
@@ -5912,6 +5920,7 @@ function songDetailsUI(song, extra = {}) {
   const links = Array.isArray(song.links) ? song.links : [];
   const versions = Array.isArray(song.versions) ? song.versions : [];
   const suppressOriginalVersion = shouldSuppressOriginalVersion(song, versions);
+  const requestedVersionId = normalizeVersionIdentifier(extra?.selectedVersionId);
   const versionOptions = [
     ...(!suppressOriginalVersion ? [{
       id: "__original",
@@ -5930,7 +5939,7 @@ function songDetailsUI(song, extra = {}) {
       lyrics_meta_json: v.lyrics_meta_json || null,
     })),
   ];
-  const initialVersion = versionOptions[0] || {
+  const initialVersion = versionOptions.find((item) => normalizeVersionIdentifier(item?.id) === requestedVersionId) || versionOptions[0] || {
     id: "__original",
     title: t("song.version"),
     lang: song.lang || "",
@@ -6048,7 +6057,7 @@ function songDetailsUI(song, extra = {}) {
   const versionSummaryText = hasVersionChoices ? versionSummaryLabel(versionOptions.length) : "";
   const versionTabsMarkup = hasVersionChoices
     ? `<div class="song-version-tabs" id="songVersionTabs">
-        ${versionOptions.map((v, i) => `<button class="btn ghost song-version-btn ${i === 0 ? "is-active" : ""}" type="button" data-version-id="${esc(v.id)}">${i + 1}</button>`).join("")}
+          ${versionOptions.map((v, i) => `<button class="btn ghost song-version-btn ${normalizeVersionIdentifier(v?.id) === normalizeVersionIdentifier(initialVersion?.id) ? "is-active" : ""}" type="button" data-version-id="${esc(v.id)}">${i + 1}</button>`).join("")}
       </div>`
     : "";
   const compareToggleLabel = uiLocale() === "ru"
@@ -10814,6 +10823,7 @@ export async function render(route) {
   }
 
   if (route.name === "song") {
+    const selectedVersionId = normalizeVersionIdentifier(params.version || "");
     const songPromise = api.song(route.id);
     const commentsPromise = api.songComments(route.id).catch(() => ({ items: [] }));
     const favoritesPromise = state.user
@@ -10834,7 +10844,10 @@ export async function render(route) {
     }
     const isFav = Array.isArray(fav?.items) && fav.items.some((x) => x.id === song.id);
     const comments = Array.isArray(commentsData?.items) ? commentsData.items : [];
-    return { html: songDetailsUI(song, { isFav, background, comments }), ctx: { song, isFav, background, comments } };
+    return {
+      html: songDetailsUI(song, { isFav, background, comments, selectedVersionId }),
+      ctx: { song, isFav, background, comments, selectedVersionId },
+    };
   }
 
   if (route.name === "draft_legacy") {
@@ -12910,6 +12923,7 @@ export function bind(route, ctx) {
     let isVerifiedTranslationMode = false;
     const explicitSongVersions = Array.isArray(song?.versions) ? song.versions : [];
     const suppressOriginalSongVersion = shouldSuppressOriginalVersion(song, explicitSongVersions);
+    const requestedVersionId = normalizeVersionIdentifier(params.version || ctx?.selectedVersionId || "");
     const initialVisibleVersion = !suppressOriginalSongVersion
       ? {
         id: "__original",
@@ -13110,7 +13124,9 @@ export function bind(route, ctx) {
       const defaultVersionId = versionById.has("__original")
         ? "__original"
         : (versionById.keys().next().value || "__original");
-      let activeVersionId = defaultVersionId;
+      let activeVersionId = requestedVersionId && knownVersionIds.has(requestedVersionId)
+        ? requestedVersionId
+        : defaultVersionId;
       const renderVersion = (id) => {
         const chosen = versionById.get(id) || versionById.get(defaultVersionId) || null;
         if (!chosen) return;
@@ -13130,7 +13146,7 @@ export function bind(route, ctx) {
           btn.classList.toggle("is-active", btn.getAttribute("data-version-id") === chosen?.id);
         });
       };
-      renderVersion(defaultVersionId);
+      renderVersion(activeVersionId);
       const versionListenPanel = qs("songVersionListenPanel");
       const versionListenTitle1 = qs("songVersionListenTitle1");
       const versionListenTitle2 = qs("songVersionListenTitle2");

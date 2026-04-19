@@ -839,6 +839,62 @@ function computeMatchMetadata(song = {}, analysis = {}, candidateTermsByField = 
   };
 }
 
+function buildVersionCandidateSong(song = {}, version = null) {
+  if (!version) return null;
+  return {
+    ...song,
+    title: String(version?.title || song?.title || ""),
+    subtitle: String(song?.subtitle || ""),
+    lyrics: String(version?.lyrics || ""),
+    lang: String(version?.lang || song?.lang || ""),
+    source: String(version?.source || song?.source || ""),
+    lyrics_meta_json: version?.lyrics_meta_json || null,
+  };
+}
+
+function chooseMatchedVersionId(song = {}, analysis = {}, candidateTermsByField = {}) {
+  const versions = Array.isArray(song?.__search_versions) ? song.__search_versions : [];
+  if (!versions.length) return "";
+  const rankedCandidates = [
+    {
+      id: "__original",
+      title: String(song?.title || ""),
+      subtitle: String(song?.subtitle || ""),
+      lyrics: String(song?.lyrics || ""),
+      created_at: song?.created_at,
+      version_rows: song?.version_rows || 0,
+    },
+    ...versions.map((version) => ({
+      id: String(version?.id || "").trim(),
+      title: String(version?.title || song?.title || ""),
+      subtitle: String(song?.subtitle || ""),
+      lyrics: String(version?.lyrics || ""),
+      created_at: song?.created_at,
+      version_rows: song?.version_rows || 0,
+    })).filter((item) => item.id && item.lyrics.trim()),
+  ].map((candidate) => {
+    const matchMeta = computeMatchMetadata(candidate, analysis, candidateTermsByField);
+    return {
+      ...candidate,
+      ...matchMeta,
+      _score: matchMeta.score,
+    };
+  }).filter((candidate) => candidate._score > 0 || (candidate.match_reasons || []).length);
+
+  if (!rankedCandidates.length) return "";
+  const [best] = sortSearchRows(rankedCandidates);
+  return best?.id && best.id !== "__original" ? String(best.id) : "";
+}
+
+function resolveSnippetSong(song = {}, matchedVersionId = "") {
+  const versionId = String(matchedVersionId || "").trim();
+  if (!versionId) return song;
+  const versions = Array.isArray(song?.__search_versions) ? song.__search_versions : [];
+  const matchedVersion = versions.find((item) => String(item?.id || "").trim() === versionId);
+  if (!matchedVersion) return song;
+  return buildVersionCandidateSong(song, matchedVersion) || song;
+}
+
 async function fetchVisibleTermCandidates(env, filters = {}, options = {}) {
   const termNorm = normalizeSearchText(options.termNorm || "");
   if (!termNorm) return [];
@@ -1068,6 +1124,7 @@ async function fetchCandidateSongRows(env, songIds = []) {
   const versionsBySongId = await fetchSongVersionsBySongIds(env, safeSongIds);
   return (rows || []).map((row) => ({
     ...row,
+    __search_versions: versionsBySongId.get(String(row?.id || "").trim()) || [],
     ...buildSearchDocument(row, versionsBySongId.get(String(row?.id || "").trim()) || []),
   }));
 }
@@ -1159,6 +1216,7 @@ async function queryDirectScanRows(env, filters = {}, analysis = {}, options = {
   );
   return (rows || []).map((row) => ({
     ...row,
+    __search_versions: [],
     search_title: uniqueNormalizedTextParts([row?.title, row?.version_titles]).join("\n"),
     search_subtitle: String(row?.subtitle || ""),
     search_lyrics: uniqueNormalizedTextParts([row?.lyrics, row?.version_lyrics]).join("\n\n"),
@@ -1630,9 +1688,11 @@ export async function searchSongs(env, options = {}) {
       const candidate = candidateMap.get(String(row?.id || "")) || { fields: { title: new Set(), subtitle: new Set(), lyrics: new Set() } };
       const matchMeta = computeMatchMetadata(row, analysis, candidate.fields || {});
       if (matchMeta.score <= 0 && !(matchMeta.match_reasons || []).length) continue;
+      const matchedVersionId = chooseMatchedVersionId(row, analysis, candidate.fields || {});
       items.push({
         ...row,
-        snippet: buildSnippet(row, analysis.tokens),
+        matched_version_id: matchedVersionId,
+        snippet: buildSnippet(resolveSnippetSong(row, matchedVersionId), analysis.tokens),
         ...matchMeta,
         _score: matchMeta.score,
       });
@@ -1640,10 +1700,21 @@ export async function searchSongs(env, options = {}) {
 
     if (!items.length) {
       const fallbackRows = await queryDirectScanRows(env, filters, analysis, { includeAdminContent });
-      const rankedRows = rankSearchCandidatesForQuery(rawQuery, fallbackRows).map((row) => ({
-        ...row,
-        snippet: buildSnippet(row, analysis.tokens),
-      }));
+      const versionsBySongId = await fetchSongVersionsBySongIds(env, fallbackRows.map((row) => row?.id));
+      const rankedRows = rankSearchCandidatesForQuery(
+        rawQuery,
+        fallbackRows.map((row) => ({
+          ...row,
+          __search_versions: versionsBySongId.get(String(row?.id || "").trim()) || [],
+        }))
+      ).map((row) => {
+        const matchedVersionId = chooseMatchedVersionId(row, analysis, {});
+        return {
+          ...row,
+          matched_version_id: matchedVersionId,
+          snippet: buildSnippet(resolveSnippetSong(row, matchedVersionId), analysis.tokens),
+        };
+      });
       return finalizeSearchResponseFromItems(rawQuery, analysis, rankedRows, page, {
         did_you_mean: didYouMean,
         query_analysis: {
@@ -1680,10 +1751,21 @@ export async function searchSongs(env, options = {}) {
     console.warn("[song-search] indexed search failed, falling back to direct scan:", cause?.message || cause);
     try {
       const fallbackRows = await queryDirectScanRows(env, filters, analysis, { includeAdminContent });
-      const rankedRows = rankSearchCandidatesForQuery(rawQuery, fallbackRows).map((row) => ({
-        ...row,
-        snippet: buildSnippet(row, analysis.tokens),
-      }));
+      const versionsBySongId = await fetchSongVersionsBySongIds(env, fallbackRows.map((row) => row?.id));
+      const rankedRows = rankSearchCandidatesForQuery(
+        rawQuery,
+        fallbackRows.map((row) => ({
+          ...row,
+          __search_versions: versionsBySongId.get(String(row?.id || "").trim()) || [],
+        }))
+      ).map((row) => {
+        const matchedVersionId = chooseMatchedVersionId(row, analysis, {});
+        return {
+          ...row,
+          matched_version_id: matchedVersionId,
+          snippet: buildSnippet(resolveSnippetSong(row, matchedVersionId), analysis.tokens),
+        };
+      });
       return finalizeSearchResponseFromItems(rawQuery, analysis, rankedRows, page, {
         search_notice: "direct_scan_fallback",
       });

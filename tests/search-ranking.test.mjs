@@ -469,9 +469,22 @@ test("searchSongs finds hits that exist only in a secondary version during direc
     DB: {
       prepare(sql) {
         return {
-          bind() {
+          bind(...params) {
             return {
               async all() {
+                if (sql.includes("FROM song_versions") && sql.includes("WHERE song_id IN")) {
+                  return {
+                    results: [
+                      {
+                        song_id: "version-only-hit",
+                        id: "v2",
+                        title: "March Song Variant",
+                        lyrics: "Hidden second version keeps the burelom refrain alive.",
+                        sort_order: 1,
+                      },
+                    ],
+                  };
+                }
                 if (sql.includes("ORDER BY s.id ASC")) return { results: songRows };
                 return { results: [] };
               },
@@ -498,6 +511,7 @@ test("searchSongs finds hits that exist only in a secondary version during direc
 
   assert.equal(out.total, 1);
   assert.equal(out.items[0]?.id, "version-only-hit");
+  assert.equal(out.items[0]?.matched_version_id, "v2");
   assert.match(String(out.items[0]?.snippet || ""), /burelom/i);
 });
 
