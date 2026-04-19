@@ -616,9 +616,9 @@ function normalizePlayableUrl(value) {
 }
 
 const LISTEN_SERVICES = [
-  { id: "youtube", label: "YouTube", iconPath: "./ui/assets/listen/youtube.svg" },
-  { id: "sovmusic", label: "SovMusic", iconPath: "./ui/assets/listen/sovmusic.svg" },
-  { id: "russian-records", label: "Russian Records", iconPath: "./ui/assets/listen/russian-records.svg" },
+  { id: "youtube", label: "YouTube", iconPath: new URL("./assets/listen/youtube.svg", import.meta.url).toString() },
+  { id: "sovmusic", label: "SovMusic", iconPath: new URL("./assets/listen/sovmusic.svg", import.meta.url).toString() },
+  { id: "russian-records", label: "Russian Records", iconPath: new URL("./assets/listen/russian-records.svg", import.meta.url).toString() },
 ];
 
 // "Viewport" is what the user sees on screen; "standard" is the stored background asset size.
@@ -644,21 +644,16 @@ const SONG_PAGE_BG_STATIC_COUNTRIES = new Set([
   "russian_empire_1900_1917",
 ]);
 
-const DEFAULT_COUNTRY_BACKGROUND = {
-  ussr: {
-    desktop_image_url: new URL("./assets/ussr-hero.jpg", import.meta.url).toString(),
-    mobile_image_url: "",
-    desktop_focus_x: 50,
-    desktop_focus_y: 50,
-    mobile_focus_x: 50,
-    mobile_focus_y: 50,
-  },
-};
-
 function clampPercent(value) {
   const n = Number(value);
   if (!Number.isFinite(n)) return 50;
   return Math.max(0, Math.min(100, n));
+}
+
+function normalizeTopAnchoredBackgroundFocusY(value) {
+  const focusY = clampPercent(value);
+  if (focusY <= 50) return 0;
+  return clampPercent((focusY - 50) * 2);
 }
 
 function clampZoomLevel(value) {
@@ -676,8 +671,7 @@ function zoomLevelToScale(level) {
 function defaultCountryBackground(country) {
   const canonical = normalizeSongCountry(country || "");
   if (!canonical) return null;
-  const fallback = DEFAULT_COUNTRY_BACKGROUND[canonical];
-  return fallback ? { ...fallback, country: canonical } : null;
+  return { country: canonical };
 }
 
 function createEmptyPeriodImageConfig() {
@@ -845,9 +839,9 @@ function applyCountryBackgroundToBody(item, country, options = {}) {
     return normalized;
   }
   const desktopFocusX = clampPercent(normalized?.desktop_focus_x);
-  const desktopFocusY = clampPercent(normalized?.desktop_focus_y);
+  const desktopFocusY = normalizeTopAnchoredBackgroundFocusY(normalized?.desktop_focus_y);
   const mobileFocusX = clampPercent(normalized?.mobile_focus_x);
-  const mobileFocusY = clampPercent(normalized?.mobile_focus_y);
+  const mobileFocusY = normalizeTopAnchoredBackgroundFocusY(normalized?.mobile_focus_y);
   if (desktopImageUrl) document.body.style.setProperty("--song-page-bg-image-desktop", toCssUrlValue(desktopImageUrl));
   else document.body.style.removeProperty("--song-page-bg-image-desktop");
   if (mobileImageUrl) document.body.style.setProperty("--song-page-bg-image-mobile", toCssUrlValue(mobileImageUrl));
@@ -2486,15 +2480,11 @@ function homeUI(data, params, homeExtras = {}) {
     .map(([langKey, bucket]) => {
       const rankedCountries = Array.from(bucket.countries.entries())
         .sort((a, b) => b[1] - a[1] || formatCountry(a[0]).localeCompare(formatCountry(b[0]), localeForSort));
-      const topCountry = rankedCountries[0]?.[0] || "";
       const topCountriesLabel = rankedCountries
         .slice(0, 2)
         .map(([countryKey]) => formatCountry(countryKey))
         .filter(Boolean)
         .join(" · ");
-      const background = topCountry ? (backgroundsByCountry.get(topCountry) || {}) : {};
-      const wallpaperUrl = String(background?.desktop_image_url || background?.mobile_image_url || "").trim();
-      const flagUrl = resolveVisualSymbolUrl(background?.visual_profile || {}, { kind: "square", device: "desktop" });
       const href = catalogHashForSongFilter({ lang: langKey, searched: "0", adv: "0", page: "1" });
       return {
         key: langKey,
@@ -2502,11 +2492,7 @@ function homeUI(data, params, homeExtras = {}) {
         title: formatLang(langKey),
         count: bucket.total,
         href,
-        previewBg: wallpaperUrl,
-        wallBg: wallpaperUrl,
-        flagBg: flagUrl,
         lang: langKey,
-        country: topCountry,
         previewLines: [
           homePickerDetailLine(t("home.country"), topCountriesLabel),
           homeCountrySongsCountLabel(bucket.total),
@@ -3735,6 +3721,50 @@ function stripTrailingLyricsFootnoteMarker(value = "") {
     .trim();
 }
 
+function draftComparableLineText(value = "") {
+  return stripTrailingLyricsFootnoteMarker(normalizeLyricsDisplayLine(value || ""))
+    .replace(/\s+/g, " ")
+    .trim()
+    .toLowerCase();
+}
+
+function draftLineLooksForeignToSource(variants = [], sourceText = "", activeText = "") {
+  const sourceComparable = draftComparableLineText(sourceText);
+  if (!sourceComparable) return false;
+  const activeComparable = draftComparableLineText(activeText);
+  if (activeComparable && activeComparable === sourceComparable) return false;
+  return !(Array.isArray(variants) ? variants : []).some((variant) => (
+    draftComparableLineText(variant?.text || "") === sourceComparable
+  ));
+}
+
+function draftDeduplicateVariantsByText(variants = [], preferredActiveId = "") {
+  const out = [];
+  const seen = new Map();
+  const activeId = String(preferredActiveId || "").trim();
+  for (const variant of Array.isArray(variants) ? variants : []) {
+    const comparable = draftComparableLineText(variant?.text || "");
+    const key = comparable || `__empty__${out.length}`;
+    const existingIndex = seen.get(key);
+    if (existingIndex === undefined) {
+      out.push(variant);
+      seen.set(key, out.length - 1);
+      continue;
+    }
+    const existing = out[existingIndex];
+    const nextId = String(variant?.id || "").trim();
+    const prevId = String(existing?.id || "").trim();
+    const nextIsActive = !!variant?.is_active || (activeId && nextId === activeId);
+    const prevIsActive = !!existing?.is_active || (activeId && prevId === activeId);
+    const nextIsManual = String(variant?.variant_type || "").trim() === "manual";
+    const prevIsManual = String(existing?.variant_type || "").trim() === "manual";
+    if ((nextIsActive && !prevIsActive) || (nextIsManual && !prevIsManual)) {
+      out[existingIndex] = variant;
+    }
+  }
+  return out;
+}
+
 function countRegexMatches(value = "", pattern) {
   const matches = String(value || "").match(pattern);
   return Array.isArray(matches) ? matches.length : 0;
@@ -3819,6 +3849,10 @@ function draftNormalizeVariantState(rawVariant = {}, options = {}) {
     rawVariant?.confidence_level ?? rawVariant?.level ?? rawVariant?.confidence,
     options?.fallbackConfidence ?? 100,
   );
+  const requestedVariantType = String(rawVariant?.variant_type || options?.defaultVariantType || "").trim().toLowerCase();
+  const variantType = requestedVariantType === "manual" || requestedVariantType === "suggested" || requestedVariantType === "imported"
+    ? requestedVariantType
+    : "manual";
   return {
     id: String(rawVariant?.id || options?.fallbackId || `variant_${Date.now()}`),
     text,
@@ -3828,7 +3862,7 @@ function draftNormalizeVariantState(rawVariant = {}, options = {}) {
       rawVariant?.confidence_segments ?? rawVariant?.segments ?? [],
       text,
     ),
-    variant_type: String(rawVariant?.variant_type || "manual").trim() || "manual",
+    variant_type: variantType,
     is_active: rawVariant?.is_active === true || Number(rawVariant?.is_active || 0) === 1,
   };
 }
@@ -3839,14 +3873,21 @@ function draftEnsureLineState(line = {}, sourceText = "", index = 0, options = {
   const variantIdPrefix = String(options?.variantIdPrefix || "variant");
   const baseLine = line && typeof line === "object" ? { ...line } : {};
   const rawVariants = Array.isArray(baseLine?.variants) ? baseLine.variants : [];
-  const variants = rawVariants.map((item, variantIndex) => draftNormalizeVariantState(item, {
+  let variants = rawVariants.map((item, variantIndex) => draftNormalizeVariantState(item, {
     fallbackText: safeText,
     fallbackId: `${variantIdPrefix}_${index + 1}_${variantIndex + 1}`,
+    defaultVariantType: "imported",
   }));
+  variants = draftDeduplicateVariantsByText(variants, baseLine?.active_variant_id);
   let active = draftResolveActiveVariant({ variants, active_variant_id: baseLine?.active_variant_id }, {
     preferredActiveId: baseLine?.active_variant_id,
     fallbackText: safeText,
   }) || variants.find((item) => String(item?.text || "") === safeText) || variants[0] || null;
+
+  if (draftLineLooksForeignToSource(variants, safeText, active?.text || "")) {
+    variants = [];
+    active = null;
+  }
 
   if (!variants.length) {
     active = draftNormalizeVariantState({}, {
@@ -4106,7 +4147,15 @@ function draftLinePopoverUI(line = null, index = -1, options = {}) {
   });
   const active = draftActiveVariant(normalizedLine);
   const activeConfidence = draftClampConfidence(active?.confidence, 100);
-  const variants = [...(Array.isArray(normalizedLine?.variants) ? normalizedLine.variants : [])];
+  const activeComparable = draftComparableLineText(active?.text || "");
+  const variants = [...(Array.isArray(normalizedLine?.variants) ? normalizedLine.variants : [])].filter((variant) => {
+    const variantId = String(variant?.id || "").trim();
+    const isActive = variantId && variantId === String(active?.id || "").trim();
+    if (isActive) return true;
+    const variantType = String(variant?.variant_type || "").trim().toLowerCase();
+    if (variantType !== "manual") return false;
+    return draftComparableLineText(variant?.text || "") !== activeComparable;
+  });
   const activeVariantId = String(active?.id || variants[0]?.id || "");
   const canRemoveVariant = variants.length > 1;
   const safeIndex = Math.max(0, Number(index || 0));
@@ -6123,6 +6172,13 @@ function songDetailsUI(song, extra = {}) {
       : uiLocale() === "et"
         ? "Paremal"
         : "Right";
+  const compareCloseLabel = uiLocale() === "ru"
+    ? "\u0412\u044b\u0439\u0442\u0438 \u0438\u0437 \u0441\u0440\u0430\u0432\u043d\u0435\u043d\u0438\u044f"
+    : uiLocale() === "uk"
+      ? "\u0412\u0438\u0439\u0442\u0438 \u0437 \u043f\u043e\u0440\u0456\u0432\u043d\u044f\u043d\u043d\u044f"
+      : uiLocale() === "et"
+        ? "V\u00e4lju v\u00f5rdlusest"
+        : "Exit comparison";
   const backgroundCardClass = hasCountryBackground ? " song-card-shell-has-bg" : "";
   const sourceValue = String(song.source || "").trim();
   const sourcePlayableUrl = normalizePlayableUrl(sourceValue);
@@ -6167,6 +6223,9 @@ function songDetailsUI(song, extra = {}) {
   ` : "";
   const comparePickerCard = hasVersionChoices ? `
     <div class="card song-compare-toolbar hidden" id="songCompareVersionPickWrap">
+      <div class="song-compare-toolbar-header">
+        <button class="btn ghost song-compare-close-btn" id="songCompareClose" type="button">${esc(compareCloseLabel)}</button>
+      </div>
       <div class="song-compare-toolbar-grid">
         <section class="song-compare-selector-card song-compare-selector-card-left">
           <div class="song-compare-selector-label">${esc(compareColumnLeftTitle)}</div>
@@ -8292,8 +8351,10 @@ function adminEditorUI(song = {}, options = {}) {
         <div class="actions request-actions ac-version-danger-zone">
           <button class="btn danger hidden" id="ac_remove_active_version" type="button">${esc(deletePageVariantLabel())}</button>
         </div>
+        <section class="request-section ac-editor-history-section">
+          ${adminSongHistoryPanelUI(historyData, song)}
+        </section>
       </div>
-      ${adminSongHistoryPanelUI(historyData, song)}
       ${footerActions}
     </div>
   `;
@@ -8410,7 +8471,7 @@ function adminUsersUI(data) {
         ? "Oigused"
         : "Permissions";
   const superAdminBadgeLabel = uiLocale() === "ru"
-    ? "Супер-адинистратор"
+    ? "Супер-администратор"
     : uiLocale() === "uk"
       ? "Супер-адіністратор"
       : uiLocale() === "et"
@@ -8438,7 +8499,7 @@ function adminUsersUI(data) {
         ? "Kasutaja"
         : "User";
   const adminRoleLabel = uiLocale() === "ru"
-    ? "Адинистратор"
+    ? "Администратор"
     : uiLocale() === "uk"
       ? "Адіністратор"
       : uiLocale() === "et"
@@ -9145,6 +9206,15 @@ function openPrompt(text, options = {}) {
   openDialogAnimated(dlg);
 }
 
+export function closePromptDialog() {
+  const dlg = qs("dlgPrompt");
+  if (dlg?.open) {
+    closeDialogAnimated(dlg);
+    return;
+  }
+  document.body.classList.remove("prompt-dialog-open");
+}
+
 function openDraftAiPrompt(text) {
   const promptText = String(text || "").trim();
   if (!promptText) return false;
@@ -9423,7 +9493,7 @@ function draftResolveLinePopoverMetrics(editorRect, textRect, anchorRect, popove
   const viewportWidth = Math.round(Number(visualViewport?.width || window.innerWidth || textRect.width || 0));
   const viewportHeight = Math.round(window.visualViewport?.height || window.innerHeight || editorRect.height || 0);
   const horizontalInset = isCompactMobile ? 20 : 24;
-  const minPopoverWidth = isCompactMobile ? 184 : 264;
+  const minPopoverWidth = isCompactMobile ? 184 : 460;
   const editorRightBound = Math.max(minPopoverWidth, Math.round(editorRect.width || viewportWidth) - 6);
   const visualLeftBound = isCompactMobile
     ? Math.max(0, Math.round(viewportOffsetLeft - editorRect.left + 6))
@@ -9462,12 +9532,12 @@ function draftResolveLinePopoverMetrics(editorRect, textRect, anchorRect, popove
           Math.round(Math.max(minPopoverWidth, textRect.width * 0.54)),
           260,
         )
-        : 420,
+        : 760,
     ),
   );
   const desiredWidth = isCompactMobile
     ? Math.round(Math.max(minPopoverWidth, Math.min(maxPopoverWidth, textRect.width * 0.48)))
-    : Math.round(Math.min(Math.max(minPopoverWidth, textRect.width * 0.52), maxPopoverWidth));
+    : Math.round(Math.min(Math.max(minPopoverWidth, textRect.width * 0.9), maxPopoverWidth));
   const popoverWidth = Math.max(minPopoverWidth, Math.min(desiredWidth, maxPopoverWidth));
   const anchorOffset = Math.max(18, Math.round(anchorRect.width || 0) + 8);
   const mobileBaseLeft = textColumnLeft;
@@ -9803,8 +9873,109 @@ function collectVersions(rootIdPrefix) {
     lang: entry.row.querySelector(".ss_version_lang")?.value?.trim() || "",
     source: entry.row.querySelector(".ss_version_source")?.value?.trim() || "",
     lyrics: entry.row.querySelector(".ss_version_lyrics")?.value || "",
-    lyrics_meta_json: parseVersionLyricsMetaValue(entry.row.querySelector(".ss_version_lyrics_meta_json")?.value || "{}"),
+    lyrics_meta_json: draftCollapseLyricsMetaToActiveOnly(
+      parseVersionLyricsMetaValue(entry.row.querySelector(".ss_version_lyrics_meta_json")?.value || "{}"),
+      entry.row.querySelector(".ss_version_lyrics")?.value || "",
+    ),
   })).filter((item) => (item.lyrics || "").trim());
+}
+
+function draftCollapseLyricsMetaToActiveOnly(metaInput = null, lyricsText = "") {
+  const payload = parseLyricsMetaPayload(metaInput);
+  const lines = draftBuildLinesFromLyricsMeta(lyricsText, payload, {
+    lineIdPrefix: "collapsed_line",
+    variantIdPrefix: "collapsed_variant",
+  }).map((line, index) => {
+    const active = draftActiveVariant(line || {});
+    const activeText = String(active?.text || splitLyricsLines(lyricsText)[index] || "");
+    const activeVariant = draftNormalizeVariantState({
+      id: String(active?.id || `collapsed_variant_${index + 1}_1`),
+      text: activeText,
+      confidence: active?.confidence ?? 100,
+      confidence_level: active?.confidence_level || draftConfidenceLevel(active?.confidence ?? 100),
+      confidence_segments: active?.confidence_segments || [],
+      variant_type: "manual",
+      is_active: true,
+    }, {
+      fallbackText: activeText,
+      fallbackId: `collapsed_variant_${index + 1}_1`,
+      fallbackConfidence: active?.confidence ?? 100,
+      defaultVariantType: "manual",
+    });
+    return {
+      id: String(line?.id || `collapsed_line_${index + 1}`),
+      line_key: String(line?.line_key || `line_${index + 1}`),
+      sort_order: Number(line?.sort_order ?? index),
+      active_variant_id: String(activeVariant.id || ""),
+      variants: [activeVariant],
+    };
+  });
+  return draftBuildLyricsMeta(lines, lyricsText);
+}
+
+function readVersionLyricsMetaFromRow(rowNode) {
+  if (!(rowNode instanceof HTMLElement)) return null;
+  const lyricsText = rowNode.querySelector(".ss_version_lyrics")?.value || "";
+  return draftCollapseLyricsMetaToActiveOnly(
+    parseVersionLyricsMetaValue(rowNode.querySelector(".ss_version_lyrics_meta_json")?.value || "{}"),
+    lyricsText,
+  );
+}
+
+function writeVersionLyricsMetaToRow(rowNode, meta) {
+  if (!(rowNode instanceof HTMLElement)) return;
+  const hiddenNode = rowNode.querySelector(".ss_version_lyrics_meta_json");
+  if (hiddenNode instanceof HTMLInputElement) {
+    hiddenNode.value = serializeVersionLyricsMetaValue(meta || {});
+  }
+}
+
+function readAdminEditorMainLyricsMeta(rootNode) {
+  if (!(rootNode instanceof HTMLElement)) return null;
+  const lyricsText = rootNode.querySelector("#ac_lyrics")?.value || rootNode.querySelector("#ac_main_lyrics_buffer")?.value || "";
+  return draftCollapseLyricsMetaToActiveOnly(rootNode.__mainLyricsConfidenceMeta || rootNode.__lyricsConfidenceMeta || null, lyricsText);
+}
+
+function writeAdminEditorMainLyricsMeta(rootNode, meta) {
+  if (!(rootNode instanceof HTMLElement)) return;
+  rootNode.__mainLyricsConfidenceMeta = meta || null;
+  const activeSource = String(rootNode.dataset?.activeVariantSource || "main").trim();
+  if (activeSource === "main") {
+    rootNode.__lyricsConfidenceMeta = meta || null;
+  }
+}
+
+function findAdminEditorActiveVersionRow(rootNode) {
+  if (!(rootNode instanceof HTMLElement)) return null;
+  const activeSource = String(rootNode.dataset?.activeVariantSource || "main").trim();
+  if (!activeSource.startsWith("row:")) return null;
+  const rowId = normalizeVersionIdentifier(activeSource.slice(4));
+  if (!rowId) return null;
+  return rootNode.querySelector(`#ac_versions .ss_version_row[data-version-row-id="${rowId}"]`);
+}
+
+function readAdminEditorActiveLyricsMeta(rootNode) {
+  const activeRow = findAdminEditorActiveVersionRow(rootNode);
+  if (activeRow) return readVersionLyricsMetaFromRow(activeRow);
+  return readAdminEditorMainLyricsMeta(rootNode);
+}
+
+function writeAdminEditorActiveLyricsMeta(rootNode, meta) {
+  if (!(rootNode instanceof HTMLElement)) return;
+  const activeRow = findAdminEditorActiveVersionRow(rootNode);
+  if (activeRow) {
+    writeVersionLyricsMetaToRow(activeRow, meta);
+  } else {
+    writeAdminEditorMainLyricsMeta(rootNode, meta);
+  }
+  rootNode.__lyricsConfidenceMeta = meta || null;
+}
+
+function syncAdminEditorActiveLyricsMeta(rootNode, lyricsText = "") {
+  if (!(rootNode instanceof HTMLElement)) return null;
+  const meta = draftEditorLyricsMeta(rootNode, lyricsText);
+  writeAdminEditorActiveLyricsMeta(rootNode, meta);
+  return meta;
 }
 
 function wireDynamicRows(root) {
@@ -9888,7 +10059,7 @@ function computeBackgroundCrop(sourceWidth, sourceHeight, targetWidth, targetHei
   const cropHeight = Math.max(1, baseCropHeight / zoomScale);
 
   const fx = clampPercent(focusX) / 100;
-  const fy = clampPercent(focusY) / 100;
+  const fy = normalizeTopAnchoredBackgroundFocusY(focusY) / 100;
   let cropX = (safeSourceWidth - cropWidth) * fx;
   let cropY = (safeSourceHeight - cropHeight) * fy;
   cropX = Math.max(0, Math.min(safeSourceWidth - cropWidth, cropX));
@@ -10185,7 +10356,12 @@ function fillContentEditor(song) {
   wireDynamicRows(qs("ac_editor"));
   wireAutoGrowTextareas(qs("ac_editor"));
   if (qs("ac_editor")) {
-    qs("ac_editor").__lyricsConfidenceMeta = song?.lyrics_meta_json || song?.lyrics_meta || null;
+    const collapsedMainMeta = draftCollapseLyricsMetaToActiveOnly(
+      song?.lyrics_meta_json || song?.lyrics_meta || null,
+      song?.lyrics || "",
+    );
+    qs("ac_editor").__mainLyricsConfidenceMeta = collapsedMainMeta;
+    qs("ac_editor").__lyricsConfidenceMeta = collapsedMainMeta;
     qs("ac_editor").__lyricsConfidenceLines = null;
   }
   syncDecodingIndicator("ac_decoding", "ac_lyrics", "ac_chorus", "ac_chorus_marker");
@@ -10203,7 +10379,11 @@ function collectContentPayload() {
     ? currentEditorLyrics
     : (qs("ac_main_lyrics_buffer")?.value || currentEditorLyrics);
   const lyrics = String(mainLyrics || "");
-  const lyricsMetaJson = draftEditorLyricsMeta(qs("ac_editor"), lyrics);
+  const editorRoot = qs("ac_editor");
+  const activeSourceMeta = syncAdminEditorActiveLyricsMeta(editorRoot, String(currentEditorLyrics || ""));
+  const lyricsMetaJson = activeEditorSource === "main"
+    ? activeSourceMeta
+    : (readAdminEditorMainLyricsMeta(editorRoot) || null);
   const requestKind = String(qs("ac_request_kind")?.value || "").trim().toLowerCase();
   const isRequestMode = String(qs("ac_request_mode")?.value || "") === "1";
   const targetSongId = String(qs("ac_target_song_id")?.value || "").trim();
@@ -11733,7 +11913,8 @@ function bindAdminHistoricalVisuals(ctx) {
   function applyPreview(refs, kind) {
     if (!refs?.preview) return;
     const imageUrl = sourceUrlForKind(kind);
-    const { focusX, focusY } = readVariantFocus(kind);
+    const { focusX, focusY: rawFocusY } = readVariantFocus(kind);
+    const focusY = normalizeTopAnchoredBackgroundFocusY(rawFocusY);
     updateZoomLabel(refs);
     if (!imageUrl) {
       refs.preview.classList.add("is-empty");
@@ -13061,6 +13242,7 @@ export function bind(route, ctx) {
       const compareWrap = qs("songVersionCompare");
       const compareToggleWrap = qs("songCompareToggleWrap");
       const compareToggle = qs("songCompareToggle");
+      const compareClose = qs("songCompareClose");
       const comparePickWrap = qs("songCompareVersionPickWrap");
       const comparePickLeft = qs("songCompareVersionPickLeft");
       const comparePickRight = qs("songCompareVersionPickRight");
@@ -13080,6 +13262,13 @@ export function bind(route, ctx) {
       if (compareWrap && compareToggleWrap && compareToggle && compareDiff) {
         const setCompareLayout = (isOpen) => {
           if (songViewRoot) songViewRoot.classList.toggle("song-compare-mode", !!isOpen);
+        };
+        const closeCompareMode = () => {
+          closeAnimatedElement(compareWrap, { duration: 420 });
+          if (baseContent) baseContent.classList.remove("hidden");
+          if (comparePickWrap) comparePickWrap.classList.add("hidden");
+          closeCompareMenus();
+          setCompareLayout(false);
         };
         const localizedVersionWord = uiLocale() === "ru"
           ? "Версия"
@@ -13455,11 +13644,7 @@ export function bind(route, ctx) {
           const canCompare = compareOptions.length > 1 && activeVersionId !== defaultVersionId;
           compareToggleWrap.classList.toggle("hidden", !canCompare);
           if (!canCompare) {
-            closeAnimatedElement(compareWrap, { duration: 420 });
-            if (baseContent) baseContent.classList.remove("hidden");
-            comparePickWrap.classList.add("hidden");
-            closeCompareMenus();
-            setCompareLayout(false);
+            closeCompareMode();
             return;
           }
           if (!isAnimatedElementOpen(compareWrap)) {
@@ -13511,11 +13696,7 @@ export function bind(route, ctx) {
         compareToggle.addEventListener("click", () => {
           const isOpen = isAnimatedElementOpen(compareWrap);
           if (isOpen) {
-            closeAnimatedElement(compareWrap, { duration: 420 });
-            if (baseContent) baseContent.classList.remove("hidden");
-            comparePickWrap.classList.add("hidden");
-            closeCompareMenus();
-            setCompareLayout(false);
+            closeCompareMode();
             return;
           }
           renderComparePick();
@@ -13525,6 +13706,7 @@ export function bind(route, ctx) {
           openAnimatedElement(compareWrap);
           setCompareLayout(true);
         });
+        compareClose?.addEventListener("click", closeCompareMode);
       }
 
       songVersionTabs.querySelectorAll(".song-version-btn").forEach((btn) => {
@@ -16000,13 +16182,18 @@ export function bind(route, ctx) {
     const acLoadActiveSourceIntoEditor = ({ emitInput = true } = {}) => {
       if (!(acLyricsNode instanceof HTMLTextAreaElement)) return;
       const activeRowId = acVariantRowIdFromKey(acActiveVariantSource);
+      let activeSourceMeta = null;
       if (!activeRowId) {
         acLyricsNode.value = acGetMainLyrics();
+        activeSourceMeta = readAdminEditorMainLyricsMeta(editorRoot);
       } else {
         const rowNode = acVersionsRoot?.querySelector(`.ss_version_row[data-version-row-id="${activeRowId}"]`);
         const rowLyricsNode = rowNode?.querySelector(".ss_version_lyrics");
         acLyricsNode.value = rowLyricsNode instanceof HTMLTextAreaElement ? String(rowLyricsNode.value || "") : "";
+        activeSourceMeta = readVersionLyricsMetaFromRow(rowNode);
       }
+      editorRoot.__lyricsConfidenceMeta = activeSourceMeta || null;
+      editorRoot.__lyricsConfidenceLines = null;
       autoGrowTextarea(acLyricsNode, { preserveViewport: false, extraBottomSpace: 0 });
       const editorNode = qs("ac_lyrics_editor");
       if (editorNode instanceof HTMLElement) {
@@ -16018,7 +16205,10 @@ export function bind(route, ctx) {
     };
     const acSetActiveVariantSource = (nextKey, options = {}) => {
       const shouldSyncCurrent = options.syncCurrent !== false;
-      if (shouldSyncCurrent) acSyncActiveSourceFromEditor();
+      if (shouldSyncCurrent) {
+        acSyncActiveSourceFromEditor();
+        syncAdminEditorActiveLyricsMeta(editorRoot, String(acLyricsNode?.value || ""));
+      }
       const entries = acVariantEntries();
       const requestedKey = String(nextKey || "").trim();
       const resolvedKey = entries.some((entry) => entry.key === requestedKey)
@@ -17828,7 +18018,7 @@ export function bind(route, ctx) {
           }
           if (acInlineError) acInlineError.classList.add("hidden");
           const oldIdentity = contentDraftIdentity();
-          if (isRequestMode && forcedStatus !== "published") {
+          if (isRequestMode && forcedStatus === "draft") {
             await saveRequestDraftToServer();
             showStatusOverlay(requestDraftSavedBannerText(), "success");
             savePending = false;
@@ -18334,7 +18524,8 @@ export function bind(route, ctx) {
     const applyPreview = (refs, kind) => {
       if (!refs?.preview) return;
       const imageUrl = sourceUrlForKind(kind);
-      const { focusX, focusY } = readVariantFocus(kind);
+      const { focusX, focusY: rawFocusY } = readVariantFocus(kind);
+      const focusY = normalizeTopAnchoredBackgroundFocusY(rawFocusY);
       updateZoomLabel(refs);
       if (!imageUrl) {
         refs.preview.classList.add("is-empty");
@@ -19054,10 +19245,15 @@ export function bind(route, ctx) {
       const toggle = card.querySelector(".au_admin_access");
       const permWrap = card.querySelector(".au_permissions_wrap");
       const scopeWrap = card.querySelector(".au_scope_wrap");
+      const scopeInputs = Array.from(card.querySelectorAll(".au_scope_lang"));
       const sync = () => {
         const isAdmin = toggle?.value === "1";
         permWrap?.classList.toggle("hidden", !isAdmin);
         scopeWrap?.classList.toggle("hidden", !isAdmin);
+        if (isAdmin && scopeInputs.length > 0 && !scopeInputs.some((node) => node.checked)) {
+          const allScopeNode = scopeInputs.find((node) => String(node.value || "").trim() === "*");
+          if (allScopeNode) allScopeNode.checked = true;
+        }
         if (permWrap instanceof HTMLDetailsElement) {
           permWrap.open = false;
         }
@@ -19087,7 +19283,7 @@ export function bind(route, ctx) {
             : uiLocale() === "et"
               ? `Kasutaja andmed kustutati: ${id}`
               : `User data deleted: ${id}`, "success");
-        location.hash = "#/admin/users";
+        location.hash = makeHash("#/admin/users", { refresh: String(Date.now()) }, ["refresh"]);
       } catch (e) {
         showStatusOverlay(`${t("common.error")}: ${e?.message || t("common.error")}`, "error");
       }
@@ -19107,7 +19303,14 @@ export function bind(route, ctx) {
       const scopeLanguages = role === "admin"
         ? Array.from(card.querySelectorAll(".au_scope_lang:checked")).map((n) => n.value.trim().toLowerCase()).filter(Boolean)
         : [];
-      const normalizedScope = scopeLanguages.includes("*") ? ["*"] : scopeLanguages.filter((x) => x !== "*");
+      const normalizedScope = role !== "admin"
+        ? []
+        : scopeLanguages.includes("*")
+          ? ["*"]
+          : scopeLanguages.filter((x) => x !== "*");
+      if (role === "admin" && normalizedScope.length === 0) {
+        normalizedScope.push("*");
+      }
       try {
         const out = await api.adminSetUserRole(id, { role, permissions, scopeLanguages: normalizedScope });
         const assigned = new Set(Array.isArray(out?.user?.permissions) ? out.user.permissions : permissions);

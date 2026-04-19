@@ -1,0 +1,8 @@
+# Research Question Matrix
+
+| RQ | supporting executed checks | exact evidence | cautious conclusion |
+|---|---|---|---|
+| RQ1 role hierarchy and protection against vandalism while allowing controlled expansion | register/login/logout, guest denials on favorites/comments/requests/drafts, non-admin denials on `/api/admin/*`, request submission flow, draft collaboration flow | Runtime 401 for guest protected actions, 403 for non-admin access to admin endpoints, successful request submission and controlled draft collaboration | Executed evidence supports basic protection against anonymous and ordinary-user vandalism and shows controlled user contribution paths. Full admin/super-admin hierarchy was not executed in runtime, so hierarchy claims remain only partially supported. |
+| RQ2 song card structure and navigation | browse catalogue, open song card from API/browser route, inspect metadata, links, comments, AI prompt buttons | `GET /api/songs`, `GET /api/songs/s_demo_du_nai`, headless DOM for `#/song/s_demo_du_nai` | Executed evidence supports that a song card exists, is reachable from catalogue routes, and contains structured metadata, versions, links, comments, and prompt buttons. |
+| RQ3 multiple versions in one card and direct comparison | multi-version filter, song card versions, headless browser compare controls in same card | `GET /api/songs?multi_versions=1`, `GET /api/songs/s_demo_du_nai`, compare selector DOM rendered inside same song page | Executed evidence supports storage/display of multiple versions inside one card and shows an in-card comparison UI. Actual comparison diff rendering was not triggered during this run, so direct-comparison behavior is only partially supported. |
+

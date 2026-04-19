@@ -17423,6 +17423,7 @@ html .catalog-top-search.has-actions-menu .catalog-top-search-menu-toggle::befor
 #ac_editor .ac-editor-lyrics-section,
 #ac_editor .ac-links-shell,
 #ac_editor .ac-links-details,
+#ac_editor .ac-editor-history-section,
 #ac_editor .ac-collab-panel,
 #ac_editor .ac-collab-controls {
   width: min(100%, 720px) !important;
@@ -17434,10 +17435,37 @@ html .catalog-top-search.has-actions-menu .catalog-top-search-menu-toggle::befor
 #ac_editor .ac-chorus-field,
 #ac_editor #ac_lyrics_editor,
 #ac_editor #ac_chorus,
+#ac_editor .ac-editor-history-section,
 #ac_editor #ac_links_section .ac-links-shell {
   width: min(100%, 620px) !important;
   max-width: 620px !important;
   margin-inline: auto !important;
+}
+
+#ac_editor .ac-editor-history-section {
+  padding: 0 !important;
+  border: 0 !important;
+  background: transparent !important;
+  box-shadow: none !important;
+}
+
+#ac_editor .ac-editor-history-section .ac-revision-panel {
+  width: 100% !important;
+  max-width: 100% !important;
+  margin: 0 !important;
+  padding: 14px !important;
+  background: rgba(16, 42, 87, 0.46) !important;
+  border: 1px solid rgba(27, 74, 143, 0.62) !important;
+  box-shadow:
+    0 12px 28px rgba(2, 8, 24, 0.22),
+    0 0 0 1px rgba(163, 206, 255, 0.05) inset !important;
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+}
+
+#ac_editor .ac-editor-history-section .ac-revision-item {
+  background: rgba(10, 29, 80, 0.34) !important;
+  border-color: rgba(57, 113, 225, 0.3) !important;
 }
 
 #ac_editor #ac_lyrics_editor,
@@ -18294,6 +18322,18 @@ html :is(
   box-shadow: none !important;
   backdrop-filter: none !important;
   -webkit-backdrop-filter: none !important;
+}
+
+.song-compare-toolbar-header {
+  display: flex;
+  justify-content: flex-end;
+  align-items: center;
+}
+
+.song-compare-close-btn {
+  min-height: 38px;
+  border-radius: 999px;
+  padding-inline: 16px;
 }
 
 .song-compare-toolbar-title {
@@ -19758,4 +19798,60 @@ html[data-theme="white"] .ac-editor-variant-tab-add-label {
     max-width 760ms cubic-bezier(0.2, 0.82, 0.22, 1) !important,
     max-height 760ms cubic-bezier(0.2, 0.82, 0.22, 1) !important,
     margin-bottom 760ms cubic-bezier(0.2, 0.82, 0.22, 1) !important;
+}
+
+@media (min-width: 761px) {
+  #ac_editor .ac-line-popover,
+  #requestForm .ac-line-popover {
+    max-width: min(760px, calc(100vw - 48px)) !important;
+    padding: 10px !important;
+    border-radius: 14px !important;
+  }
+
+  #ac_editor .ac-line-popover-card,
+  #requestForm .ac-line-popover-card {
+    gap: 10px !important;
+  }
+
+  #ac_editor .draft-variant-row,
+  #ac_editor .draft-variant-row.is-active,
+  #requestForm .draft-variant-row,
+  #requestForm .draft-variant-row.is-active {
+    padding: 10px 12px !important;
+  }
+
+  #ac_editor .draft-word-confidence-flow,
+  #requestForm .draft-word-confidence-flow {
+    display: grid !important;
+    grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)) !important;
+    gap: 8px !important;
+  }
+
+  #ac_editor .draft-word-confidence-item,
+  #requestForm .draft-word-confidence-item {
+    display: grid !important;
+    grid-template-columns: minmax(0, 1fr) !important;
+    align-items: start !important;
+    gap: 4px !important;
+  }
+
+  #ac_editor .draft-word-confidence-token,
+  #requestForm .draft-word-confidence-token {
+    min-width: 0 !important;
+    white-space: normal !important;
+    overflow: visible !important;
+    text-overflow: clip !important;
+  }
+
+  #ac_editor .draft-word-confidence-select-wrap,
+  #requestForm .draft-word-confidence-select-wrap {
+    width: 100% !important;
+    min-width: 0 !important;
+    justify-self: stretch !important;
+  }
+
+  #ac_editor .draft-word-confidence-select,
+  #requestForm .draft-word-confidence-select {
+    width: 100% !important;
+  }
 }

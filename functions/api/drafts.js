@@ -1,7 +1,35 @@
 import { json, err, readJSON } from "../_lib/utils.js";
 import { ensureSchemaAndSeed } from "../_lib/schema.js";
 import { dbAll, requireAuth } from "../_lib/db.js";
-import { createDraft, getDraftState } from "../_lib/drafts.js";
+import { createDraft } from "../_lib/drafts.js";
+
+function dedupeDraftList(items = []) {
+  const picked = new Map();
+  for (const item of Array.isArray(items) ? items : []) {
+    const songId = String(item?.song_id || "").trim();
+    const ownerUserId = String(item?.owner_user_id || "").trim();
+    const status = String(item?.status || "draft").trim().toLowerCase();
+    const draftId = String(item?.id || "").trim();
+    const duplicateKey = songId && ownerUserId && status === "draft"
+      ? `song:${ownerUserId}:${songId}`
+      : `draft:${draftId}`;
+    const existing = picked.get(duplicateKey);
+    if (!existing) {
+      picked.set(duplicateKey, item);
+      continue;
+    }
+    const existingUpdatedAt = String(existing?.updated_at || "");
+    const nextUpdatedAt = String(item?.updated_at || "");
+    const shouldReplace = nextUpdatedAt > existingUpdatedAt
+      || (nextUpdatedAt === existingUpdatedAt && draftId > String(existing?.id || ""));
+    if (shouldReplace) picked.set(duplicateKey, item);
+  }
+  return [...picked.values()].sort((left, right) => {
+    const byUpdatedAt = String(right?.updated_at || "").localeCompare(String(left?.updated_at || ""));
+    if (byUpdatedAt !== 0) return byUpdatedAt;
+    return String(right?.id || "").localeCompare(String(left?.id || ""));
+  });
+}
 
 export async function onRequestGet({ env, request }) {
   await ensureSchemaAndSeed(env);
@@ -52,7 +80,7 @@ export async function onRequestGet({ env, request }) {
      ORDER BY datetime(d.updated_at) DESC`,
     [userId, userId, ...params]
   );
-  return json({ items });
+  return json({ items: dedupeDraftList(items) });
 }
 
 export async function onRequestPost({ env, request }) {
@@ -67,13 +95,12 @@ export async function onRequestPost({ env, request }) {
 
   try {
     const draftId = await createDraft(env, { userId, songId, seed });
-    const state = await getDraftState(env, draftId);
     return json({
       draft_id: draftId,
-      version: state?.draft?.version ?? 0,
+      version: 0,
       role: "owner",
-      snapshot: state?.draft?.snapshot || {},
-      lines: state?.lines || [],
+      snapshot: seed,
+      lines: [],
     });
   } catch (cause) {
     return err(cause?.message || "Draft create failed", 400);

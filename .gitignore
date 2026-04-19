@@ -4,6 +4,7 @@ node_modules/
 # cloudflare build/runtime
 .wrangler/
 .wrangler-build/
+out/
 
 # env secrets
 .dev.vars
@@ -12,6 +13,9 @@ node_modules/
 
 # deploy snapshots / temp imports
 .deploy_*/
+tmp_pages_deploy_*/
+tmp_pages_deploy_clean.tar
+tmp_markup_scan.sqlite
 tmp_*.sql
 tmp_*.json
 tmp_import_chunks*/

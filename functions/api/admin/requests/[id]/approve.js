@@ -3,6 +3,7 @@ import { requirePermission, dbGet, dbRun, assertScopeForLang, hasAccessPermissio
 import { ensureSchemaAndSeed } from "../../../../_lib/schema.js";
 import { normalizeSongCatalogInput } from "../../../../../shared/song-catalogs.js";
 import { syncSongSearchIndex } from "../../../../_lib/song-search.mjs";
+import { findLikelyDuplicateSong } from "../../../../_lib/song-similarity.mjs";
 
 function parseJSON(text, fallback) {
   try {
@@ -73,6 +74,14 @@ export async function onRequestPost({ env, request, params }) {
 
     const item = await dbGet(env, `SELECT * FROM song_requests WHERE id=?`, [id]);
     if (!item) return err("Not found", 404);
+    if (item.status === "approved") {
+      return json({
+        ok: true,
+        requestId: id,
+        songId: normStr(item.target_song_id) || null,
+        alreadyApproved: true,
+      });
+    }
     if (item.status !== "new") return err("Already reviewed", 400);
 
     const requestKind = String(item.request_kind || "").trim().toLowerCase() === "edit_song" ? "edit_song" : "new_song";
@@ -157,43 +166,98 @@ export async function onRequestPost({ env, request, params }) {
         ]
       );
     } else {
-      songId = makeId("s");
+      const duplicate = await findLikelyDuplicateSong(env, {
+        title: item.title,
+        lang: normalizedLang,
+        lyrics: item.lyrics,
+      });
+      if (duplicate?.song?.id && duplicate.song.id !== songId) {
+        return err(`likely duplicate song exists: ${duplicate.song.id}`, 409);
+      }
+      const existingCreatedSong = songId
+        ? await dbGet(env, `SELECT id, status FROM songs WHERE id=?`, [songId])
+        : null;
+      if (existingCreatedSong && String(existingCreatedSong.status || "").trim() === "published") {
+        await dbRun(
+          env,
+          `UPDATE songs
+           SET
+             title=?,
+             subtitle=?,
+             lang=?,
+             country=?,
+             period=?,
+             region=?,
+             event=?,
+             theme=?,
+             year=?,
+             source=?,
+             notes=?,
+             lyrics=?,
+             lyrics_meta_json=?,
+             tags_json=?,
+             updated_by=?,
+             updated_at=datetime('now')
+           WHERE id=?`,
+          [
+            normStr(item.title),
+            normStr(item.subtitle),
+            normalizedLang,
+            normStr(normalizedCountry),
+            normStr(normalizedPeriod),
+            normStr(item.region),
+            normStr(item.event),
+            normStr(item.theme),
+            normStr(item.year),
+            normStr(item.source),
+            normStr(item.notes),
+            String(item.lyrics ?? ""),
+            JSON.stringify(lyricsMeta || {}),
+            JSON.stringify(Array.isArray(tags) ? tags : []),
+            access.id,
+            songId,
+          ]
+        );
+      } else {
+        songId = makeId("s");
+        await dbRun(
+          env,
+          `INSERT INTO songs (
+            id,title,subtitle,lang,country,period,region,event,theme,verified,year,source,notes,verified_translation,lyrics,lyrics_meta_json,tags_json,
+            created_by,updated_by,lang_locked,status,created_at,updated_at
+          ) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,1,'published',datetime('now'),datetime('now'))`,
+          [
+            songId,
+            normStr(item.title),
+            normStr(item.subtitle),
+            normalizedLang,
+            normStr(normalizedCountry),
+            normStr(normalizedPeriod),
+            normStr(item.region),
+            normStr(item.event),
+            normStr(item.theme),
+            0,
+            normStr(item.year),
+            normStr(item.source),
+            normStr(item.notes),
+            null,
+            String(item.lyrics ?? ""),
+            JSON.stringify(lyricsMeta || {}),
+            JSON.stringify(Array.isArray(tags) ? tags : []),
+            access.id,
+            access.id,
+          ]
+        );
+      }
+
       await dbRun(
         env,
-        `INSERT INTO songs (
-          id,title,subtitle,lang,country,period,region,event,theme,verified,year,source,notes,verified_translation,lyrics,lyrics_meta_json,tags_json,
-          created_by,updated_by,lang_locked,status,created_at,updated_at
-        ) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,1,'published',datetime('now'),datetime('now'))`,
-        [
-          songId,
-          normStr(item.title),
-          normStr(item.subtitle),
-          normalizedLang,
-          normStr(normalizedCountry),
-          normStr(normalizedPeriod),
-          normStr(item.region),
-          normStr(item.event),
-          normStr(item.theme),
-          0,
-          normStr(item.year),
-          normStr(item.source),
-          normStr(item.notes),
-          null,
-          String(item.lyrics ?? ""),
-          JSON.stringify(lyricsMeta || {}),
-          JSON.stringify(Array.isArray(tags) ? tags : []),
-          access.id,
-          access.id,
-        ]
+        `UPDATE song_requests
+         SET target_song_id=?, updated_at=datetime('now')
+         WHERE id=?`,
+        [songId, id]
       );
     }
-
-    await syncSongSearchIndex(env, {
-      id: songId,
-      title: item.title,
-      subtitle: item.subtitle,
-      lyrics: item.lyrics,
-    });
 
     // Keep versions before links so version_id references can be resolved.
     await replaceVersions(env, songId, versions);
@@ -203,9 +267,23 @@ export async function onRequestPost({ env, request, params }) {
       env,
       `UPDATE song_requests
        SET status='approved', review_comment=?, reviewed_by=?, reviewed_at=datetime('now'), updated_at=datetime('now')
-       WHERE id=?`,
+      WHERE id=?`,
       [normStr(body?.comment), access.id, id]
     );
+
+    try {
+      await syncSongSearchIndex(env, {
+        id: songId,
+        title: item.title,
+        subtitle: item.subtitle,
+        lyrics: item.lyrics,
+      });
+    } catch (syncCause) {
+      console.error(
+        `[approve-request] search sync failed for request ${id} song ${songId}:`,
+        syncCause?.message || syncCause
+      );
+    }
 
     return json({ ok: true, requestId: id, songId });
   } catch (cause) {

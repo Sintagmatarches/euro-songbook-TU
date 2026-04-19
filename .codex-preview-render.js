@@ -4948,9 +4948,203 @@ function songInlineVersionRow(v = {}) {
   `;
 }
 
+function songCommentUiText(key = "") {
+  const locale = uiLocale();
+  const dictionary = {
+    title: {
+      ru: "Комментарии",
+      uk: "Коментарі",
+      et: "Kommentaarid",
+      en: "Comments",
+    },
+    subtitle: {
+      ru: "Зарегистрированные пользователи могут обсуждать карточку песни.",
+      uk: "Зареєстровані користувачі можуть обговорювати картку пісні.",
+      et: "Registreeritud kasutajad saavad laulu kaarti arutada.",
+      en: "Registered users can discuss the song card.",
+    },
+    empty: {
+      ru: "Комментариев пока нет.",
+      uk: "Коментарів поки немає.",
+      et: "Kommentaare veel pole.",
+      en: "No comments yet.",
+    },
+    loginHint: {
+      ru: "Войдите, чтобы оставить комментарий.",
+      uk: "Увійдіть, щоб залишити коментар.",
+      et: "Logi sisse, et kommentaari lisada.",
+      en: "Log in to leave a comment.",
+    },
+    placeholder: {
+      ru: "Напишите комментарий",
+      uk: "Напишіть коментар",
+      et: "Kirjuta kommentaar",
+      en: "Write a comment",
+    },
+    add: {
+      ru: "Отправить",
+      uk: "Надіслати",
+      et: "Saada",
+      en: "Post comment",
+    },
+    saving: {
+      ru: "Сохранение...",
+      uk: "Збереження...",
+      et: "Salvestan...",
+      en: "Saving...",
+    },
+    edit: {
+      ru: "Редактировать",
+      uk: "Редагувати",
+      et: "Muuda",
+      en: "Edit",
+    },
+    delete: {
+      ru: "Удалить",
+      uk: "Видалити",
+      et: "Kustuta",
+      en: "Delete",
+    },
+    cancel: {
+      ru: "Отмена",
+      uk: "Скасувати",
+      et: "Loobu",
+      en: "Cancel",
+    },
+    save: {
+      ru: "Сохранить",
+      uk: "Зберегти",
+      et: "Salvesta",
+      en: "Save",
+    },
+    edited: {
+      ru: "изменён",
+      uk: "змінено",
+      et: "muudetud",
+      en: "edited",
+    },
+    deleteConfirm: {
+      ru: "Удалить комментарий?",
+      uk: "Видалити коментар?",
+      et: "Kas kustutada kommentaar?",
+      en: "Delete this comment?",
+    },
+  };
+  const entry = dictionary[key] || dictionary.empty;
+  return entry[locale] || entry.ru || entry.en || "";
+}
+
+function formatSongCommentTimestamp(value = "") {
+  const raw = String(value || "").trim();
+  if (!raw) return "";
+  const parsed = new Date(raw);
+  if (Number.isNaN(parsed.getTime())) return raw;
+  try {
+    return new Intl.DateTimeFormat(uiLocale(), {
+      year: "numeric",
+      month: "short",
+      day: "numeric",
+      hour: "2-digit",
+      minute: "2-digit",
+    }).format(parsed);
+  } catch {
+    return parsed.toLocaleString();
+  }
+}
+
+function canManageSongComment(comment = {}) {
+  if (!state.user) return false;
+  if (state.user.role === "super_admin") return true;
+  return String(comment?.user_id || "") === String(state.user.id || "");
+}
+
+function songCommentsListMarkup(items = [], options = {}) {
+  const comments = Array.isArray(items) ? items : [];
+  const editingId = String(options?.editingId || "").trim();
+  if (!comments.length) {
+    return `<div class="muted">${esc(songCommentUiText("empty"))}</div>`;
+  }
+  return comments.map((comment) => {
+    const commentId = String(comment?.id || "").trim();
+    const isEditing = commentId && commentId === editingId;
+    const canManage = canManageSongComment(comment);
+    const createdAt = formatSongCommentTimestamp(comment?.created_at);
+    const updatedAt = formatSongCommentTimestamp(comment?.updated_at);
+    const showEdited = updatedAt && createdAt && updatedAt !== createdAt;
+    const metaText = [createdAt, showEdited ? `${songCommentUiText("edited")} ${updatedAt}` : ""]
+      .filter(Boolean)
+      .join(" · ");
+    return `
+      <article class="card song-comment-card" data-comment-id="${esc(commentId)}">
+        <div class="song-comment-head">
+          <div>
+            <div class="song-comment-author"><strong>${esc(comment?.author_name || "-")}</strong></div>
+            ${metaText ? `<div class="muted small song-comment-meta">${esc(metaText)}</div>` : ``}
+          </div>
+          ${canManage ? `
+            <div class="song-comment-actions">
+              ${isEditing
+                ? `<button class="btn ghost" type="button" data-comment-action="cancel-edit" data-comment-id="${esc(commentId)}">${esc(songCommentUiText("cancel"))}</button>`
+                : `<button class="btn ghost" type="button" data-comment-action="edit" data-comment-id="${esc(commentId)}">${esc(songCommentUiText("edit"))}</button>`
+              }
+              <button class="btn danger" type="button" data-comment-action="delete" data-comment-id="${esc(commentId)}">${esc(songCommentUiText("delete"))}</button>
+            </div>
+          ` : ``}
+        </div>
+        ${isEditing
+          ? `
+            <div class="field">
+              <textarea class="textarea song-comment-edit-input" data-comment-id="${esc(commentId)}">${esc(comment?.body || "")}</textarea>
+            </div>
+            <div class="song-comment-edit-actions">
+              <button class="btn" type="button" data-comment-action="save-edit" data-comment-id="${esc(commentId)}">${esc(songCommentUiText("save"))}</button>
+              <button class="btn ghost" type="button" data-comment-action="cancel-edit" data-comment-id="${esc(commentId)}">${esc(songCommentUiText("cancel"))}</button>
+            </div>
+          `
+          : `<div class="song-comment-body">${esc(comment?.body || "").replace(/\n/g, "<br />")}</div>`
+        }
+      </article>
+    `;
+  }).join("");
+}
+
+function songCommentsSectionMarkup(items = [], options = {}) {
+  const comments = Array.isArray(items) ? items : [];
+  const editingId = String(options?.editingId || "").trim();
+  return `
+    <section class="song-comments-panel">
+      <div class="song-ai-head">
+        <div class="song-ai-title">${esc(songCommentUiText("title"))}</div>
+        <div class="song-ai-subtitle">${esc(songCommentUiText("subtitle"))}</div>
+      </div>
+      <div class="list song-comments-list" id="songCommentsList">
+        ${songCommentsListMarkup(comments, { editingId })}
+      </div>
+      ${state.user ? `
+        <div class="song-comment-compose">
+          <div class="field">
+            <textarea class="textarea" id="songCommentInput" placeholder="${esc(songCommentUiText("placeholder"))}"></textarea>
+          </div>
+          <div class="song-comment-compose-actions">
+            <button class="btn" id="btnSongCommentSubmit" type="button">${esc(songCommentUiText("add"))}</button>
+            <div class="muted small" id="songCommentMsg"></div>
+          </div>
+        </div>
+      ` : `
+        <div class="song-comment-login">
+          <div class="muted">${esc(songCommentUiText("loginHint"))}</div>
+          ${renderGuestAuthActions()}
+        </div>
+      `}
+    </section>
+  `;
+}
+
 function songDetailsUI(song, extra = {}) {
   const links = Array.isArray(song.links) ? song.links : [];
   const versions = Array.isArray(song.versions) ? song.versions : [];
+  const comments = Array.isArray(extra?.comments?.items) ? extra.comments.items : [];
+  const editingCommentId = String(extra?.editingCommentId || "").trim();
   const canOpenEditor = can("songs.edit");
   const countryValue = normalizeSongCountry(song.country) || (song.country || "");
   const langValue = normalizeSongLanguage(song.lang) || "";
@@ -5255,6 +5449,8 @@ function songDetailsUI(song, extra = {}) {
               </div>
             </div>
           </div>
+
+          ${songCommentsSectionMarkup(comments, { editingId: editingCommentId })}
         </div>
       </div>
 
@@ -9091,10 +9287,11 @@ export async function render(route) {
 
   if (route.name === "song") {
     const songPromise = api.song(route.id);
+    const commentsPromise = api.songComments(route.id).catch(() => ({ items: [] }));
     const favoritesPromise = state.user
       ? api.favorites().catch(() => ({ items: [] }))
       : Promise.resolve({ items: [] });
-    const [song, fav] = await Promise.all([songPromise, favoritesPromise]);
+    const [song, comments, fav] = await Promise.all([songPromise, commentsPromise, favoritesPromise]);
     const countryKey = normalizeSongCountry(song?.country || "") || "";
     let background = null;
     if (countryKey) {
@@ -9105,7 +9302,7 @@ export async function render(route) {
       });
     }
     const isFav = Array.isArray(fav?.items) && fav.items.some((x) => x.id === song.id);
-    return { html: songDetailsUI(song, { isFav, background }), ctx: { song, isFav, background } };
+    return { html: songDetailsUI(song, { isFav, background, comments }), ctx: { song, isFav, background, comments } };
   }
 
   if (route.name === "draft_legacy") {
@@ -11065,6 +11262,107 @@ export function bind(route, ctx) {
     qs("btnPromptContext")?.addEventListener("click", () => openPrompt(buildPrompt("context", promptSong)));
     qs("btnPromptTranslate")?.addEventListener("click", () => openPrompt(buildPrompt("translate", promptSong)));
     qs("btnPromptExplain")?.addEventListener("click", () => openPrompt(buildPrompt("explain", promptSong)));
+
+    let songCommentsState = Array.isArray(ctx?.comments?.items)
+      ? ctx.comments.items.map((item) => ({ ...item }))
+      : [];
+    let editingCommentId = "";
+    const commentsListNode = qs("songCommentsList");
+    const commentInputNode = qs("songCommentInput");
+    const commentSubmitNode = qs("btnSongCommentSubmit");
+    const commentMsgNode = qs("songCommentMsg");
+    const setCommentMessage = (text = "", isError = false) => {
+      if (!commentMsgNode) return;
+      commentMsgNode.textContent = String(text || "");
+      commentMsgNode.classList.toggle("error", !!(isError && text));
+    };
+    const renderCommentsList = () => {
+      if (!commentsListNode) return;
+      commentsListNode.innerHTML = songCommentsListMarkup(songCommentsState, { editingId: editingCommentId });
+      wireAutoGrowTextareas(commentsListNode);
+    };
+    const setCommentBusy = (busy) => {
+      if (!(commentSubmitNode instanceof HTMLButtonElement)) return;
+      commentSubmitNode.disabled = !!busy;
+      commentSubmitNode.textContent = busy ? songCommentUiText("saving") : songCommentUiText("add");
+    };
+    renderCommentsList();
+    commentSubmitNode?.addEventListener("click", async () => {
+      const body = String(commentInputNode?.value || "").trim();
+      if (!body) {
+        setCommentMessage(songCommentUiText("placeholder"), true);
+        return;
+      }
+      setCommentBusy(true);
+      setCommentMessage("");
+      try {
+        const out = await api.addSongComment(song.id, body);
+        if (out?.item) songCommentsState.push(out.item);
+        if (commentInputNode) commentInputNode.value = "";
+        renderCommentsList();
+      } catch (error) {
+        setCommentMessage(String(error?.message || t("common.error")), true);
+      } finally {
+        setCommentBusy(false);
+      }
+    });
+    commentsListNode?.addEventListener("click", async (event) => {
+      const actionNode = event.target instanceof Element ? event.target.closest("[data-comment-action]") : null;
+      if (!actionNode) return;
+      const action = String(actionNode.getAttribute("data-comment-action") || "").trim();
+      const commentId = String(actionNode.getAttribute("data-comment-id") || "").trim();
+      if (!commentId) return;
+      if (action === "edit") {
+        editingCommentId = commentId;
+        setCommentMessage("");
+        renderCommentsList();
+        const editInput = commentsListNode.querySelector(`.song-comment-edit-input[data-comment-id="${CSS.escape(commentId)}"]`);
+        if (editInput instanceof HTMLTextAreaElement) {
+          editInput.focus();
+          editInput.setSelectionRange(editInput.value.length, editInput.value.length);
+        }
+        return;
+      }
+      if (action === "cancel-edit") {
+        editingCommentId = "";
+        setCommentMessage("");
+        renderCommentsList();
+        return;
+      }
+      if (action === "save-edit") {
+        const editInput = commentsListNode.querySelector(`.song-comment-edit-input[data-comment-id="${CSS.escape(commentId)}"]`);
+        const body = String(editInput?.value || "").trim();
+        if (!body) {
+          setCommentMessage(songCommentUiText("placeholder"), true);
+          return;
+        }
+        setCommentMessage("");
+        try {
+          const out = await api.updateSongComment(song.id, commentId, body);
+          const nextItem = out?.item || null;
+          if (nextItem) {
+            songCommentsState = songCommentsState.map((item) => String(item?.id || "") === commentId ? nextItem : item);
+          }
+          editingCommentId = "";
+          renderCommentsList();
+        } catch (error) {
+          setCommentMessage(String(error?.message || t("common.error")), true);
+        }
+        return;
+      }
+      if (action === "delete") {
+        if (!confirm(songCommentUiText("deleteConfirm"))) return;
+        setCommentMessage("");
+        try {
+          await api.deleteSongComment(song.id, commentId);
+          songCommentsState = songCommentsState.filter((item) => String(item?.id || "") !== commentId);
+          if (editingCommentId === commentId) editingCommentId = "";
+          renderCommentsList();
+        } catch (error) {
+          setCommentMessage(String(error?.message || t("common.error")), true);
+        }
+      }
+    });
 
     const songVersionTabs = qs("songVersionTabs");
     const versionMeta = qs("songVersionMeta");

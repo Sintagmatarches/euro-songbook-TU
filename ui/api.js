@@ -583,6 +583,17 @@ export const api = {
       body: JSON.stringify({ body }),
     });
   },
+  async updateSongComment(songId, commentId, body) {
+    return req(`api/songs/${encodeURIComponent(songId)}/comments/${encodeURIComponent(commentId)}`, {
+      method: "PUT",
+      body: JSON.stringify({ body }),
+    });
+  },
+  async deleteSongComment(songId, commentId) {
+    return req(`api/songs/${encodeURIComponent(songId)}/comments/${encodeURIComponent(commentId)}`, {
+      method: "DELETE",
+    });
+  },
   async countryBackground(country) {
     const q = new URLSearchParams({ country: String(country || "") });
     return req(`api/country-backgrounds?${q.toString()}`);

@@ -227,7 +227,29 @@ export async function normalizeDraftSnapshot(input = {}) {
   return output;
 }
 
+async function findReusableOwnedDraft(env, { userId, songId = "" }) {
+  const normalizedUserId = String(userId || "").trim();
+  const normalizedSongId = String(songId || "").trim();
+  if (!normalizedUserId || !normalizedSongId) return null;
+  return dbGet(
+    env,
+    `SELECT id
+     FROM drafts
+     WHERE owner_user_id=?
+       AND song_id=?
+       AND status='draft'
+     ORDER BY datetime(updated_at) DESC, datetime(created_at) DESC, id DESC
+     LIMIT 1`,
+    [normalizedUserId, normalizedSongId]
+  );
+}
+
 export async function createDraft(env, { userId, songId = "", seed = {} }) {
+  const reusableDraft = await findReusableOwnedDraft(env, { userId, songId });
+  if (reusableDraft?.id) {
+    return String(reusableDraft.id || "").trim();
+  }
+
   const id = makeId("d");
   const now = nowIso();
 

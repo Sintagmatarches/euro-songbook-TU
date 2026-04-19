@@ -31,8 +31,8 @@ const SAMPLE_SONGS = [
     title: "At The River Gate",
     subtitle: "Traditional folk sample",
     lang: "en",
-    country: "Romania",
-    period: "folk",
+    country: "romania_1989",
+    period: "",
     year: "",
     source: "Demo content",
     notes: "Demo record for first launch.",
@@ -60,8 +60,8 @@ const SAMPLE_SONGS = [
     title: "We Will Be Captains",
     subtitle: "Historical-themed demo",
     lang: "en",
-    country: "USSR",
-    period: "WW2",
+    country: "ussr",
+    period: "",
     year: "1941",
     source: "Demo content",
     notes: "Demo historical card.",
@@ -77,7 +77,7 @@ const SAMPLE_SONGS = [
     subtitle: "Traditional sample",
     lang: "en",
     country: "",
-    period: "folk",
+    period: "",
     year: "",
     source: "Demo content",
     notes: "",
@@ -1225,6 +1225,23 @@ async function ensureDemoSong(env, it) {
   }
 }
 
+async function ensureCanonicalDemoSongMetadata(env) {
+  const updates = [
+    ["s_demo_du_nai", "romania_1989", null],
+    ["s_demo_captains", "ussr", null],
+    ["s_demo_pockmarked", null, null],
+  ];
+  for (const [songId, country, period] of updates) {
+    await dbRun(
+      env,
+      `UPDATE songs
+       SET country=?, period=?, updated_at=datetime('now')
+       WHERE id=?`,
+      [country, period, songId]
+    );
+  }
+}
+
 export async function ensureSeed(env) {
   const row = await dbGet(env, `SELECT COUNT(*) AS c FROM songs`, []);
   const songsCount = row?.c || 0;
@@ -1235,8 +1252,14 @@ export async function ensureSeed(env) {
 }
 
 export async function ensureSchemaAndSeed(env) {
-  if (schemaSeedReady) return;
-  if (await hasFreshFullSchema(env)) return;
+  if (schemaSeedReady) {
+    await ensureCanonicalDemoSongMetadata(env);
+    return;
+  }
+  if (await hasFreshFullSchema(env)) {
+    await ensureCanonicalDemoSongMetadata(env);
+    return;
+  }
   if (schemaSeedWork) {
     await schemaSeedWork;
     return;
@@ -1247,6 +1270,7 @@ export async function ensureSchemaAndSeed(env) {
     await ensureSuperAdmin(env);
     await ensureUsersNicknameData(env);
     await ensureSeed(env);
+    await ensureCanonicalDemoSongMetadata(env);
     const searchMarker = await readSchemaMarker(env, SEARCH_INDEX_SCHEMA_MARKER_KEY);
     if (searchMarker !== SEARCH_INDEX_SCHEMA_MARKER_VALUE) {
       const searchIndexStats = await getSearchIndexStats(env);

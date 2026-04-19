@@ -54,6 +54,28 @@ function unique(values = []) {
   return Array.from(new Set(values.filter(Boolean)));
 }
 
+async function runPreparedBatch(env, statements = []) {
+  const safeStatements = Array.isArray(statements) ? statements.filter(Boolean) : [];
+  if (!safeStatements.length) return;
+  if (typeof env?.DB?.batch === "function") {
+    await env.DB.batch(safeStatements);
+    return;
+  }
+  for (const statement of safeStatements) {
+    await statement.run();
+  }
+}
+
+function chunkValues(values = [], chunkSize = 64) {
+  const safeChunkSize = Math.max(1, Number(chunkSize || 64) || 64);
+  const items = Array.isArray(values) ? values : [];
+  const chunks = [];
+  for (let index = 0; index < items.length; index += safeChunkSize) {
+    chunks.push(items.slice(index, index + safeChunkSize));
+  }
+  return chunks;
+}
+
 function escapeFtsToken(value = "") {
   return String(value || "").replace(/["']/g, "").trim();
 }
@@ -199,53 +221,61 @@ export function damerauLevenshtein(left = "", right = "", maxDistance = Infinity
 
 async function recomputeSearchAuxiliaryForTerms(env, terms = []) {
   const uniqueTerms = unique(terms.map((value) => normalizeSearchText(value)));
-  for (const termNorm of uniqueTerms) {
-    const aggregate = await dbGet(
+  for (const chunk of chunkValues(uniqueTerms, 48)) {
+    const placeholders = chunk.map(() => "?").join(", ");
+    const aggregateRows = await dbAll(
       env,
       `SELECT
+         term_norm,
          MIN(term_raw) AS display_term,
          COUNT(DISTINCT song_id) AS song_count,
          SUM(CASE WHEN field='title' THEN 1 ELSE 0 END) AS title_hits,
          SUM(CASE WHEN field='subtitle' THEN 1 ELSE 0 END) AS subtitle_hits,
          SUM(CASE WHEN field='lyrics' THEN 1 ELSE 0 END) AS lyrics_hits
        FROM song_search_terms
-       WHERE term_norm=?`,
-      [termNorm]
+       WHERE term_norm IN (${placeholders})
+       GROUP BY term_norm`,
+      chunk
     );
-    const songCount = Number(aggregate?.song_count || 0);
-    await dbRun(env, `DELETE FROM song_search_deletes WHERE term_norm=?`, [termNorm]);
-    if (!songCount) {
-      await dbRun(env, `DELETE FROM song_search_vocab WHERE term_norm=?`, [termNorm]);
-      continue;
-    }
-    await dbRun(
-      env,
-      `INSERT INTO song_search_vocab (
-         term_norm, display_term, song_count, title_hits, subtitle_hits, lyrics_hits
-       )
-       VALUES (?, ?, ?, ?, ?, ?)
-       ON CONFLICT(term_norm) DO UPDATE SET
-         display_term=excluded.display_term,
-         song_count=excluded.song_count,
-         title_hits=excluded.title_hits,
-         subtitle_hits=excluded.subtitle_hits,
-         lyrics_hits=excluded.lyrics_hits`,
-      [
-        termNorm,
-        String(aggregate?.display_term || termNorm),
-        songCount,
-        Number(aggregate?.title_hits || 0),
-        Number(aggregate?.subtitle_hits || 0),
-        Number(aggregate?.lyrics_hits || 0),
-      ]
+    const aggregatesByTerm = new Map(
+      aggregateRows.map((row) => [String(row?.term_norm || "").trim(), row])
     );
-    for (const deleteKey of generateDeleteKeys(termNorm, MAX_DELETE_DISTANCE)) {
-      await dbRun(
-        env,
-        `INSERT OR IGNORE INTO song_search_deletes (delete_key, term_norm) VALUES (?, ?)`,
-        [deleteKey, termNorm]
+
+    await dbRun(env, `DELETE FROM song_search_deletes WHERE term_norm IN (${placeholders})`, chunk);
+    await dbRun(env, `DELETE FROM song_search_vocab WHERE term_norm IN (${placeholders})`, chunk);
+
+    const vocabStatements = [];
+    const deleteStatements = [];
+    for (const termNorm of chunk) {
+      const aggregate = aggregatesByTerm.get(termNorm);
+      const songCount = Number(aggregate?.song_count || 0);
+      if (!songCount) continue;
+      vocabStatements.push(
+        env.DB.prepare(
+          `INSERT INTO song_search_vocab (
+             term_norm, display_term, song_count, title_hits, subtitle_hits, lyrics_hits
+           )
+           VALUES (?, ?, ?, ?, ?, ?)`
+        ).bind(
+          termNorm,
+          String(aggregate?.display_term || termNorm),
+          songCount,
+          Number(aggregate?.title_hits || 0),
+          Number(aggregate?.subtitle_hits || 0),
+          Number(aggregate?.lyrics_hits || 0),
+        )
       );
+      for (const deleteKey of generateDeleteKeys(termNorm, MAX_DELETE_DISTANCE)) {
+        deleteStatements.push(
+          env.DB.prepare(
+            `INSERT OR IGNORE INTO song_search_deletes (delete_key, term_norm) VALUES (?, ?)`
+          ).bind(deleteKey, termNorm)
+        );
+      }
     }
+
+    await runPreparedBatch(env, vocabStatements);
+    await runPreparedBatch(env, deleteStatements);
   }
 }
 
@@ -370,7 +400,7 @@ function buildSearchWhereClause(filters = {}, options = {}) {
       params.push(...patterns);
     }
   }
-  if (filters.verified) where.push("1 = 0");
+  if (filters.verified) where.push("coalesce(s.verified, 0) = 1");
   if (filters.recent) where.push("datetime(s.created_at) >= datetime('now','-30 day')");
   if (filters.multiVersions) where.push("coalesce(vc.version_rows, 0) >= 1");
   return { where, params };

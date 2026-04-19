@@ -1,0 +1,54 @@
+npm run test:thesis-evidence
+python -m unittest tests.test_import_parser tests.test_refilter_song_catalog_guards tests.test_russo_japanese_heuristics tests.test_verified_translation_splitter
+npm run build
+npx wrangler pages dev . --port 8788 --local-protocol http
+PowerShell runtime API scenario script using Invoke-RestMethod against http://127.0.0.1:8788 for:
+- GET /
+- GET /api/health
+- GET /api/songs
+- GET /api/songs?page=2
+- GET /api/songs?multi_versions=1
+- GET /api/songs/:id
+- GET /api/songs?q=<full title>
+- GET /api/songs?q=<partial title>
+- GET /api/songs?q=<lyric fragment>
+- GET /api/songs?q=<incomplete fragment>
+- GET /api/songs?q=<nonexistent>
+- GET /api/songs?lang=<lang>
+- GET /api/songs?country=<country>
+- GET /api/songs?period=<period>
+- GET /api/songs?recent=1
+- GET /api/songs?verified=1
+- POST /api/favorites/:id
+- POST /api/songs/:id/comments
+- POST /api/requests
+- POST /api/drafts
+- POST /api/auth/register
+- POST /api/auth/login
+- POST /api/auth/logout
+- GET /api/me
+- GET /api/favorites
+- DELETE /api/favorites/:id
+- GET /api/songs/:id/comments
+- POST /api/fragment-reports
+- GET /api/fragment-reports
+- GET /api/fragment-reports/:id
+- POST /api/drafts
+- GET /api/drafts/:id
+- POST /api/drafts/:id/autosave
+- POST /api/drafts/:id/invitations
+- GET /api/drafts/invitations
+- POST /api/drafts/invitations/:id/accept
+- GET /api/drafts/:id/history
+- POST /api/drafts/:id/publish
+- GET /api/admin/requests
+- GET /api/admin/users
+- PUT /api/admin/users/:id/role
+- GET /api/admin/songs
+- GET /api/country-counts
+- GET /api/lang-country-counts
+- GET /api/lang-country-period-counts
+Headless browser checks:
+- msedge.exe --headless --disable-gpu --virtual-time-budget=6000 --dump-dom http://127.0.0.1:8788/
+- msedge.exe --headless --disable-gpu --virtual-time-budget=8000 --dump-dom http://127.0.0.1:8788/#/song/s_demo_du_nai
+

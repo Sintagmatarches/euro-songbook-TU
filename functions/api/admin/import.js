@@ -4,6 +4,7 @@ import { ensureSchemaAndSeed } from "../../_lib/schema.js";
 import { normalizeSongCatalogInput } from "../../../shared/song-catalogs.js";
 import { syncSongSearchIndex } from "../../_lib/song-search.mjs";
 import { sanitizeSongLinks } from "../../_lib/link-safety.js";
+import { findLikelyDuplicateSong } from "../../_lib/song-similarity.mjs";
 
 function normStr(v){ v = (v ?? "").toString().trim(); return v || null; }
 function normLinkVersion(v){ v = (v ?? "").toString().trim(); return v || null; }
@@ -75,6 +76,16 @@ export async function onRequestPost({ env, request }){
         id
       ]);
     }else{
+      const duplicate = status === "published"
+        ? await findLikelyDuplicateSong(env, {
+            title: it.title,
+            lang: catalog.value.lang || "",
+            lyrics: it.lyrics,
+          })
+        : null;
+      if (duplicate?.song?.id) {
+        return err(`items[${index}]: likely duplicate song exists: ${duplicate.song.id}`, 409);
+      }
       await dbRun(env, `
         INSERT INTO songs (
           id,title,subtitle,lang,country,period,region,event,theme,verified,year,source,notes,verified_translation,lyrics,lyrics_meta_json,tags_json,is_admin_content,

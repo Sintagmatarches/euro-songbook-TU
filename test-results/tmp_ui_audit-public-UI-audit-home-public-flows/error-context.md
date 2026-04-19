@@ -1,7 +1,7 @@
 # Page snapshot
 
 ```yaml
-- generic [ref=e1]:
+- generic [active] [ref=e1]:
   - banner [ref=e2]:
     - generic [ref=e3]:
       - button "Открыть меню" [ref=e4] [cursor=pointer]: ☰
@@ -10,20 +10,81 @@
       - generic [ref=e6]:
         - generic [ref=e7]: European Songbook
         - generic [ref=e8]: Европейский исторический песенник
-    - generic [ref=e9]:
-      - search [ref=e10]:
-        - textbox "Искать…" [ref=e11]: zz
-        - button "Искать" [active] [ref=e12] [cursor=pointer]
-      - button "Вход" [ref=e13] [cursor=pointer]
-  - navigation "Основная навигация" [ref=e14]:
-    - link [ref=e15] [cursor=pointer]:
+    - search [ref=e10]:
+      - textbox "Искать…" [ref=e11]
+      - generic [ref=e12]:
+        - button "Поиск" [ref=e13] [cursor=pointer]
+        - button "Действия поиска" [ref=e14] [cursor=pointer]
+  - navigation "Основная навигация" [ref=e15]:
+    - link [ref=e16] [cursor=pointer]:
       - /url: "#/"
-      - img [ref=e17]
-    - link "✚" [ref=e21] [cursor=pointer]:
+      - img [ref=e18]
+    - link "✚" [ref=e22] [cursor=pointer]:
       - /url: "#/request"
-      - generic [ref=e22]: ✚
-  - main [ref=e23]:
-    - generic [ref=e24]:
-      - generic [ref=e25]: Ошибка
-      - generic [ref=e27]: HTTP 500
+      - generic [ref=e23]: ✚
+  - main [ref=e24]:
+    - generic [ref=e25]:
+      - generic [ref=e27]:
+        - generic [ref=e28]: Языковые разделы
+        - generic [ref=e29]: Нажмите на нужный раздел, чтобы открыть песни.
+        - generic "Всего песен" [ref=e30]:
+          - generic [ref=e31]: 41 813
+          - generic [ref=e32]: Всего песен
+      - generic [ref=e33]:
+        - link "Немецкий 10875 песен" [ref=e34] [cursor=pointer]:
+          - /url: "#/?lang=de&adv=0&searched=0&page=1"
+          - generic [ref=e35]: Немецкий
+          - generic [ref=e36]: 10875 песен
+        - link "Русский 9481 песня" [ref=e37] [cursor=pointer]:
+          - /url: "#/?lang=ru&adv=0&searched=0&page=1"
+          - generic [ref=e38]: Русский
+          - generic [ref=e39]: 9481 песня
+        - link "Украинский 8155 песен" [ref=e40] [cursor=pointer]:
+          - /url: "#/?lang=uk&adv=0&searched=0&page=1"
+          - generic [ref=e41]: Украинский
+          - generic [ref=e42]: 8155 песен
+        - link "Польский 6682 песни" [ref=e43] [cursor=pointer]:
+          - /url: "#/?lang=pl&adv=0&searched=0&page=1"
+          - generic [ref=e44]: Польский
+          - generic [ref=e45]: 6682 песни
+        - link "Английский 3353 песни" [ref=e46] [cursor=pointer]:
+          - /url: "#/?lang=en&adv=0&searched=0&page=1"
+          - generic [ref=e47]: Английский
+          - generic [ref=e48]: 3353 песни
+        - link "Французский 1942 песни" [ref=e49] [cursor=pointer]:
+          - /url: "#/?lang=fr&adv=0&searched=0&page=1"
+          - generic [ref=e50]: Французский
+          - generic [ref=e51]: 1942 песни
+        - link "Испанский 401 песня" [ref=e52] [cursor=pointer]:
+          - /url: "#/?lang=es&adv=0&searched=0&page=1"
+          - generic [ref=e53]: Испанский
+          - generic [ref=e54]: 401 песня
+        - link "Эстонский 303 песни" [ref=e55] [cursor=pointer]:
+          - /url: "#/?lang=et&adv=0&searched=0&page=1"
+          - generic [ref=e56]: Эстонский
+          - generic [ref=e57]: 303 песни
+        - link "Итальянский 204 песни" [ref=e58] [cursor=pointer]:
+          - /url: "#/?lang=it&adv=0&searched=0&page=1"
+          - generic [ref=e59]: Итальянский
+          - generic [ref=e60]: 204 песни
+        - link "Люксембургский 80 песен" [ref=e61] [cursor=pointer]:
+          - /url: "#/?lang=lb&adv=0&searched=0&page=1"
+          - generic [ref=e62]: Люксембургский
+          - generic [ref=e63]: 80 песен
+        - link "Баскский 78 песен" [ref=e64] [cursor=pointer]:
+          - /url: "#/?lang=eu&adv=0&searched=0&page=1"
+          - generic [ref=e65]: Баскский
+          - generic [ref=e66]: 78 песен
+        - link "Белорусский 73 песни" [ref=e67] [cursor=pointer]:
+          - /url: "#/?lang=be&adv=0&searched=0&page=1"
+          - generic [ref=e68]: Белорусский
+          - generic [ref=e69]: 73 песни
+        - link "Каталанский 56 песен" [ref=e70] [cursor=pointer]:
+          - /url: "#/?lang=ca&adv=0&searched=0&page=1"
+          - generic [ref=e71]: Каталанский
+          - generic [ref=e72]: 56 песен
+        - link "Нидерландский 46 песен" [ref=e73] [cursor=pointer]:
+          - /url: "#/?lang=nl&adv=0&searched=0&page=1"
+          - generic [ref=e74]: Нидерландский
+          - generic [ref=e75]: 46 песен
 ```

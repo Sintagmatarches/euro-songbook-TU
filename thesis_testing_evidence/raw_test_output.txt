@@ -1,0 +1,176 @@
+## Node tests
+
+Command:
+`npm run test:thesis-evidence`
+
+Observed summary:
+- tests: 45
+- pass: 43
+- fail: 1
+- skipped: 1
+- failing test: `song card endpoint returns metadata, versions, and external links`
+
+## Python tests
+
+Command:
+`python -m unittest tests.test_import_parser tests.test_refilter_song_catalog_guards tests.test_russo_japanese_heuristics tests.test_verified_translation_splitter`
+
+Observed summary:
+- ran 56 tests
+- result: OK
+
+## Build
+
+Command:
+`npm run build`
+
+Observed summary:
+- Wrangler Pages Functions build completed successfully
+
+## Runtime API/browser checks
+
+### Root page
+
+```json
+{"status":200,"content_length":109434,"has_top_search":true,"has_auth_dialog":true}
+```
+
+### Health
+
+```json
+{"elapsed_ms":41.6,"body":{"ok":true,"ts":"2026-04-18T12:50:00.668Z"}}
+```
+
+### Catalogue browse
+
+```json
+{"elapsed_ms":39.86,"total":3,"page":1,"pages":1,"first_ids":["s_demo_du_nai","s_demo_pockmarked","s_demo_captains"]}
+```
+
+### Multi-version filter
+
+```json
+{"total":1,"page":1,"ids":["s_demo_du_nai"]}
+```
+
+### Song card API
+
+```json
+{"id":"s_demo_du_nai","title":"At The River Gate","lang":"en","country":"Romania","year":null,"links_count":1,"versions_count":1,"has_verified_translation":false}
+```
+
+### Search checks
+
+```json
+{"q":"At The River Gate","total":1,"first_id":"s_demo_du_nai","mode":"hybrid"}
+{"q":"At","total":2,"first_ids":["s_demo_du_nai","s_demo_captains"]}
+{"q":"At the river gate I stan","total":1,"first_ids":["s_demo_du_nai"]}
+{"q":"At the","total":3,"first_ids":["s_demo_du_nai","s_demo_pockmarked","s_demo_captains"]}
+{"total":0,"page":1,"pages":1,"mode":"empty"}
+```
+
+### Filter checks
+
+```json
+{"lang":"en","total":3}
+{"country":"Romania","total":0}
+{"period":"folk","total":0}
+{"total":3}
+{"total":0}
+{"total":1,"page":1,"ids":["s_demo_du_nai"]}
+```
+
+### Guest protected-action denials
+
+```json
+{"status":401}
+{"status":401}
+{"status":401}
+{"status":401}
+```
+
+### Auth/session checks
+
+```json
+{"role":"user","nickname":"thesis_3cc65ebd"}
+{"status":409}
+{"status":401}
+{"id":"u6060eb7c1b9d0cfb","email":"thesis_3cc65ebd@example.com","nickname":"thesis_3cc65ebd","role":"user","permissions":[],"scopeLanguages":[],"created_at":"2026-04-18T12:50:01.323Z"}
+{"ok":true}
+{"status":401}
+```
+
+### Favorites
+
+```json
+{"ok":true}
+{"items":[{"id":"s_demo_du_nai","title":"At The River Gate","lang":"en","country":"Romania","period":"folk"}]}
+{"ok":true}
+{"items":[]}
+```
+
+### Comments
+
+```json
+{"item":{"id":"sc997b8f3fa9c161ee","song_id":"s_demo_du_nai","user_id":"u6060eb7c1b9d0cfb","body":"Thesis automated comment","created_at":"2026-04-18 12:50:01","updated_at":"2026-04-18 12:50:01","author_name":"thesis_3cc65ebd"}}
+{"count":1}
+```
+
+### Requests and fragment reports
+
+```json
+{"id":"rqb043ed89d1a5d820","status":"new","mode":"request"}
+{"id":"rqbf99c05d59837e76","status":"new","mode":"request"}
+{"id":"fr1766c25e7535ebb4","status":"open"}
+{"count":1}
+```
+
+### Drafts and collaboration
+
+```json
+{"draft_id":"d54da489dbedfcb73","version":0,"role":"owner"}
+{"ok":true,"draft_id":"d54da489dbedfcb73","changed":true,"version":1}
+{"ok":true}
+{"items":[{"status":"pending"}]}
+{"ok":true}
+{"ok":true,"draft_id":"d54da489dbedfcb73","changed":true,"version":2}
+{"count":2}
+{"ok":true,"draft_id":"d54da489dbedfcb73","song_id":"sf8a8fa1ef3ed059e"}
+{"status":403}
+```
+
+### Non-admin denials
+
+```json
+{"status":403}
+{"status":403}
+{"status":403}
+{"status":403}
+```
+
+### Count endpoints
+
+```json
+{"items":[{"country":"romania_1989","count":1},{"country":"ussr","count":1}]}
+{"items":[{"lang":"en","country":"","count":2},{"lang":"en","country":"romania_1989","count":1},{"lang":"en","country":"ussr","count":1}]}
+{"items":[]}
+```
+
+### Repeated search timing
+
+```json
+[{"run":1,"ms":26.86,"total":2},{"run":2,"ms":12.63,"total":2},{"run":3,"ms":11.94,"total":2},{"run":4,"ms":13.12,"total":2},{"run":5,"ms":11.55,"total":2}]
+```
+
+### Headless browser song-page observations
+
+Observed in dumped DOM for `#/song/s_demo_du_nai`:
+
+- title `At The River Gate`
+- version tabs
+- compare trigger `Сравнить версии`
+- compare selectors embedded in same page
+- comments section
+- AI prompt buttons
+- external listen link section
+

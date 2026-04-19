@@ -116,7 +116,7 @@ function buildSqlFilters(filters = {}, options = {}) {
     }
   }
   if (filters.verified) {
-    where.push("1=0");
+    where.push("coalesce(s.verified, 0) = 1");
   }
   if (filters.recent) {
     where.push("datetime(s.created_at) >= datetime('now','-30 day')");
@@ -240,7 +240,7 @@ export async function onRequestGet({ env, request }) {
            ) AS duplicate_rank
          FROM filtered
        )
-       SELECT s.id, s.title, s.subtitle, s.lyrics, s.lang, s.country, s.period, s.region, s.event, s.theme, 0 AS verified, s.year, s.created_at,
+       SELECT s.id, s.title, s.subtitle, s.lyrics, s.lang, s.country, s.period, s.region, s.event, s.theme, coalesce(s.verified, 0) AS verified, s.year, s.created_at,
               '' AS snippet, ranked.version_rows
        FROM ranked
        JOIN songs s ON s.id = ranked.id

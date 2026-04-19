@@ -4,6 +4,7 @@ import { ensureSchemaAndSeed } from "../../_lib/schema.js";
 import { normalizeSongCatalogInput, normalizeSongCountry } from "../../../shared/song-catalogs.js";
 import { syncSongSearchIndex } from "../../_lib/song-search.mjs";
 import { sanitizeSongLinks } from "../../_lib/link-safety.js";
+import { findLikelyDuplicateSong } from "../../_lib/song-similarity.mjs";
 import { readSongSnapshot, recordSongRevision, replaceSongLinks, replaceSongVersions } from "../../_lib/song-audit.js";
 
 function normStr(v){ v = (v ?? "").toString().trim(); return v || null; }
@@ -148,7 +149,7 @@ export async function onRequestGet({ env, request }){
   if (region) { where.push("lower(trim(coalesce(region,''))) LIKE ?"); params.push(`%${region.toLowerCase()}%`); }
   if (event) { where.push("lower(trim(coalesce(event,''))) LIKE ?"); params.push(`%${event.toLowerCase()}%`); }
   if (theme) { where.push("lower(trim(coalesce(theme,''))) LIKE ?"); params.push(`%${theme.toLowerCase()}%`); }
-  if (verified === "1") { where.push("1=0"); }
+  if (verified === "1") { where.push("coalesce(verified, 0)=1"); }
   if (recent === "1") { where.push("datetime(created_at) >= datetime('now','-30 day')"); }
   if(!allowAdminContent){ where.push("coalesce(is_admin_content,0)=0"); }
   if(q){
@@ -168,7 +169,7 @@ export async function onRequestGet({ env, request }){
 
   const items = await dbAll(
     env,
-    `SELECT id,title,subtitle,lang,country,period,region,event,theme,0 AS verified,year,status,is_admin_content,created_at,updated_at,
+    `SELECT id,title,subtitle,lang,country,period,region,event,theme,coalesce(verified, 0) AS verified,year,status,is_admin_content,created_at,updated_at,
             substr(trim(coalesce(lyrics,'')), 1, 280) AS snippet,
             CASE WHEN datetime(created_at) >= datetime('now','-30 day') THEN 1 ELSE 0 END AS is_recent
      FROM songs
@@ -212,10 +213,21 @@ export async function onRequestPost({ env, request }){
   }
 
   assertScopeForLang(access, catalog.value.lang);
+  const status = body.status === "draft" ? "draft" : "published";
+
+  const duplicate = status === "published"
+    ? await findLikelyDuplicateSong(env, {
+        title: body.title,
+        lang: catalog.value.lang || "",
+        lyrics: body.lyrics,
+      })
+    : null;
+  if (duplicate?.song?.id) {
+    return err(`likely duplicate song exists: ${duplicate.song.id}`, 409);
+  }
 
   const id = makeId("s");
   const tags_json = JSON.stringify(Array.isArray(body.tags) ? body.tags : []);
-  const status = body.status === "draft" ? "draft" : "published";
 
   await dbRun(env, `
     INSERT INTO songs (

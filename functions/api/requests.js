@@ -4,6 +4,7 @@ import { ensureSchemaAndSeed } from "../_lib/schema.js";
 import { normalizeSongCatalogInput } from "../../shared/song-catalogs.js";
 import { syncSongSearchIndex } from "../_lib/song-search.mjs";
 import { sanitizeSongLinks } from "../_lib/link-safety.js";
+import { findLikelyDuplicateSong } from "../_lib/song-similarity.mjs";
 
 function normStr(v) {
   const value = (v ?? "").toString().trim();
@@ -130,6 +131,14 @@ export async function onRequestPost({ env, request }) {
   const allowPublish = requestKind === "new_song" && canDirectPublish(access, catalog.value.lang, body);
 
   if (allowPublish) {
+    const duplicate = await findLikelyDuplicateSong(env, {
+      title: body.title,
+      lang: catalog.value.lang || "",
+      lyrics: body.lyrics,
+    });
+    if (duplicate?.song?.id) {
+      return err(`likely duplicate song exists: ${duplicate.song.id}`, 409);
+    }
     const id = makeId("s");
     await dbRun(
       env,

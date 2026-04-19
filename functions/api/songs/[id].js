@@ -113,7 +113,7 @@ export async function onRequestGet({ env, request, params }){
       region: song.region,
       event: song.event,
       theme: song.theme,
-      verified: false,
+      verified: Number(song.verified || 0) === 1,
       year: song.year,
       source: song.source,
       notes: includeEditorFields ? song.notes : "",
