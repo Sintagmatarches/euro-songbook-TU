@@ -36,7 +36,7 @@ function extractDirectScanRows(sql, params, songs) {
     const pattern = String(params[index] || "");
     if (pattern.startsWith("%") && pattern.endsWith("%")) {
       queryTokens.push(pattern.slice(1, -1).replace(/\\([\\%_])/g, "$1"));
-      index += 3;
+      index += 5;
       continue;
     }
     index += 1;
@@ -46,8 +46,10 @@ function extractDirectScanRows(sql, params, songs) {
     rows = rows.filter((song) => {
       const haystack = [
         String(song.title || "").toLowerCase(),
+        String(song.version_titles || "").toLowerCase(),
         String(song.subtitle || "").toLowerCase(),
         String(song.lyrics || "").toLowerCase(),
+        String(song.version_lyrics || "").toLowerCase(),
       ];
       return queryTokens.every((token) => haystack.some((field) => field.includes(token)));
     });

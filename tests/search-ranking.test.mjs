@@ -442,3 +442,113 @@ test("searchSongs falls back to a direct song scan for a single long token query
   assert.equal(out.items[0]?.id, "stalin-song");
   assert.equal(out.items[0]?.match_bucket, "exact");
 });
+
+test("searchSongs finds hits that exist only in a secondary version during direct scan fallback", async () => {
+  const songRows = [
+    {
+      id: "version-only-hit",
+      title: "March Song",
+      subtitle: null,
+      lyrics: "Base version without the searched token.",
+      version_titles: "March Song Variant",
+      version_lyrics: "Hidden second version keeps the burelom refrain alive.",
+      lang: "ru",
+      country: "ussr",
+      period: "ww2",
+      region: null,
+      event: null,
+      theme: null,
+      verified: 0,
+      year: "1943",
+      created_at: "2024-01-01T00:00:00.000Z",
+      version_rows: 1,
+    },
+  ];
+
+  const env = {
+    DB: {
+      prepare(sql) {
+        return {
+          bind() {
+            return {
+              async all() {
+                if (sql.includes("ORDER BY s.id ASC")) return { results: songRows };
+                return { results: [] };
+              },
+              async first() {
+                if (sql.includes("SELECT COUNT(*) AS total")) return { total: songRows.length };
+                return null;
+              },
+              async run() {
+                return {};
+              },
+            };
+          },
+        };
+      },
+    },
+  };
+
+  const out = await searchSongs(env, {
+    q: "burelom",
+    page: 1,
+    filters: {},
+    includeAdminContent: false,
+  });
+
+  assert.equal(out.total, 1);
+  assert.equal(out.items[0]?.id, "version-only-hit");
+  assert.match(String(out.items[0]?.snippet || ""), /burelom/i);
+});
+
+test("searchSongs hides did-you-mean suggestions when corrected queries still have no visible hits", async () => {
+  const env = {
+    DB: {
+      prepare(sql) {
+        return {
+          bind(...params) {
+            return {
+              async all() {
+                if (sql.includes("FROM song_search_deletes")) {
+                  return {
+                    results: [
+                      {
+                        term_norm: "stalin",
+                        display_term: "stalin",
+                        song_count: 1,
+                        title_hits: 1,
+                        subtitle_hits: 0,
+                        lyrics_hits: 0,
+                      },
+                    ],
+                  };
+                }
+                if (sql.includes("FROM song_search_terms") || sql.includes("FROM songs_fts") || sql.includes("ORDER BY s.id ASC")) {
+                  return { results: [] };
+                }
+                return { results: [] };
+              },
+              async first() {
+                if (sql.includes("SELECT COUNT(*) AS total")) return { total: 0 };
+                return null;
+              },
+              async run() {
+                return {};
+              },
+            };
+          },
+        };
+      },
+    },
+  };
+
+  const out = await searchSongs(env, {
+    q: "stalni",
+    page: 1,
+    filters: {},
+    includeAdminContent: false,
+  });
+
+  assert.deepEqual(out.did_you_mean, []);
+  assert.equal(out.total, 0);
+});

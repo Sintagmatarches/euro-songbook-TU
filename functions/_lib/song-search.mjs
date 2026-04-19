@@ -1,7 +1,7 @@
 import { dbAll, dbGet, dbRun } from "./db.js";
 
 export const SEARCH_INDEX_SCHEMA_MARKER_KEY = "schema.search.version";
-export const SEARCH_INDEX_SCHEMA_MARKER_VALUE = "2026-03-14-search-v1";
+export const SEARCH_INDEX_SCHEMA_MARKER_VALUE = "2026-04-19-search-v2";
 
 const SEARCH_FIELDS = ["title", "subtitle", "lyrics"];
 const MAX_QUERY_TOKENS = 8;
@@ -124,11 +124,70 @@ export function hasSignificantSearchToken(analysis = {}, options = {}) {
 }
 
 function buildFieldTextMap(song = {}) {
+  const fallbackSearchTitle = uniqueNormalizedTextParts([song?.title, song?.version_titles]).join("\n");
+  const fallbackSearchLyrics = uniqueNormalizedTextParts([song?.lyrics, song?.version_lyrics]).join("\n\n");
   return {
-    title: String(song?.title || ""),
-    subtitle: String(song?.subtitle || ""),
-    lyrics: String(song?.lyrics || ""),
+    title: String((song?.search_title ?? fallbackSearchTitle) || ""),
+    subtitle: String((song?.search_subtitle ?? song?.subtitle) || ""),
+    lyrics: String((song?.search_lyrics ?? fallbackSearchLyrics) || ""),
   };
+}
+
+function uniqueNormalizedTextParts(values = []) {
+  const seen = new Set();
+  const out = [];
+  for (const value of values || []) {
+    const text = String(value || "").replace(/\r\n?/g, "\n").trim();
+    if (!text) continue;
+    const normalized = normalizeSearchText(text);
+    const key = normalized || text.toLowerCase();
+    if (seen.has(key)) continue;
+    seen.add(key);
+    out.push(text);
+  }
+  return out;
+}
+
+function buildSearchDocument(song = {}, versions = []) {
+  const baseTitle = String(song?.title || "").trim();
+  const baseSubtitle = String(song?.subtitle || "").trim();
+  const baseLyrics = String(song?.lyrics || "").replace(/\r\n?/g, "\n").trim();
+  const versionTitles = [];
+  const versionLyrics = [];
+  for (const version of Array.isArray(versions) ? versions : []) {
+    const title = String(version?.title || "").trim();
+    const lyrics = String(version?.lyrics || "").replace(/\r\n?/g, "\n").trim();
+    if (title) versionTitles.push(title);
+    if (lyrics) versionLyrics.push(lyrics);
+  }
+  const mergedTitles = uniqueNormalizedTextParts([baseTitle, ...versionTitles]).join("\n");
+  const mergedLyrics = uniqueNormalizedTextParts([baseLyrics, ...versionLyrics]).join("\n\n");
+  return {
+    search_title: mergedTitles,
+    search_subtitle: baseSubtitle,
+    search_lyrics: mergedLyrics,
+  };
+}
+
+async function fetchSongVersionsBySongIds(env, songIds = []) {
+  const safeSongIds = unique(songIds.map((value) => String(value || "").trim()));
+  if (!safeSongIds.length) return new Map();
+  const rows = await dbAll(
+    env,
+    `SELECT song_id, title, lyrics, sort_order
+     FROM song_versions
+     WHERE song_id IN (${safeSongIds.map(() => "?").join(", ")})
+     ORDER BY song_id ASC, sort_order ASC, id ASC`,
+    safeSongIds
+  );
+  const grouped = new Map();
+  for (const row of rows || []) {
+    const songId = String(row?.song_id || "").trim();
+    if (!songId) continue;
+    if (!grouped.has(songId)) grouped.set(songId, []);
+    grouped.get(songId).push(row);
+  }
+  return grouped;
 }
 
 export function buildSongSearchRows(song = {}) {
@@ -284,15 +343,20 @@ export async function syncSongSearchIndex(env, song = {}) {
   if (!songId) return;
   const existingRows = await dbAll(env, `SELECT DISTINCT term_norm FROM song_search_terms WHERE song_id=?`, [songId]);
   const previousTerms = existingRows.map((row) => String(row?.term_norm || "").trim()).filter(Boolean);
+  const versionsBySongId = await fetchSongVersionsBySongIds(env, [songId]);
+  const searchDocument = buildSearchDocument(song, versionsBySongId.get(songId) || []);
 
   await dbRun(
     env,
     `INSERT OR REPLACE INTO songs_fts(song_id, title, lyrics) VALUES (?,?,?)`,
-    [songId, String(song?.title || ""), String(song?.lyrics || "")]
+    [songId, searchDocument.search_title, searchDocument.search_lyrics]
   );
 
   await dbRun(env, `DELETE FROM song_search_terms WHERE song_id=?`, [songId]);
-  const rows = buildSongSearchRows(song);
+  const rows = buildSongSearchRows({
+    ...song,
+    ...searchDocument,
+  });
   for (const row of rows) {
     await dbRun(
       env,
@@ -332,14 +396,20 @@ export async function rebuildSongSearchIndex(env) {
   await dbRun(env, `DELETE FROM song_search_deletes`);
 
   const songs = await dbAll(env, `SELECT id, title, subtitle, lyrics FROM songs`);
+  const versionsBySongId = await fetchSongVersionsBySongIds(env, songs.map((song) => song?.id));
   const vocabTerms = new Set();
   for (const song of songs) {
+    const songId = String(song?.id || "").trim();
+    const searchDocument = buildSearchDocument(song, versionsBySongId.get(songId) || []);
     await dbRun(
       env,
       `INSERT OR REPLACE INTO songs_fts(song_id, title, lyrics) VALUES (?,?,?)`,
-      [String(song?.id || ""), String(song?.title || ""), String(song?.lyrics || "")]
+      [songId, searchDocument.search_title, searchDocument.search_lyrics]
     );
-    const rows = buildSongSearchRows(song);
+    const rows = buildSongSearchRows({
+      ...song,
+      ...searchDocument,
+    });
     for (const row of rows) {
       vocabTerms.add(row.term_norm);
       await dbRun(
@@ -455,7 +525,7 @@ function computeAdjacentRun(sequence = [], queryTokens = []) {
 }
 
 function buildSnippet(song = {}, queryTokens = []) {
-  const lyrics = String(song?.lyrics || "").replace(/\r\n?/g, "\n");
+  const lyrics = String((song?.search_lyrics ?? song?.lyrics) || "").replace(/\r\n?/g, "\n");
   const lines = lyrics.split("\n").map((line) => line.trim()).filter(Boolean);
   if (!lines.length) return "";
   const normalizedTokens = queryTokens.map((token) => token.normalized);
@@ -708,15 +778,16 @@ function computeMatchMetadata(song = {}, analysis = {}, candidateTermsByField = 
   const queryTokens = Array.isArray(analysis?.tokens) ? analysis.tokens : [];
   const wholeQuery = String(analysis?.normalized || "").trim();
   const significantQueryLength = getSignificantSearchTokens(analysis).length;
-  const titleTerms = mergeFieldTerms(song?.title || "", candidateTermsByField.title);
-  const subtitleTerms = mergeFieldTerms(song?.subtitle || "", candidateTermsByField.subtitle);
-  const lyricsTerms = mergeFieldTerms(song?.lyrics || "", candidateTermsByField.lyrics);
-  const title = computeFieldMatch(song?.title || "", queryTokens, titleTerms);
-  const subtitle = computeFieldMatch(song?.subtitle || "", queryTokens, subtitleTerms);
-  const lyrics = computeFieldMatch(song?.lyrics || "", queryTokens, lyricsTerms);
+  const fields = buildFieldTextMap(song);
+  const titleTerms = mergeFieldTerms(fields.title, candidateTermsByField.title);
+  const subtitleTerms = mergeFieldTerms(fields.subtitle, candidateTermsByField.subtitle);
+  const lyricsTerms = mergeFieldTerms(fields.lyrics, candidateTermsByField.lyrics);
+  const title = computeFieldMatch(fields.title, queryTokens, titleTerms);
+  const subtitle = computeFieldMatch(fields.subtitle, queryTokens, subtitleTerms);
+  const lyrics = computeFieldMatch(fields.lyrics, queryTokens, lyricsTerms);
   const queryLength = queryTokens.length;
-  const titleSignals = computeTitleIntentSignals(title, wholeQuery, song?.title || "");
-  const lyricsSignals = computeTitleIntentSignals(lyrics, wholeQuery, song?.lyrics || "");
+  const titleSignals = computeTitleIntentSignals(title, wholeQuery, fields.title);
+  const lyricsSignals = computeTitleIntentSignals(lyrics, wholeQuery, fields.lyrics);
   let score = 0;
 
   score += (title.phrase ? 80 : 0) + (lyrics.phrase ? 80 : 0);
@@ -968,7 +1039,7 @@ function buildDidYouMeanQueries(rawQuery = "", analysis = {}, typoCandidates = [
 async function fetchCandidateSongRows(env, songIds = []) {
   const safeSongIds = unique(songIds.map((value) => String(value || "").trim()));
   if (!safeSongIds.length) return [];
-  return dbAll(
+  const rows = await dbAll(
     env,
     `SELECT
        s.id,
@@ -994,6 +1065,11 @@ async function fetchCandidateSongRows(env, songIds = []) {
      WHERE s.id IN (${safeSongIds.map(() => "?").join(", ")})`,
     safeSongIds
   );
+  const versionsBySongId = await fetchSongVersionsBySongIds(env, safeSongIds);
+  return (rows || []).map((row) => ({
+    ...row,
+    ...buildSearchDocument(row, versionsBySongId.get(String(row?.id || "").trim()) || []),
+  }));
 }
 
 async function queryDirectScanRows(env, filters = {}, analysis = {}, options = {}) {
@@ -1012,10 +1088,12 @@ async function queryDirectScanRows(env, filters = {}, analysis = {}, options = {
     const pattern = `%${escapeLikeValue(token)}%`;
     where.push(`(
       lower(coalesce(s.title, '')) LIKE ? ESCAPE '\\'
+      OR lower(coalesce(va.version_titles, '')) LIKE ? ESCAPE '\\'
       OR lower(coalesce(s.subtitle, '')) LIKE ? ESCAPE '\\'
       OR lower(coalesce(s.lyrics, '')) LIKE ? ESCAPE '\\'
+      OR lower(coalesce(va.version_lyrics, '')) LIKE ? ESCAPE '\\'
     )`);
-    queryParams.push(pattern, pattern, pattern);
+    queryParams.push(pattern, pattern, pattern, pattern, pattern);
   }
 
   const countRow = await dbGet(
@@ -1027,19 +1105,29 @@ async function queryDirectScanRows(env, filters = {}, analysis = {}, options = {
        FROM song_versions
        GROUP BY song_id
      ) vc ON vc.song_id = s.id
+     LEFT JOIN (
+       SELECT
+         song_id,
+         GROUP_CONCAT(COALESCE(NULLIF(title, ''), ''), '\n') AS version_titles,
+         GROUP_CONCAT(COALESCE(NULLIF(lyrics, ''), ''), '\n\n') AS version_lyrics
+       FROM song_versions
+       GROUP BY song_id
+     ) va ON va.song_id = s.id
      WHERE ${where.join(" AND ")}`,
     queryParams
   );
   const total = Number(countRow?.total || 0);
   if (!shouldRunDirectScanFallback(analysis, total)) return [];
 
-  return dbAll(
+  const rows = await dbAll(
     env,
     `SELECT
        s.id,
        s.title,
        s.subtitle,
        s.lyrics,
+       coalesce(va.version_titles, '') AS version_titles,
+       coalesce(va.version_lyrics, '') AS version_lyrics,
        s.lang,
        s.country,
        s.period,
@@ -1056,11 +1144,54 @@ async function queryDirectScanRows(env, filters = {}, analysis = {}, options = {
        FROM song_versions
        GROUP BY song_id
      ) vc ON vc.song_id = s.id
+     LEFT JOIN (
+       SELECT
+         song_id,
+         GROUP_CONCAT(COALESCE(NULLIF(title, ''), ''), '\n') AS version_titles,
+         GROUP_CONCAT(COALESCE(NULLIF(lyrics, ''), ''), '\n\n') AS version_lyrics
+       FROM song_versions
+       GROUP BY song_id
+     ) va ON va.song_id = s.id
      WHERE ${where.join(" AND ")}
      ORDER BY s.id ASC
      LIMIT 250`,
     queryParams
   );
+  return (rows || []).map((row) => ({
+    ...row,
+    search_title: uniqueNormalizedTextParts([row?.title, row?.version_titles]).join("\n"),
+    search_subtitle: String(row?.subtitle || ""),
+    search_lyrics: uniqueNormalizedTextParts([row?.lyrics, row?.version_lyrics]).join("\n\n"),
+  }));
+}
+
+async function filterDidYouMeanQueries(env, filters = {}, variants = [], options = {}) {
+  const includeAdminContent = options.includeAdminContent === true;
+  const accepted = [];
+  for (const variant of variants || []) {
+    const nextAnalysis = {
+      raw: String(variant?.query || "").trim(),
+      normalized: normalizeSearchText(variant?.query || ""),
+      tokens: tokenizeSearchText(variant?.query || "", { maxTokens: MAX_QUERY_TOKENS, minLen: MIN_INDEX_TERM_LEN }),
+    };
+    if (!nextAnalysis.tokens.length) continue;
+    const [phraseRows, tokenRows, prefixRows] = await Promise.all([
+      queryExactPhraseRows(env, filters, nextAnalysis, { includeAdminContent }),
+      queryExactTokenRows(env, filters, nextAnalysis, { includeAdminContent }),
+      queryPrefixRows(env, filters, nextAnalysis, { includeAdminContent }),
+    ]);
+    if (phraseRows.length || tokenRows.length || prefixRows.length) {
+      accepted.push(variant);
+      if (accepted.length >= MAX_DID_YOU_MEAN) break;
+      continue;
+    }
+    const directRows = await queryDirectScanRows(env, filters, nextAnalysis, { includeAdminContent });
+    if (directRows.length) {
+      accepted.push(variant);
+      if (accepted.length >= MAX_DID_YOU_MEAN) break;
+    }
+  }
+  return accepted;
 }
 
 export function shouldRunDirectScanFallback(analysis = {}, candidateCount = 0) {
@@ -1479,7 +1610,12 @@ export async function searchSongs(env, options = {}) {
       ? await queryFuzzyRows(env, filters, analysis, typoCandidates, { includeAdminContent })
       : [];
     const didYouMean = shouldRunTypoSearch
-      ? buildDidYouMeanQueries(rawQuery, analysis, typoCandidates)
+      ? await filterDidYouMeanQueries(
+          env,
+          filters,
+          buildDidYouMeanQueries(rawQuery, analysis, typoCandidates),
+          { includeAdminContent }
+        )
       : [];
 
     const candidateMap = new Map();
