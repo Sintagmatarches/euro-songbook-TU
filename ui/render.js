@@ -6065,14 +6065,14 @@ function songDetailsUI(song, extra = {}) {
     : uiLocale() === "uk"
       ? "Порівняти версії"
       : uiLocale() === "et"
-        ? "Vordle versioone"
+        ? "V?rdle versioone"
         : "Compare versions";
   const compareMetaMissing = uiLocale() === "ru"
     ? "не указано"
     : uiLocale() === "uk"
       ? "не вказано"
       : uiLocale() === "et"
-        ? "maaramata"
+        ? "m??ramata"
         : "Not specified";
   const compareVersionOneTitle = uiLocale() === "ru"
     ? "Версия 1"
