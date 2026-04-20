@@ -1,5 +1,5 @@
 <!doctype html>
-<html lang="ru">
+<html lang="et">
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
@@ -66,9 +66,24 @@
         <div class="catalog-top-search-actions">
           <button class="btn primary catalog-top-search-btn" id="topSearchBtn" type="submit">Искать</button>
           <button class="btn primary catalog-top-search-menu-toggle" id="topSearchMenuToggle" type="button" aria-haspopup="menu" aria-expanded="false" aria-label="Параметры поиска"></button>
+          <select class="select catalog-top-locale-switch" id="localeSwitchTop" aria-label="РЇР·С‹Рє РёРЅС‚РµСЂС„РµР№СЃР°">
+            <option value="ru">РУССКИЙ</option>
+            <option value="et">EESTI</option>
+            <option value="en">ENGLISH</option>
+            <option value="uk">УКРАЇНСЬКА</option>
+          </select>
           <div class="catalog-top-search-menu hidden" id="topSearchMenu" role="menu">
             <button class="btn ghost catalog-top-search-menu-item" id="yt_toggleAdvanced" type="button" role="menuitem"></button>
             <a class="btn ghost catalog-top-search-menu-item" id="yt_openRecent" href="#/?searched=1&recent=1&adv=0&page=1" role="menuitem"></a>
+          </div>
+        </div>
+        <div class="catalog-top-locale" id="topLocaleControl">
+          <button class="btn primary catalog-top-locale-button" id="topLocaleButton" type="button" aria-haspopup="menu" aria-expanded="false">EESTI</button>
+          <div class="catalog-top-locale-menu hidden" id="topLocaleMenu" role="menu">
+            <button class="btn ghost catalog-top-locale-item" type="button" role="menuitemradio" data-locale="ru">РУССКИЙ</button>
+            <button class="btn ghost catalog-top-locale-item" type="button" role="menuitemradio" data-locale="et">EESTI</button>
+            <button class="btn ghost catalog-top-locale-item" type="button" role="menuitemradio" data-locale="en">ENGLISH</button>
+            <button class="btn ghost catalog-top-locale-item" type="button" role="menuitemradio" data-locale="uk">УКРАЇНСЬКА</button>
           </div>
         </div>
       </form>

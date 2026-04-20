@@ -2,6 +2,7 @@ import { json, err, readJSON, makeId } from "../../../../_lib/utils.js";
 import { requirePermission, dbGet, dbRun, assertScopeForLang, hasAccessPermission } from "../../../../_lib/db.js";
 import { ensureSchemaAndSeed } from "../../../../_lib/schema.js";
 import { normalizeSongCatalogInput } from "../../../../../shared/song-catalogs.js";
+import { hasMinimumSongLyricWords, shortLyricsErrorMessage } from "../../../../../shared/lyrics-validation.js";
 import { syncSongSearchIndex } from "../../../../_lib/song-search.mjs";
 import { findLikelyDuplicateSong } from "../../../../_lib/song-similarity.mjs";
 
@@ -110,6 +111,9 @@ export async function onRequestPost({ env, request, params }) {
     const versions = parseJSON(item.versions_json, []);
     const tags = parseJSON(item.tags_json, []);
     const lyricsMeta = parseJSON(item.lyrics_meta_json, {});
+    if (!hasMinimumSongLyricWords(item.lyrics)) {
+      return err(shortLyricsErrorMessage(), 400);
+    }
     if (Array.isArray(links) && links.length > 0) {
       const linksPerm = await requirePermission(env, request, "links.manage", { lang: normalizedLang });
       if (linksPerm instanceof Response) return linksPerm;

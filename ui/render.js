@@ -3500,7 +3500,7 @@ function setupSongConfidenceMenus(root) {
     const target = event.target;
     if (!(target instanceof HTMLElement)) return;
     const trigger = target.closest(".song-confidence-word-trigger");
-    if (!(trigger instanceof HTMLButtonElement) || !root.contains(trigger)) return;
+    if (!(trigger instanceof HTMLElement) || !root.contains(trigger)) return;
     const anchor = trigger.closest(".song-confidence-word-anchor");
     if (!(anchor instanceof HTMLElement)) return;
     const menu = anchor.querySelector(".song-confidence-word-menu");
@@ -3516,6 +3516,17 @@ function setupSongConfidenceMenus(root) {
     menu.open = true;
     syncSongConfidenceMenuTrigger(menu);
     schedulePosition(menu);
+  };
+
+  const onRootKeyDown = (event) => {
+    const target = event.target;
+    if (!(target instanceof HTMLElement)) return;
+    const trigger = target.closest(".song-confidence-word-trigger");
+    if (!(trigger instanceof HTMLElement) || !root.contains(trigger)) return;
+    const key = String(event?.key || "");
+    if (key !== "Enter" && key !== " ") return;
+    event.preventDefault();
+    trigger.click();
   };
 
   const onDocumentClick = (event) => {
@@ -3539,6 +3550,7 @@ function setupSongConfidenceMenus(root) {
   };
 
   root.addEventListener("click", onRootClick);
+  root.addEventListener("keydown", onRootKeyDown);
   document.addEventListener("click", onDocumentClick, true);
   document.addEventListener("keydown", onDocumentKeyDown);
   window.addEventListener("resize", onResize, { passive: true });
@@ -3548,6 +3560,7 @@ function setupSongConfidenceMenus(root) {
 
   songConfidenceMenusCleanup = () => {
     root.removeEventListener("click", onRootClick);
+    root.removeEventListener("keydown", onRootKeyDown);
     document.removeEventListener("click", onDocumentClick, true);
     document.removeEventListener("keydown", onDocumentKeyDown);
     window.removeEventListener("resize", onResize);
@@ -4116,8 +4129,6 @@ function draftLinePopoverUI(line = null, index = -1, options = {}) {
     const variantId = String(variant?.id || "").trim();
     const isActive = variantId && variantId === String(active?.id || "").trim();
     if (isActive) return true;
-    const variantType = String(variant?.variant_type || "").trim().toLowerCase();
-    if (variantType !== "manual") return false;
     return draftComparableLineText(variant?.text || "") !== activeComparable;
   });
   const activeVariantId = String(active?.id || variants[0]?.id || "");
@@ -4756,7 +4767,7 @@ function renderTextWithConfidenceWords(text, segments = [], options = {}) {
         : String(variantPanelMarkup || "");
       if (wordVariantPanelMarkup) {
         const triggerLabel = esc(variantToggleTitle || confidenceLabel);
-        out += `<span class="song-confidence-word-anchor" style="${confidenceStyle}"><details class="song-confidence-word-menu"><summary class="song-confidence-word-toggle" aria-label="${triggerLabel}" title="${triggerLabel}"><span>${esc(confidenceLabel)}</span></summary>${wordVariantPanelMarkup}</details><button class="song-confidence-word song-confidence-word-trigger" type="button" style="${confidenceStyle}" aria-label="${triggerLabel}" title="${triggerLabel}" aria-expanded="false">${renderTextWithUnknownMarkers(wordText)}</button></span>`;
+        out += `<span class="song-confidence-word-anchor" style="${confidenceStyle}"><details class="song-confidence-word-menu"><summary class="song-confidence-word-toggle" aria-label="${triggerLabel}" title="${triggerLabel}"><span>${esc(confidenceLabel)}</span></summary>${wordVariantPanelMarkup}</details><span class="song-confidence-word-trigger" role="button" tabindex="0" aria-label="${triggerLabel}" title="${triggerLabel}" aria-expanded="false"><span class="song-confidence-word" data-confidence-label="" style="${confidenceStyle}">${renderTextWithUnknownMarkers(wordText)}</span></span></span>`;
       } else {
         out += `<span class="song-confidence-word" data-confidence-label="${esc(confidenceLabel)}" style="${confidenceStyle}">${renderTextWithUnknownMarkers(wordText)}</span>`;
       }
@@ -5187,15 +5198,45 @@ function splitLyricsToStanzasFallback(text = "") {
   return blocks.length ? blocks : [lines.join("\n")];
 }
 
+function normalizeCompareBlock(rawBlock = "") {
+  const lines = String(rawBlock || "")
+    .replace(/\r\n?/g, "\n")
+    .split("\n")
+    .map((line) => String(line || "").trim());
+  const nonEmptyLines = lines.filter(Boolean);
+  if (!nonEmptyLines.length) return null;
+  const firstLine = nonEmptyLines[0] || "";
+  const isChorusBlock = isSectionToken(firstLine, CHORUS_KEYWORDS);
+  const isVerseBlock = isSectionToken(firstLine, VERSE_KEYWORDS);
+  const contentLines = (isChorusBlock || isVerseBlock) ? nonEmptyLines.slice(1) : nonEmptyLines;
+  const content = contentLines.join("\n").trim();
+  if (!content) return null;
+  return {
+    type: isChorusBlock ? "chorus" : "verse",
+    text: content,
+  };
+}
+
 function splitLyricsToStanzas(text = "") {
   const normalized = normalizeCompareText(text);
   if (!normalized) return [];
+  const parsed = parseStructuredLyrics(normalized);
+  if (Array.isArray(parsed?.blocks) && parsed.blocks.length) {
+    return parsed.blocks
+      .map((block) => ({
+        type: block?.type === "chorus" ? "chorus" : "verse",
+        text: String(block?.text || "").trim(),
+      }))
+      .filter((block) => block.text);
+  }
   const stanzas = normalized
     .split(/\n\s*\n+/)
-    .map((chunk) => chunk.trim())
+    .map((chunk) => normalizeCompareBlock(chunk))
     .filter(Boolean);
   if (stanzas.length > 1) return stanzas;
-  return splitLyricsToStanzasFallback(normalized);
+  return splitLyricsToStanzasFallback(normalized)
+    .map((chunk) => normalizeCompareBlock(chunk))
+    .filter(Boolean);
 }
 
 function normalizeCompareStanza(text = "") {
@@ -5255,14 +5296,18 @@ function alignCompareStanzas(sourceStanzas = [], targetStanzas = []) {
   for (let idx = 0; idx < rowCount; idx += 1) {
     const hasSource = idx < src.length;
     const hasTarget = idx < dst.length;
-    const sourceText = hasSource ? String(src[idx] || "") : "";
-    const targetText = hasTarget ? String(dst[idx] || "") : "";
+    const sourceBlock = hasSource ? (src[idx] || null) : null;
+    const targetBlock = hasTarget ? (dst[idx] || null) : null;
+    const sourceText = hasSource ? String(sourceBlock?.text || "") : "";
+    const targetText = hasTarget ? String(targetBlock?.text || "") : "";
     const isExact = hasSource
       && hasTarget
       && normalizeCompareStanza(sourceText) === normalizeCompareStanza(targetText);
     rows.push({
       sourceIndex: hasSource ? idx : null,
       targetIndex: hasTarget ? idx : null,
+      sourceType: String(sourceBlock?.type || "verse"),
+      targetType: String(targetBlock?.type || "verse"),
       isExact,
     });
   }
@@ -5675,6 +5720,20 @@ function versionSummaryLabel(count) {
   return `This song has ${total} versions`;
 }
 
+function versionTitleFieldLabel() {
+  if (uiLocale() === "ru") return "Название версии";
+  if (uiLocale() === "uk") return "Назва версії";
+  if (uiLocale() === "et") return "Versiooni nimi";
+  return "Version title";
+}
+
+function versionTitleHelperText() {
+  if (uiLocale() === "ru") return "Этот текст показывается в выборе ссылок и в сравнении версий.";
+  if (uiLocale() === "uk") return "Цей текст показується у виборі посилань і в порівнянні версій.";
+  if (uiLocale() === "et") return "Seda teksti näidatakse linkide valikus ja versioonide võrdluses.";
+  return "This text is shown in the link selector and in version comparison.";
+}
+
 function songSuggestionButtonLabel() {
   if (uiLocale() === "ru") return "Предложить редакцию";
   if (uiLocale() === "uk") return "Запропонувати редакцію";
@@ -5832,8 +5891,9 @@ function songInlineVersionRow(v = {}) {
         <button class="btn danger ss_version_remove" type="button">x</button>
       </div>
       <div class="ss_version_row_body">
+        <div class="muted small ss_version_hint">${esc(versionTitleHelperText())}</div>
         <div class="grid2 ss_version_row_meta">
-          <input class="input ss_version_title" placeholder="${esc(uiText("performer"))}" value="${esc(v.title || "")}" />
+          <input class="input ss_version_title" placeholder="${esc(versionTitleFieldLabel())}" aria-label="${esc(versionTitleFieldLabel())}" title="${esc(versionTitleFieldLabel())}" value="${esc(v.title || "")}" />
           <input class="input ss_version_lang" placeholder="${esc(t("field.lang"))}" value="${esc(v.lang || "")}" />
         </div>
         <input class="input ss_version_source" placeholder="${esc(t("field.source"))}" value="${esc(v.source || "")}" />
@@ -6065,14 +6125,14 @@ function songDetailsUI(song, extra = {}) {
     : uiLocale() === "uk"
       ? "Порівняти версії"
       : uiLocale() === "et"
-        ? "V?rdle versioone"
+        ? "Võrdle versioone"
         : "Compare versions";
   const compareMetaMissing = uiLocale() === "ru"
     ? "не указано"
     : uiLocale() === "uk"
       ? "не вказано"
       : uiLocale() === "et"
-        ? "m??ramata"
+        ? "määramata"
         : "Not specified";
   const compareVersionOneTitle = uiLocale() === "ru"
     ? "Версия 1"
@@ -12923,7 +12983,7 @@ export function bind(route, ctx) {
     let isVerifiedTranslationMode = false;
     const explicitSongVersions = Array.isArray(song?.versions) ? song.versions : [];
     const suppressOriginalSongVersion = shouldSuppressOriginalVersion(song, explicitSongVersions);
-    const requestedVersionId = normalizeVersionIdentifier(params.version || ctx?.selectedVersionId || "");
+    const requestedVersionId = normalizeVersionIdentifier(ctx?.selectedVersionId || "");
     const initialVisibleVersion = !suppressOriginalSongVersion
       ? {
         id: "__original",
@@ -13391,13 +13451,18 @@ export function bind(route, ctx) {
               : "Stanza";
 
           const renderCompareCell = (ownStanzas = [], peerStanzas = [], ownIndex = null, peerIndex = null, row = {}, rowIndex = 0) => {
-            const ownText = ownIndex === null ? "" : String(ownStanzas[ownIndex] || "");
-            const peerText = peerIndex === null ? "" : String(peerStanzas[peerIndex] || "");
+            const ownBlock = ownIndex === null ? null : (ownStanzas[ownIndex] || null);
+            const peerBlock = peerIndex === null ? null : (peerStanzas[peerIndex] || null);
+            const ownText = ownIndex === null ? "" : String(ownBlock?.text || "");
+            const peerText = peerIndex === null ? "" : String(peerBlock?.text || "");
             const skipDiff = !!row?.isExact && !!ownText && !!peerText;
             const stanzaBody = ownText
               ? renderCompareWordMarkup(ownText, peerText, { skipDiff })
               : "";
-            const stanzaIndexLabel = ownIndex === null ? "-" : `${stanzaLabel} ${ownIndex + 1}`;
+            const ownType = String(ownBlock?.type || "verse");
+            const stanzaIndexLabel = ownIndex === null
+              ? "-"
+              : (ownType === "chorus" ? chorusMarkerLabel() : `${verseMarkerLabel()} ${ownIndex + 1}`);
             const cellClasses = [
               "card",
               "song-compare-window",

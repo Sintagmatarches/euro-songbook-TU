@@ -11952,7 +11952,7 @@ html[data-theme="white"] .home-country-card .home-country-card-sub {
   content: attr(data-confidence-label);
   position: absolute;
   left: 50%;
-  bottom: calc(100% + 2px);
+  bottom: calc(100% + 6px);
   transform: translateX(-50%);
   font-size: 10px;
   line-height: 1;
@@ -12177,7 +12177,7 @@ html[data-theme="white"] .home-country-card .home-country-card-sub {
 }
 
 .song-confidence-word::before {
-  bottom: calc(100% + 4px);
+  bottom: calc(100% + 8px);
 }
 
 .song-confidence-word[data-confidence-label=""]::before {
@@ -12599,6 +12599,41 @@ html[data-theme="white"] .song-lyric-line.has-word-confidence {
   vertical-align: baseline;
 }
 
+.song-confidence-word-trigger > .song-confidence-word {
+  display: inline-block;
+  vertical-align: baseline;
+  color: inherit;
+}
+
+html[data-theme="light"] .song-confidence-word-trigger,
+html[data-theme="white"] .song-confidence-word-trigger {
+  -webkit-text-fill-color: currentColor;
+}
+
+:root:not([data-theme="light"]):not([data-theme="white"]) .song-confidence-word-trigger,
+html[data-theme="dark"] .song-confidence-word-trigger,
+html:not([data-theme]) .song-confidence-word-trigger {
+  padding: 0;
+  margin: 0;
+  min-width: 0;
+  min-height: 0;
+  -webkit-text-fill-color: currentColor;
+  background: transparent !important;
+  background-color: transparent !important;
+  background-image: none !important;
+  box-shadow: none !important;
+  border-radius: 0;
+}
+
+:root:not([data-theme="light"]):not([data-theme="white"]) .song-confidence-word-trigger.song-confidence-word::after,
+html[data-theme="dark"] .song-confidence-word-trigger.song-confidence-word::after,
+html:not([data-theme]) .song-confidence-word-trigger.song-confidence-word::after {
+  content: none !important;
+  display: none !important;
+  background: transparent !important;
+  box-shadow: none !important;
+}
+
 .song-confidence-word-trigger:focus-visible {
   outline: 2px solid rgba(
     var(--song-confidence-r, 130),
@@ -12622,19 +12657,9 @@ html[data-theme="white"] .song-lyric-line.has-word-confidence {
   min-height: 18px;
   padding: 0 7px;
   border: 0;
-  border-radius: 999px;
-  background: rgba(
-    var(--song-confidence-r, 130),
-    var(--song-confidence-g, 180),
-    var(--song-confidence-b, 130),
-    calc(var(--song-confidence-fill-alpha, 0.14) + 0.03)
-  );
-  box-shadow: inset 0 0 0 1px rgba(
-    var(--song-confidence-r, 130),
-    var(--song-confidence-g, 180),
-    var(--song-confidence-b, 130),
-    calc(var(--song-confidence-border-alpha, 0.28) + 0.03)
-  );
+  border-radius: 0;
+  background: transparent;
+  box-shadow: none;
   color: rgba(
     var(--song-confidence-r, 130),
     var(--song-confidence-g, 180),
@@ -12657,18 +12682,8 @@ html[data-theme="white"] .song-lyric-line.has-word-confidence {
 }
 
 .song-confidence-word-menu[open] > .song-confidence-word-toggle {
-  background: rgba(
-    var(--song-confidence-r, 130),
-    var(--song-confidence-g, 180),
-    var(--song-confidence-b, 130),
-    calc(var(--song-confidence-fill-alpha, 0.14) + 0.06)
-  );
-  box-shadow: inset 0 0 0 1px rgba(
-    var(--song-confidence-r, 130),
-    var(--song-confidence-g, 180),
-    var(--song-confidence-b, 130),
-    calc(var(--song-confidence-border-alpha, 0.28) + 0.06)
-  );
+  background: transparent;
+  box-shadow: none;
 }
 
 .song-confidence-word-menu > .song-line-variants-panel {
@@ -17140,6 +17155,8 @@ html[data-theme="white"] .home-picker-card.is-active {
 
 html #topSearchBtn,
 html .catalog-top-search-btn,
+html #localeSwitchTop,
+html .catalog-top-locale-switch,
 html #topSearchMenuToggle,
 html .catalog-top-search-menu-toggle {
   min-height: 50px !important;
@@ -17161,8 +17178,41 @@ html .catalog-top-search-btn {
   font-weight: 800 !important;
 }
 
+html #localeSwitchTop,
+html .catalog-top-locale-switch {
+  order: 2 !important;
+  width: clamp(92px, 10vw, 116px) !important;
+  min-width: clamp(92px, 10vw, 116px) !important;
+  max-width: 116px !important;
+  padding: 0 28px 0 12px !important;
+  border-left: 1px solid rgba(125, 149, 255, 0.46) !important;
+  border-right: 1px solid rgba(125, 149, 255, 0.46) !important;
+  border-radius: 0 !important;
+  background: transparent !important;
+  background-color: transparent !important;
+  color: #ffffff !important;
+  font-size: 11px !important;
+  font-weight: 800 !important;
+  letter-spacing: 0.08em !important;
+  line-height: 1 !important;
+  text-transform: uppercase !important;
+  text-align: center !important;
+  text-align-last: center !important;
+  appearance: none !important;
+  -webkit-appearance: none !important;
+  background-image:
+    linear-gradient(45deg, transparent 50%, rgba(255, 255, 255, 0.92) 50%),
+    linear-gradient(135deg, rgba(255, 255, 255, 0.92) 50%, transparent 50%) !important;
+  background-position:
+    calc(100% - 14px) calc(50% - 3px),
+    calc(100% - 9px) calc(50% - 3px) !important;
+  background-size: 5px 5px, 5px 5px !important;
+  background-repeat: no-repeat !important;
+}
+
 html #topSearchMenuToggle,
 html .catalog-top-search-menu-toggle {
+  order: 3 !important;
   width: 58px !important;
   min-width: 58px !important;
   border-left: 1px solid rgba(125, 149, 255, 0.46) !important;
@@ -17170,6 +17220,8 @@ html .catalog-top-search-menu-toggle {
 
 html #topSearchBtn:hover,
 html .catalog-top-search-btn:hover,
+html #localeSwitchTop:hover,
+html .catalog-top-locale-switch:hover,
 html #topSearchMenuToggle:hover,
 html .catalog-top-search-menu-toggle:hover {
   background: rgba(255, 255, 255, 0.05) !important;
@@ -17178,6 +17230,8 @@ html .catalog-top-search-menu-toggle:hover {
 
 html #topSearchBtn:active,
 html .catalog-top-search-btn:active,
+html #localeSwitchTop:active,
+html .catalog-top-locale-switch:active,
 html #topSearchMenuToggle:active,
 html .catalog-top-search-menu-toggle:active {
   background: rgba(0, 0, 0, 0.14) !important;
@@ -17194,6 +17248,8 @@ html .catalog-top-search-menu-toggle:active {
 
   html #topSearchBtn,
   html .catalog-top-search-btn,
+  html #localeSwitchTop,
+  html .catalog-top-locale-switch,
   html #topSearchMenuToggle,
   html .catalog-top-search-menu-toggle {
     min-height: 46px !important;
@@ -17204,6 +17260,15 @@ html .catalog-top-search-menu-toggle:active {
     min-width: 128px !important;
     padding: 0 18px !important;
     font-size: 16px !important;
+  }
+
+  html #localeSwitchTop,
+  html .catalog-top-locale-switch {
+    width: clamp(84px, 20vw, 104px) !important;
+    min-width: clamp(84px, 20vw, 104px) !important;
+    max-width: 104px !important;
+    padding: 0 24px 0 10px !important;
+    font-size: 10px !important;
   }
 
   html #topSearchMenuToggle,
@@ -18022,6 +18087,19 @@ html :is(
   .collab-add-contact-icon
 ) {
   color: var(--btn-blue-text) !important;
+}
+
+html :is(.song-confidence-word-trigger, .song-confidence-word-trigger:hover, .song-confidence-word-trigger:active, .song-confidence-word-trigger:focus-visible) {
+  background: transparent !important;
+  background-color: transparent !important;
+  background-image: none !important;
+  border: 0 !important;
+  border-color: transparent !important;
+  box-shadow: none !important;
+  color: inherit !important;
+  -webkit-text-fill-color: currentColor !important;
+  font-weight: inherit !important;
+  text-shadow: none !important;
 }
 
 /* Historical country cards: dedicated media-top layout with safe text zone. */
@@ -19853,5 +19931,182 @@ html[data-theme="white"] .ac-editor-variant-tab-add-label {
   #ac_editor .draft-word-confidence-select,
   #requestForm .draft-word-confidence-select {
     width: 100% !important;
+  }
+}
+
+/* Top search: standalone language button to the right, without the old action chevron. */
+html #localeSwitchTop,
+html .catalog-top-locale-switch,
+html .catalog-top-search:not(.has-actions-menu) #topSearchMenuToggle,
+html .catalog-top-search:not(.has-actions-menu) .catalog-top-search-menu-toggle {
+  display: none !important;
+}
+
+html .catalog-top-search {
+  gap: 12px !important;
+  align-items: stretch !important;
+}
+
+html .catalog-top-search-actions {
+  flex: 0 0 auto !important;
+  min-height: 50px !important;
+  border-radius: 18px !important;
+  overflow: hidden !important;
+}
+
+html #topSearchBtn,
+html .catalog-top-search-btn {
+  flex: 0 0 190px !important;
+  min-width: 190px !important;
+  min-height: 50px !important;
+  padding: 0 30px !important;
+  border-top-left-radius: 17px !important;
+  border-bottom-left-radius: 17px !important;
+  border-top-right-radius: 0 !important;
+  border-bottom-right-radius: 0 !important;
+  font-size: 20px !important;
+  font-weight: 800 !important;
+}
+
+html #topSearchMenuToggle,
+html .catalog-top-search-menu-toggle {
+  display: inline-flex !important;
+  flex: 0 0 72px !important;
+  width: 72px !important;
+  min-width: 72px !important;
+  min-height: 50px !important;
+  border-left: 1px solid rgba(125, 149, 255, 0.46) !important;
+  border-top-right-radius: 17px !important;
+  border-bottom-right-radius: 17px !important;
+  border-top-left-radius: 0 !important;
+  border-bottom-left-radius: 0 !important;
+}
+
+html #topSearchMenu,
+html .catalog-top-search-menu {
+  display: grid !important;
+  right: auto !important;
+  left: 0 !important;
+}
+
+html #topSearchMenu.hidden,
+html .catalog-top-search-menu.hidden {
+  display: none !important;
+}
+
+html .catalog-top-locale {
+  position: relative !important;
+  display: flex !important;
+  flex: 0 0 auto !important;
+  align-items: stretch !important;
+}
+
+html #topLocaleButton,
+html .catalog-top-locale-button {
+  min-width: 140px !important;
+  min-height: 50px !important;
+  padding: 0 22px !important;
+  border: 1px solid rgba(71, 92, 218, 0.88) !important;
+  border-radius: 18px !important;
+  background: linear-gradient(180deg, rgba(25, 0, 255, 0.98), rgba(15, 0, 168, 0.98)) !important;
+  box-shadow:
+    0 12px 24px rgba(8, 12, 78, 0.28),
+    inset 0 1px 0 rgba(110, 126, 255, 0.2) !important;
+  color: #ffffff !important;
+  font-size: 16px !important;
+  font-weight: 800 !important;
+  letter-spacing: 0.08em !important;
+  text-transform: uppercase !important;
+}
+
+html #topLocaleButton.is-open,
+html .catalog-top-locale-button.is-open {
+  background: linear-gradient(180deg, rgba(32, 9, 255, 0.98), rgba(21, 4, 182, 0.98)) !important;
+}
+
+html #topLocaleButton::after,
+html .catalog-top-locale-button::after {
+  content: none !important;
+}
+
+html #topLocaleMenu,
+html .catalog-top-locale-menu {
+  position: absolute !important;
+  top: calc(100% + 8px) !important;
+  right: 0 !important;
+  min-width: 180px !important;
+  display: grid !important;
+  gap: 4px !important;
+  padding: 10px !important;
+  border: 1px solid rgba(139, 152, 199, 0.92) !important;
+  border-radius: 12px !important;
+  background: rgba(43, 43, 55, 0.97) !important;
+  box-shadow: 0 16px 30px rgba(0, 0, 0, 0.35) !important;
+  z-index: 40 !important;
+}
+
+html #topLocaleMenu.hidden,
+html .catalog-top-locale-menu.hidden {
+  display: none !important;
+}
+
+html .catalog-top-locale-item {
+  justify-content: flex-start !important;
+  min-height: 40px !important;
+  padding: 0 12px !important;
+  border-radius: 8px !important;
+  background: transparent !important;
+  color: #ffffff !important;
+  font-size: 18px !important;
+  font-weight: 700 !important;
+  letter-spacing: 0.03em !important;
+  text-transform: uppercase !important;
+}
+
+html .catalog-top-locale-item:hover,
+html .catalog-top-locale-item:focus-visible,
+html .catalog-top-locale-item.is-active {
+  background: rgba(255, 255, 255, 0.16) !important;
+}
+
+@media (max-width: 960px) {
+  html .catalog-top-search {
+    gap: 10px !important;
+  }
+
+  html .catalog-top-search-actions,
+  html #topSearchBtn,
+  html .catalog-top-search-btn,
+  html #topLocaleButton,
+  html .catalog-top-locale-button {
+    min-height: 46px !important;
+  }
+
+  html #topSearchBtn,
+  html .catalog-top-search-btn {
+    flex-basis: 156px !important;
+    min-width: 156px !important;
+    padding: 0 22px !important;
+    font-size: 18px !important;
+  }
+
+  html #topSearchMenuToggle,
+  html .catalog-top-search-menu-toggle {
+    flex-basis: 58px !important;
+    width: 58px !important;
+    min-width: 58px !important;
+    min-height: 46px !important;
+  }
+
+  html #topLocaleButton,
+  html .catalog-top-locale-button {
+    min-width: 122px !important;
+    padding: 0 18px !important;
+    font-size: 14px !important;
+  }
+
+  html .catalog-top-locale-item {
+    min-height: 36px !important;
+    font-size: 16px !important;
   }
 }

@@ -22,6 +22,11 @@ const menuUserChip = document.getElementById("menuUserChip");
 const topSearchWrap = document.getElementById("topSearchWrap");
 const topSearchInput = document.getElementById("topSearchInput");
 const topSearchBtn = document.getElementById("topSearchBtn");
+const topLocaleControl = document.getElementById("topLocaleControl");
+const topLocaleButton = document.getElementById("topLocaleButton");
+const topLocaleMenu = document.getElementById("topLocaleMenu");
+const topLocaleItems = Array.from(document.querySelectorAll(".catalog-top-locale-item"));
+const localeSwitchTop = document.getElementById("localeSwitchTop");
 const topSearchMenuToggle = document.getElementById("topSearchMenuToggle");
 const topSearchMenu = document.getElementById("topSearchMenu");
 const topSearchAdvancedAction = document.getElementById("yt_toggleAdvanced");
@@ -54,6 +59,12 @@ const doRegister = document.getElementById("doRegister");
 const promptDialogCloseButton = document.querySelector('#dlgPrompt button[value="cancel"]');
 const localeSwitchMenu = document.getElementById("localeSwitchMenu");
 const localeSwitches = [localeSwitchMenu].filter(Boolean);
+const LOCALE_LABELS = {
+  ru: "РУССКИЙ",
+  et: "EESTI",
+  en: "ENGLISH",
+  uk: "УКРАЇНСЬКА",
+};
 
 const THEME_KEY = "ui_theme";
 const SUPPORTED_THEMES = ["dark", "white"];
@@ -792,12 +803,12 @@ function setTopSearchState(route) {
   if (!topSearchWrap || !topSearchInput) return;
   const routeName = String(route?.name || "").trim();
   const shouldShowSearch = routeName === "home" || routeName === "song";
-  const shouldShowActionsMenu = shouldShowSearch;
   const isOpen = topSearchWrap.classList.contains("is-open") && !topSearchWrap.classList.contains("is-closing");
   if (shouldShowSearch && !isOpen) animateElementOpen(topSearchWrap);
   if (!shouldShowSearch && isOpen) animateElementClose(topSearchWrap, { duration: 560 });
-  topSearchWrap.classList.toggle("has-actions-menu", shouldShowActionsMenu);
-  if (!shouldShowActionsMenu) closeTopSearchMenu();
+  topSearchWrap.classList.toggle("has-actions-menu", shouldShowSearch);
+  if (!shouldShowSearch) closeTopSearchMenu();
+  if (!shouldShowSearch) closeTopLocaleMenu();
   const query = route?.query || Object.fromEntries(getHashQuery());
   if (query.q !== undefined) topSearchInput.value = query.q || "";
 }
@@ -856,6 +867,34 @@ function topSearchAdvancedClosedLabel() {
 
 function topSearchRecentLabel() {
   return t("topSearch.recent");
+}
+
+function localeLabel(locale) {
+  return LOCALE_LABELS[locale] || LOCALE_LABELS.et;
+}
+
+function openTopLocaleMenu() {
+  if (!topLocaleMenu || !topLocaleButton) return;
+  topLocaleMenu.classList.remove("hidden");
+  topLocaleMenu.classList.add("is-open");
+  topLocaleButton.classList.add("is-open");
+  topLocaleButton.setAttribute("aria-expanded", "true");
+}
+
+function closeTopLocaleMenu() {
+  if (!topLocaleMenu || !topLocaleButton) return;
+  topLocaleMenu.classList.add("hidden");
+  topLocaleMenu.classList.remove("is-open");
+  topLocaleButton.classList.remove("is-open");
+  topLocaleButton.setAttribute("aria-expanded", "false");
+}
+
+function toggleTopLocaleMenu() {
+  if (!topLocaleMenu || topLocaleMenu.classList.contains("hidden")) {
+    openTopLocaleMenu();
+    return;
+  }
+  closeTopLocaleMenu();
 }
 
 function openTopSearchMenu() {
@@ -1139,15 +1178,26 @@ function applyStaticTexts() {
   syncThemeToggleButton();
 
   if (localeSwitches.length) {
-    const labels = { ru: "Rus", et: "Est", en: "Eng", uk: "Ukr" };
     localeSwitches.forEach((switchEl) => {
       Array.from(switchEl.options).forEach((option) => {
-        option.textContent = labels[option.value] || option.textContent;
+        option.textContent = localeLabel(option.value);
       });
       switchEl.setAttribute("aria-label", interfaceLanguageAriaText());
+      switchEl.setAttribute("title", interfaceLanguageAriaText());
       switchEl.value = state.locale;
     });
   }
+  if (topLocaleButton) {
+    topLocaleButton.textContent = localeLabel(state.locale);
+    topLocaleButton.setAttribute("aria-label", interfaceLanguageAriaText());
+    topLocaleButton.setAttribute("title", interfaceLanguageAriaText());
+  }
+  topLocaleItems.forEach((item) => {
+    const active = item.dataset.locale === state.locale;
+    item.textContent = localeLabel(item.dataset.locale || "");
+    item.classList.toggle("is-active", active);
+    item.setAttribute("aria-checked", active ? "true" : "false");
+  });
   applyAdminAttentionLabels();
   updateUserChip();
 }
@@ -1334,6 +1384,11 @@ topSearchBtn?.addEventListener("click", (e) => {
   e.preventDefault();
   runTopSearch();
 });
+topLocaleButton?.addEventListener("click", (e) => {
+  e.preventDefault();
+  e.stopPropagation();
+  toggleTopLocaleMenu();
+});
 topSearchMenuToggle?.addEventListener("click", (e) => {
   e.preventDefault();
   e.stopPropagation();
@@ -1361,15 +1416,33 @@ topSearchMenu?.addEventListener("click", (e) => {
   }
   closeTopSearchMenu();
 });
+topLocaleMenu?.addEventListener("click", (e) => {
+  const action = e.target instanceof Element ? e.target.closest(".catalog-top-locale-item") : null;
+  if (!action) return;
+  e.preventDefault();
+  e.stopPropagation();
+  const nextLocale = String(action.getAttribute("data-locale") || "").trim();
+  setLocale(nextLocale);
+  applyStaticTexts();
+  refreshRoute();
+  closeTopLocaleMenu();
+});
 document.addEventListener("pointerdown", (e) => {
   if (!topSearchWrap || !topSearchMenu || topSearchMenu.classList.contains("hidden")) return;
   const target = e.target;
   if (target instanceof Node && topSearchWrap.contains(target)) return;
   closeTopSearchMenu();
 });
+document.addEventListener("pointerdown", (e) => {
+  if (!topLocaleControl || !topLocaleMenu || topLocaleMenu.classList.contains("hidden")) return;
+  const target = e.target;
+  if (target instanceof Node && topLocaleControl.contains(target)) return;
+  closeTopLocaleMenu();
+});
 
 window.addEventListener("keydown", (e) => {
   if (e.key === "Escape") closeTopSearchMenu();
+  if (e.key === "Escape") closeTopLocaleMenu();
   if (e.key === "Escape") setMenuOpen(false);
 });
 

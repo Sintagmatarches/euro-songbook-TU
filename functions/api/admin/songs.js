@@ -2,6 +2,7 @@ import { json, err, readJSON, makeId } from "../../_lib/utils.js";
 import { requirePermission, assertScopeForLang, dbRun, dbGet, dbAll, canViewAdminContent } from "../../_lib/db.js";
 import { ensureSchemaAndSeed } from "../../_lib/schema.js";
 import { normalizeSongCatalogInput, normalizeSongCountry } from "../../../shared/song-catalogs.js";
+import { hasMinimumSongLyricWords, shortLyricsErrorMessage } from "../../../shared/lyrics-validation.js";
 import { syncSongSearchIndex } from "../../_lib/song-search.mjs";
 import { sanitizeSongLinks } from "../../_lib/link-safety.js";
 import { findLikelyDuplicateSong } from "../../_lib/song-similarity.mjs";
@@ -195,6 +196,9 @@ export async function onRequestPost({ env, request }){
   if (!catalog.ok) return err(catalog.error, 400);
   if(!body?.title || !String(body?.lyrics ?? "").trim()) {
     return err("title, lyrics required", 400);
+  }
+  if (!hasMinimumSongLyricWords(body?.lyrics)) {
+    return err(shortLyricsErrorMessage(), 400);
   }
 
   const access = await requirePermission(env, request, "songs.create", { lang: catalog.value.lang });

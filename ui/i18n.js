@@ -1,7 +1,7 @@
 import { state } from "./state.js";
 
 export const LOCALES = ["ru", "uk", "en", "et"];
-const DEFAULT_LOCALE = "ru";
+const DEFAULT_LOCALE = "et";
 const LOCALE_STORAGE_KEY = "ui_locale";
 
 function readStoredLocale() {

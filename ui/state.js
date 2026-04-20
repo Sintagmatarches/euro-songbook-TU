@@ -1,7 +1,7 @@
 export const state = {
   user: null,
   lastNickname: "",
-  locale: "ru",
+  locale: "et",
   ui: {
     sidebarCollapsed: false,
   },

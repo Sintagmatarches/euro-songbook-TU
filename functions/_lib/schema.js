@@ -23,6 +23,8 @@ export const FULL_SCHEMA_MARKER_KEY = "schema.full.version";
 export const AUTH_SCHEMA_MARKER_KEY = "schema.auth.version";
 export const FULL_SCHEMA_MARKER_VALUE = "2026-04-13-full-v8";
 export const AUTH_SCHEMA_MARKER_VALUE = "2026-03-21-auth-v2";
+export const VERIFICATION_RESET_MARKER_KEY = "data.verification_reset.version";
+export const VERIFICATION_RESET_MARKER_VALUE = "2026-04-20-reset-v1";
 const SEARCH_INLINE_REBUILD_MAX_SONGS = 2000;
 
 const SAMPLE_SONGS = [
@@ -1242,6 +1244,24 @@ async function ensureCanonicalDemoSongMetadata(env) {
   }
 }
 
+async function ensureHistoricalVerificationReset(env) {
+  const marker = await readSchemaMarker(env, VERIFICATION_RESET_MARKER_KEY);
+  if (marker === VERIFICATION_RESET_MARKER_VALUE) return;
+
+  await dbRun(
+    env,
+    `UPDATE songs
+     SET
+       verified = 0,
+       verified_translation = NULL,
+       updated_at = datetime('now')
+     WHERE coalesce(verified, 0) <> 0
+        OR NULLIF(trim(coalesce(verified_translation, '')), '') IS NOT NULL`
+  );
+
+  await writeSchemaMarker(env, VERIFICATION_RESET_MARKER_KEY, VERIFICATION_RESET_MARKER_VALUE);
+}
+
 export async function ensureSeed(env) {
   const row = await dbGet(env, `SELECT COUNT(*) AS c FROM songs`, []);
   const songsCount = row?.c || 0;
@@ -1254,10 +1274,12 @@ export async function ensureSeed(env) {
 export async function ensureSchemaAndSeed(env) {
   if (schemaSeedReady) {
     await ensureCanonicalDemoSongMetadata(env);
+    await ensureHistoricalVerificationReset(env);
     return;
   }
   if (await hasFreshFullSchema(env)) {
     await ensureCanonicalDemoSongMetadata(env);
+    await ensureHistoricalVerificationReset(env);
     return;
   }
   if (schemaSeedWork) {
@@ -1271,6 +1293,7 @@ export async function ensureSchemaAndSeed(env) {
     await ensureUsersNicknameData(env);
     await ensureSeed(env);
     await ensureCanonicalDemoSongMetadata(env);
+    await ensureHistoricalVerificationReset(env);
     const searchMarker = await readSchemaMarker(env, SEARCH_INDEX_SCHEMA_MARKER_KEY);
     if (searchMarker !== SEARCH_INDEX_SCHEMA_MARKER_VALUE) {
       const searchIndexStats = await getSearchIndexStats(env);

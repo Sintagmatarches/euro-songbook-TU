@@ -2,6 +2,7 @@ import { json, err, readJSON } from "../../../_lib/utils.js";
 import { requirePermission, dbGet, assertScopeForLang, canViewAdminContent } from "../../../_lib/db.js";
 import { ensureSchemaAndSeed } from "../../../_lib/schema.js";
 import { normalizeSongCatalogInput } from "../../../../shared/song-catalogs.js";
+import { hasMinimumSongLyricWords, shortLyricsErrorMessage } from "../../../../shared/lyrics-validation.js";
 import { syncSongSearchIndex, deleteSongSearchIndex } from "../../../_lib/song-search.mjs";
 import { sanitizeSongLinks } from "../../../_lib/link-safety.js";
 import {
@@ -184,6 +185,7 @@ export async function onRequestPut({ env, request, params }){
     : (Array.isArray(sourceSnapshot.links) ? sourceSnapshot.links : []);
 
   if (!title || !String(lyrics || "").trim()) return err("title, lyrics required", 400);
+  if (!hasMinimumSongLyricWords(lyrics)) return err(shortLyricsErrorMessage(), 400);
 
   const nextSnapshot = {
     ...sourceSnapshot,

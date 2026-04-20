@@ -2,6 +2,7 @@ import { json, err, readJSON, makeId } from "../../_lib/utils.js";
 import { requirePermission, assertScopeForLang, dbRun, dbGet, canViewAdminContent } from "../../_lib/db.js";
 import { ensureSchemaAndSeed } from "../../_lib/schema.js";
 import { normalizeSongCatalogInput } from "../../../shared/song-catalogs.js";
+import { hasMinimumSongLyricWords, shortLyricsErrorMessage } from "../../../shared/lyrics-validation.js";
 import { syncSongSearchIndex } from "../../_lib/song-search.mjs";
 import { sanitizeSongLinks } from "../../_lib/link-safety.js";
 import { findLikelyDuplicateSong } from "../../_lib/song-similarity.mjs";
@@ -31,6 +32,7 @@ export async function onRequestPost({ env, request }){
     const catalog = normalizeSongCatalogInput(it || {});
     if(!it?.title || !it?.lyrics) continue;
     if (!catalog.ok) return err(`items[${index}]: ${catalog.error}`, 400);
+    if (!hasMinimumSongLyricWords(it?.lyrics)) return err(`items[${index}]: ${shortLyricsErrorMessage()}`, 400);
 
     assertScopeForLang(access, catalog.value.lang);
     const isAdminContent = toAdminContentFlag(it?.is_admin_content ?? it?.isAdminContent);
