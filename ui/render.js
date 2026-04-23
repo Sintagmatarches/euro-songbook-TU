@@ -3252,7 +3252,6 @@ function draftVariantNumberLabel(number) {
 
 function draftConfidenceSelectOptions(selectedValue) {
   const selectedLevel = draftConfidenceLevel(selectedValue, "exact");
-  const useCompactLabel = draftIsCompactMobileViewport();
   return [
     "exact",
     "very_sure",
@@ -3260,7 +3259,7 @@ function draftConfidenceSelectOptions(selectedValue) {
     "medium",
     "unsure",
   ].map((level) => (
-    `<option value="${esc(level)}"${level === selectedLevel ? " selected" : ""}>${esc(useCompactLabel ? draftCompactConfidenceLabel(level) : draftConfidenceLabel(level))}</option>`
+    `<option value="${esc(level)}"${level === selectedLevel ? " selected" : ""}>${esc(draftCompactConfidenceLabel(level))}</option>`
   )).join("");
 }
 
@@ -3341,6 +3340,12 @@ function draftLineHasConfidenceTie(line = {}) {
     if (leaders > 1) return true;
   }
   return false;
+}
+
+function draftNewVariantTextFromInput(inputNode = null, line = null) {
+  const typedText = String(inputNode?.value || "").trim();
+  if (typedText) return typedText;
+  return String(draftActiveVariant(line || {})?.text || "").trim();
 }
 
 function draftApplyResolvedActiveVariant(line = {}, options = {}) {
@@ -3425,11 +3430,12 @@ function syncSongConfidenceMenuTrigger(menu) {
 
 function positionSongConfidenceMenu(menu) {
   if (!(menu instanceof HTMLDetailsElement)) return;
-  resetSongConfidenceMenuPanel(menu);
   if (!menu.open) return;
   const panel = menu.querySelector(".song-line-variants-panel");
   const anchor = menu.closest(".song-confidence-word-anchor");
   if (!(panel instanceof HTMLElement) || !(anchor instanceof HTMLElement)) return;
+  panel.style.left = "";
+  panel.style.right = "";
   const visualViewport = window.visualViewport || null;
   const viewportOffsetLeft = Number(visualViewport?.offsetLeft || 0);
   const viewportWidth = Number(
@@ -3496,26 +3502,39 @@ function setupSongConfidenceMenus(root) {
     return { menu, onToggle };
   });
 
+  const onRootPointerDown = (event) => {
+    const target = event.target;
+    if (!(target instanceof HTMLElement)) return;
+    if (!target.closest(".song-confidence-word-trigger, .song-confidence-word-toggle, .song-confidence-word")) return;
+    if (target.closest(".song-line-variants-panel")) return;
+    event.stopPropagation();
+  };
+
   const onRootClick = (event) => {
     const target = event.target;
     if (!(target instanceof HTMLElement)) return;
-    const trigger = target.closest(".song-confidence-word-trigger");
+    const trigger = target.closest(".song-confidence-word-trigger, .song-confidence-word-toggle, .song-confidence-word");
     if (!(trigger instanceof HTMLElement) || !root.contains(trigger)) return;
+    if (target.closest(".song-line-variants-panel")) return;
     const anchor = trigger.closest(".song-confidence-word-anchor");
     if (!(anchor instanceof HTMLElement)) return;
     const menu = anchor.querySelector(".song-confidence-word-menu");
     if (!(menu instanceof HTMLDetailsElement)) return;
+    const triggerNode = anchor.querySelector(".song-confidence-word-trigger");
     event.preventDefault();
+    event.stopPropagation();
     if (menu.open) {
       menu.open = false;
       resetSongConfidenceMenuPanel(menu);
       syncSongConfidenceMenuTrigger(menu);
+      if (triggerNode instanceof HTMLElement) triggerNode.focus({ preventScroll: true });
       return;
     }
     closeMenus(menu);
     menu.open = true;
     syncSongConfidenceMenuTrigger(menu);
     schedulePosition(menu);
+    if (triggerNode instanceof HTMLElement) triggerNode.focus({ preventScroll: true });
   };
 
   const onRootKeyDown = (event) => {
@@ -3549,7 +3568,8 @@ function setupSongConfidenceMenus(root) {
     });
   };
 
-  root.addEventListener("click", onRootClick);
+  root.addEventListener("pointerdown", onRootPointerDown, { capture: true });
+  root.addEventListener("click", onRootClick, true);
   root.addEventListener("keydown", onRootKeyDown);
   document.addEventListener("click", onDocumentClick, true);
   document.addEventListener("keydown", onDocumentKeyDown);
@@ -3559,7 +3579,8 @@ function setupSongConfidenceMenus(root) {
   window.visualViewport?.addEventListener("resize", onResize, { passive: true });
 
   songConfidenceMenusCleanup = () => {
-    root.removeEventListener("click", onRootClick);
+    root.removeEventListener("pointerdown", onRootPointerDown, { capture: true });
+    root.removeEventListener("click", onRootClick, true);
     root.removeEventListener("keydown", onRootKeyDown);
     document.removeEventListener("click", onDocumentClick, true);
     document.removeEventListener("keydown", onDocumentKeyDown);
@@ -3722,6 +3743,8 @@ function draftDeduplicateVariantsByText(variants = [], preferredActiveId = "") {
   for (const variant of Array.isArray(variants) ? variants : []) {
     const comparable = draftComparableLineText(variant?.text || "");
     const key = comparable || `__empty__${out.length}`;
+    const variantType = String(variant?.variant_type || "").trim();
+    const isEditableVariant = variantType === "manual" || variantType === "suggested";
     const existingIndex = seen.get(key);
     if (existingIndex === undefined) {
       out.push(variant);
@@ -3729,12 +3752,18 @@ function draftDeduplicateVariantsByText(variants = [], preferredActiveId = "") {
       continue;
     }
     const existing = out[existingIndex];
+    const existingType = String(existing?.variant_type || "").trim();
+    const existingIsEditableVariant = existingType === "manual" || existingType === "suggested";
+    if (isEditableVariant && existingIsEditableVariant) {
+      out.push(variant);
+      continue;
+    }
     const nextId = String(variant?.id || "").trim();
     const prevId = String(existing?.id || "").trim();
     const nextIsActive = !!variant?.is_active || (activeId && nextId === activeId);
     const prevIsActive = !!existing?.is_active || (activeId && prevId === activeId);
-    const nextIsManual = String(variant?.variant_type || "").trim() === "manual";
-    const prevIsManual = String(existing?.variant_type || "").trim() === "manual";
+    const nextIsManual = variantType === "manual";
+    const prevIsManual = existingType === "manual";
     if ((nextIsActive && !prevIsActive) || (nextIsManual && !prevIsManual)) {
       out[existingIndex] = variant;
     }
@@ -3861,7 +3890,7 @@ function draftEnsureLineState(line = {}, sourceText = "", index = 0, options = {
     fallbackText: safeText,
   }) || variants.find((item) => String(item?.text || "") === safeText) || variants[0] || null;
 
-  if (draftLineLooksForeignToSource(variants, safeText, active?.text || "")) {
+  if (!options?.preserveForeignVariants && draftLineLooksForeignToSource(variants, safeText, active?.text || "")) {
     variants = [];
     active = null;
   }
@@ -3927,14 +3956,20 @@ function draftBuildLinesFromLyricsMeta(lyricsText = "", lyricsMetaInput = null, 
 function draftResyncLines(lines = [], lyricsText = "", options = {}) {
   const sourceLines = splitLyricsLines(lyricsText);
   const baseLines = Array.isArray(lines) ? lines : [];
-  return sourceLines.map((sourceText, index) => draftEnsureLineState(baseLines[index], sourceText, index, options));
+  return sourceLines.map((sourceText, index) => draftEnsureLineState(baseLines[index], sourceText, index, {
+    ...options,
+    preserveForeignVariants: true,
+  }));
 }
 
 function draftSyncEditableLines(lines = [], lyricsText = "", options = {}) {
   const sourceLines = splitLyricsLines(lyricsText);
   const baseLines = Array.isArray(lines) ? lines : [];
   return sourceLines.map((sourceText, index) => {
-    const seedLine = draftEnsureLineState(baseLines[index], String(draftActiveVariant(baseLines[index] || {})?.text || sourceText || ""), index, options);
+    const seedLine = draftEnsureLineState(baseLines[index], String(draftActiveVariant(baseLines[index] || {})?.text || sourceText || ""), index, {
+      ...options,
+      preserveForeignVariants: true,
+    });
     const nextLine = {
       ...seedLine,
       variants: (Array.isArray(seedLine?.variants) ? seedLine.variants : []).map((variant) => ({ ...variant })),
@@ -3944,7 +3979,10 @@ function draftSyncEditableLines(lines = [], lyricsText = "", options = {}) {
       active.text = String(sourceText || "");
       active.confidence_segments = [];
     }
-    return draftEnsureLineState(nextLine, sourceText, index, options);
+    return draftEnsureLineState(nextLine, sourceText, index, {
+      ...options,
+      preserveForeignVariants: true,
+    });
   });
 }
 
@@ -3999,6 +4037,7 @@ function draftEditorLyricsMeta(rootNode, lyricsText = "") {
   const seededLines = draftBuildLinesFromLyricsMeta(lyricsText, initialMeta, {
     lineIdPrefix: "editor_line",
     variantIdPrefix: "editor_variant",
+    preserveForeignVariants: true,
   });
   return draftBuildLyricsMeta(seededLines, lyricsText);
 }
@@ -4765,11 +4804,13 @@ function renderTextWithConfidenceWords(text, segments = [], options = {}) {
       const wordVariantPanelMarkup = typeof variantPanelMarkup === "function"
         ? String(variantPanelMarkup(word, wordText, words) || "")
         : String(variantPanelMarkup || "");
+      const confidenceLabelMarkup = `<span class="song-confidence-word-label" aria-hidden="true">${esc(confidenceLabel)}</span>`;
+      const confidenceWordMarkup = `<span class="song-confidence-word" data-confidence-label="" style="${confidenceStyle}">${renderTextWithUnknownMarkers(wordText)}</span>`;
       if (wordVariantPanelMarkup) {
         const triggerLabel = esc(variantToggleTitle || confidenceLabel);
-        out += `<span class="song-confidence-word-anchor" style="${confidenceStyle}"><details class="song-confidence-word-menu"><summary class="song-confidence-word-toggle" aria-label="${triggerLabel}" title="${triggerLabel}"><span>${esc(confidenceLabel)}</span></summary>${wordVariantPanelMarkup}</details><span class="song-confidence-word-trigger" role="button" tabindex="0" aria-label="${triggerLabel}" title="${triggerLabel}" aria-expanded="false"><span class="song-confidence-word" data-confidence-label="" style="${confidenceStyle}">${renderTextWithUnknownMarkers(wordText)}</span></span></span>`;
+        out += `<span class="song-confidence-word-anchor" style="${confidenceStyle}"><details class="song-confidence-word-menu"><summary class="song-confidence-word-toggle" aria-label="${triggerLabel}" title="${triggerLabel}"><span>${esc(confidenceLabel)}</span></summary>${wordVariantPanelMarkup}</details><span class="song-confidence-word-trigger" role="button" tabindex="0" aria-label="${triggerLabel}" title="${triggerLabel}" aria-expanded="false">${confidenceLabelMarkup}${confidenceWordMarkup}</span></span>`;
       } else {
-        out += `<span class="song-confidence-word" data-confidence-label="${esc(confidenceLabel)}" style="${confidenceStyle}">${renderTextWithUnknownMarkers(wordText)}</span>`;
+        out += `<span class="song-confidence-word-anchor song-confidence-word-anchor-static" style="${confidenceStyle}">${confidenceLabelMarkup}${confidenceWordMarkup}</span>`;
       }
     }
     cursor = end;
@@ -9517,8 +9558,8 @@ function draftResolveLinePopoverMetrics(editorRect, textRect, anchorRect, popove
   const viewportOffsetLeft = Math.round(Number(visualViewport?.offsetLeft || 0));
   const viewportWidth = Math.round(Number(visualViewport?.width || window.innerWidth || textRect.width || 0));
   const viewportHeight = Math.round(window.visualViewport?.height || window.innerHeight || editorRect.height || 0);
-  const horizontalInset = isCompactMobile ? 20 : 24;
-  const minPopoverWidth = isCompactMobile ? 184 : 460;
+  const horizontalInset = isCompactMobile ? 12 : 24;
+  const minPopoverWidth = isCompactMobile ? Math.min(280, Math.max(224, viewportWidth - 16)) : 460;
   const editorRightBound = Math.max(minPopoverWidth, Math.round(editorRect.width || viewportWidth) - 6);
   const visualLeftBound = isCompactMobile
     ? Math.max(0, Math.round(viewportOffsetLeft - editorRect.left + 6))
@@ -9553,15 +9594,15 @@ function draftResolveLinePopoverMetrics(editorRect, textRect, anchorRect, popove
       availableWidth,
       isCompactMobile
         ? Math.min(
-          Math.round(Math.max(minPopoverWidth, viewportInnerWidth * 0.62)),
-          Math.round(Math.max(minPopoverWidth, textRect.width * 0.54)),
-          260,
+          Math.round(Math.max(minPopoverWidth, viewportInnerWidth)),
+          Math.round(Math.max(minPopoverWidth, textRect.width)),
+          Math.max(minPopoverWidth, viewportWidth - horizontalInset),
         )
         : 760,
     ),
   );
   const desiredWidth = isCompactMobile
-    ? Math.round(Math.max(minPopoverWidth, Math.min(maxPopoverWidth, textRect.width * 0.48)))
+    ? Math.round(Math.max(minPopoverWidth, Math.min(maxPopoverWidth, viewportWidth - horizontalInset)))
     : Math.round(Math.min(Math.max(minPopoverWidth, textRect.width * 0.9), maxPopoverWidth));
   const popoverWidth = Math.max(minPopoverWidth, Math.min(desiredWidth, maxPopoverWidth));
   const anchorOffset = Math.max(18, Math.round(anchorRect.width || 0) + 8);
@@ -9898,11 +9939,21 @@ function collectVersions(rootIdPrefix) {
     lang: entry.row.querySelector(".ss_version_lang")?.value?.trim() || "",
     source: entry.row.querySelector(".ss_version_source")?.value?.trim() || "",
     lyrics: entry.row.querySelector(".ss_version_lyrics")?.value || "",
-    lyrics_meta_json: draftCollapseLyricsMetaToActiveOnly(
+    lyrics_meta_json: draftNormalizeLyricsMetaForSave(
       parseVersionLyricsMetaValue(entry.row.querySelector(".ss_version_lyrics_meta_json")?.value || "{}"),
       entry.row.querySelector(".ss_version_lyrics")?.value || "",
     ),
   })).filter((item) => (item.lyrics || "").trim());
+}
+
+function draftNormalizeLyricsMetaForSave(metaInput = null, lyricsText = "") {
+  const payload = parseLyricsMetaPayload(metaInput);
+  const lines = draftBuildLinesFromLyricsMeta(lyricsText, payload, {
+    lineIdPrefix: "saved_line",
+    variantIdPrefix: "saved_variant",
+    preserveForeignVariants: true,
+  });
+  return draftBuildLyricsMeta(lines, lyricsText);
 }
 
 function draftCollapseLyricsMetaToActiveOnly(metaInput = null, lyricsText = "") {
@@ -9941,7 +9992,7 @@ function draftCollapseLyricsMetaToActiveOnly(metaInput = null, lyricsText = "") 
 function readVersionLyricsMetaFromRow(rowNode) {
   if (!(rowNode instanceof HTMLElement)) return null;
   const lyricsText = rowNode.querySelector(".ss_version_lyrics")?.value || "";
-  return draftCollapseLyricsMetaToActiveOnly(
+  return draftNormalizeLyricsMetaForSave(
     parseVersionLyricsMetaValue(rowNode.querySelector(".ss_version_lyrics_meta_json")?.value || "{}"),
     lyricsText,
   );
@@ -9958,7 +10009,7 @@ function writeVersionLyricsMetaToRow(rowNode, meta) {
 function readAdminEditorMainLyricsMeta(rootNode) {
   if (!(rootNode instanceof HTMLElement)) return null;
   const lyricsText = rootNode.querySelector("#ac_lyrics")?.value || rootNode.querySelector("#ac_main_lyrics_buffer")?.value || "";
-  return draftCollapseLyricsMetaToActiveOnly(rootNode.__mainLyricsConfidenceMeta || rootNode.__lyricsConfidenceMeta || null, lyricsText);
+  return draftNormalizeLyricsMetaForSave(rootNode.__mainLyricsConfidenceMeta || rootNode.__lyricsConfidenceMeta || null, lyricsText);
 }
 
 function writeAdminEditorMainLyricsMeta(rootNode, meta) {
@@ -10381,12 +10432,12 @@ function fillContentEditor(song) {
   wireDynamicRows(qs("ac_editor"));
   wireAutoGrowTextareas(qs("ac_editor"));
   if (qs("ac_editor")) {
-    const collapsedMainMeta = draftCollapseLyricsMetaToActiveOnly(
+    const normalizedMainMeta = draftNormalizeLyricsMetaForSave(
       song?.lyrics_meta_json || song?.lyrics_meta || null,
       song?.lyrics || "",
     );
-    qs("ac_editor").__mainLyricsConfidenceMeta = collapsedMainMeta;
-    qs("ac_editor").__lyricsConfidenceMeta = collapsedMainMeta;
+    qs("ac_editor").__mainLyricsConfidenceMeta = normalizedMainMeta;
+    qs("ac_editor").__lyricsConfidenceMeta = normalizedMainMeta;
     qs("ac_editor").__lyricsConfidenceLines = null;
   }
   syncDecodingIndicator("ac_decoding", "ac_lyrics", "ac_chorus", "ac_chorus_marker");
@@ -14062,11 +14113,25 @@ export function bind(route, ctx) {
       renderOps();
     };
     const sendOp = (opType, payload = {}) => {
+      const clientOpId = `cop_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`;
       if (!(ws instanceof WebSocket) || ws.readyState !== WebSocket.OPEN) {
-        showStatusOverlay(draftUiText("wsNotConnected"), "error");
+        registerOpStatus(clientOpId, "pending", opType);
+        api.draftOp(draftId, {
+          op_type: opType,
+          payload,
+          base_version: localVersion,
+          client_op_id: clientOpId,
+        }).then((out) => {
+          registerOpStatus(clientOpId, "persisted", opType);
+          localVersion = Math.max(localVersion, Number(out?.version || 0));
+          updateVersion();
+          if (out?.state) applySnapshotState(out.state);
+        }).catch((cause) => {
+          registerOpStatus(clientOpId, "error", opType);
+          showStatusOverlay(String(cause?.message || t("common.error")), "error");
+        });
         return;
       }
-      const clientOpId = `cop_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`;
       registerOpStatus(clientOpId, "pending", opType);
       ws.send(JSON.stringify({
         type: "op",
@@ -14209,6 +14274,10 @@ export function bind(route, ctx) {
     draftRoot.addEventListener("pointerdown", (event) => {
       const target = event.target;
       if (!(target instanceof HTMLElement)) return;
+      if (target.closest(".draft-word-confidence-select, .draft-variant-confidence-select, .draft-word-confidence-item, .draft-variant-activate, .draft-add-variant-btn, .draft-new-variant-text")) {
+        event.stopPropagation();
+        return;
+      }
       if (!target.closest(".draft-segment-apply, .draft-segment-remove")) return;
       event.preventDefault();
     }, { capture: true });
@@ -15289,12 +15358,12 @@ export function bind(route, ctx) {
           const row = addVariant.closest(".draft-add-variant");
           if (!lineId || !row) return;
           const textInput = row.querySelector(".draft-new-variant-text");
-          const text = String(textInput?.value || "").trim();
-        if (!text) return;
-        const line = findLine(lineId);
-        if (!line) return;
-        const previousActiveId = String(draftActiveVariant(line || {})?.id || "").trim();
-        const variantId = `rq_variant_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`;
+          const line = findLine(lineId);
+          if (!line) return;
+          const text = draftNewVariantTextFromInput(textInput, line);
+          if (!text) return;
+          const previousActiveId = String(draftActiveVariant(line || {})?.id || "").trim();
+          const variantId = `rq_variant_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`;
           line.variants = [...(Array.isArray(line.variants) ? line.variants : []), {
             id: variantId,
             text,
@@ -16989,11 +17058,29 @@ export function bind(route, ctx) {
     };
     const inlineSendOp = (opType, payload = {}, options = {}) => {
       const silent = options?.silent === true;
-      if (!(inlineWs instanceof WebSocket) || inlineWs.readyState !== WebSocket.OPEN) {
-        if (!silent) showStatusOverlay(draftUiText("wsNotConnected"), "error");
-        return false;
-      }
       const clientOpId = `cop_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`;
+      if (!(inlineWs instanceof WebSocket) || inlineWs.readyState !== WebSocket.OPEN) {
+        if (!inlineDraftId) {
+          if (!silent) showStatusOverlay(draftUiText("wsNotConnected"), "error");
+          return false;
+        }
+        inlineRegisterOpStatus(clientOpId, "pending", opType);
+        api.draftOp(inlineDraftId, {
+          op_type: opType,
+          payload,
+          base_version: inlineVersion,
+          client_op_id: clientOpId,
+        }).then((out) => {
+          inlineRegisterOpStatus(clientOpId, "persisted", opType);
+          inlineVersion = Math.max(inlineVersion, Number(out?.version || 0));
+          inlineRefreshMeta();
+          if (out?.state) inlineApplyState(out.state);
+        }).catch((cause) => {
+          inlineRegisterOpStatus(clientOpId, "error", opType);
+          if (!silent) showStatusOverlay(String(cause?.message || t("common.error")), "error");
+        });
+        return true;
+      }
       inlineRegisterOpStatus(clientOpId, "pending", opType);
       inlineWs.send(JSON.stringify({
         type: "op",
@@ -17441,6 +17528,10 @@ export function bind(route, ctx) {
     editorRoot?.addEventListener("pointerdown", (event) => {
       const target = event.target;
       if (!(target instanceof HTMLElement)) return;
+      if (target.closest(".draft-word-confidence-select, .draft-variant-confidence-select, .draft-word-confidence-item, .draft-variant-activate, .draft-add-variant-btn, .draft-new-variant-text")) {
+        event.stopPropagation();
+        return;
+      }
       if (target.closest(".draft-segment-apply, .draft-segment-remove")) {
         event.preventDefault();
         return;
@@ -17507,8 +17598,6 @@ export function bind(route, ctx) {
         const row = addVariant.closest(".draft-add-variant");
         if (!row) return;
         const textInput = row.querySelector(".draft-new-variant-text");
-        const text = String(textInput?.value || "").trim();
-        if (!text) return;
         let lineId = await inlineResolveVariantLineId(rawLineId, lineIndex);
         if (!lineId) lineId = rawLineId;
         inlineSelectedLineId = lineId;
@@ -17518,7 +17607,10 @@ export function bind(route, ctx) {
           const fallbackLineId = String(inlineMainEditorLines()[lineIndex]?.id || "").trim();
           if (fallbackLineId) localLineId = fallbackLineId;
         }
-        if (!inlineLocalFindLine(localLineId)) return;
+        const localLine = inlineLocalFindLine(localLineId);
+        if (!localLine) return;
+        const text = draftNewVariantTextFromInput(textInput, localLine);
+        if (!text) return;
         if (inlineDraftId && !inlineIsVirtualLineId(lineId)) {
           const sent = inlineSendOp("add_variant", {
             line_id: lineId,

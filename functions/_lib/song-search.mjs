@@ -663,10 +663,13 @@ function summarizeMatchHierarchy(source = {}) {
   );
   const lyricsAdjacentRun = Number(source?.lyrics?.adjacentRun ?? source?.lyrics_adjacent_run ?? 0);
   const broadLyricsThreshold = queryLength <= 1 ? 1 : Math.max(2, queryLength - 1);
+  const titleStrongThreshold = Math.max(2, queryLength - 1);
   const hasTitleLiteral = titlePhrase
-    || titleSignificantExactCount > 0
-    || (significantQueryLength === 0 && titleExact > 0)
-    || (queryLength > 1 && titleSignificantPrefixCount > 0);
+    || titleExact >= queryLength
+    || titleAdjacentRun >= titleStrongThreshold
+    || (queryLength <= 2 && titleSignificantExactCount > 0)
+    || (significantQueryLength === 0 && titleExact > 0);
+  const hasPartialTitle = !hasTitleLiteral && titleSignificantLiteralCount > 0;
   const hasStrongLyrics = lyricsPhrase
     || lyricsExact >= queryLength
     || lyricsLiteralCount >= broadLyricsThreshold
@@ -696,7 +699,9 @@ function summarizeMatchHierarchy(source = {}) {
     titleAdjacentRun,
     lyricsAdjacentRun,
     broadLyricsThreshold,
+    titleStrongThreshold,
     hasTitleLiteral,
+    hasPartialTitle,
     hasStrongLyrics,
     hasPartialLyrics,
   };
@@ -706,7 +711,7 @@ function deriveMatchBucket(match = {}) {
   const signals = summarizeMatchHierarchy(match);
   if (signals.hasTitleLiteral) return "exact";
   if (signals.hasStrongLyrics) return "text";
-  if (signals.hasPartialLyrics) return "partial";
+  if (signals.hasPartialTitle || signals.hasPartialLyrics) return "partial";
   return "fuzzy";
 }
 
@@ -1506,6 +1511,7 @@ function intraBucketPriority(item = {}) {
   }
 
   if (bucket === "partial") {
+    if (signals.hasPartialTitle) return 20;
     if (signals.lyricsSignificantLiteralCount > 0) return 20;
     if (signals.lyricsPrefix > 0) return 21;
     if (signals.lyricsExact > 0) return 22;

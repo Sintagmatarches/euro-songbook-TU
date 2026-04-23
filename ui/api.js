@@ -736,6 +736,12 @@ export const api = {
   async draft(id) {
     return req(`api/drafts/${encodeURIComponent(id)}`, { noCache: true });
   },
+  async draftOp(id, op = {}) {
+    return req(`api/drafts/${encodeURIComponent(id)}`, {
+      method: "POST",
+      body: JSON.stringify(op || {}),
+    });
+  },
   async draftAddCollaborator(id, nickname) {
     return req(`api/drafts/${encodeURIComponent(id)}/invitations`, {
       method: "POST",

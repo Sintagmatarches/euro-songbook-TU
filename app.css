@@ -11908,7 +11908,7 @@ html[data-theme="white"] .home-country-card .home-country-card-sub {
 }
 
 .song-lyric-line.has-word-confidence {
-  padding-top: 16px;
+  padding: 3px 0;
 }
 
 .song-lyric-line.has-tools {
@@ -11934,7 +11934,7 @@ html[data-theme="white"] .home-country-card .home-country-card-sub {
   padding: 0;
   background: transparent;
   box-shadow: none;
-  z-index: 0;
+  z-index: 2;
 }
 
 .song-confidence-word::after {
@@ -11952,17 +11952,39 @@ html[data-theme="white"] .home-country-card .home-country-card-sub {
   content: attr(data-confidence-label);
   position: absolute;
   left: 50%;
-  bottom: calc(100% + 6px);
+  bottom: calc(100% - 2px);
   transform: translateX(-50%);
   font-size: 10px;
   line-height: 1;
   font-weight: 800;
   letter-spacing: 0.01em;
   color: rgba(var(--song-confidence-r, 130), var(--song-confidence-g, 180), var(--song-confidence-b, 130), 0.96);
+  text-shadow: 0 1px 2px rgba(2, 7, 26, 0.78);
   white-space: nowrap;
   pointer-events: none;
   user-select: none;
   -webkit-user-select: none;
+  z-index: 5;
+}
+
+.song-confidence-word-label {
+  position: absolute;
+  left: 50%;
+  bottom: calc(100% - 2px);
+  transform: translateX(-50%);
+  display: block;
+  min-width: max-content;
+  color: rgba(var(--song-confidence-r, 130), var(--song-confidence-g, 180), var(--song-confidence-b, 130), 0.98);
+  font-size: 10px;
+  line-height: 1;
+  font-weight: 800;
+  letter-spacing: 0;
+  text-shadow: 0 1px 2px rgba(2, 7, 26, 0.78);
+  white-space: nowrap;
+  pointer-events: none;
+  user-select: none;
+  -webkit-user-select: none;
+  z-index: 6;
 }
 
 .ac-line-popover {
@@ -12141,19 +12163,9 @@ html[data-theme="white"] .home-country-card .home-country-card-sub {
 }
 
 .song-lyric-line.has-word-confidence {
-  padding: 16px 8px 4px 6px;
-  background: rgba(
-    var(--song-confidence-r, 130),
-    var(--song-confidence-g, 180),
-    var(--song-confidence-b, 130),
-    calc(var(--song-confidence-fill-alpha, 0.14) + 0.05)
-  ) !important;
-  box-shadow: inset 0 0 0 1px rgba(
-    var(--song-confidence-r, 130),
-    var(--song-confidence-g, 180),
-    var(--song-confidence-b, 130),
-    calc(var(--song-confidence-border-alpha, 0.28) + 0.04)
-  ) !important;
+  padding: 3px 0;
+  background: transparent !important;
+  box-shadow: none !important;
 }
 
 .song-confidence-word {
@@ -12177,11 +12189,7 @@ html[data-theme="white"] .home-country-card .home-country-card-sub {
 }
 
 .song-confidence-word::before {
-  bottom: calc(100% + 8px);
-}
-
-.song-confidence-word[data-confidence-label=""]::before {
-  display: none;
+  bottom: calc(100% + 2px);
 }
 
 .song-line-variants-toggle {
@@ -12575,21 +12583,34 @@ html[data-theme="white"] .song-lyric-line.has-word-confidence {
   display: none;
 }
 
+.song-confidence-word[data-confidence-label=""]::before {
+  display: none;
+}
+
 .song-confidence-word-anchor {
   position: relative;
   display: inline-block;
   margin-inline: 0;
   vertical-align: baseline;
+  line-height: inherit;
+  pointer-events: auto;
+  z-index: 3;
 }
 
 .song-confidence-word-menu {
-  position: static;
-  display: inline;
+  position: absolute;
+  inset: 0;
+  display: block;
+  width: 100%;
+  height: 100%;
+  line-height: 0;
+  pointer-events: none;
 }
 
 .song-confidence-word-trigger {
   appearance: none;
   -webkit-appearance: none;
+  display: inline-block;
   border: 0;
   font: inherit;
   line-height: inherit;
@@ -12597,6 +12618,10 @@ html[data-theme="white"] .song-lyric-line.has-word-confidence {
   text-align: inherit;
   cursor: pointer;
   vertical-align: baseline;
+  touch-action: manipulation;
+  pointer-events: auto;
+  position: relative;
+  z-index: 4;
 }
 
 .song-confidence-word-trigger > .song-confidence-word {
@@ -12647,15 +12672,16 @@ html:not([data-theme]) .song-confidence-word-trigger.song-confidence-word::after
 .song-confidence-word-toggle {
   list-style: none;
   position: absolute;
-  left: 50%;
-  bottom: calc(100% + 4px);
-  transform: translateX(-50%);
-  display: inline-flex;
+  inset: 0;
+  transform: none;
+  display: block;
   align-items: center;
   justify-content: center;
-  min-width: 38px;
-  min-height: 18px;
-  padding: 0 7px;
+  width: 100%;
+  height: 100%;
+  min-width: 0;
+  min-height: 0;
+  padding: 0;
   border: 0;
   border-radius: 0;
   background: transparent;
@@ -12675,6 +12701,8 @@ html:not([data-theme]) .song-confidence-word-trigger.song-confidence-word::after
   -webkit-user-select: none;
   white-space: nowrap;
   z-index: 2;
+  opacity: 0;
+  pointer-events: none;
 }
 
 .song-confidence-word-toggle::-webkit-details-marker {
@@ -12687,23 +12715,27 @@ html:not([data-theme]) .song-confidence-word-trigger.song-confidence-word::after
 }
 
 .song-confidence-word-menu > .song-line-variants-panel {
-  top: calc(100% + 10px);
+  top: calc(100% + 6px);
   left: 0;
   right: auto;
   width: min(360px, calc(100vw - 32px));
   max-width: calc(100vw - 32px);
   box-sizing: border-box;
   opacity: 0;
-  filter: saturate(0.8) brightness(0.9);
-  will-change: opacity, filter;
+  transform: translateY(-2px) scale(0.992);
+  transform-origin: top left;
+  filter: saturate(0.88) brightness(0.95);
+  will-change: opacity, transform, filter;
   pointer-events: none;
   transition:
-    opacity 320ms cubic-bezier(0.22, 1, 0.36, 1),
-    filter 320ms cubic-bezier(0.22, 1, 0.36, 1);
+    opacity 160ms cubic-bezier(0.22, 1, 0.36, 1),
+    transform 180ms cubic-bezier(0.22, 1, 0.36, 1),
+    filter 180ms cubic-bezier(0.22, 1, 0.36, 1);
 }
 
 .song-confidence-word-menu[open] > .song-line-variants-panel.is-visible {
   opacity: 1;
+  transform: translateY(0) scale(1);
   filter: saturate(1) brightness(1);
   pointer-events: auto;
 }
@@ -12734,12 +12766,14 @@ html[data-theme="white"] .song-confidence-word-toggle {
   .song-confidence-word-menu > .song-line-variants-panel {
     transition: none;
     opacity: 1;
+    transform: none;
     filter: none;
     pointer-events: auto;
   }
 
   .song-confidence-word-menu[open] > .song-line-variants-panel.is-visible {
     opacity: 1;
+    transform: none;
     filter: none;
   }
 }
@@ -13214,10 +13248,19 @@ html[data-theme="white"] .song-line-variants-list {
   grid-template-columns: minmax(0, 1fr) auto;
   align-items: center;
   gap: 8px;
+  position: relative;
+  z-index: 4;
 }
 
 .draft-add-variant-actions {
   justify-content: flex-end;
+}
+
+.draft-add-variant-btn,
+.draft-new-variant-text {
+  position: relative;
+  z-index: 5;
+  pointer-events: auto;
 }
 
 html[data-theme="light"] .ac-line-popover,
@@ -13462,6 +13505,41 @@ html:not([data-theme="light"]):not([data-theme="white"]) .draft-new-variant-text
 
 html:not([data-theme="light"]):not([data-theme="white"]) .draft-word-confidence-editor {
   border-top-color: rgba(54, 103, 205, 0.32);
+}
+
+.ac-line-popover {
+  width: min(820px, calc(100vw - 16px));
+}
+
+.draft-word-confidence-flow {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 176px), 1fr));
+  gap: 10px;
+}
+
+.draft-word-confidence-item {
+  width: 100%;
+  min-width: 0;
+  max-width: none;
+  align-items: stretch;
+}
+
+.draft-word-confidence-token {
+  display: block;
+  min-width: 0;
+  max-width: 100%;
+  overflow-wrap: anywhere;
+  word-break: break-word;
+  white-space: normal;
+}
+
+.draft-word-confidence-select-wrap {
+  min-width: 0;
+  width: 100%;
+}
+
+.draft-word-confidence-select {
+  width: 100%;
 }
 
 @media (max-width: 760px) {
@@ -20108,5 +20186,160 @@ html .catalog-top-locale-item.is-active {
   html .catalog-top-locale-item {
     min-height: 36px !important;
     font-size: 16px !important;
+  }
+}
+
+/* Final song stanza alignment: verse sits under the title, chorus remains a secondary right column. */
+.song-lyrics-stack {
+  --song-verse-indent: clamp(70px, 5.2vw, 92px) !important;
+  --song-chorus-offset: clamp(34px, 3vw, 48px) !important;
+  --song-chorus-extra-width: clamp(84px, 8vw, 128px) !important;
+}
+
+.song-lyric-block {
+  width: calc(100% - var(--song-verse-indent)) !important;
+  margin-left: var(--song-verse-indent) !important;
+}
+
+.song-lyric-block.is-chorus {
+  --song-chorus-indent: calc(var(--song-verse-indent) + var(--song-chorus-offset)) !important;
+  width: calc(100% - var(--song-chorus-indent) + var(--song-chorus-extra-width)) !important;
+  margin-left: var(--song-chorus-indent) !important;
+}
+
+.song-lyric-block.is-chorus:first-child {
+  width: calc(100% - var(--song-verse-indent)) !important;
+  margin-left: var(--song-verse-indent) !important;
+}
+
+@media (max-width: 960px) {
+  .song-lyrics-stack {
+    --song-verse-indent: clamp(34px, 5.4vw, 54px) !important;
+    --song-chorus-offset: clamp(24px, 4vw, 36px) !important;
+    --song-chorus-extra-width: clamp(48px, 8vw, 76px) !important;
+  }
+}
+
+@media (max-width: 760px) {
+  .song-lyrics-stack {
+    --song-verse-indent: clamp(14px, 4.8vw, 30px) !important;
+    --song-chorus-offset: clamp(18px, 5vw, 30px) !important;
+    --song-chorus-extra-width: clamp(28px, 8vw, 52px) !important;
+  }
+}
+
+/* Compact horizontal word-confidence controls inside line popovers. */
+#ac_editor .draft-word-confidence-editor,
+#requestForm .draft-word-confidence-editor {
+  gap: 6px !important;
+  padding-top: 6px !important;
+}
+
+#ac_editor .draft-word-confidence-header,
+#requestForm .draft-word-confidence-header {
+  grid-template-columns: auto minmax(0, 1fr) !important;
+  gap: 4px 8px !important;
+  align-items: end !important;
+}
+
+#ac_editor .draft-word-confidence-header .muted.small,
+#requestForm .draft-word-confidence-header .muted.small {
+  min-width: 0 !important;
+  text-align: right !important;
+  white-space: normal !important;
+  overflow: visible !important;
+  text-overflow: clip !important;
+  line-height: 1.15 !important;
+}
+
+#ac_editor .draft-word-confidence-flow,
+#requestForm .draft-word-confidence-flow {
+  display: flex !important;
+  flex-flow: row wrap !important;
+  align-items: flex-start !important;
+  justify-content: flex-start !important;
+  gap: 5px 7px !important;
+  width: max-content !important;
+  min-width: 100% !important;
+  max-width: calc(100vw - 24px) !important;
+}
+
+#ac_editor .draft-word-confidence-item,
+#requestForm .draft-word-confidence-item {
+  flex: 0 0 auto !important;
+  display: grid !important;
+  grid-template-rows: minmax(14px, auto) 28px !important;
+  justify-items: start !important;
+  align-items: start !important;
+  gap: 3px !important;
+  width: auto !important;
+  min-width: 72px !important;
+  max-width: 108px !important;
+  margin: 0 !important;
+  padding: 0 !important;
+  border: 0 !important;
+  background: transparent !important;
+  box-shadow: none !important;
+}
+
+#ac_editor .draft-word-confidence-token,
+#requestForm .draft-word-confidence-token {
+  display: block !important;
+  width: 100% !important;
+  min-width: 0 !important;
+  max-width: 108px !important;
+  padding: 0 !important;
+  font-size: 12px !important;
+  line-height: 1.15 !important;
+  white-space: normal !important;
+  overflow: visible !important;
+  text-overflow: clip !important;
+  overflow-wrap: anywhere !important;
+  word-break: normal !important;
+}
+
+#ac_editor .draft-word-confidence-select-wrap,
+#requestForm .draft-word-confidence-select-wrap {
+  width: auto !important;
+  min-width: 0 !important;
+  max-width: none !important;
+}
+
+#ac_editor .draft-word-confidence-select,
+#requestForm .draft-word-confidence-select {
+  width: 72px !important;
+  min-width: 72px !important;
+  max-width: 72px !important;
+  min-height: 32px !important;
+  height: 32px !important;
+  padding: 0 22px 0 10px !important;
+  font-size: 13px !important;
+  line-height: 1 !important;
+}
+
+@media (max-width: 760px) {
+  #ac_editor .draft-word-confidence-flow,
+  #requestForm .draft-word-confidence-flow {
+    max-width: calc(100vw - 16px) !important;
+    gap: 5px 6px !important;
+  }
+
+  #ac_editor .draft-word-confidence-item,
+  #requestForm .draft-word-confidence-item {
+    min-width: 66px !important;
+    max-width: 98px !important;
+  }
+
+  #ac_editor .draft-word-confidence-token,
+  #requestForm .draft-word-confidence-token {
+    max-width: 98px !important;
+    font-size: 11.5px !important;
+  }
+
+  #ac_editor .draft-word-confidence-select,
+  #requestForm .draft-word-confidence-select {
+    width: 68px !important;
+    min-width: 68px !important;
+    max-width: 68px !important;
   }
 }

@@ -37,7 +37,7 @@ test("single-word queries keep exact hits above prefix and fuzzy matches", () =>
   );
 });
 
-test.skip("title matches stay above lyrics matches, and lyrics stay above partial title matches", () => {
+test("title matches stay above lyrics matches, and lyrics stay above partial title matches", () => {
   const ranked = rankSearchCandidatesForQuery(QUERY_RU_FULL, [
     makeSong("partial-title", "Чтобы наши", "other line"),
     makeSong("lyrics-hit", "Song B", TANK_LYRICS),
