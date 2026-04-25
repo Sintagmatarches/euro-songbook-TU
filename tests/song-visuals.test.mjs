@@ -4,6 +4,7 @@ import assert from "node:assert/strict";
 import {
   buildVisualProfileFromLegacyFields,
   resolveVisualBackground,
+  validateVisualProfileRanges,
 } from "../shared/song-visuals.js";
 
 test("legacy single-image rows map into strict desktop/mobile profile", () => {
@@ -39,4 +40,24 @@ test("legacy dedicated mobile image stays separate from desktop image", () => {
   assert.equal(desktop.focus_x, 40);
   assert.equal(mobile.image_url, "https://example.com/mobile.jpg");
   assert.equal(mobile.focus_y, 61);
+});
+
+test("visual year ranges are inclusive and cannot overlap", () => {
+  const valid = validateVisualProfileRanges({
+    default: {},
+    variants: [
+      { from: 1900, to: 1910, desktop: "https://example.com/a.jpg" },
+      { from: 1911, to: 1920, mobile: "https://example.com/b.jpg" },
+    ],
+  });
+  assert.equal(valid.ok, true);
+
+  const overlapping = validateVisualProfileRanges({
+    default: {},
+    variants: [
+      { from: 1900, to: 1910, desktop: "https://example.com/a.jpg" },
+      { from: 1910, to: 1920, mobile: "https://example.com/b.jpg" },
+    ],
+  });
+  assert.equal(overlapping.ok, false);
 });

@@ -626,13 +626,13 @@ const LISTEN_SERVICES = [
 // to allow parallax/scroll reveal.
 const COUNTRY_BACKGROUND_VIEWPORTS = {
   desktop: { width: 1600, height: 900 }, // 16:9
-  mobile: { width: 900, height: 2000 }, // phone 20:9 in portrait (9:20)
+  mobile: { width: 900, height: 2700 }, // tall phone background (9:27)
 };
 
 const COUNTRY_BACKGROUND_STANDARDS = {
   // Keep stored assets in the same base ratio as runtime viewports.
   desktop: { width: 1600, height: 900 }, // 16:9
-  mobile: { width: 900, height: 2000 }, // phone 20:9 in portrait (9:20)
+  mobile: { width: 900, height: 2700 }, // tall phone background (9:27)
 };
 
 const FLAG_CARD_STANDARDS = {
@@ -4805,12 +4805,12 @@ function renderTextWithConfidenceWords(text, segments = [], options = {}) {
         ? String(variantPanelMarkup(word, wordText, words) || "")
         : String(variantPanelMarkup || "");
       const confidenceLabelMarkup = `<span class="song-confidence-word-label" aria-hidden="true">${esc(confidenceLabel)}</span>`;
-      const confidenceWordMarkup = `<span class="song-confidence-word" data-confidence-label="" style="${confidenceStyle}">${renderTextWithUnknownMarkers(wordText)}</span>`;
+      const confidenceWordMarkup = `<span class="song-confidence-word" data-confidence-label="" style="${confidenceStyle}" title="${esc(confidenceLabel)}" aria-label="${esc(confidenceLabel)}">${renderTextWithUnknownMarkers(wordText)}</span>`;
       if (wordVariantPanelMarkup) {
         const triggerLabel = esc(variantToggleTitle || confidenceLabel);
         out += `<span class="song-confidence-word-anchor" style="${confidenceStyle}"><details class="song-confidence-word-menu"><summary class="song-confidence-word-toggle" aria-label="${triggerLabel}" title="${triggerLabel}"><span>${esc(confidenceLabel)}</span></summary>${wordVariantPanelMarkup}</details><span class="song-confidence-word-trigger" role="button" tabindex="0" aria-label="${triggerLabel}" title="${triggerLabel}" aria-expanded="false">${confidenceLabelMarkup}${confidenceWordMarkup}</span></span>`;
       } else {
-        out += `<span class="song-confidence-word-anchor song-confidence-word-anchor-static" style="${confidenceStyle}">${confidenceLabelMarkup}${confidenceWordMarkup}</span>`;
+        out += `<span class="song-confidence-word-anchor song-confidence-word-anchor-static" style="${confidenceStyle}" title="${esc(confidenceLabel)}" aria-label="${esc(confidenceLabel)}">${confidenceLabelMarkup}${confidenceWordMarkup}</span>`;
       }
     }
     cursor = end;
@@ -5075,18 +5075,12 @@ function renderLyricLineWithConfidence(text, meta = null) {
   const safeMeta = meta && typeof meta === "object" ? meta : null;
   const content = String(text || "");
   const safeSegments = draftDisplayConfidenceSegments(content, safeMeta?.confidence_segments);
-  const hasWordConfidence = safeSegments.length > 0;
   const hasVariantMenu = Array.isArray(safeMeta?.variants) && safeMeta.variants.length > 1;
   const variantsCount = Math.max(0, Array.isArray(safeMeta?.variants) ? safeMeta.variants.length : 0);
-  const classes = [
-    "song-lyric-line",
-    hasWordConfidence ? "has-word-confidence" : "",
-    hasVariantMenu ? "has-variants" : "",
-  ].filter(Boolean).join(" ");
-  return `<div class="${classes}"><div class="song-lyric-line-text">${content ? renderTextWithConfidenceWords(content, safeSegments, {
+  return content ? renderTextWithConfidenceWords(content, safeSegments, {
     variantPanelMarkup: hasVariantMenu ? ((word) => renderSongLyricVariantsPanel(safeMeta, word)) : "",
     variantToggleTitle: `${draftUiText("variantsList")}: ${variantsCount}`,
-  }) : "&nbsp;"}</div></div>`;
+  }) : "&nbsp;";
 }
 
 function renderStructuredLyrics(rawLyrics, options = {}) {
@@ -5107,7 +5101,7 @@ function renderStructuredLyrics(rawLyrics, options = {}) {
   });
   const renderEntriesWithConfidence = (entries = []) => entries.map((entry) => (
     renderLyricLineWithConfidence(entry?.text || "", lineMetaByIndex.get(Number(entry?.index || 0)) || null)
-  )).join("");
+  )).join("<br />");
   if (!parsed.blocks.length) {
     const fallbackEntries = createLyricsDisplayEntries(fallbackText, { keepBlankLines: false }).entries
       .map((entry) => ({ text: entry.text, index: entry.index }));
@@ -7984,6 +7978,24 @@ function bulkImportUiText(key, vars = {}) {
       et: "1. Esimene laul\nEsimene rida\n\n2. Teine laul\nEsimene rida",
       en: "1. First song\nFirst line\n\n2. Second song\nFirst line",
     },
+    formatExampleTitle: {
+      ru: "\u0424\u043e\u0440\u043c\u0430\u0442 \u0438\u043c\u043f\u043e\u0440\u0442\u0430",
+      uk: "\u0424\u043e\u0440\u043c\u0430\u0442 \u0456\u043c\u043f\u043e\u0440\u0442\u0443",
+      et: "Impordi vorming",
+      en: "Import format",
+    },
+    formatExampleHint: {
+      ru: "\u041a\u0430\u0436\u0434\u0430\u044f \u043f\u0435\u0441\u043d\u044f \u043d\u0430\u0447\u0438\u043d\u0430\u0435\u0442\u0441\u044f \u0441 \u043d\u043e\u0432\u043e\u0439 \u0441\u0442\u0440\u043e\u043a\u0438 \u0432\u0438\u0434\u0430 1. \u041d\u0430\u0437\u0432\u0430\u043d\u0438\u0435. \u041f\u0435\u0440\u0432\u0430\u044f \u043d\u0435\u043f\u0443\u0441\u0442\u0430\u044f \u0441\u0442\u0440\u043e\u043a\u0430 \u043f\u043e\u0441\u043b\u0435 \u043d\u043e\u043c\u0435\u0440\u0430 \u0441\u0442\u0430\u043d\u0435\u0442 \u043d\u0430\u0437\u0432\u0430\u043d\u0438\u0435\u043c, \u0434\u0430\u043b\u044c\u0448\u0435 \u0438\u0434\u0435\u0442 \u0442\u0435\u043a\u0441\u0442.",
+      uk: "\u041a\u043e\u0436\u043d\u0430 \u043f\u0456\u0441\u043d\u044f \u043f\u043e\u0447\u0438\u043d\u0430\u0454\u0442\u044c\u0441\u044f \u0437 \u043d\u043e\u0432\u043e\u0433\u043e \u0440\u044f\u0434\u043a\u0430 \u0432\u0438\u0434\u0443 1. \u041d\u0430\u0437\u0432\u0430. \u041f\u0435\u0440\u0448\u0438\u0439 \u043d\u0435\u043f\u043e\u0440\u043e\u0436\u043d\u0456\u0439 \u0440\u044f\u0434\u043e\u043a \u043f\u0456\u0441\u043b\u044f \u043d\u043e\u043c\u0435\u0440\u0430 \u0441\u0442\u0430\u043d\u0435 \u043d\u0430\u0437\u0432\u043e\u044e, \u0434\u0430\u043b\u0456 \u0439\u0434\u0435 \u0442\u0435\u043a\u0441\u0442.",
+      et: "Iga laul algab uue reaga kujul 1. Pealkiri. Esimene mitte-tuhj rida parast numbrit saab pealkirjaks, edasi tuleb tekst.",
+      en: "Each song starts on a new line like 1. Title. The first non-empty line after the number becomes the title, then the lyrics follow.",
+    },
+    formatExampleText: {
+      ru: "1. \u041f\u0435\u0440\u0432\u0430\u044f \u043f\u0435\u0441\u043d\u044f\n\u041f\u0435\u0440\u0432\u0430\u044f \u0441\u0442\u0440\u043e\u043a\u0430 \u0442\u0435\u043a\u0441\u0442\u0430\n\u0412\u0442\u043e\u0440\u0430\u044f \u0441\u0442\u0440\u043e\u043a\u0430 \u0442\u0435\u043a\u0441\u0442\u0430\n\n2. \u0412\u0442\u043e\u0440\u0430\u044f \u043f\u0435\u0441\u043d\u044f\n\u041f\u0435\u0440\u0432\u0430\u044f \u0441\u0442\u0440\u043e\u043a\u0430 \u0442\u0435\u043a\u0441\u0442\u0430\n\u0412\u0442\u043e\u0440\u0430\u044f \u0441\u0442\u0440\u043e\u043a\u0430 \u0442\u0435\u043a\u0441\u0442\u0430",
+      uk: "1. \u041f\u0435\u0440\u0448\u0430 \u043f\u0456\u0441\u043d\u044f\n\u041f\u0435\u0440\u0448\u0438\u0439 \u0440\u044f\u0434\u043e\u043a \u0442\u0435\u043a\u0441\u0442\u0443\n\u0414\u0440\u0443\u0433\u0438\u0439 \u0440\u044f\u0434\u043e\u043a \u0442\u0435\u043a\u0441\u0442\u0443\n\n2. \u0414\u0440\u0443\u0433\u0430 \u043f\u0456\u0441\u043d\u044f\n\u041f\u0435\u0440\u0448\u0438\u0439 \u0440\u044f\u0434\u043e\u043a \u0442\u0435\u043a\u0441\u0442\u0443\n\u0414\u0440\u0443\u0433\u0438\u0439 \u0440\u044f\u0434\u043e\u043a \u0442\u0435\u043a\u0441\u0442\u0443",
+      et: "1. Esimene laul\nEsimene tekstirida\nTeine tekstirida\n\n2. Teine laul\nEsimene tekstirida\nTeine tekstirida",
+      en: "1. First song\nFirst lyric line\nSecond lyric line\n\n2. Second song\nFirst lyric line\nSecond lyric line",
+    },
     note: {
       ru: "Все песни пойдут в раздел «{country}».",
       uk: "Усі пісні підуть до розділу «{country}».",
@@ -8177,6 +8189,11 @@ function adminBulkImportUI(params = {}) {
           <div class="fieldLabel">${esc(bulkImportUiText("text"))}</div>
           <textarea class="textarea song-editor-text song-editor-text-main ac-bulk-import-textarea" id="ac_bulk_text" placeholder="${esc(bulkImportUiText("textPlaceholder"))}">${esc(params?.bulkText || "")}</textarea>
         </label>
+        <div class="ac-bulk-import-format">
+          <div class="fieldLabel">${esc(bulkImportUiText("formatExampleTitle"))}</div>
+          <div class="muted small">${esc(bulkImportUiText("formatExampleHint"))}</div>
+          <pre class="ac-bulk-import-format-example">${esc(bulkImportUiText("formatExampleText"))}</pre>
+        </div>
         <div class="muted small ac-bulk-import-note">${esc(bulkImportUiText("note", { country: unsortedCountryLabel }))}</div>
         <div class="actions ac-bulk-import-actions">
           <button class="btn primary" id="ac_bulk_submit" type="button">${esc(bulkImportUiText("add"))}</button>
@@ -8989,6 +9006,8 @@ function adminHistoricalVisualsUI(data) {
   const defaultScopeCaption = pick("\u041f\u043e \u0443\u043c\u043e\u043b\u0447\u0430\u043d\u0438\u044e", "\u0417\u0430 \u0437\u0430\u043c\u043e\u0432\u0447\u0443\u0432\u0430\u043d\u043d\u044f\u043c", "Vaikimisi", "Default");
   const fromLabel = pick("\u0421", "\u0412\u0456\u0434", "Algus", "From");
   const toLabel = pick("\u041f\u043e", "\u0414\u043e", "Lõpp", "To");
+  const rangeEditorLabel = pick("\u0414\u0438\u0430\u043f\u0430\u0437\u043e\u043d \u043f\u043e\u043a\u0430\u0437\u0430", "\u0414\u0456\u0430\u043f\u0430\u0437\u043e\u043d \u043f\u043e\u043a\u0430\u0437\u0443", "Kuvamise vahemik", "Display range");
+  const defaultRangeHint = pick("\u0414\u0435\u0444\u043e\u043b\u0442 \u043f\u043e\u043a\u0430\u0437\u044b\u0432\u0430\u0435\u0442\u0441\u044f, \u043a\u043e\u0433\u0434\u0430 \u0433\u043e\u0434 \u043f\u0435\u0441\u043d\u0438 \u043d\u0435 \u043f\u043e\u043f\u0430\u043b \u0432 \u0434\u0438\u0430\u043f\u0430\u0437\u043e\u043d.", "\u0414\u0435\u0444\u043e\u043b\u0442 \u043f\u043e\u043a\u0430\u0437\u0443\u0454\u0442\u044c\u0441\u044f, \u043a\u043e\u043b\u0438 \u0440\u0456\u043a \u043f\u0456\u0441\u043d\u0456 \u043d\u0435 \u043f\u043e\u0442\u0440\u0430\u043f\u0438\u0432 \u0443 \u0434\u0456\u0430\u043f\u0430\u0437\u043e\u043d.", "Vaikimisi kuvatakse siis, kui laulu aasta ei kuulu vahemikku.", "Default is shown when a song year does not match any range.");
   const removeLabel = pick("\u0423\u0434\u0430\u043b\u0438\u0442\u044c", "\u0412\u0438\u0434\u0430\u043b\u0438\u0442\u0438", "Eemalda", "Remove");
   const desktopLabel = pick("\u041f\u041a", "\u041f\u041a", "Lauaarvuti", "Desktop");
   const mobileLabel = pick("\u0422\u0435\u043b\u0435\u0444\u043e\u043d", "\u0422\u0435\u043b\u0435\u0444\u043e\u043d", "Telefon", "Mobile");
@@ -9109,6 +9128,20 @@ function adminHistoricalVisualsUI(data) {
               <div class="fieldLabel">${esc(urlLabel)}</div>
               <input class="input" id="ab_desktop_url" placeholder="https://... / /picture/..." />
             </label>
+            <div class="ab-inline-range" data-inline-range="desktop">
+              <div class="fieldLabel">${esc(rangeEditorLabel)}</div>
+              <div class="ab-inline-range-grid">
+                <label class="field">
+                  <div class="fieldLabel">${esc(fromLabel)}</div>
+                  <input class="input" id="ab_desktop_year_from" type="number" min="1" max="3000" step="1" />
+                </label>
+                <label class="field">
+                  <div class="fieldLabel">${esc(toLabel)}</div>
+                  <input class="input" id="ab_desktop_year_to" type="number" min="1" max="3000" step="1" />
+                </label>
+              </div>
+              <div class="muted small" id="ab_desktop_year_hint">${esc(defaultRangeHint)}</div>
+            </div>
             <input id="ab_desktop_focus_x" type="hidden" value="50" />
             <input id="ab_desktop_focus_y" type="hidden" value="50" />
             <label class="field">
@@ -9161,6 +9194,20 @@ function adminHistoricalVisualsUI(data) {
               <div class="fieldLabel">${esc(urlLabel)}</div>
               <input class="input" id="ab_mobile_url" placeholder="https://... / /picture/..." />
             </label>
+            <div class="ab-inline-range" data-inline-range="mobile">
+              <div class="fieldLabel">${esc(rangeEditorLabel)}</div>
+              <div class="ab-inline-range-grid">
+                <label class="field">
+                  <div class="fieldLabel">${esc(fromLabel)}</div>
+                  <input class="input" id="ab_mobile_year_from" type="number" min="1" max="3000" step="1" />
+                </label>
+                <label class="field">
+                  <div class="fieldLabel">${esc(toLabel)}</div>
+                  <input class="input" id="ab_mobile_year_to" type="number" min="1" max="3000" step="1" />
+                </label>
+              </div>
+              <div class="muted small" id="ab_mobile_year_hint">${esc(defaultRangeHint)}</div>
+            </div>
             <input id="ab_mobile_focus_x" type="hidden" value="50" />
             <input id="ab_mobile_focus_y" type="hidden" value="50" />
             <label class="field">
@@ -9222,6 +9269,20 @@ function adminHistoricalVisualsUI(data) {
               <div class="fieldLabel">${esc(flagMobileUrlLabel)}</div>
               <input class="input" id="ab_flag_url_mobile" placeholder="https://... / /picture/..." />
             </label>
+            <div class="ab-inline-range" data-inline-range="flag">
+              <div class="fieldLabel">${esc(rangeEditorLabel)}</div>
+              <div class="ab-inline-range-grid">
+                <label class="field">
+                  <div class="fieldLabel">${esc(fromLabel)}</div>
+                  <input class="input" id="ab_flag_year_from" type="number" min="1" max="3000" step="1" />
+                </label>
+                <label class="field">
+                  <div class="fieldLabel">${esc(toLabel)}</div>
+                  <input class="input" id="ab_flag_year_to" type="number" min="1" max="3000" step="1" />
+                </label>
+              </div>
+              <div class="muted small" id="ab_flag_year_hint">${esc(defaultRangeHint)}</div>
+            </div>
             <div class="muted small ab-flag-scope-note" id="ab_flag_scope_note">${esc(`${activeStickerScopeLabel}: ${defaultScopeCaption}`)}</div>
           ` : `<div class="muted small">${esc(flagSuperAdminHint)}</div>`}
           <div class="fieldLabel">${esc(flagPreviewTitle)}</div>
@@ -11561,6 +11622,9 @@ function bindAdminHistoricalVisuals(ctx) {
     scrollDimTop: qs("ab_scroll_dim_top_desktop"),
     scrollDimBottom: qs("ab_scroll_dim_bottom_desktop"),
     scrollViewport: qs("ab_scroll_viewport_desktop"),
+    yearFrom: qs("ab_desktop_year_from"),
+    yearTo: qs("ab_desktop_year_to"),
+    yearHint: qs("ab_desktop_year_hint"),
     standard: COUNTRY_BACKGROUND_STANDARDS.desktop,
     viewport: COUNTRY_BACKGROUND_VIEWPORTS.desktop,
   };
@@ -11579,6 +11643,9 @@ function bindAdminHistoricalVisuals(ctx) {
     scrollDimTop: qs("ab_scroll_dim_top_mobile"),
     scrollDimBottom: qs("ab_scroll_dim_bottom_mobile"),
     scrollViewport: qs("ab_scroll_viewport_mobile"),
+    yearFrom: qs("ab_mobile_year_from"),
+    yearTo: qs("ab_mobile_year_to"),
+    yearHint: qs("ab_mobile_year_hint"),
     standard: COUNTRY_BACKGROUND_STANDARDS.mobile,
     viewport: COUNTRY_BACKGROUND_VIEWPORTS.mobile,
   };
@@ -11592,6 +11659,9 @@ function bindAdminHistoricalVisuals(ctx) {
     previewLongDesktop: qs("ab_flag_preview_long_desktop"),
     previewLongMobile: qs("ab_flag_preview_long_mobile"),
     scopeNote: qs("ab_flag_scope_note"),
+    yearFrom: qs("ab_flag_year_from"),
+    yearTo: qs("ab_flag_year_to"),
+    yearHint: qs("ab_flag_year_hint"),
   };
   const scopeRefs = {
     select: qs("ab_period_scope"),
@@ -11827,6 +11897,30 @@ function bindAdminHistoricalVisuals(ctx) {
     if (flagRefs.scopeNote) flagRefs.scopeNote.textContent = caption;
   }
 
+  function inlineRangeControls() {
+    return [
+      { from: desktopRefs.yearFrom, to: desktopRefs.yearTo, hint: desktopRefs.yearHint },
+      { from: mobileRefs.yearFrom, to: mobileRefs.yearTo, hint: mobileRefs.yearHint },
+      { from: flagRefs.yearFrom, to: flagRefs.yearTo, hint: flagRefs.yearHint },
+    ];
+  }
+
+  function syncInlineRangeInputs() {
+    const isDefaultScope = activeScope === "default";
+    const scope = isDefaultScope ? null : activeScopeDraft();
+    const from = scope ? String(scope.from || "").trim() : "";
+    const to = scope ? String(scope.to || "").trim() : "";
+    inlineRangeControls().forEach((refs) => {
+      if (refs.from && document.activeElement !== refs.from) refs.from.value = from;
+      if (refs.to && document.activeElement !== refs.to) refs.to.value = to;
+      if (refs.hint) {
+        refs.hint.textContent = isDefaultScope
+          ? defaultRangeHint
+          : `${fromLabel}: ${from || "-"} · ${toLabel}: ${to || "-"}`;
+      }
+    });
+  }
+
   function syncScopeSelect() {
     ensureActiveScope();
     if (!scopeRefs.select) return;
@@ -11897,6 +11991,7 @@ function bindAdminHistoricalVisuals(ctx) {
     renderRangeList();
     highlightActiveRangeRow();
     syncStickerScopeUi();
+    syncInlineRangeInputs();
     applyFlagPreview();
   }
 
@@ -12336,6 +12431,40 @@ function bindAdminHistoricalVisuals(ctx) {
     }
   });
 
+  function ensureRangeScopeForInlineYears() {
+    if (activeScope !== "default") return false;
+    syncActiveScopeFromInputs();
+    const base = visualProfileState.default || createEmptyVisualVariant();
+    visualProfileState.variants.push({
+      from: "",
+      to: "",
+      desktop: normalizeVisualBackground(base.desktop || {}),
+      mobile: normalizeVisualBackground(base.mobile || {}),
+      symbol: normalizeVisualSymbol(base.symbol || {}),
+    });
+    pendingRangeStickers.push("");
+    activeScope = scopeValueForIndex(visualProfileState.variants.length - 1);
+    return true;
+  }
+
+  function handleInlineYearInput(target) {
+    if (!(target instanceof HTMLInputElement)) return;
+    const role = String(target.id || "").endsWith("_year_from") ? "from" : "to";
+    setRangeError("");
+    const createdScope = ensureRangeScopeForInlineYears();
+    const scope = activeScopeDraft();
+    if (!scope || activeScope === "default") return;
+    syncActiveScopeFromInputs();
+    scope[role] = target.value;
+    if (createdScope) loadScopeIntoInputs();
+    syncScopeControls();
+  }
+
+  inlineRangeControls().forEach((refs) => {
+    refs.from?.addEventListener("input", (event) => handleInlineYearInput(event.target));
+    refs.to?.addEventListener("input", (event) => handleInlineYearInput(event.target));
+  });
+
   [flagRefs.urlDesktop, flagRefs.urlMobile].forEach((input) => {
     input?.addEventListener("input", () => {
       syncActiveScopeFromInputs();
@@ -12565,7 +12694,7 @@ function bindAdminHistoricalVisuals(ctx) {
         if (variantBaseSource.desktop) profile.default.desktop.image_url = variantBaseSource.desktop;
         if (variantBaseSource.mobile) profile.default.mobile.image_url = variantBaseSource.mobile;
       } else {
-        const scopeIndex = Number.parseInt(String(activeScope).replace(/^range:/, ""), 10);
+        const scopeIndex = scopeIndexFromValue(activeScope);
         if (Number.isInteger(scopeIndex) && scopeIndex >= 0 && profile.variants[scopeIndex]) {
           if (variantBaseSource.desktop) profile.variants[scopeIndex].desktop.image_url = variantBaseSource.desktop;
           if (variantBaseSource.mobile) profile.variants[scopeIndex].mobile.image_url = variantBaseSource.mobile;

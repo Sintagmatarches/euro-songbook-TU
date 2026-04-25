@@ -102,6 +102,9 @@ let songPageBgParallaxRaf = 0;
 let songPageBgParallaxMetrics = null;
 let songPageBgParallaxLastMeasureAt = 0;
 let songPageBgParallaxLastShiftPx = Number.NaN;
+let songPageBgMobileViewportWidth = 0;
+let songPageBgMobileViewportHeight = 0;
+let songPageBgMobileHeaderInsetPx = Number.NaN;
 let globalWallpaperLastShiftPx = Number.NaN;
 let activeRouteRenderToken = 0;
 let mobileNavViewportRaf = 0;
@@ -117,6 +120,8 @@ const SONG_PAGE_BG_PARALLAX_LAYOUT_MEASURE_INTERVAL_MS = 180;
 const SONG_PAGE_BG_PARALLAX_SCROLL_RATIO = 0.2;
 const SONG_PAGE_BG_PARALLAX_LONG_TEXT_SLOWDOWN_MAX = 2.3;
 const SONG_PAGE_BG_PARALLAX_LONG_TEXT_THRESHOLD_PX = 240;
+const SONG_PAGE_BG_MOBILE_ASPECT_HEIGHT_RATIO = 27 / 9;
+const SONG_PAGE_BG_MOBILE_BOTTOM_OVERSCAN_PX = 140;
 const GLOBAL_WALLPAPER_PARALLAX_MIN_PX = 44;
 const GLOBAL_WALLPAPER_PARALLAX_MAX_PX = 240;
 const GLOBAL_WALLPAPER_PARALLAX_VIEWPORT_RATIO = 0.24;
@@ -397,6 +402,61 @@ function resetSongPageBackgroundParallaxCache() {
   songPageBgParallaxMetrics = null;
   songPageBgParallaxLastMeasureAt = 0;
   songPageBgParallaxLastShiftPx = Number.NaN;
+  songPageBgMobileViewportWidth = 0;
+  songPageBgMobileViewportHeight = 0;
+  songPageBgMobileHeaderInsetPx = Number.NaN;
+}
+
+function setSongPageBackgroundMobileY(px) {
+  const nextPx = Number.isFinite(px) ? px : 0;
+  const roundedPx = Number(nextPx.toFixed(3));
+  if (roundedPx === songPageBgParallaxLastShiftPx) return;
+  document.body.style.setProperty("--song-page-bg-y", `${roundedPx}px`);
+  songPageBgParallaxLastShiftPx = roundedPx;
+}
+
+function setSongPageBackgroundMobileParallaxImmediate(px) {
+  setSongPageBackgroundMobileY(px);
+}
+
+function supportsNativeSongPageBackgroundScrollTimeline() {
+  return Boolean(
+    window.CSS?.supports?.("animation-timeline: scroll()")
+    || window.CSS?.supports?.("animation-timeline", "scroll()")
+  );
+}
+
+function shouldUseNativeSongPageBackgroundScrollTimeline() {
+  return window.matchMedia("(max-width: 960px)").matches && supportsNativeSongPageBackgroundScrollTimeline();
+}
+
+function getStableSongPageMobileViewportHeight(rawViewportHeight, viewportWidth) {
+  const nextWidth = Math.max(1, Math.round(viewportWidth || 0));
+  if (songPageBgMobileViewportWidth !== nextWidth || !songPageBgMobileViewportHeight) {
+    songPageBgMobileViewportWidth = nextWidth;
+    songPageBgMobileViewportHeight = Math.max(1, Math.round(rawViewportHeight || 0));
+    songPageBgMobileHeaderInsetPx = Number.NaN;
+  }
+  return songPageBgMobileViewportHeight;
+}
+
+function getSongPageHeaderInsetPx(viewportHeight) {
+  if (Number.isFinite(songPageBgMobileHeaderInsetPx)) {
+    return songPageBgMobileHeaderInsetPx;
+  }
+  const topbar = document.querySelector(".topbar");
+  if (!topbar) {
+    songPageBgMobileHeaderInsetPx = 0;
+    return 0;
+  }
+  const rect = topbar.getBoundingClientRect();
+  const layoutBottom = Math.max(
+    0,
+    Number(topbar.offsetTop || 0) + Number(topbar.offsetHeight || 0),
+    Number(rect.bottom || 0) + (window.scrollY || window.pageYOffset || 0)
+  );
+  songPageBgMobileHeaderInsetPx = Math.min(Math.round(viewportHeight * 0.4), Math.round(layoutBottom));
+  return songPageBgMobileHeaderInsetPx;
 }
 
 function preloadGlobalWallpaperAssets() {
@@ -430,12 +490,15 @@ function syncSongPageBackgroundParallax() {
     document.body.style.removeProperty("--song-page-bg-focus-y-desktop");
     document.body.style.removeProperty("--song-page-bg-focus-x-mobile");
     document.body.style.removeProperty("--song-page-bg-focus-y-mobile");
+    document.body.style.removeProperty("--song-page-bg-render-height");
+    document.body.style.removeProperty("--song-page-bg-y");
     resetSongPageBackgroundParallaxCache();
     return;
   }
   if (prefersReducedMotion()) {
     if (songPageBgParallaxLastShiftPx !== 0) {
       document.body.style.setProperty("--song-page-bg-shift", "0px");
+      document.body.style.setProperty("--song-page-bg-y", "0px");
       songPageBgParallaxLastShiftPx = 0;
     }
     return;
@@ -443,6 +506,7 @@ function syncSongPageBackgroundParallax() {
   if (document.body.classList.contains("song-page-country-bg-static")) {
     if (songPageBgParallaxLastShiftPx !== 0) {
       document.body.style.setProperty("--song-page-bg-shift", "0px");
+      document.body.style.setProperty("--song-page-bg-y", "0px");
       songPageBgParallaxLastShiftPx = 0;
     }
     return;
@@ -450,11 +514,22 @@ function syncSongPageBackgroundParallax() {
 
   const now = performance.now();
   const scrollY = window.scrollY || window.pageYOffset || 0;
-  const viewportHeight = window.innerHeight || document.documentElement.clientHeight || 1;
+  const isMobile = window.matchMedia("(max-width: 960px)").matches;
+  const viewportWidth = Math.max(1, window.innerWidth || document.documentElement.clientWidth || 1);
+  const rawViewportHeight = window.innerHeight || document.documentElement.clientHeight || 1;
+  const viewportHeight = isMobile
+    ? getStableSongPageMobileViewportHeight(rawViewportHeight, viewportWidth)
+    : rawViewportHeight;
+  const documentHeight = Math.max(
+    document.body?.scrollHeight || 0,
+    document.documentElement.scrollHeight || 0,
+    viewportHeight
+  );
+  const maxScroll = Math.max(1, documentHeight - viewportHeight);
   const shouldMeasureLayout = (
     !songPageBgParallaxMetrics
-    || (now - songPageBgParallaxLastMeasureAt) >= SONG_PAGE_BG_PARALLAX_LAYOUT_MEASURE_INTERVAL_MS
     || songPageBgParallaxMetrics.viewportHeight !== viewportHeight
+    || (!isMobile && songPageBgParallaxMetrics.documentHeight !== documentHeight)
   );
   if (shouldMeasureLayout) {
     const songCard = document.querySelector(".song-view .song-card-shell.song-card-shell-has-bg");
@@ -471,15 +546,18 @@ function syncSongPageBackgroundParallax() {
         end,
         scrollRangePx,
         cardHeight,
+        documentHeight,
+        maxScroll,
       };
     } else {
-      const maxScroll = Math.max(1, document.documentElement.scrollHeight - viewportHeight);
       songPageBgParallaxMetrics = {
         viewportHeight,
         start: 0,
         end: maxScroll,
         scrollRangePx: maxScroll,
         cardHeight: viewportHeight,
+        documentHeight,
+        maxScroll,
       };
     }
     songPageBgParallaxLastMeasureAt = now;
@@ -491,8 +569,29 @@ function syncSongPageBackgroundParallax() {
     end: 1,
     scrollRangePx: 1,
     cardHeight: viewportHeight,
+    documentHeight,
+    maxScroll,
   };
-  const isMobile = window.matchMedia("(max-width: 960px)").matches;
+  if (isMobile) {
+    const visibleHeight = Math.max(1, viewportHeight);
+    const renderHeight = Math.max(
+      Math.round(viewportWidth * SONG_PAGE_BG_MOBILE_ASPECT_HEIGHT_RATIO),
+      visibleHeight + SONG_PAGE_BG_MOBILE_BOTTOM_OVERSCAN_PX
+    );
+    const travelPx = Math.max(0, renderHeight - visibleHeight - SONG_PAGE_BG_MOBILE_BOTTOM_OVERSCAN_PX);
+    const progress = Math.min(1, Math.max(0, scrollY / Math.max(1, metrics.maxScroll || maxScroll)));
+    const bgY = Number((-travelPx * progress).toFixed(3));
+    document.body.style.setProperty("--song-page-bg-render-height", `${renderHeight}px`);
+    document.body.style.setProperty("--song-page-bg-viewport-height", `${visibleHeight}px`);
+    document.body.style.setProperty("--song-page-bg-bottom-overscan", `${SONG_PAGE_BG_MOBILE_BOTTOM_OVERSCAN_PX}px`);
+    if (shouldUseNativeSongPageBackgroundScrollTimeline()) {
+      setSongPageBackgroundMobileParallaxImmediate(0);
+      return;
+    }
+    setSongPageBackgroundMobileParallaxImmediate(bgY);
+    return;
+  }
+
   const maxShift = isMobile
     ? Math.max(
       SONG_PAGE_BG_PARALLAX_MOBILE_MIN_PX,
@@ -513,9 +612,9 @@ function syncSongPageBackgroundParallax() {
   const slowDownFactor = 1 + (SONG_PAGE_BG_PARALLAX_LONG_TEXT_SLOWDOWN_MAX - 1) * longTextRatio;
 
   // Parallax: move background slower than content. We cap by maxShift so we never "overshoot" the image.
-  const desiredRange = Math.max(0, Math.round(scrollRangePx * SONG_PAGE_BG_PARALLAX_SCROLL_RATIO));
+  const desiredRange = Math.max(0, scrollRangePx * SONG_PAGE_BG_PARALLAX_SCROLL_RATIO);
   const rangePx = Math.min(maxShift, desiredRange);
-  const shiftPx = Math.round(((0.5 - progress) * rangePx) / slowDownFactor);
+  const shiftPx = Number((((0.5 - progress) * rangePx) / slowDownFactor).toFixed(3));
   if (shiftPx !== songPageBgParallaxLastShiftPx) {
     document.body.style.setProperty("--song-page-bg-shift", `${shiftPx}px`);
     songPageBgParallaxLastShiftPx = shiftPx;
@@ -530,7 +629,19 @@ function scheduleSongPageBackgroundParallax() {
   });
 }
 
+function handleSongPageBackgroundParallaxScroll() {
+  if (shouldUseNativeSongPageBackgroundScrollTimeline()) return;
+  scheduleSongPageBackgroundParallax();
+}
+
 function handleSongPageBackgroundParallaxViewportChange() {
+  const isMobile = window.matchMedia("(max-width: 960px)").matches;
+  const viewportWidth = Math.max(1, window.innerWidth || document.documentElement.clientWidth || 1);
+  const nextMobileWidth = Math.max(1, Math.round(viewportWidth || 0));
+  if (isMobile && songPageBgMobileViewportWidth === nextMobileWidth) {
+    scheduleSongPageBackgroundParallax();
+    return;
+  }
   resetSongPageBackgroundParallaxCache();
   scheduleSongPageBackgroundParallax();
 }
@@ -1631,7 +1742,7 @@ window.addEventListener("hashchange", () => {
 });
 
 // Keep parallax synced to scroll/viewport changes.
-window.addEventListener("scroll", scheduleSongPageBackgroundParallax, { passive: true });
+window.addEventListener("scroll", handleSongPageBackgroundParallaxScroll, { passive: true });
 window.addEventListener("resize", handleSongPageBackgroundParallaxViewportChange);
 window.visualViewport?.addEventListener?.("resize", handleSongPageBackgroundParallaxViewportChange);
 window.addEventListener("resize", syncMobileEditorFocusState, { passive: true });
