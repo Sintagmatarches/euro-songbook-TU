@@ -43,6 +43,9 @@ foreach ($dir in $dirs) {
 Push-Location $root
 try {
   npx wrangler pages deploy $bundle --project-name euro-songbook --branch main --commit-dirty=true
+  if ($LASTEXITCODE -ne 0) {
+    throw "wrangler pages deploy failed with exit code $LASTEXITCODE"
+  }
 } finally {
   Pop-Location
 }
