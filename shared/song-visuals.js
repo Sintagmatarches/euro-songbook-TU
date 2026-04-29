@@ -21,8 +21,10 @@ function cleanUrl(value) {
 export function createEmptyVisualBackground() {
   return {
     image_url: "",
+    source_url: "",
     focus_x: 50,
     focus_y: 50,
+    zoom: 1,
   };
 }
 
@@ -46,6 +48,12 @@ export function createEmptyVisualProfile() {
   return {
     default: createEmptyVisualVariant(),
     variants: [],
+    categories: {
+      desktop: { default: createEmptyVisualBackground(), variants: [] },
+      mobile: { default: createEmptyVisualBackground(), variants: [] },
+      flag: { default: createEmptyVisualSymbol(), variants: [] },
+      sticker: { default: createEmptyVisualSymbol(), variants: [] },
+    },
   };
 }
 
@@ -60,8 +68,10 @@ export function normalizeVisualBackground(value = {}) {
   const raw = value && typeof value === "object" ? value : {};
   return {
     image_url: cleanUrl(raw.image_url ?? raw.url ?? raw.image ?? ""),
+    source_url: cleanUrl(raw.source_url ?? raw.sourceUrl ?? raw.source ?? raw.original_url ?? raw.originalUrl ?? ""),
     focus_x: clampVisualFocus(raw.focus_x ?? raw.focusX ?? 50),
     focus_y: clampVisualFocus(raw.focus_y ?? raw.focusY ?? 50),
+    zoom: Math.max(1, Math.min(100, Math.round(Number(raw.zoom ?? raw.zoom_level ?? raw.zoomLevel ?? 1) || 1))),
   };
 }
 
@@ -101,6 +111,136 @@ function visualVariantHasContent(variant = {}) {
   );
 }
 
+function visualCategoryValueHasContent(type, value = {}) {
+  if (type === "symbol") {
+    const symbol = normalizeVisualSymbol(value);
+    return !!(symbol.long || symbol.long_mobile || symbol.square);
+  }
+  return !!normalizeVisualBackground(value).image_url;
+}
+
+function normalizeVisualCategoryRange(value = {}, type = "background") {
+  const raw = value && typeof value === "object" ? value : {};
+  const from = parseVisualYear(raw.from ?? raw.year_from ?? raw.start ?? raw.yearStart);
+  const to = parseVisualYear(raw.to ?? raw.year_to ?? raw.end ?? raw.yearEnd);
+  if (!from || !to || from > to) return null;
+  const sourceValue = raw.value ?? raw.visual ?? raw[type] ?? raw.image ?? raw;
+  const normalizedValue = type === "symbol"
+    ? normalizeVisualSymbol(sourceValue)
+    : normalizeVisualBackground(sourceValue);
+  if (!visualCategoryValueHasContent(type, normalizedValue)) return null;
+  return { from, to, value: normalizedValue };
+}
+
+function normalizeVisualCategory(value = {}, type = "background") {
+  const raw = value && typeof value === "object" ? value : {};
+  const defaultValue = type === "symbol"
+    ? normalizeVisualSymbol(raw.default ?? raw.value ?? {})
+    : normalizeVisualBackground(raw.default ?? raw.value ?? {});
+  const variants = Array.isArray(raw.variants)
+    ? raw.variants.map((row) => normalizeVisualCategoryRange(row, type)).filter(Boolean)
+    : [];
+  variants.sort((a, b) => a.from - b.from || a.to - b.to);
+  return { default: defaultValue, variants };
+}
+
+function visualCategoryHasContent(category = {}, type = "background") {
+  const normalized = normalizeVisualCategory(category, type);
+  return (
+    visualCategoryValueHasContent(type, normalized.default)
+    || normalized.variants.some((row) => visualCategoryValueHasContent(type, row.value))
+  );
+}
+
+function visualCategoriesHaveContent(categories = {}) {
+  const raw = categories && typeof categories === "object" ? categories : {};
+  return (
+    visualCategoryHasContent(raw.desktop || raw.desktop_background || raw.desktopBackground || {})
+    || visualCategoryHasContent(raw.mobile || raw.phone_background || raw.mobileBackground || {})
+    || visualCategoryHasContent(raw.flag || raw.preview_flag || raw.previewFlag || {}, "symbol")
+    || visualCategoryHasContent(raw.sticker || raw.preview_sticker || raw.previewSticker || {}, "symbol")
+  );
+}
+
+function categoryFromLegacyProfile(profile = {}, key = "desktop") {
+  const normalized = profile && typeof profile === "object" ? profile : createEmptyVisualProfile();
+  if (key === "desktop") {
+    return normalizeVisualCategory({
+      default: normalized.default?.desktop || {},
+      variants: (normalized.variants || []).map((row) => ({ from: row.from, to: row.to, value: row.desktop || {} })),
+    });
+  }
+  if (key === "mobile") {
+    return normalizeVisualCategory({
+      default: normalized.default?.mobile || {},
+      variants: (normalized.variants || []).map((row) => ({ from: row.from, to: row.to, value: row.mobile || {} })),
+    });
+  }
+  if (key === "flag") {
+    return normalizeVisualCategory({
+      default: normalized.default?.symbol || {},
+      variants: (normalized.variants || []).map((row) => ({ from: row.from, to: row.to, value: row.symbol || {} })),
+    }, "symbol");
+  }
+  return normalizeVisualCategory({
+    default: {
+      square: normalizeVisualSymbol(normalized.default?.symbol || {}).square,
+    },
+    variants: (normalized.variants || []).map((row) => ({
+      from: row.from,
+      to: row.to,
+      value: { square: normalizeVisualSymbol(row.symbol || {}).square },
+    })),
+  }, "symbol");
+}
+
+function buildLegacyProfileFromCategories(categories = {}) {
+  const desktop = normalizeVisualCategory(categories.desktop || {});
+  const mobile = normalizeVisualCategory(categories.mobile || {});
+  const flag = normalizeVisualCategory(categories.flag || {}, "symbol");
+  const sticker = normalizeVisualCategory(categories.sticker || {}, "symbol");
+  const rangeMap = new Map();
+  const ensureRange = (from, to) => {
+    const key = `${from}:${to}`;
+    if (!rangeMap.has(key)) {
+      rangeMap.set(key, {
+        from,
+        to,
+        desktop: createEmptyVisualBackground(),
+        mobile: createEmptyVisualBackground(),
+        symbol: createEmptyVisualSymbol(),
+      });
+    }
+    return rangeMap.get(key);
+  };
+  desktop.variants.forEach((row) => { ensureRange(row.from, row.to).desktop = normalizeVisualBackground(row.value); });
+  mobile.variants.forEach((row) => { ensureRange(row.from, row.to).mobile = normalizeVisualBackground(row.value); });
+  flag.variants.forEach((row) => {
+    const range = ensureRange(row.from, row.to);
+    const symbol = normalizeVisualSymbol(row.value);
+    range.symbol = normalizeVisualSymbol({ ...range.symbol, long: symbol.long, long_mobile: symbol.long_mobile });
+  });
+  sticker.variants.forEach((row) => {
+    const range = ensureRange(row.from, row.to);
+    const symbol = normalizeVisualSymbol(row.value);
+    range.symbol = normalizeVisualSymbol({ ...range.symbol, square: symbol.square });
+  });
+  const flagDefault = normalizeVisualSymbol(flag.default);
+  const stickerDefault = normalizeVisualSymbol(sticker.default);
+  return {
+    default: {
+      desktop: normalizeVisualBackground(desktop.default),
+      mobile: normalizeVisualBackground(mobile.default),
+      symbol: normalizeVisualSymbol({
+        long: flagDefault.long,
+        long_mobile: flagDefault.long_mobile,
+        square: stickerDefault.square || flagDefault.square,
+      }),
+    },
+    variants: Array.from(rangeMap.values()).filter(visualVariantHasContent).sort((a, b) => a.from - b.from || a.to - b.to),
+  };
+}
+
 export function normalizeVisualRange(value = {}) {
   const raw = value && typeof value === "object" ? value : {};
   const from = parseVisualYear(raw.from ?? raw.year_from ?? raw.start ?? raw.yearStart);
@@ -129,7 +269,7 @@ export function normalizeVisualProfile(value = {}) {
     }
   }
   if (!raw || typeof raw !== "object") return createEmptyVisualProfile();
-  const profile = {
+  const legacyProfile = {
     default: {
       desktop: normalizeVisualBackground(raw?.default?.desktop || {}),
       mobile: normalizeVisualBackground(raw?.default?.mobile || {}),
@@ -139,7 +279,25 @@ export function normalizeVisualProfile(value = {}) {
       ? raw.variants.map((row) => normalizeVisualRange(row)).filter(Boolean)
       : [],
   };
-  profile.variants.sort((a, b) => a.from - b.from || a.to - b.to);
+  legacyProfile.variants.sort((a, b) => a.from - b.from || a.to - b.to);
+  const hasCategories = raw.categories && typeof raw.categories === "object" && visualCategoriesHaveContent(raw.categories);
+  const categories = hasCategories
+    ? {
+      desktop: normalizeVisualCategory(raw.categories.desktop || raw.categories.desktop_background || raw.categories.desktopBackground || {}),
+      mobile: normalizeVisualCategory(raw.categories.mobile || raw.categories.phone_background || raw.categories.mobileBackground || {}),
+      flag: normalizeVisualCategory(raw.categories.flag || raw.categories.preview_flag || raw.categories.previewFlag || {}, "symbol"),
+      sticker: normalizeVisualCategory(raw.categories.sticker || raw.categories.preview_sticker || raw.categories.previewSticker || {}, "symbol"),
+    }
+    : {
+      desktop: categoryFromLegacyProfile(legacyProfile, "desktop"),
+      mobile: categoryFromLegacyProfile(legacyProfile, "mobile"),
+      flag: categoryFromLegacyProfile(legacyProfile, "flag"),
+      sticker: categoryFromLegacyProfile(legacyProfile, "sticker"),
+    };
+  const profile = {
+    ...buildLegacyProfileFromCategories(categories),
+    categories,
+  };
   return profile;
 }
 
@@ -150,99 +308,75 @@ export function hasVisualProfileContent(profile = {}) {
 
 export function validateVisualProfileRanges(profile = {}) {
   const normalized = normalizeVisualProfile(profile);
-  for (let index = 0; index < normalized.variants.length; index += 1) {
-    const current = normalized.variants[index];
-    const previous = normalized.variants[index - 1];
-    if (previous && current.from <= previous.to) {
-      return {
-        ok: false,
-        error: `variants[${index}] overlaps variants[${index - 1}]`,
-      };
+  const categoryEntries = Object.entries(normalized.categories || {});
+  for (const [categoryKey, category] of categoryEntries) {
+    const variants = Array.isArray(category?.variants) ? category.variants : [];
+    for (let index = 0; index < variants.length; index += 1) {
+      const current = variants[index];
+      const previous = variants[index - 1];
+      if (previous && current.from <= previous.to) {
+        return {
+          ok: false,
+          error: `${categoryKey}.variants[${index}] overlaps ${categoryKey}.variants[${index - 1}]`,
+        };
+      }
     }
   }
   return { ok: true };
 }
 
-export function serializeVisualProfile(profile = {}) {
+export function compactVisualProfile(profile = {}, options = {}) {
   const normalized = normalizeVisualProfile(profile);
-  return JSON.stringify({
-    default: normalized.default,
-    variants: normalized.variants,
-  });
+  const compact = {
+    categories: normalized.categories,
+  };
+  if (options?.includeLegacyDefault === true) {
+    compact.default = normalized.default;
+  }
+  if (options?.includeLegacyVariants === true) {
+    compact.variants = normalized.variants;
+  }
+  return compact;
+}
+
+export function serializeVisualProfile(profile = {}, options = {}) {
+  return JSON.stringify(compactVisualProfile(profile, options));
 }
 
 export function extractBackgroundVisualProfile(profile = {}) {
   const normalized = normalizeVisualProfile(profile);
   return normalizeVisualProfile({
-    default: {
-      desktop: normalized.default?.desktop || {},
-      mobile: normalized.default?.mobile || {},
-      symbol: createEmptyVisualSymbol(),
+    categories: {
+      desktop: normalized.categories?.desktop || {},
+      mobile: normalized.categories?.mobile || {},
+      flag: { default: createEmptyVisualSymbol(), variants: [] },
+      sticker: { default: createEmptyVisualSymbol(), variants: [] },
     },
-    variants: normalized.variants.map((variant) => ({
-      from: variant.from,
-      to: variant.to,
-      desktop: variant.desktop || {},
-      mobile: variant.mobile || {},
-      symbol: createEmptyVisualSymbol(),
-    })),
   });
 }
 
 export function extractFlagVisualProfile(profile = {}) {
   const normalized = normalizeVisualProfile(profile);
   return normalizeVisualProfile({
-    default: {
-      desktop: createEmptyVisualBackground(),
-      mobile: createEmptyVisualBackground(),
-      symbol: normalized.default?.symbol || {},
+    categories: {
+      desktop: { default: createEmptyVisualBackground(), variants: [] },
+      mobile: { default: createEmptyVisualBackground(), variants: [] },
+      flag: normalized.categories?.flag || {},
+      sticker: normalized.categories?.sticker || {},
     },
-    variants: normalized.variants.map((variant) => ({
-      from: variant.from,
-      to: variant.to,
-      desktop: createEmptyVisualBackground(),
-      mobile: createEmptyVisualBackground(),
-      symbol: variant.symbol || {},
-    })),
   });
 }
 
 export function mergeVisualProfiles(backgroundProfile = {}, flagProfile = {}) {
   const background = normalizeVisualProfile(backgroundProfile);
   const flag = normalizeVisualProfile(flagProfile);
-  const rangeMap = new Map();
-
-  const ensureRange = (from, to) => {
-    const key = `${from}:${to}`;
-    if (!rangeMap.has(key)) {
-      rangeMap.set(key, {
-        from,
-        to,
-        desktop: createEmptyVisualBackground(),
-        mobile: createEmptyVisualBackground(),
-        symbol: createEmptyVisualSymbol(),
-      });
-    }
-    return rangeMap.get(key);
-  };
-
-  background.variants.forEach((variant) => {
-    const row = ensureRange(variant.from, variant.to);
-    row.desktop = normalizeVisualBackground(variant.desktop || {});
-    row.mobile = normalizeVisualBackground(variant.mobile || {});
-  });
-  flag.variants.forEach((variant) => {
-    const row = ensureRange(variant.from, variant.to);
-    row.symbol = normalizeVisualSymbol(variant.symbol || {});
-  });
-
   return normalizeVisualProfile({
-    default: {
-      desktop: background.default?.desktop || {},
-      mobile: background.default?.mobile || {},
-      symbol: flag.default?.symbol || {},
+    categories: {
+      desktop: background.categories?.desktop || {},
+      mobile: background.categories?.mobile || {},
+      flag: flag.categories?.flag || {},
+      sticker: flag.categories?.sticker || {},
     },
-    variants: Array.from(rangeMap.values()),
   });
 }
 
@@ -287,17 +421,34 @@ export function resolveVisualVariant(profile = {}, options = {}) {
   return fallbackVariant;
 }
 
+function resolveVisualCategoryValue(profile = {}, categoryKey = "desktop", type = "background", options = {}) {
+  const normalized = normalizeVisualProfile(profile);
+  const category = normalized.categories?.[categoryKey] || normalizeVisualCategory({}, type);
+  const fallback = type === "symbol"
+    ? normalizeVisualSymbol(category.default || {})
+    : normalizeVisualBackground(category.default || {});
+  const year = parseVisualYear(options.year);
+  if (year) {
+    const matched = (Array.isArray(category.variants) ? category.variants : [])
+      .find((variant) => variant.from <= year && year <= variant.to);
+    if (matched) {
+      if (type === "symbol") return mergeVisualSymbolWithFallback(matched.value, fallback);
+      return mergeVisualBackgroundWithFallback(matched.value, fallback);
+    }
+  }
+  return fallback;
+}
+
 export function resolveVisualBackground(profile = {}, options = {}) {
-  const variant = resolveVisualVariant(profile, options);
   const device = options.device === "mobile" ? "mobile" : "desktop";
-  return normalizeVisualBackground(variant?.[device] || {});
+  return normalizeVisualBackground(resolveVisualCategoryValue(profile, device, "background", options));
 }
 
 export function resolveVisualSymbolUrl(profile = {}, options = {}) {
-  const variant = resolveVisualVariant(profile, options);
-  const symbol = normalizeVisualSymbol(variant?.symbol || {});
   const kind = options.kind === "square" ? "square" : "long";
   const device = options.device === "mobile" ? "mobile" : "desktop";
+  const categoryKey = kind === "square" ? "sticker" : "flag";
+  const symbol = normalizeVisualSymbol(resolveVisualCategoryValue(profile, categoryKey, "symbol", options));
   if (kind === "square") return cleanUrl(symbol.square || symbol.long || symbol.long_mobile || "");
   if (device === "mobile") return cleanUrl(symbol.long_mobile || symbol.long || symbol.square || "");
   return cleanUrl(symbol.long || symbol.long_mobile || symbol.square || "");

@@ -189,6 +189,23 @@ CREATE TABLE IF NOT EXISTS draft_snapshots (
   created_at TEXT NOT NULL
 );
 
+CREATE TABLE IF NOT EXISTS entity_nodes (
+  id TEXT PRIMARY KEY,
+  name TEXT NOT NULL UNIQUE,
+  kind TEXT NOT NULL,
+  is_virtual INTEGER NOT NULL DEFAULT 0
+);
+
+CREATE TABLE IF NOT EXISTS entity_links (
+  id TEXT PRIMARY KEY,
+  child_name TEXT NOT NULL,
+  parent_name TEXT NOT NULL,
+  link_type TEXT NOT NULL CHECK(link_type IN ('по_стране','в_составе','автономия_в_составе','зависимый_режим','категория','контекст')),
+  sort_order INTEGER NOT NULL DEFAULT 0,
+  CHECK(child_name <> parent_name),
+  UNIQUE(child_name, parent_name, link_type)
+);
+
 -- helper index
 CREATE INDEX IF NOT EXISTS idx_songs_status_title ON songs(status, title);
 CREATE INDEX IF NOT EXISTS idx_songs_lang ON songs(lang);
@@ -219,3 +236,7 @@ CREATE UNIQUE INDEX IF NOT EXISTS idx_draft_ops_seq ON draft_ops(draft_id, seq);
 CREATE INDEX IF NOT EXISTS idx_draft_ops_created ON draft_ops(draft_id, created_at DESC);
 CREATE INDEX IF NOT EXISTS idx_draft_snapshots_version ON draft_snapshots(draft_id, version DESC);
 CREATE UNIQUE INDEX IF NOT EXISTS idx_users_nickname_nocase ON users(lower(trim(nickname)));
+CREATE INDEX IF NOT EXISTS idx_entity_nodes_name ON entity_nodes(name);
+CREATE INDEX IF NOT EXISTS idx_entity_links_child ON entity_links(child_name, sort_order);
+CREATE INDEX IF NOT EXISTS idx_entity_links_parent ON entity_links(parent_name, sort_order);
+CREATE INDEX IF NOT EXISTS idx_entity_links_type ON entity_links(link_type, sort_order);

@@ -18,6 +18,7 @@ import {
 
 const CHUNK_MARKER_PREFIX = "__chunked__:country_background:";
 const CHUNK_SIZE = 350_000;
+const MAX_BACKGROUND_DATA_URL_LENGTH = 420_000;
 
 function chunkMarker(field) {
   return `${CHUNK_MARKER_PREFIX}${field}`;
@@ -96,6 +97,11 @@ function normalizeImageValue(value) {
   } catch {
     return null;
   }
+}
+
+function isOversizedDataImage(value, maxLength = MAX_BACKGROUND_DATA_URL_LENGTH) {
+  const raw = String(value || "").trim();
+  return raw.startsWith("data:image/") && raw.length > maxLength;
 }
 
 function normalizeFlagConfigEntry(entry = {}) {
@@ -189,10 +195,14 @@ function sanitizeVisualBackground(entry = {}) {
   const normalized = normalizeVisualBackground(entry);
   const imageUrl = normalizeImageValue(normalized.image_url);
   if (imageUrl === null) return null;
+  if (isOversizedDataImage(imageUrl)) return null;
+  const sourceUrl = normalizeImageValue(normalized.source_url);
   return {
     image_url: imageUrl || "",
+    source_url: sourceUrl && !isOversizedDataImage(sourceUrl, 80_000) ? sourceUrl : "",
     focus_x: clampFocus(normalized.focus_x),
     focus_y: clampFocus(normalized.focus_y),
+    zoom: Math.max(1, Math.min(100, Math.round(Number(normalized.zoom || 1) || 1))),
   };
 }
 
@@ -221,9 +231,39 @@ function sanitizeVisualProfile(profileInput = {}) {
       symbol: sanitizeVisualSymbol(profile?.default?.symbol || {}),
     },
     variants: [],
+    categories: {
+      desktop: { default: null, variants: [] },
+      mobile: { default: null, variants: [] },
+      flag: { default: null, variants: [] },
+      sticker: { default: null, variants: [] },
+    },
   };
   if (!next.default.desktop || !next.default.mobile || !next.default.symbol) {
     return { ok: false, error: "Invalid visual profile values" };
+  }
+
+  const categoryDefs = [
+    ["desktop", sanitizeVisualBackground],
+    ["mobile", sanitizeVisualBackground],
+    ["flag", sanitizeVisualSymbol],
+    ["sticker", sanitizeVisualSymbol],
+  ];
+  for (const [categoryKey, sanitizer] of categoryDefs) {
+    const category = profile.categories?.[categoryKey] || {};
+    const defaultValue = sanitizer(category.default || {});
+    if (!defaultValue) return { ok: false, error: `Invalid visual profile values in ${categoryKey}.default` };
+    next.categories[categoryKey].default = defaultValue;
+    const variants = Array.isArray(category.variants) ? category.variants : [];
+    for (let index = 0; index < variants.length; index += 1) {
+      const row = variants[index];
+      const value = sanitizer(row?.value || {});
+      if (!value) return { ok: false, error: `Invalid visual profile values in ${categoryKey}.variants[${index}]` };
+      next.categories[categoryKey].variants.push({
+        from: row.from,
+        to: row.to,
+        value,
+      });
+    }
   }
 
   for (let index = 0; index < profile.variants.length; index += 1) {
@@ -401,8 +441,8 @@ export async function onRequestPut({ env, request }) {
 
   const backgroundProfile = extractBackgroundVisualProfile(profile);
   const flagProfile = extractFlagVisualProfile(profile);
-  const serializedBackgroundProfile = serializeVisualProfile(backgroundProfile);
-  const serializedFlagProfile = serializeVisualProfile(flagProfile);
+  const serializedBackgroundProfile = "";
+  const serializedFlagProfile = "";
   const serializedProfile = serializeVisualProfile(profile);
   const activeDefault = resolveVisualVariant(profile, {});
   const defaultDesktopImageUrl = String(activeDefault?.desktop?.image_url || "").trim();

@@ -1,4 +1,4 @@
-const CACHE_VERSION = "v54";
+const CACHE_VERSION = "v55";
 const CACHE_NAME = `songbook-app-${CACHE_VERSION}`;
 
 function scopeUrl(path) {

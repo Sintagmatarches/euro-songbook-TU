@@ -18,6 +18,12 @@ import {
   getHistoricalAffiliationOptions,
   resolveHistoricalAffiliationSelection,
 } from "../shared/historical-affiliations.js";
+import {
+  buildCountryAncestorMap,
+  buildCountryDescendantMap,
+  getEntityCountryNameIndex,
+  getEntityLinks,
+} from "../shared/entity-graph.js";
 import { getHistoricalCardVisuals } from "../shared/historical-card-visuals.js";
 import { ADMIN_PERMISSION_VALUES } from "../shared/admin-permissions.js";
 import {
@@ -54,6 +60,34 @@ import {
 import { getPublicSongYear } from "../shared/song-year.js";
 
 const ADMIN_PERMISSIONS = ADMIN_PERMISSION_VALUES;
+const ENTITY_LINKS = getEntityLinks();
+const ENTITY_COUNTRY_ANCESTORS = buildCountryAncestorMap(ENTITY_LINKS);
+const ENTITY_COUNTRY_DESCENDANTS = buildCountryDescendantMap(ENTITY_LINKS);
+const ENTITY_COUNTRY_NAME_INDEX = getEntityCountryNameIndex(ENTITY_LINKS);
+const ENTITY_NAME_TO_COUNTRY = ENTITY_COUNTRY_NAME_INDEX.nameToCountry;
+const ENTITY_COUNTRY_TO_NAMES = ENTITY_COUNTRY_NAME_INDEX.countryToNames;
+const ENTITY_LINK_TYPE_COUNTRY = "\u043f\u043e_\u0441\u0442\u0440\u0430\u043d\u0435";
+const ENTITY_LINK_TYPE_PART_OF = "\u0432_\u0441\u043e\u0441\u0442\u0430\u0432\u0435";
+const ENTITY_LINK_TYPE_AUTONOMY = "\u0430\u0432\u0442\u043e\u043d\u043e\u043c\u0438\u044f_\u0432_\u0441\u043e\u0441\u0442\u0430\u0432\u0435";
+const ENTITY_LINK_TYPE_DEPENDENT = "\u0437\u0430\u0432\u0438\u0441\u0438\u043c\u044b\u0439_\u0440\u0435\u0436\u0438\u043c";
+const ENTITY_LINK_TYPE_CATEGORY = "\u043a\u0430\u0442\u0435\u0433\u043e\u0440\u0438\u044f";
+const ENTITY_LINK_TYPE_CONTEXT = "\u043a\u043e\u043d\u0442\u0435\u043a\u0441\u0442";
+const ENTITY_TOP_CONTAINER_NAMES = Object.freeze([
+  "\u0423\u043a\u0440\u0430\u0438\u043d\u0430",
+  "\u0420\u043e\u0441\u0441\u0438\u044f",
+  "\u0421\u0421\u0421\u0420",
+  "\u0420\u043e\u0441\u0441\u0438\u0439\u0441\u043a\u0430\u044f \u0438\u043c\u043f\u0435\u0440\u0438\u044f",
+  "\u0413\u0435\u0440\u043c\u0430\u043d\u0438\u044f",
+  "\u0424\u0440\u0430\u043d\u0446\u0438\u044f",
+  "\u041f\u043e\u043b\u044c\u0448\u0430",
+  "\u042e\u0433\u043e\u0441\u043b\u0430\u0432\u0438\u044f",
+  "\u0427\u0435\u0445\u043e\u0441\u043b\u043e\u0432\u0430\u043a\u0438\u044f",
+  "\u0410\u0432\u0441\u0442\u0440\u043e-\u0412\u0435\u043d\u0433\u0440\u0438\u044f",
+  "\u0410\u0432\u0441\u0442\u0440\u0438\u044f",
+  "\u0412\u0435\u043d\u0433\u0440\u0438\u044f",
+  "\u0421\u0435\u0440\u0431\u0438\u044f",
+  "\u0425\u043e\u0440\u0432\u0430\u0442\u0438\u044f",
+]);
 
 const PERMISSION_LABELS = {
   "songs.create": { ru: "Создание песен", en: "Create songs", et: "Laulude loomine" },
@@ -441,6 +475,26 @@ function formatCountry(value) {
   return getCatalogLabel("country", value, uiLocale());
 }
 
+function entityRollupCountriesFor(country) {
+  const normalized = normalizeSongCountry(country || "");
+  if (!normalized) return [];
+  return Array.from(ENTITY_COUNTRY_ANCESTORS.get(normalized) || [normalized]);
+}
+
+function entityDescendantCountriesFor(country) {
+  const normalized = normalizeSongCountry(country || "");
+  if (!normalized) return [];
+  return Array.from(ENTITY_COUNTRY_DESCENDANTS.get(normalized) || [normalized]);
+}
+
+function entityPrimaryNameForCountry(country) {
+  const normalized = normalizeSongCountry(country || "");
+  const names = normalized ? Array.from(ENTITY_COUNTRY_TO_NAMES.get(normalized) || []) : [];
+  if (!names.length) return "";
+  const labelName = String(formatCountry(normalized) || "").split(/\s[-–—]\s/)[0].trim();
+  return names.find((name) => name === labelName) || names.find((name) => !/\d/.test(name)) || names[0];
+}
+
 function formatPeriod(value) {
   return getCatalogLabel("period", value, uiLocale());
 }
@@ -630,9 +684,10 @@ const COUNTRY_BACKGROUND_VIEWPORTS = {
 };
 
 const COUNTRY_BACKGROUND_STANDARDS = {
-  // Keep stored assets in the same base ratio as runtime viewports.
-  desktop: { width: 1600, height: 900 }, // 16:9
-  mobile: { width: 900, height: 2700 }, // tall phone background (9:27)
+  // Keep stored assets in the same base ratio as runtime viewports, but cap pixels
+  // so uploaded camera/AI images do not become multi-megabyte data URLs in D1.
+  desktop: { width: 1280, height: 720, maxDataUrlLength: 260_000 }, // 16:9
+  mobile: { width: 720, height: 2160, maxDataUrlLength: 320_000 }, // tall phone background (9:27)
 };
 
 const FLAG_CARD_STANDARDS = {
@@ -1440,6 +1495,7 @@ function catalogHashForSongFilter(filters = {}) {
       q: "",
       lang: "",
       country: "",
+      country_exact: "",
       period: "",
       region: "",
       event: "",
@@ -1456,7 +1512,7 @@ function catalogHashForSongFilter(filters = {}) {
       page: "1",
       ...filters,
     },
-    ["q", "lang", "country", "period", "region", "event", "theme", "words_author", "music_author", "verified", "recent", "multi_versions", "performer", "year", "adv", "searched", "page"],
+    ["q", "lang", "country", "country_exact", "period", "region", "event", "theme", "words_author", "music_author", "verified", "recent", "multi_versions", "performer", "year", "adv", "searched", "page"],
   );
 }
 
@@ -1475,6 +1531,45 @@ function hasHomeSearchIntent(params = {}) {
   const recent = String(params.recent || "").trim() === "1";
   const multiVersions = String(params.multi_versions || "").trim() === "1";
   return !!(query || country || period || region || event || theme || wordsAuthor || musicAuthor || performer || year || verified || recent || multiVersions);
+}
+
+function shouldFetchHomeSongResults(params = {}) {
+  const searched = String(params.searched || "").trim() === "1";
+  const query = String(params.q || "").trim();
+  const entity = String(params.entity || "").trim();
+  const country = normalizeSongCountry(params.country || "") || String(params.country || "").trim();
+  const period = normalizeSongPeriod(params.period || "") || String(params.period || "").trim();
+  const region = String(params.region || "").trim();
+  const event = String(params.event || "").trim();
+  const theme = String(params.theme || "").trim();
+  const wordsAuthor = String(params.words_author || "").trim();
+  const musicAuthor = String(params.music_author || "").trim();
+  const performer = String(params.performer || "").trim();
+  const year = String(params.year || "").trim();
+  const verified = String(params.verified || "").trim() === "1";
+  const recent = String(params.recent || "").trim() === "1";
+  const multiVersions = String(params.multi_versions || "").trim() === "1";
+  const hasExplicitSongFilter = !!(searched || query || country || period || region || event || theme || wordsAuthor || musicAuthor || performer || year || verified || recent || multiVersions);
+  return hasExplicitSongFilter || (!!entity && !entityHasNavigationChildren(entity));
+}
+
+function emptyHomeSongsResponse(params = {}) {
+  return {
+    items: [],
+    total: 0,
+    page: Math.max(1, Number(params.page || 1) || 1),
+    pages: 1,
+    search_mode: "browse",
+    suggestions: [],
+    suggestions_total: 0,
+    did_you_mean: [],
+    bucket_counts: { exact_title: 0, exact: 0, fuzzy: 0, partial: 0, text: 0 },
+    query_analysis: {
+      normalized: "",
+      corrected_tokens: [],
+      literal_hits: { phrase: 0, tokens: 0, prefix: 0, fuzzy: 0 },
+    },
+  };
 }
 
 function collectHomeFilters() {
@@ -1807,8 +1902,496 @@ function renderHomeCatalogCard(item = {}) {
       ${style ? `style="${esc(style)}"` : ""}
     >
       ${renderHomeCountryCardLabel(String(item?.label || item?.title || "").trim())}
+      ${Array.isArray(item?.previewLines) && item.previewLines.length ? `<span class="home-country-card-sub home-country-card-preview">${esc(item.previewLines.filter(Boolean).join("\n"))}</span>` : ""}
       ${item?.hideCount ? "" : `<span class="home-country-card-count">${esc(homeCountrySongsCountLabel(item?.count))}</span>`}
     </a>
+  `;
+}
+
+function homeOpenNavigationLabel() {
+  if (uiLocale() === "ru") return "\u041e\u0442\u043a\u0440\u044b\u0442\u044c \u043d\u0430\u0432\u0438\u0433\u0430\u0446\u0438\u044e";
+  if (uiLocale() === "uk") return "\u0412\u0456\u0434\u043a\u0440\u0438\u0442\u0438 \u043d\u0430\u0432\u0456\u0433\u0430\u0446\u0456\u044e";
+  if (uiLocale() === "et") return "Ava navigeerimine";
+  return "Open navigation";
+}
+
+function homeEntityNavSectionTitle(sectionKey = "") {
+  if (sectionKey === "countries") {
+    if (uiLocale() === "ru") return "\u041f\u043e \u0441\u0442\u0440\u0430\u043d\u0430\u043c";
+    if (uiLocale() === "uk") return "\u0417\u0430 \u043a\u0440\u0430\u0457\u043d\u0430\u043c\u0438";
+    if (uiLocale() === "et") return "Riikide kaupa";
+    return "By country";
+  }
+  if (sectionKey === "containers") {
+    if (uiLocale() === "ru") return "\u041f\u043e \u043d\u0430\u0434\u0441\u0443\u0449\u043d\u043e\u0441\u0442\u044f\u043c";
+    if (uiLocale() === "uk") return "\u0417\u0430 \u043d\u0430\u0434\u0441\u0443\u0442\u043d\u043e\u0441\u0442\u044f\u043c\u0438";
+    if (uiLocale() === "et") return "Ajalooliste tervikute kaupa";
+    return "By larger entity";
+  }
+  if (uiLocale() === "ru") return "\u0414\u0432\u0438\u0436\u0435\u043d\u0438\u044f \u0438 \u043f\u0440\u043e\u0447\u0435\u0435";
+  if (uiLocale() === "uk") return "\u0420\u0443\u0445\u0438 \u0442\u0430 \u0456\u043d\u0448\u0435";
+  if (uiLocale() === "et") return "Liikumised ja muu";
+  return "Movements and other";
+}
+
+function homeEntityNavGroupHint(sectionKey = "", childCount = 0) {
+  const countText = formatUiInteger(childCount);
+  if (sectionKey === "countries") {
+    if (uiLocale() === "ru") return `${countText} \u0441\u0443\u0449\u043d\u043e\u0441\u0442\u0435\u0439`;
+    if (uiLocale() === "uk") return `${countText} \u0441\u0443\u0442\u043d\u043e\u0441\u0442\u0435\u0439`;
+    if (uiLocale() === "et") return `${countText} üksust`;
+    return `${countText} entities`;
+  }
+  if (sectionKey === "containers") {
+    if (uiLocale() === "ru") return `${countText} \u0441\u0432\u044f\u0437\u0430\u043d\u043d\u044b\u0445 \u0441\u0443\u0449\u043d\u043e\u0441\u0442\u0435\u0439`;
+    if (uiLocale() === "uk") return `${countText} \u043f\u043e\u0432'\u044f\u0437\u0430\u043d\u0438\u0445 \u0441\u0443\u0442\u043d\u043e\u0441\u0442\u0435\u0439`;
+    if (uiLocale() === "et") return `${countText} seotud üksust`;
+    return `${countText} linked entities`;
+  }
+  if (uiLocale() === "ru") return `${countText} \u0440\u0430\u0437\u0434\u0435\u043b\u043e\u0432`;
+  if (uiLocale() === "uk") return `${countText} \u0440\u043e\u0437\u0434\u0456\u043b\u0456\u0432`;
+  if (uiLocale() === "et") return `${countText} jaotist`;
+  return `${countText} sections`;
+}
+
+function homeEntityOpenLabel() {
+  if (uiLocale() === "ru") return "\u041e\u0442\u043a\u0440\u044b\u0442\u044c";
+  if (uiLocale() === "uk") return "\u0412\u0456\u0434\u043a\u0440\u0438\u0442\u0438";
+  if (uiLocale() === "et") return "Ava";
+  return "Open";
+}
+
+function homeEntityNameLabel(entityName = "") {
+  return String(entityName || "").trim();
+}
+
+function homeEntityCountries(entityName = "", visited = new Set()) {
+  const safeName = String(entityName || "").trim();
+  if (!safeName || visited.has(safeName)) return new Set();
+  visited.add(safeName);
+  const country = ENTITY_NAME_TO_COUNTRY.get(safeName);
+  if (country) return new Set(entityDescendantCountriesFor(country));
+  const out = new Set();
+  for (const link of ENTITY_LINKS) {
+    if (link.parent_name !== safeName) continue;
+    for (const childCountry of homeEntityCountries(link.child_name, new Set(visited))) {
+      out.add(childCountry);
+    }
+  }
+  return out;
+}
+
+function homeEntityCountForCountries(countries, directCounts) {
+  if (!(directCounts instanceof Map)) return 0;
+  let total = 0;
+  for (const country of countries || []) {
+    total += Math.max(0, Number(directCounts.get(country) || 0));
+  }
+  return total;
+}
+
+function homeEntityCount(entityName = "", directCounts) {
+  return homeEntityCountForCountries(homeEntityCountries(entityName), directCounts);
+}
+
+function homeEntityOwnCountry(entityName = "") {
+  return ENTITY_NAME_TO_COUNTRY.get(String(entityName || "").trim()) || "";
+}
+
+function homeEntityOwnCount(entityName = "", directCounts) {
+  const country = homeEntityOwnCountry(entityName);
+  if (!country || !(directCounts instanceof Map)) return 0;
+  return Math.max(0, Number(directCounts.get(country) || 0));
+}
+
+function homeEntityDirectSongsHref(entityName = "", lang = "", path = []) {
+  const country = homeEntityOwnCountry(entityName);
+  if (!country) return "";
+  return catalogHashForEntity(entityName, {
+    lang,
+    path,
+    country,
+    country_exact: "1",
+    searched: "1",
+    adv: "0",
+    page: "1",
+  });
+}
+
+function compareEntityNavigationItems(a = {}, b = {}, priority = new Map()) {
+  return Number(b.count || 0) - Number(a.count || 0)
+    || (priority.get(a.key || a.name) ?? 999) - (priority.get(b.key || b.name) ?? 999)
+    || Number(a.sortOrder || 0) - Number(b.sortOrder || 0)
+    || String(a.label || "").localeCompare(String(b.label || ""), uiLocale() === "ru" ? "ru" : undefined);
+}
+
+function homeEntityHref(entityName = "", lang = "") {
+  const country = ENTITY_NAME_TO_COUNTRY.get(String(entityName || "").trim());
+  if (!country) return "";
+  return catalogHashForSongFilter({ lang, country, searched: "0", adv: "0", page: "1" });
+}
+
+function uniqueEntityLinksByParent(linkTypes) {
+  const allowed = new Set(linkTypes || []);
+  const byParent = new Map();
+  for (const link of ENTITY_LINKS) {
+    if (!allowed.has(link.link_type) || !link.child_name || !link.parent_name) continue;
+    if (!byParent.has(link.parent_name)) byParent.set(link.parent_name, []);
+    byParent.get(link.parent_name).push(link);
+  }
+  for (const links of byParent.values()) {
+    links.sort((a, b) => Number(a.sort_order || 0) - Number(b.sort_order || 0)
+      || homeEntityNameLabel(a.child_name).localeCompare(homeEntityNameLabel(b.child_name), uiLocale() === "ru" ? "ru" : undefined));
+  }
+  return byParent;
+}
+
+function buildHomeEntitySection(sectionKey, linkTypes, directCounts, lang, coveredCountries = new Set()) {
+  const byParent = uniqueEntityLinksByParent(linkTypes);
+  const groups = [];
+  for (const [parentName, links] of byParent.entries()) {
+    const childSeen = new Set();
+    const children = [];
+    const parentCountry = ENTITY_NAME_TO_COUNTRY.get(parentName);
+    if (parentCountry && homeEntityCount(parentName, directCounts) > 0) {
+      childSeen.add(parentName);
+      homeEntityCountries(parentName).forEach((country) => coveredCountries.add(country));
+      children.push({
+        name: parentName,
+        label: homeEntityNameLabel(parentName),
+        href: homeEntityHref(parentName, lang),
+        count: homeEntityCount(parentName, directCounts),
+        sortOrder: -1,
+      });
+    }
+    for (const link of links) {
+      if (childSeen.has(link.child_name)) continue;
+      const count = homeEntityCount(link.child_name, directCounts);
+      if (count <= 0) continue;
+      childSeen.add(link.child_name);
+      const childCountries = homeEntityCountries(link.child_name);
+      childCountries.forEach((country) => coveredCountries.add(country));
+      children.push({
+        name: link.child_name,
+        label: homeEntityNameLabel(link.child_name),
+        href: homeEntityHref(link.child_name, lang),
+        count,
+        sortOrder: Number(link.sort_order || 0),
+      });
+    }
+    if (!children.length) continue;
+    const groupCountries = homeEntityCountries(parentName);
+    children.forEach((child) => homeEntityCountries(child.name).forEach((country) => groupCountries.add(country)));
+    const groupCount = homeEntityCountForCountries(groupCountries, directCounts);
+    if (groupCount <= 0) continue;
+    groups.push({
+      name: parentName,
+      label: homeEntityNameLabel(parentName),
+      count: groupCount,
+      childCount: children.length,
+      href: homeEntityHref(parentName, lang),
+      children: children.sort((a, b) => Number(b.count || 0) - Number(a.count || 0)
+        || Number(a.sortOrder || 0) - Number(b.sortOrder || 0)
+        || String(a.label || "").localeCompare(String(b.label || ""), uiLocale() === "ru" ? "ru" : undefined)),
+    });
+  }
+  groups.sort((a, b) => Number(b.count || 0) - Number(a.count || 0)
+    || String(a.label || "").localeCompare(String(b.label || ""), uiLocale() === "ru" ? "ru" : undefined));
+  return { key: sectionKey, title: homeEntityNavSectionTitle(sectionKey), groups };
+}
+
+function buildHomeEntityFallbackSection(directCounts, lang, coveredCountries = new Set()) {
+  const children = [];
+  for (const [country, count] of directCounts.entries()) {
+    if (coveredCountries.has(country) || Number(count || 0) <= 0) continue;
+    children.push({
+      name: country,
+      label: formatCountry(country),
+      href: catalogHashForSongFilter({ lang, country, searched: "0", adv: "0", page: "1" }),
+      count: Number(count || 0),
+    });
+  }
+  if (!children.length) return null;
+  children.sort((a, b) => Number(b.count || 0) - Number(a.count || 0)
+    || String(a.label || "").localeCompare(String(b.label || ""), uiLocale() === "ru" ? "ru" : undefined));
+  return {
+    key: "misc",
+    title: homeEntityNavSectionTitle("misc"),
+    groups: [{
+      name: "misc",
+      label: uiLocale() === "ru" ? "\u041f\u0440\u043e\u0447\u0435\u0435" : uiLocale() === "uk" ? "\u0406\u043d\u0448\u0435" : uiLocale() === "et" ? "Muu" : "Other",
+      count: children.reduce((sum, child) => sum + Number(child.count || 0), 0),
+      childCount: children.length,
+      href: "",
+      children,
+    }],
+  };
+}
+
+function renderHomeEntityNavigationSection(section = {}) {
+  const groups = Array.isArray(section.groups) ? section.groups : [];
+  if (!groups.length) return "";
+  return `
+    <section class="home-entity-nav-section" data-section="${esc(section.key || "")}">
+      <div class="home-entity-nav-section-head">
+        <div class="h2">${esc(section.title || "")}</div>
+      </div>
+      <div class="home-entity-nav-groups">
+        ${groups.map((group, index) => `
+          <details class="home-entity-nav-group" ${index < 2 ? "open" : ""}>
+            <summary class="home-entity-nav-summary">
+              <span class="home-entity-nav-summary-main">
+                <span class="home-entity-nav-title">${esc(group.label || "")}</span>
+                <span class="home-entity-nav-hint">${esc(homeEntityNavGroupHint(section.key, group.childCount || 0))}</span>
+              </span>
+              <span class="home-entity-nav-count">${esc(homeCountrySongsCountLabel(group.count))}</span>
+            </summary>
+            <div class="home-entity-nav-children">
+              ${group.children.map((child) => `
+                ${child.href ? `<a class="home-entity-nav-child" href="${esc(child.href)}">` : `<div class="home-entity-nav-child">`}
+                  <span class="home-entity-nav-child-title">${esc(child.label || "")}</span>
+                  <span class="home-entity-nav-child-meta">
+                    <span>${esc(homeCountrySongsCountLabel(child.count))}</span>
+                    ${child.href ? `<span class="home-entity-nav-open">${esc(homeEntityOpenLabel())}</span>` : ""}
+                  </span>
+                ${child.href ? `</a>` : `</div>`}
+              `).join("")}
+            </div>
+          </details>
+        `).join("")}
+      </div>
+    </section>
+  `;
+}
+
+function renderHomeEntityNavigation(directCounts, lang) {
+  if (!(directCounts instanceof Map) || directCounts.size === 0) return "";
+  const coveredCountries = new Set();
+  const countrySection = buildHomeEntitySection("countries", [ENTITY_LINK_TYPE_COUNTRY], directCounts, lang, coveredCountries);
+  const containerSection = buildHomeEntitySection("containers", [
+    ENTITY_LINK_TYPE_PART_OF,
+    ENTITY_LINK_TYPE_AUTONOMY,
+    ENTITY_LINK_TYPE_DEPENDENT,
+    ENTITY_LINK_TYPE_CONTEXT,
+  ], directCounts, lang, coveredCountries);
+  const movementsSection = buildHomeEntitySection("movements", [ENTITY_LINK_TYPE_CATEGORY], directCounts, lang, coveredCountries);
+  const fallback = buildHomeEntityFallbackSection(directCounts, lang, coveredCountries);
+  if (fallback?.groups?.length) movementsSection.groups.push(...fallback.groups);
+  const sections = [
+    countrySection,
+    containerSection,
+    movementsSection,
+  ];
+  return sections.map((section) => renderHomeEntityNavigationSection(section)).filter(Boolean).join("");
+}
+
+function homeCurrentUserDisplayName() {
+  const user = state.user;
+  if (!user || typeof user !== "object") return "";
+  const nickname = String(user.nickname || "").trim();
+  if (nickname) return nickname;
+  const email = String(user.email || "").trim();
+  if (!email) return "";
+  const at = email.indexOf("@");
+  return at > 0 ? email.slice(0, at) : email;
+}
+
+function homeTopNavigationTitle() {
+  if (uiLocale() === "ru") return "\u0421\u0442\u0440\u0430\u043d\u044b";
+  if (uiLocale() === "uk") return "\u041a\u0440\u0430\u0457\u043d\u0438";
+  if (uiLocale() === "et") return "Riigid";
+  if (uiLocale() === "et") return "Vali kõigepealt riik või suurem ajalooline tervik. Keel toimib filtrina.";
+  return "Countries";
+}
+
+function homeBranchTitle(entityName = "") {
+  return homeEntityNameLabel(entityName);
+}
+
+function entityDirectChildren(entityName = "", mode = "all") {
+  const allowed = new Set([
+    ENTITY_LINK_TYPE_COUNTRY,
+    ENTITY_LINK_TYPE_PART_OF,
+    ENTITY_LINK_TYPE_AUTONOMY,
+    ENTITY_LINK_TYPE_DEPENDENT,
+    ENTITY_LINK_TYPE_CONTEXT,
+    ENTITY_LINK_TYPE_CATEGORY,
+  ]);
+  return ENTITY_LINKS
+    .filter((link) => link.parent_name === entityName && allowed.has(link.link_type))
+    .sort((a, b) => Number(a.sort_order || 0) - Number(b.sort_order || 0)
+      || homeEntityNameLabel(a.child_name).localeCompare(homeEntityNameLabel(b.child_name), uiLocale() === "ru" ? "ru" : undefined));
+}
+
+function entityHasNavigationChildren(entityName = "") {
+  return entityDirectChildren(entityName, "all").length > 0;
+}
+
+function entityRootNames() {
+  const parentNames = new Set();
+  const childNames = new Set();
+  for (const link of ENTITY_LINKS) {
+    if (link.parent_name) parentNames.add(link.parent_name);
+    if (link.child_name) childNames.add(link.child_name);
+  }
+  const roots = new Set();
+  for (const name of parentNames) {
+    if (!childNames.has(name)) roots.add(name);
+  }
+  for (const name of ENTITY_TOP_CONTAINER_NAMES) {
+    if (parentNames.has(name) || childNames.has(name)) roots.add(name);
+  }
+  return Array.from(roots);
+}
+
+function buildHomeTopCards(directCounts, lang = "") {
+  const priority = new Map(ENTITY_TOP_CONTAINER_NAMES.map((name, index) => [name, index]));
+  return entityRootNames()
+    .map((name) => ({
+      key: name,
+      label: homeEntityNameLabel(name),
+      count: homeEntityCount(name, directCounts),
+      href: entityHasNavigationChildren(name)
+        ? catalogHashForEntity(name, { lang, path: [name] })
+        : catalogHashForSongFilter({ lang, country: ENTITY_NAME_TO_COUNTRY.get(name) || "", searched: "1", adv: "0", page: "1" }),
+    }))
+    .filter((item) => item.count > 0)
+    .sort((a, b) => compareEntityNavigationItems(a, b, priority));
+}
+
+function renderHomeTopNavigation(directCounts, lang = "") {
+  const cards = buildHomeTopCards(directCounts, lang);
+  if (!cards.length) return "";
+  return `
+    <section class="home-entity-nav-section" data-section="entities">
+      <div class="home-entity-nav-section-head">
+        <div class="h2">${esc(homeTopNavigationTitle())}</div>
+      </div>
+      <div class="home-entity-top-grid">
+        ${cards.map((item) => `
+          <a class="home-entity-top-card" href="${esc(item.href)}">
+            <span class="home-entity-top-title">${esc(item.label)}</span>
+            <span class="home-entity-top-count">${esc(homeCountrySongsCountLabel(item.count))}</span>
+          </a>
+        `).join("")}
+      </div>
+    </section>
+  `;
+}
+
+function entityPathFromParam(pathParam = "", entityName = "") {
+  const current = String(entityName || "").trim();
+  const parts = String(pathParam || "")
+    .split(">")
+    .map((item) => String(item || "").trim())
+    .filter(Boolean);
+  if (!current) return parts;
+  if (!parts.length) return [current];
+  if (parts[parts.length - 1] !== current) {
+    const existingIndex = parts.lastIndexOf(current);
+    return existingIndex >= 0 ? parts.slice(0, existingIndex + 1) : [...parts, current];
+  }
+  return parts;
+}
+
+function directVisibleEntityChildren(entityName = "", directCounts) {
+  const safeName = String(entityName || "").trim();
+  if (!safeName) return [];
+  const seen = new Set();
+  const directChildCountries = new Set();
+  const children = [];
+  for (const link of entityDirectChildren(safeName, "all")) {
+    const childName = String(link.child_name || "").trim();
+    if (!childName || seen.has(childName)) continue;
+    seen.add(childName);
+    const count = homeEntityCount(childName, directCounts);
+    if (count <= 0) continue;
+    const childOwnCountry = homeEntityOwnCountry(childName);
+    if (childOwnCountry) directChildCountries.add(childOwnCountry);
+    children.push({
+      name: childName,
+      label: homeEntityNameLabel(childName),
+      count,
+      sortOrder: Number(link.sort_order || 0),
+      hasChildren: entityHasNavigationChildren(childName),
+    });
+  }
+  const ownCountry = homeEntityOwnCountry(safeName);
+  const ownCount = homeEntityOwnCount(safeName, directCounts);
+  if (ownCountry && ownCount > 0 && !directChildCountries.has(ownCountry)) {
+    children.push({
+      name: safeName,
+      label: homeEntityNameLabel(safeName),
+      count: ownCount,
+      sortOrder: -1,
+      hasChildren: false,
+      isDirectSongsEntry: true,
+    });
+  }
+  return children.sort((a, b) => compareEntityNavigationItems(a, b));
+}
+
+function homeEntityBranchState(entityName = "", directCounts) {
+  const safeName = String(entityName || "").trim();
+  if (!safeName) return { count: 0, children: [] };
+  return {
+    count: homeEntityCount(safeName, directCounts),
+    children: directVisibleEntityChildren(safeName, directCounts),
+  };
+}
+
+function renderHomeEntityBreadcrumbs(path = [], lang = "") {
+  const cleanPath = (Array.isArray(path) ? path : [])
+    .map((item) => String(item || "").trim())
+    .filter(Boolean);
+  if (cleanPath.length <= 1) return "";
+  return `
+    <nav class="home-entity-breadcrumbs" aria-label="Breadcrumb">
+      ${cleanPath.map((name, index) => {
+        const partialPath = cleanPath.slice(0, index + 1);
+        const label = homeEntityNameLabel(name);
+        if (index === cleanPath.length - 1) return `<span class="home-entity-breadcrumb-current">${esc(label)}</span>`;
+        return `<a href="${esc(catalogHashForEntity(name, { lang, path: partialPath }))}">${esc(label)}</a>`;
+      }).join(`<span class="home-entity-breadcrumb-separator">&gt;</span>`)}
+    </nav>
+  `;
+}
+
+function renderHomeEntityChildRow(child, lang = "", path = []) {
+  if (!child) return "";
+  const childPath = [...path, child.name];
+  const href = child.isDirectSongsEntry
+    ? homeEntityDirectSongsHref(child.name, lang, path)
+    : catalogHashForEntity(child.name, { lang, path: childPath });
+  const content = `
+    <span class="home-entity-nav-child-title">${esc(child.label)}</span>
+    <span class="home-entity-nav-child-meta">
+      <span>${esc(homeCountrySongsCountLabel(child.count))}</span>
+      <span class="home-entity-nav-open">${esc(homeEntityOpenLabel())}</span>
+    </span>
+  `;
+  return `<a class="home-entity-nav-child" href="${esc(href)}">${content}</a>`;
+}
+
+function renderHomeEntityBranch(entityName = "", directCounts, lang = "", pathParam = "") {
+  const safeName = String(entityName || "").trim();
+  if (!safeName) return "";
+  const state = homeEntityBranchState(safeName, directCounts);
+  if (state.count <= 0) return "";
+  const path = entityPathFromParam(pathParam, safeName);
+  return `
+    <section class="home-entity-branch">
+      <div class="home-country-head">
+        <div class="home-country-head-main">
+          ${renderHomeEntityBreadcrumbs(path, lang)}
+          <div class="h1">${esc(homeBranchTitle(safeName))}</div>
+          <div class="muted">${esc(homeCountrySongsCountLabel(state.count))}</div>
+        </div>
+      </div>
+      ${state.children.length ? `<div class="home-entity-branch-list">
+        ${state.children.map((child) => renderHomeEntityChildRow(child, lang, path)).join("")}
+      </div>` : ""}
+    </section>
   `;
 }
 
@@ -2362,6 +2945,7 @@ function homeUI(data, params, homeExtras = {}) {
   const pages = data.pages || 1;
   const q = params.q || "";
   const lang = normalizeSongLanguage(params.lang || "") || params.lang || "";
+  const selectedEntityName = String(params.entity || "").trim();
   const country = normalizeSongCountry(params.country || "") || params.country || "";
   const countrySelection = resolveHistoricalAffiliationSelection(country || "");
   const period = normalizeSongPeriod(params.period || "") || params.period || "";
@@ -2397,13 +2981,17 @@ function homeUI(data, params, homeExtras = {}) {
     page: "1",
   });
   const backgroundsByCountry = new Map();
+  const directCountryCounts = new Map();
   const countryCounts = new Map();
   const countItems = Array.isArray(homeExtras?.countryCounts) ? homeExtras.countryCounts : [];
   for (const item of countItems) {
     const key = normalizeSongCountry(item?.country || "");
     const count = Number(item?.count || 0);
     if (!key || count < 0) continue;
-    countryCounts.set(key, (countryCounts.get(key) || 0) + count);
+    directCountryCounts.set(key, (directCountryCounts.get(key) || 0) + count);
+    for (const rollupCountry of entityRollupCountriesFor(key)) {
+      countryCounts.set(rollupCountry, (countryCounts.get(rollupCountry) || 0) + count);
+    }
   }
   const backgroundItems = Array.isArray(homeExtras?.countryBackgrounds) ? homeExtras.countryBackgrounds : [];
   for (const item of backgroundItems) {
@@ -2414,6 +3002,8 @@ function homeUI(data, params, homeExtras = {}) {
   }
 
   const langCountryMap = new Map();
+  const directLangCountryMap = new Map();
+  const directLangTotals = new Map();
   const langCountryItems = Array.isArray(homeExtras?.langCountryCounts) ? homeExtras.langCountryCounts : [];
   for (const item of langCountryItems) {
     const langKey = normalizeSongLanguage(item?.lang || "");
@@ -2423,9 +3013,19 @@ function homeUI(data, params, homeExtras = {}) {
     if (!langCountryMap.has(langKey)) {
       langCountryMap.set(langKey, { total: 0, countries: new Map() });
     }
+    if (!directLangCountryMap.has(langKey)) {
+      directLangCountryMap.set(langKey, new Map());
+    }
+    if (countryKey) {
+      const directCountries = directLangCountryMap.get(langKey);
+      directCountries.set(countryKey, (directCountries.get(countryKey) || 0) + count);
+    }
     const bucket = langCountryMap.get(langKey);
-    bucket.total += count;
-    if (countryKey) bucket.countries.set(countryKey, (bucket.countries.get(countryKey) || 0) + count);
+    directLangTotals.set(langKey, (directLangTotals.get(langKey) || 0) + count);
+    bucket.total = directLangTotals.get(langKey) || 0;
+    for (const rollupCountry of entityRollupCountriesFor(countryKey)) {
+      bucket.countries.set(rollupCountry, (bucket.countries.get(rollupCountry) || 0) + count);
+    }
   }
 
   const langCountryPeriodItems = Array.isArray(homeExtras?.langCountryPeriodCounts) ? homeExtras.langCountryPeriodCounts : [];
@@ -2436,10 +3036,12 @@ function homeUI(data, params, homeExtras = {}) {
     const periodKey = normalizeSongPeriod(item?.period || "");
     const count = Number(item?.count || 0);
     if (!langKey || !countryKey || !periodKey || count <= 0) continue;
-    const key = `${langKey}::${countryKey}`;
-    if (!langCountryPeriodMap.has(key)) langCountryPeriodMap.set(key, new Map());
-    const periodMap = langCountryPeriodMap.get(key);
-    periodMap.set(periodKey, (periodMap.get(periodKey) || 0) + count);
+    for (const rollupCountry of entityRollupCountriesFor(countryKey)) {
+      const key = `${langKey}::${rollupCountry}`;
+      if (!langCountryPeriodMap.has(key)) langCountryPeriodMap.set(key, new Map());
+      const periodMap = langCountryPeriodMap.get(key);
+      periodMap.set(periodKey, (periodMap.get(periodKey) || 0) + count);
+    }
   }
   const availableCountriesByLang = buildLangCountryAvailabilityMap(langCountryItems);
   const availablePeriodsByLangCountry = buildLangCountryPeriodAvailabilityMap(langCountryPeriodItems);
@@ -2450,7 +3052,7 @@ function homeUI(data, params, homeExtras = {}) {
       .map((option, index) => [String(option?.value || "").trim(), index])
   );
   const totalSongsFromResults = Math.max(0, Number(data?.total || 0));
-  const totalSongsFromCountries = Array.from(countryCounts.values()).reduce((sum, count) => sum + Math.max(0, Number(count || 0)), 0);
+  const totalSongsFromCountries = Array.from(directCountryCounts.values()).reduce((sum, count) => sum + Math.max(0, Number(count || 0)), 0);
   const totalSongsOnSite = Math.max(totalSongsFromResults, totalSongsFromCountries);
   const compareCountries = (left, right) => {
     const leftOther = normalizeSongCountry(left?.key || "") === "other_countries" ? 1 : 0;
@@ -2490,6 +3092,7 @@ function homeUI(data, params, homeExtras = {}) {
         previewLines: [
           homePickerDetailLine(t("home.country"), topCountriesLabel),
           homeCountrySongsCountLabel(bucket.total),
+          homeOpenNavigationLabel(),
         ],
         isActive: lang === langKey && !country,
       };
@@ -2545,6 +3148,7 @@ function homeUI(data, params, homeExtras = {}) {
       })
       .sort((a, b) => (Number(b?.count || 0) - Number(a?.count || 0)) || compareCountries(a, b))
     : [];
+  const selectedLangEntityNavigationHtml = "";
 
   const selectedCountryPeriodCards = (lang && country)
     ? Array.from(langCountryPeriodMap.get(`${lang}::${country}`)?.entries() || [])
@@ -2585,6 +3189,18 @@ function homeUI(data, params, homeExtras = {}) {
     ? languageCards.map((item) => renderHomeCatalogCard(item)).join("")
     : ``;
 
+  const navigationDirectCounts = lang
+    ? (directLangCountryMap.get(lang) || new Map())
+    : directCountryCounts;
+  const homeTopNavigationHtml = renderHomeTopNavigation(navigationDirectCounts, lang);
+  const selectedEntityState = selectedEntityName
+    ? homeEntityBranchState(selectedEntityName, navigationDirectCounts)
+    : { count: 0, children: [] };
+  const selectedEntityHasChildren = selectedEntityState.children.length > 0;
+  const selectedEntityBranchHtml = selectedEntityName
+    ? renderHomeEntityBranch(selectedEntityName, navigationDirectCounts, lang, params.path || "")
+    : "";
+
   const selectedLanguageCountryCardsHtml = selectedLangCountryCards.length
     ? selectedLangCountryCards.map((item) => renderHomeCatalogCard(item)).join("")
     : ``;
@@ -2593,11 +3209,16 @@ function homeUI(data, params, homeExtras = {}) {
     ? selectedCountryPeriodCards.map((item) => renderHomeCatalogCard(item)).join("")
     : "";
 
-  const showLanguageRoot = !didSearch && !lang && !isCountryLocked;
-  const showLanguageCountryPicker = !didSearch && !!lang && !isCountryLocked;
+  const showNavigationRoot = !didSearch && !isCountryLocked && !selectedEntityName;
+  const showEntityBranch = !didSearch && !isCountryLocked && !!selectedEntityName;
+  const showLanguageRoot = false;
+  const showLanguageCountryPicker = false;
   const showLanguagePeriodPicker = !didSearch && !!lang && !!country && !period && selectedCountryPeriodCards.length > 0;
-  const shouldShowResults = didSearch || (!!lang && !!country && !!period) || (!!lang && !!country && selectedCountryPeriodCards.length === 0);
-  const showPassiveHint = !showLanguageRoot && !showLanguageCountryPicker && !showLanguagePeriodPicker;
+  const shouldShowResults = didSearch
+    || (!!selectedEntityName && !selectedEntityHasChildren)
+    || (!!lang && !!country && !!period)
+    || (!!lang && !!country && selectedCountryPeriodCards.length === 0);
+  const showPassiveHint = !showNavigationRoot && !showEntityBranch && !showLanguageRoot && !showLanguageCountryPicker && !showLanguagePeriodPicker;
 
   const loadingResultsText = homeLoadingResultsText();
   const resultLoadingScreenMarkup = `
@@ -2679,10 +3300,9 @@ function homeUI(data, params, homeExtras = {}) {
         </div>
       </div>
 
-      ${showLanguageRoot ? `<div class="home-country-head">
+      ${showNavigationRoot ? `<div class="home-country-head">
         <div class="home-country-head-main">
-          <div class="h1">${esc(homeLanguageSectionTitle())}</div>
-          <div class="muted">${esc(homeLanguageSectionHint())}</div>
+          ${homeCurrentUserDisplayName() ? `<div class="h1 home-user-title">${esc(homeCurrentUserDisplayName())}</div>` : ""}
           ${totalSongsOnSite > 0 ? `<div class="home-catalog-total" aria-label="${esc(homeCatalogTotalLabel())}">
             <span class="home-catalog-total-value">${esc(formatUiInteger(totalSongsOnSite))}</span>
             <span class="home-catalog-total-label">${esc(homeCatalogTotalLabel())}</span>
@@ -2690,9 +3310,11 @@ function homeUI(data, params, homeExtras = {}) {
         </div>
       </div>
 
-      <div class="home-country-grid home-country-feed">
-        ${languageCardsHtml}
+      <div class="home-entity-nav">
+        ${homeTopNavigationHtml}
       </div>` : ``}
+
+      ${showEntityBranch ? selectedEntityBranchHtml : ``}
 
       ${showLanguageCountryPicker ? `<div class="home-country-head">
         <div>
@@ -2700,8 +3322,8 @@ function homeUI(data, params, homeExtras = {}) {
         </div>
       </div>
 
-      <div class="home-country-grid home-country-feed home-country-feed-historical-list">
-        ${selectedLanguageCountryCardsHtml}
+      <div class="home-entity-nav">
+        ${selectedLangEntityNavigationHtml}
       </div>` : ``}
 
       ${showLanguagePeriodPicker ? `<div class="home-country-head">
@@ -4377,7 +4999,7 @@ function draftEditorUI(payload = {}, options = {}) {
       <div class="card">
         <div class="row wrap gap">
           <div class="h2">${esc(title)}</div>
-          <a class="btn ghost" href="#/admin/songs">${esc(t("common.back"))}</a>
+          <a class="btn ghost" href="#/admin/bulk-import">${esc(t("common.back"))}</a>
         </div>
         <div class="muted small">${esc(draftUiText("draftMeta", { draftId, version: String(payload?.version || 0) }))}</div>
         <div class="sep"></div>
@@ -7722,7 +8344,7 @@ async function songbookImportExtractTextFromFile(file, options = {}) {
 
 function normalizeAdminSection(value = "") {
   const normalized = String(value || "").trim().toLowerCase();
-  if (!normalized || normalized === "content") return "songs";
+  if (!normalized || normalized === "content" || normalized === "songs") return "bulk-import";
   if (normalized === "import" || normalized === "imports" || normalized === "bulk" || normalized === "bulk_import") {
     return "bulk-import";
   }
@@ -7731,14 +8353,12 @@ function normalizeAdminSection(value = "") {
 
 function adminTabs(active) {
   const normalizedActive = normalizeAdminSection(active);
-  const canEditSongs = can("songs.edit");
   const canBulkImport = can("songs.bulk_import");
   const canManageBackgrounds = isSuperAdmin();
   const canReviewRequests = can("proposals.review");
   const canManageUsers = isSuperAdmin();
   return `
     <div class="admin-tabs" style="margin-bottom:12px">
-      ${canEditSongs ? `<a class="btn admin-tab-btn ${normalizedActive === "songs" ? "primary" : "ghost"}" href="#/admin/songs">${esc(t("admin.tab.songs"))}</a>` : ``}
       ${canBulkImport ? `<a class="btn admin-tab-btn ${normalizedActive === "bulk-import" ? "primary" : "ghost"}" href="#/admin/bulk-import">${esc(t("admin.tab.bulkImport"))}</a>` : ``}
       ${canManageBackgrounds ? `<a class="btn admin-tab-btn ${normalizedActive === "backgrounds" ? "primary" : "ghost"}" href="#/admin/backgrounds">${esc(t("admin.tab.backgrounds"))}</a>` : ``}
       ${canReviewRequests ? `<a class="btn admin-tab-btn ${normalizedActive === "requests" ? "primary" : "ghost"}" href="#/admin/requests?status=new">${esc(t("admin.tab.requests"))}</a>` : ``}
@@ -7991,10 +8611,10 @@ function bulkImportUiText(key, vars = {}) {
       en: "Each song starts on a new line like 1. Title. The first non-empty line after the number becomes the title, then the lyrics follow.",
     },
     formatExampleText: {
-      ru: "1. \u041f\u0435\u0440\u0432\u0430\u044f \u043f\u0435\u0441\u043d\u044f\n\u041f\u0435\u0440\u0432\u0430\u044f \u0441\u0442\u0440\u043e\u043a\u0430 \u0442\u0435\u043a\u0441\u0442\u0430\n\u0412\u0442\u043e\u0440\u0430\u044f \u0441\u0442\u0440\u043e\u043a\u0430 \u0442\u0435\u043a\u0441\u0442\u0430\n\n2. \u0412\u0442\u043e\u0440\u0430\u044f \u043f\u0435\u0441\u043d\u044f\n\u041f\u0435\u0440\u0432\u0430\u044f \u0441\u0442\u0440\u043e\u043a\u0430 \u0442\u0435\u043a\u0441\u0442\u0430\n\u0412\u0442\u043e\u0440\u0430\u044f \u0441\u0442\u0440\u043e\u043a\u0430 \u0442\u0435\u043a\u0441\u0442\u0430",
-      uk: "1. \u041f\u0435\u0440\u0448\u0430 \u043f\u0456\u0441\u043d\u044f\n\u041f\u0435\u0440\u0448\u0438\u0439 \u0440\u044f\u0434\u043e\u043a \u0442\u0435\u043a\u0441\u0442\u0443\n\u0414\u0440\u0443\u0433\u0438\u0439 \u0440\u044f\u0434\u043e\u043a \u0442\u0435\u043a\u0441\u0442\u0443\n\n2. \u0414\u0440\u0443\u0433\u0430 \u043f\u0456\u0441\u043d\u044f\n\u041f\u0435\u0440\u0448\u0438\u0439 \u0440\u044f\u0434\u043e\u043a \u0442\u0435\u043a\u0441\u0442\u0443\n\u0414\u0440\u0443\u0433\u0438\u0439 \u0440\u044f\u0434\u043e\u043a \u0442\u0435\u043a\u0441\u0442\u0443",
-      et: "1. Esimene laul\nEsimene tekstirida\nTeine tekstirida\n\n2. Teine laul\nEsimene tekstirida\nTeine tekstirida",
-      en: "1. First song\nFirst lyric line\nSecond lyric line\n\n2. Second song\nFirst lyric line\nSecond lyric line",
+      ru: "1. \u041d\u0430\u0437\u0432\u0430\u043d\u0438\u0435 \u043f\u0435\u0441\u043d\u0438\n\u041f\u0435\u0440\u0432\u0430\u044f \u0441\u0442\u0440\u043e\u043a\u0430 \u043a\u0443\u043f\u043b\u0435\u0442\u0430\n\u0412\u0442\u043e\u0440\u0430\u044f \u0441\u0442\u0440\u043e\u043a\u0430 \u043a\u0443\u043f\u043b\u0435\u0442\u0430\n\n\u041f\u0440\u0438\u043f\u0435\u0432:\n\u0421\u0442\u0440\u043e\u043a\u0430 \u043f\u0440\u0438\u043f\u0435\u0432\u0430\n\u0412\u0442\u043e\u0440\u0430\u044f \u0441\u0442\u0440\u043e\u043a\u0430 \u043f\u0440\u0438\u043f\u0435\u0432\u0430\n\n2. \u0412\u0442\u043e\u0440\u0430\u044f \u043f\u0435\u0441\u043d\u044f\n\u041f\u0435\u0440\u0432\u0430\u044f \u0441\u0442\u0440\u043e\u043a\u0430",
+      uk: "1. \u041d\u0430\u0437\u0432\u0430 \u043f\u0456\u0441\u043d\u0456\n\u041f\u0435\u0440\u0448\u0438\u0439 \u0440\u044f\u0434\u043e\u043a \u043a\u0443\u043f\u043b\u0435\u0442\u0443\n\u0414\u0440\u0443\u0433\u0438\u0439 \u0440\u044f\u0434\u043e\u043a \u043a\u0443\u043f\u043b\u0435\u0442\u0443\n\n\u041f\u0440\u0438\u0441\u043f\u0456\u0432:\n\u0420\u044f\u0434\u043e\u043a \u043f\u0440\u0438\u0441\u043f\u0456\u0432\u0443\n\u0414\u0440\u0443\u0433\u0438\u0439 \u0440\u044f\u0434\u043e\u043a \u043f\u0440\u0438\u0441\u043f\u0456\u0432\u0443\n\n2. \u0414\u0440\u0443\u0433\u0430 \u043f\u0456\u0441\u043d\u044f\n\u041f\u0435\u0440\u0448\u0438\u0439 \u0440\u044f\u0434\u043e\u043a",
+      et: "1. Laulu pealkiri\nEsimene salmirida\nTeine salmirida\n\nRefrain:\nRefraini rida\nTeine refraini rida\n\n2. Teine laul\nEsimene rida",
+      en: "1. Song title\nFirst verse line\nSecond verse line\n\nChorus:\nFirst chorus line\nSecond chorus line\n\n2. Second song\nFirst line",
     },
     note: {
       ru: "Все песни пойдут в раздел «{country}».",
@@ -8161,18 +8781,10 @@ function adminSongsUI(data, params = {}) {
 function adminBulkImportUI(params = {}) {
   const languageOptions = getCatalogOptions("language", uiLocale(), "ru");
   const selectedBulkLang = normalizeSongLanguage(params?.bulkLang || "ru") || "ru";
-  const unsortedCountryLabel = formatCountry("other_countries");
   return `
     <div class="admin-section-stack admin-bulk-import-stack">
       ${adminTabs("bulk-import")}
-      <div class="card admin-section-head">
-        <div class="h2">${esc(t("admin.bulkImport.title"))}</div>
-        <div class="muted small">${esc(t("admin.bulkImport.subtitle"))}</div>
-      </div>
       <div class="card ac-bulk-import-card">
-        <div class="h2">${esc(bulkImportUiText("title"))}</div>
-        <div class="muted small">${esc(bulkImportUiText("subtitle"))}</div>
-        <div class="sep"></div>
         <div class="ac-bulk-import-grid">
           <label class="field">
             <div class="fieldLabel">${esc(bulkImportUiText("lang"))}</div>
@@ -8191,18 +8803,13 @@ function adminBulkImportUI(params = {}) {
         </label>
         <div class="ac-bulk-import-format">
           <div class="fieldLabel">${esc(bulkImportUiText("formatExampleTitle"))}</div>
-          <div class="muted small">${esc(bulkImportUiText("formatExampleHint"))}</div>
           <pre class="ac-bulk-import-format-example">${esc(bulkImportUiText("formatExampleText"))}</pre>
         </div>
-        <div class="muted small ac-bulk-import-note">${esc(bulkImportUiText("note", { country: unsortedCountryLabel }))}</div>
         <div class="actions ac-bulk-import-actions">
           <button class="btn primary" id="ac_bulk_submit" type="button">${esc(bulkImportUiText("add"))}</button>
           <button class="btn ghost" id="ac_bulk_clear" type="button">${esc(bulkImportUiText("clear"))}</button>
           <div class="muted small ac-bulk-import-stats" id="ac_bulk_stats">${esc(bulkImportUiText("empty"))}</div>
         </div>
-        <div class="sep"></div>
-        <div class="fieldLabel">${esc(bulkImportUiText("preview"))}</div>
-        <div class="ac-bulk-import-preview" id="ac_bulk_preview">${adminBulkImportPreviewMarkup([])}</div>
       </div>
     </div>
   `;
@@ -8731,6 +9338,22 @@ function adminCountryBackgroundsUI(data) {
   const noImage = uiLocale() === "ru" ? "Нет изображения" : uiLocale() === "uk" ? "Немає зображення" : uiLocale() === "et" ? "Pilt puudub" : "No image";
   const assetLabel = uiLocale() === "ru" ? "Картинка" : uiLocale() === "uk" ? "Картинка" : uiLocale() === "et" ? "Pilt" : "Image";
   const screenLabel = uiLocale() === "ru" ? "Экран" : uiLocale() === "uk" ? "Екран" : uiLocale() === "et" ? "Ekraan" : "Screen";
+  const defaultVariantText = pick("\u0414\u0435\u0444\u043e\u043b\u0442", "\u0414\u0435\u0444\u043e\u043b\u0442", "Vaikimisi", "Default");
+  const addVariantText = pick("\u0414\u043e\u0431\u0430\u0432\u0438\u0442\u044c \u0433\u043e\u0434\u044b", "\u0414\u043e\u0434\u0430\u0442\u0438 \u0440\u043e\u043a\u0438", "Lisa aastad", "Add years");
+  const visualCategories = [
+    ["desktop", pick("\u0424\u043e\u043d \u041f\u041a", "\u0424\u043e\u043d \u041f\u041a", "Lauaarvuti taust", "Desktop background")],
+    ["mobile", pick("\u0424\u043e\u043d \u0442\u0435\u043b\u0435\u0444\u043e\u043d\u0430", "\u0424\u043e\u043d \u0442\u0435\u043b\u0435\u0444\u043e\u043d\u0443", "Telefoni taust", "Phone background")],
+    ["sticker", pick("\u0421\u0442\u0438\u043a\u0435\u0440 \u043f\u0440\u0435\u0432\u044c\u044e", "\u0421\u0442\u0456\u043a\u0435\u0440 \u043f\u0440\u0435\u0432\u044c\u044e", "Eelvaate kleebis", "Preview sticker")],
+  ];
+  const visualCategoryCards = visualCategories.map(([key, label]) => `
+    <section class="songCard ab-category-card hidden" data-visual-category="${esc(key)}">
+      <div class="ab-category-head">
+        <div class="h2">${esc(label)}</div>
+        <button class="btn ghost ab-add-variant" type="button" data-category="${esc(key)}">${esc(addVariantText)}</button>
+      </div>
+      <div class="ab-category-rows" data-category-rows="${esc(key)}" data-default-label="${esc(defaultVariantText)}"></div>
+    </section>
+  `).join("");
   const ratioText = (w, h) => {
     const gcd = (a, b) => (b ? gcd(b, a % b) : a);
     const ww = Math.max(1, Number(w) || 1);
@@ -8985,6 +9608,9 @@ function adminHistoricalVisualsUI(data) {
   const flagDesktopStd = FLAG_CARD_STANDARDS.desktopLong;
   const flagMobileStd = FLAG_CARD_STANDARDS.mobileLong;
   const title = pick("\u0412\u0438\u0437\u0443\u0430\u043b\u044b", "\u0412\u0456\u0437\u0443\u0430\u043b\u0438", "Visuaalid", "Visuals");
+  const entityLabel = pick("\u0421\u0443\u0449\u043d\u043e\u0441\u0442\u044c", "\u0421\u0443\u0442\u043d\u0456\u0441\u0442\u044c", "Olem", "Entity");
+  const entityPlaceholder = pick("\u0412\u044b\u0431\u0435\u0440\u0438\u0442\u0435 \u0441\u0443\u0449\u043d\u043e\u0441\u0442\u044c", "\u041e\u0431\u0435\u0440\u0456\u0442\u044c \u0441\u0443\u0442\u043d\u0456\u0441\u0442\u044c", "Vali olem", "Select entity");
+  const entitySearchPlaceholder = pick("\u041d\u0430\u0439\u0442\u0438 \u0441\u0443\u0449\u043d\u043e\u0441\u0442\u044c...", "\u0417\u043d\u0430\u0439\u0442\u0438 \u0441\u0443\u0442\u043d\u0456\u0441\u0442\u044c...", "Otsi olemit...", "Search entity...");
   const subtitle = pick("\u0424\u043e\u043d \u0438 \u0441\u0442\u0438\u043a\u0435\u0440 \u0434\u043b\u044f \u0432\u044b\u0431\u0440\u0430\u043d\u043d\u043e\u0439 \u0441\u0443\u0449\u043d\u043e\u0441\u0442\u0438. \u041c\u043e\u0436\u043d\u043e \u0437\u0430\u0434\u0430\u0442\u044c \u0434\u0435\u0444\u043e\u043b\u0442 \u0438 \u0434\u0438\u0430\u043f\u0430\u0437\u043e\u043d\u044b \u043b\u0435\u0442.", "\u0424\u043e\u043d \u0456 \u0441\u0442\u0456\u043a\u0435\u0440 \u0434\u043b\u044f \u0432\u0438\u0431\u0440\u0430\u043d\u043e\u0457 \u0441\u0443\u0442\u043d\u043e\u0441\u0442\u0456. \u041c\u043e\u0436\u043d\u0430 \u0437\u0430\u0434\u0430\u0442\u0438 \u0434\u0435\u0444\u043e\u043b\u0442 \u0456 \u0434\u0456\u0430\u043f\u0430\u0437\u043e\u043d\u0438 \u0440\u043e\u043a\u0456\u0432.", "Taust ja kleebis valitud kuuluvuse jaoks. Saad seadistada vaikimisi variandi ja aasta-vahemikud.", "Background and sticker for the selected affiliation. You can set a default and year ranges.");
   const scopeDefaultLabel = pick("\u041f\u043e \u0443\u043c\u043e\u043b\u0447\u0430\u043d\u0438\u044e", "\u0417\u0430 \u0437\u0430\u043c\u043e\u0432\u0447\u0443\u0432\u0430\u043d\u043d\u044f\u043c", "Vaikimisi", "Default");
   const scopeTitle = pick("\u0410\u043a\u0442\u0438\u0432\u043d\u044b\u0439 \u0434\u0438\u0430\u043f\u0430\u0437\u043e\u043d", "\u0410\u043a\u0442\u0438\u0432\u043d\u0438\u0439 \u0434\u0456\u0430\u043f\u0430\u0437\u043e\u043d", "Aktiivne vahemik", "Active scope");
@@ -8995,7 +9621,7 @@ function adminHistoricalVisualsUI(data) {
     "Allpool olev taust ja kleebis muudetakse valitud vahemiku jaoks. Kui laulu aasta ei mahu \u00fchtegi vahemikku, kasutatakse vaikimisi varianti.",
     "The background and sticker below edit the selected scope. If a song year does not match any range, the default variant is used."
   );
-  const rangesTitle = pick("\u0421\u0442\u0438\u043a\u0435\u0440\u044b \u043f\u043e \u0433\u043e\u0434\u0430\u043c", "\u0421\u0442\u0456\u043a\u0435\u0440\u0438 \u0437\u0430 \u0440\u043e\u043a\u0430\u043c\u0438", "Kleebised aastate kaupa", "Stickers by years");
+  const rangesTitle = pick("\u0414\u0438\u0430\u043f\u0430\u0437\u043e\u043d\u044b", "\u0414\u0456\u0430\u043f\u0430\u0437\u043e\u043d\u0438", "Vahemikud", "Ranges");
   const rangesHelp = pick("\u0423\u043a\u0430\u0436\u0438\u0442\u0435 \u0433\u043e\u0434\u044b \u0438 \u0432\u044b\u0431\u0435\u0440\u0438\u0442\u0435 \u0441\u0442\u0438\u043a\u0435\u0440 \u0434\u043b\u044f \u044d\u0442\u043e\u0433\u043e \u043f\u0440\u043e\u043c\u0435\u0436\u0443\u0442\u043a\u0430.", "\u0412\u043a\u0430\u0436\u0456\u0442\u044c \u0440\u043e\u043a\u0438 \u0456 \u0432\u0438\u0431\u0435\u0440\u0456\u0442\u044c \u0441\u0442\u0456\u043a\u0435\u0440 \u0434\u043b\u044f \u0446\u044c\u043e\u0433\u043e \u043f\u0440\u043e\u043c\u0456\u0436\u043a\u0443.", "Määra aastad ja vali sellele vahemikule kleebis.", "Set the years and choose a sticker for that range.");
   const addRangeLabel = pick("\u0414\u043e\u0431\u0430\u0432\u0438\u0442\u044c \u0434\u0438\u0430\u043f\u0430\u0437\u043e\u043d", "\u0414\u043e\u0434\u0430\u0442\u0438 \u0434\u0456\u0430\u043f\u0430\u0437\u043e\u043d", "Lisa vahemik", "Add range");
   const attachStickerLabel = pick("\u0412\u044b\u0431\u0440\u0430\u0442\u044c \u0441\u0442\u0438\u043a\u0435\u0440", "\u0412\u0438\u0431\u0440\u0430\u0442\u0438 \u0441\u0442\u0456\u043a\u0435\u0440", "Vali kleebis", "Choose sticker");
@@ -9027,7 +9653,7 @@ function adminHistoricalVisualsUI(data) {
   const nudgeHint = pick("\u0421\u0434\u0432\u0438\u0433 \u043a\u0430\u0434\u0440\u0430 \u043a\u043d\u043e\u043f\u043a\u0430\u043c\u0438", "\u0417\u0441\u0443\u0432 \u043a\u0430\u0434\u0440\u0443 \u043a\u043d\u043e\u043f\u043a\u0430\u043c\u0438", "Kaadri liigutus nuppudega", "Move frame with buttons");
   const centerLabel = pick("\u0426\u0435\u043d\u0442\u0440", "\u0426\u0435\u043d\u0442\u0440", "Keskele", "Center");
   const stepLabel = pick("\u0428\u0430\u0433", "\u041a\u0440\u043e\u043a", "Samm", "Step");
-  const flagTitle = pick("\u041f\u0440\u0435\u0432\u044c\u044e \u0441\u0442\u0438\u043a\u0435\u0440\u0430", "\u041f\u0435\u0440\u0435\u0433\u043b\u044f\u0434 \u0441\u0442\u0456\u043a\u0435\u0440\u0430", "Kleebise eelvaade", "Sticker preview");
+  const flagTitle = pick("\u0421\u0442\u0438\u043a\u0435\u0440", "\u0421\u0442\u0456\u043a\u0435\u0440", "Kleebis", "Sticker");
   const flagHelp = pick("\u041f\u0440\u043e\u0437\u0440\u0430\u0447\u043d\u044b\u0439 PNG \u0434\u043b\u044f \u0434\u043b\u0438\u043d\u043d\u043e\u0439 \u043a\u0430\u0440\u0442\u043e\u0447\u043a\u0438. \u041a\u0432\u0430\u0434\u0440\u0430\u0442\u043d\u0443\u044e \u0432\u0435\u0440\u0441\u0438\u044e \u043c\u043e\u0436\u043d\u043e \u0434\u043e\u0431\u0430\u0432\u0438\u0442\u044c \u043d\u0438\u0436\u0435.", "\u041f\u0440\u043e\u0437\u043e\u0440\u0438\u0439 PNG \u0434\u043b\u044f \u0434\u043e\u0432\u0433\u043e\u0457 \u043a\u0430\u0440\u0442\u043a\u0438. \u041a\u0432\u0430\u0434\u0440\u0430\u0442\u043d\u0443 \u0432\u0435\u0440\u0441\u0456\u044e \u043c\u043e\u0436\u043d\u0430 \u0434\u043e\u0434\u0430\u0442\u0438 \u043d\u0438\u0436\u0447\u0435.", "Labi paistev PNG pika kaardi jaoks. Ruudukujulise versiooni saab lisada all.", "Transparent PNG for the long card. You can add the square version below.");
   const flagDesktopInputLabel = pick("\u0424\u0430\u0439\u043b \u0434\u043b\u0438\u043d\u043d\u043e\u0439 \u043a\u0430\u0440\u0442\u043e\u0447\u043a\u0438 (\u041f\u041a)", "\u0424\u0430\u0439\u043b \u0434\u043e\u0432\u0433\u043e\u0457 \u043a\u0430\u0440\u0442\u043a\u0438 (\u041f\u041a)", "Pika kaardi fail (lauaarvuti)", "Long card file (desktop)");
   const flagDesktopUrlLabel = pick("\u0438\u043b\u0438 URL \u0434\u043b\u0438\u043d\u043d\u043e\u0439 \u043a\u0430\u0440\u0442\u043e\u0447\u043a\u0438 (\u041f\u041a)", "\u0430\u0431\u043e URL \u0434\u043e\u0432\u0433\u043e\u0457 \u043a\u0430\u0440\u0442\u043a\u0438 (\u041f\u041a)", "või pika kaardi URL (lauaarvuti)", "or long card URL (desktop)");
@@ -9044,6 +9670,22 @@ function adminHistoricalVisualsUI(data) {
   const flagNoImage = pick("\u0421\u0442\u0438\u043a\u0435\u0440 \u043d\u0435 \u0437\u0430\u0434\u0430\u043d", "\u0421\u0442\u0456\u043a\u0435\u0440 \u043d\u0435 \u0437\u0430\u0434\u0430\u043d\u043e", "Kleebist pole valitud", "Sticker is not set");
   const flagSuperAdminHint = pick("\u0421\u0442\u0438\u043a\u0435\u0440\u044b \u043c\u043e\u0436\u0435\u0442 \u043c\u0435\u043d\u044f\u0442\u044c \u0442\u043e\u043b\u044c\u043a\u043e \u0441\u0443\u043f\u0435\u0440-\u0430\u0434\u043c\u0438\u043d.", "\u0421\u0442\u0456\u043a\u0435\u0440\u0438 \u043c\u043e\u0436\u0435 \u0437\u043c\u0456\u043d\u044e\u0432\u0430\u0442\u0438 \u043b\u0438\u0448\u0435 \u0441\u0443\u043f\u0435\u0440-\u0430\u0434\u043c\u0456\u043d.", "Kleebiseid saab muuta ainult superadmin.", "Only super admin can change stickers.");
   const selectCountryFirstText = pick("\u0421\u043d\u0430\u0447\u0430\u043b\u0430 \u0432\u044b\u0431\u0435\u0440\u0438\u0442\u0435 \u0441\u0442\u0440\u0430\u043d\u0443 \u0438\u043b\u0438 \u0438\u0441\u0442\u043e\u0440\u0438\u0447\u0435\u0441\u043a\u0443\u044e \u0441\u0443\u0449\u043d\u043e\u0441\u0442\u044c.", "\u0421\u043f\u043e\u0447\u0430\u0442\u043a\u0443 \u0432\u0438\u0431\u0435\u0440\u0456\u0442\u044c \u043a\u0440\u0430\u0457\u043d\u0443 \u0430\u0431\u043e \u0456\u0441\u0442\u043e\u0440\u0438\u0447\u043d\u0443 \u0441\u0443\u0442\u043d\u0456\u0441\u0442\u044c.", "Vali enne riik või ajalooline kuuluvus.", "Select a country or historical affiliation first.");
+  const defaultVariantText = pick("\u0414\u0435\u0444\u043e\u043b\u0442", "\u0414\u0435\u0444\u043e\u043b\u0442", "Vaikimisi", "Default");
+  const addVariantText = pick("\u0414\u043e\u0431\u0430\u0432\u0438\u0442\u044c \u0433\u043e\u0434\u044b", "\u0414\u043e\u0434\u0430\u0442\u0438 \u0440\u043e\u043a\u0438", "Lisa aastad", "Add years");
+  const visualCategories = [
+    ["desktop", pick("\u0424\u043e\u043d \u041f\u041a", "\u0424\u043e\u043d \u041f\u041a", "Lauaarvuti taust", "Desktop background")],
+    ["mobile", pick("\u0424\u043e\u043d \u0442\u0435\u043b\u0435\u0444\u043e\u043d\u0430", "\u0424\u043e\u043d \u0442\u0435\u043b\u0435\u0444\u043e\u043d\u0443", "Telefoni taust", "Phone background")],
+    ["sticker", pick("\u0421\u0442\u0438\u043a\u0435\u0440 \u043f\u0440\u0435\u0432\u044c\u044e", "\u0421\u0442\u0456\u043a\u0435\u0440 \u043f\u0440\u0435\u0432\u044c\u044e", "Eelvaate kleebis", "Preview sticker")],
+  ];
+  const visualCategoryCards = visualCategories.map(([key, label]) => `
+    <section class="songCard ab-category-card hidden" data-visual-category="${esc(key)}">
+      <div class="ab-category-head">
+        <div class="h2">${esc(label)}</div>
+        <button class="btn ghost ab-add-variant" type="button" data-category="${esc(key)}">${esc(addVariantText)}</button>
+      </div>
+      <div class="ab-category-rows" data-category-rows="${esc(key)}" data-default-label="${esc(defaultVariantText)}"></div>
+    </section>
+  `).join("");
   const ratioText = (w, h) => {
     const gcd = (a, b) => (b ? gcd(b, a % b) : a);
     const ww = Math.max(1, Number(w) || 1);
@@ -9057,26 +9699,23 @@ function adminHistoricalVisualsUI(data) {
       ${adminTabs("backgrounds")}
       <div class="card ac-editor-card ab-editor">
         <div class="h2">${esc(title)}</div>
-        <div class="muted small">${esc(subtitle)}</div>
-        <div class="sep"></div>
-        <div class="ac-historical-grid">
+        <div class="ab-entity-picker">
           <label class="field">
-            <div class="fieldLabel">${esc(t("field.lang"))}</div>
-            <select class="select" id="ab_lang">${selectOptions("language", "", uiText("selectLanguage"))}</select>
+            <div class="fieldLabel">${esc(entityLabel)}</div>
+            <input class="input" id="ab_country_search" type="search" autocomplete="off" placeholder="${esc(entitySearchPlaceholder)}" />
+            <select class="select hidden" id="ab_country" aria-label="${esc(entityLabel)}">${selectOptions("country", "", entityPlaceholder)}</select>
           </label>
-          <label class="field">
-            <div class="fieldLabel">${esc(historicalAffiliationFieldLabel())}</div>
-            <select class="select" id="ab_country">${historicalAffiliationSelectOptions("", "", "")}</select>
-          </label>
+          <div class="ab-entity-results" id="ab_country_results"></div>
         </div>
         <div class="songCard ab-empty-state hidden" id="ab_empty_state">
           <div class="muted small">${esc(selectCountryFirstText)}</div>
         </div>
+        <div class="ab-inline-error hidden" id="ab_range_error" role="status" aria-live="polite"></div>
+        <div class="ab-category-stack" id="ab_category_stack">${visualCategoryCards}</div>
         <div class="songCard ab-range-card" id="ab_range_card">
           <div class="ab-range-head">
             <div>
               <div class="h2">${esc(rangesTitle)}</div>
-              <div class="muted small ab-range-note">${esc(rangesHelp)}</div>
             </div>
             <div class="actions ab-range-actions-top">
               <button class="btn ghost" id="ab_scope_add" type="button">${esc(addRangeLabel)}</button>
@@ -9102,7 +9741,6 @@ function adminHistoricalVisualsUI(data) {
               <option value="default">${esc(scopeDefaultLabel)}</option>
             </select>
           </label>
-          <div class="muted small ab-section-note">${esc(scopeHelp)}</div>
           ${canEditFlag ? `
             <div class="ab-sticker-toolbar">
               <div class="ab-sticker-scope-block">
@@ -9124,10 +9762,7 @@ function adminHistoricalVisualsUI(data) {
               <div class="fieldLabel">${esc(uploadLabel)}</div>
               <input class="input" id="ab_desktop_file" type="file" accept="image/*" />
             </label>
-            <label class="field">
-              <div class="fieldLabel">${esc(urlLabel)}</div>
-              <input class="input" id="ab_desktop_url" placeholder="https://... / /picture/..." />
-            </label>
+            <input id="ab_desktop_url" type="hidden" />
             <div class="ab-inline-range" data-inline-range="desktop">
               <div class="fieldLabel">${esc(rangeEditorLabel)}</div>
               <div class="ab-inline-range-grid">
@@ -9190,10 +9825,7 @@ function adminHistoricalVisualsUI(data) {
               <div class="fieldLabel">${esc(uploadLabel)}</div>
               <input class="input" id="ab_mobile_file" type="file" accept="image/*" />
             </label>
-            <label class="field">
-              <div class="fieldLabel">${esc(urlLabel)}</div>
-              <input class="input" id="ab_mobile_url" placeholder="https://... / /picture/..." />
-            </label>
+            <input id="ab_mobile_url" type="hidden" />
             <div class="ab-inline-range" data-inline-range="mobile">
               <div class="fieldLabel">${esc(rangeEditorLabel)}</div>
               <div class="ab-inline-range-grid">
@@ -9251,24 +9883,17 @@ function adminHistoricalVisualsUI(data) {
         </div>
         <div class="songCard ab-flag-card" id="ab_flag_card">
           <div class="h2">${esc(flagTitle)}</div>
-          <div class="muted small ab-section-note">${esc(flagHelp)}</div>
           ${canEditFlag ? `
             <label class="field">
               <div class="fieldLabel">${esc(flagDesktopInputLabel)} &middot; ${flagDesktopStd.width}x${flagDesktopStd.height}</div>
               <input class="input" id="ab_flag_file_desktop" type="file" accept="image/*" />
             </label>
-            <label class="field">
-              <div class="fieldLabel">${esc(flagDesktopUrlLabel)}</div>
-              <input class="input" id="ab_flag_url_desktop" placeholder="https://... / /picture/..." />
-            </label>
+            <input id="ab_flag_url_desktop" type="hidden" />
             <label class="field">
               <div class="fieldLabel">${esc(flagMobileInputLabel)} &middot; ${flagMobileStd.width}x${flagMobileStd.height}</div>
               <input class="input" id="ab_flag_file_mobile" type="file" accept="image/*" />
             </label>
-            <label class="field">
-              <div class="fieldLabel">${esc(flagMobileUrlLabel)}</div>
-              <input class="input" id="ab_flag_url_mobile" placeholder="https://... / /picture/..." />
-            </label>
+            <input id="ab_flag_url_mobile" type="hidden" />
             <div class="ab-inline-range" data-inline-range="flag">
               <div class="fieldLabel">${esc(rangeEditorLabel)}</div>
               <div class="ab-inline-range-grid">
@@ -9285,21 +9910,6 @@ function adminHistoricalVisualsUI(data) {
             </div>
             <div class="muted small ab-flag-scope-note" id="ab_flag_scope_note">${esc(`${activeStickerScopeLabel}: ${defaultScopeCaption}`)}</div>
           ` : `<div class="muted small">${esc(flagSuperAdminHint)}</div>`}
-          <div class="fieldLabel">${esc(flagPreviewTitle)}</div>
-          <div class="ab-flag-preview-grid">
-            <div class="ab-flag-preview-wrap">
-              <div class="muted small">${esc(flagCardLongDesktopLabel)} &middot; ${flagDesktopStd.width}x${flagDesktopStd.height}</div>
-              <div class="ab-flag-preview-shell ab-flag-preview-shell-desktop">
-                <div class="yt-card ab-flag-preview ab-flag-preview-long-desktop" id="ab_flag_preview_long_desktop" data-empty="${esc(flagNoImage)}"></div>
-              </div>
-            </div>
-            <div class="ab-flag-preview-wrap">
-              <div class="muted small">${esc(flagCardLongMobileLabel)} &middot; ${flagMobileStd.width}x${flagMobileStd.height}</div>
-              <div class="ab-flag-preview-shell ab-flag-preview-shell-mobile">
-                <div class="yt-card ab-flag-preview ab-flag-preview-long-mobile" id="ab_flag_preview_long_mobile" data-empty="${esc(flagNoImage)}"></div>
-              </div>
-            </div>
-          </div>
         </div>
         <div class="actions" style="margin-top:12px">
           <button class="btn" id="ab_save" type="button">${esc(saveLabel)}</button>
@@ -10059,6 +10669,41 @@ function readVersionLyricsMetaFromRow(rowNode) {
   );
 }
 
+function catalogHashForEntity(entityName = "", filters = {}) {
+  const cleanPath = Array.isArray(filters.path)
+    ? filters.path.map((item) => String(item || "").trim()).filter(Boolean).join(">")
+    : String(filters.path || "").trim();
+  return makeHash(
+    "#/",
+    {
+      q: "",
+      lang: "",
+      entity: String(entityName || "").trim(),
+      path: cleanPath,
+      country: "",
+      country_exact: "",
+      period: "",
+      region: "",
+      event: "",
+      theme: "",
+      words_author: "",
+      music_author: "",
+      verified: "",
+      recent: "",
+      multi_versions: "",
+      performer: "",
+      year: "",
+      searched: "0",
+      adv: "0",
+      page: "1",
+      ...filters,
+      entity: String(entityName || filters.entity || "").trim(),
+      path: cleanPath,
+    },
+    ["q", "lang", "entity", "path", "country", "country_exact", "period", "region", "event", "theme", "words_author", "music_author", "verified", "recent", "multi_versions", "performer", "year", "adv", "searched", "page"],
+  );
+}
+
 function writeVersionLyricsMetaToRow(rowNode, meta) {
   if (!(rowNode instanceof HTMLElement)) return;
   const hiddenNode = rowNode.querySelector(".ss_version_lyrics_meta_json");
@@ -10215,7 +10860,23 @@ function computeBackgroundCrop(sourceWidth, sourceHeight, targetWidth, targetHei
   };
 }
 
-async function standardizeBackgroundImage(sourceUrl, width, height, focusX, focusY, zoomLevel = 1) {
+function isDataImageUrl(value) {
+  return String(value || "").trim().startsWith("data:image/");
+}
+
+function compressedCanvasDataUrl(canvas, options = {}) {
+  const maxLength = Math.max(40_000, Number(options.maxDataUrlLength || 320_000) || 320_000);
+  const qualities = [0.82, 0.76, 0.7, 0.64, 0.58, 0.52, 0.46];
+  let best = "";
+  for (const quality of qualities) {
+    const out = canvas.toDataURL("image/webp", quality);
+    if (!best || out.length < best.length) best = out;
+    if (out.length <= maxLength) return out;
+  }
+  return best;
+}
+
+async function standardizeBackgroundImage(sourceUrl, width, height, focusX, focusY, zoomLevel = 1, maxDataUrlLength = 320_000) {
   const image = await loadImageElement(sourceUrl);
   const sourceWidth = Math.max(1, Number(image.naturalWidth || image.width || 1));
   const sourceHeight = Math.max(1, Number(image.naturalHeight || image.height || 1));
@@ -10231,17 +10892,23 @@ async function standardizeBackgroundImage(sourceUrl, width, height, focusX, focu
   ctx.imageSmoothingEnabled = true;
   ctx.imageSmoothingQuality = "high";
   ctx.drawImage(image, crop.cropX, crop.cropY, crop.cropWidth, crop.cropHeight, 0, 0, targetWidth, targetHeight);
-  return canvas.toDataURL("image/webp", 0.88);
+  return compressedCanvasDataUrl(canvas, { maxDataUrlLength });
 }
 
-async function ensureStrictBackgroundImage(sourceUrl, width, height, focusX, focusY, zoomLevel = 1) {
+async function ensureStrictBackgroundImage(sourceUrl, width, height, focusX, focusY, zoomLevel = 1, maxDataUrlLength = 320_000) {
   const image = await loadImageElement(sourceUrl);
   const sourceWidth = Math.max(1, Number(image.naturalWidth || image.width || 1));
   const sourceHeight = Math.max(1, Number(image.naturalHeight || image.height || 1));
   const targetWidth = Math.max(1, Math.round(Number(width) || 1));
   const targetHeight = Math.max(1, Math.round(Number(height) || 1));
-  if (sourceWidth === targetWidth && sourceHeight === targetHeight) return sourceUrl;
-  return standardizeBackgroundImage(sourceUrl, targetWidth, targetHeight, focusX, focusY, zoomLevel);
+  if (
+    sourceWidth === targetWidth
+    && sourceHeight === targetHeight
+    && (!isDataImageUrl(sourceUrl) || String(sourceUrl).length <= maxDataUrlLength)
+  ) {
+    return sourceUrl;
+  }
+  return standardizeBackgroundImage(sourceUrl, targetWidth, targetHeight, focusX, focusY, zoomLevel, maxDataUrlLength);
 }
 
 async function standardizeVisualBackgroundPair(entry = {}) {
@@ -10252,27 +10919,31 @@ async function standardizeVisualBackgroundPair(entry = {}) {
   const nextDesktop = desktopSource
     ? normalizeVisualBackground({
         ...desktop,
-        image_url: await ensureStrictBackgroundImage(
+      image_url: await ensureStrictBackgroundImage(
           desktopSource,
           COUNTRY_BACKGROUND_STANDARDS.desktop.width,
           COUNTRY_BACKGROUND_STANDARDS.desktop.height,
           desktop.focus_x,
           desktop.focus_y,
           1,
+          COUNTRY_BACKGROUND_STANDARDS.desktop.maxDataUrlLength,
         ),
+        source_url: isDataImageUrl(desktop.source_url) ? "" : desktop.source_url,
       })
     : createEmptyVisualBackground();
   const nextMobile = mobileSource
     ? normalizeVisualBackground({
         ...mobile,
-        image_url: await ensureStrictBackgroundImage(
+      image_url: await ensureStrictBackgroundImage(
           mobileSource,
           COUNTRY_BACKGROUND_STANDARDS.mobile.width,
           COUNTRY_BACKGROUND_STANDARDS.mobile.height,
           mobile.focus_x,
           mobile.focus_y,
           1,
+          COUNTRY_BACKGROUND_STANDARDS.mobile.maxDataUrlLength,
         ),
+        source_url: isDataImageUrl(mobile.source_url) ? "" : mobile.source_url,
       })
     : createEmptyVisualBackground();
   return {
@@ -10960,11 +11631,14 @@ export async function render(route) {
   teardownSongConfidenceMenus();
 
   if (route.name === "home") {
-    const [data, countryBackgroundsResponse, countryCountsResponse, langCountryCountsResponse, langCountryPeriodCountsResponse] = await Promise.all([
-      api.songs({
+    const shouldLoadSongResults = shouldFetchHomeSongResults(params);
+    const songResultsPromise = shouldLoadSongResults
+      ? api.songs({
         q: params.q || "",
         lang: params.lang || "",
+        entity: params.entity || "",
         country: params.country || "",
+        country_exact: params.country_exact || "",
         period: params.period || "",
         region: params.region || "",
         event: params.event || "",
@@ -10975,7 +11649,10 @@ export async function render(route) {
         performer: params.performer || "",
         year: params.year || "",
         page: Number(params.page || 1),
-      }),
+      })
+      : Promise.resolve(emptyHomeSongsResponse(params));
+    const [data, countryBackgroundsResponse, countryCountsResponse, langCountryCountsResponse, langCountryPeriodCountsResponse] = await Promise.all([
+      songResultsPromise,
       api.countryBackground("").catch(() => ({ items: [] })),
       api.countryCounts().catch(() => ({ items: [] })),
       api.langCountryCounts().catch(() => ({ items: [] })),
@@ -11365,7 +12042,6 @@ export async function render(route) {
     const canBackgrounds = isSuperAdmin();
     const canUsers = isSuperAdmin();
     const allowedSections = [
-      canEditSongs ? "songs" : "",
       canBulkImport ? "bulk-import" : "",
       (canEditSongs || canCreateSongs) ? "editor" : "",
       canRequests ? "requests" : "",
@@ -11481,7 +12157,11 @@ export async function render(route) {
         else if (uiLocale() === "et") deniedText = "Riikide taustade haldamiseks pole piisavalt õigusi.";
         return { html: `${adminTabs("backgrounds")}<div class="card"><div class="muted">${esc(deniedText)}</div></div>`, ctx: { section } };
       }
-      const data = await api.adminCountryBackgrounds();
+      const [data, countryCounts] = await Promise.all([
+        api.adminCountryBackgrounds(),
+        api.countryCounts().catch(() => ({ items: [] })),
+      ]);
+      data.country_counts = Array.isArray(countryCounts?.items) ? countryCounts.items : [];
       return { html: adminHistoricalVisualsUI(data), ctx: { section, data } };
     }
 
@@ -11528,10 +12208,414 @@ export async function render(route) {
   return { html: `<div class="card"><div class="h1">${esc(t("common.notFound"))}</div></div>`, ctx: {} };
 }
 
+function bindAdminVisualCategories(ctx) {
+  const countrySelect = qs("ab_country");
+  const countrySearchInput = qs("ab_country_search");
+  const countryResultsNode = qs("ab_country_results");
+  const saveBtn = qs("ab_save");
+  const clearBtn = qs("ab_clear");
+  const emptyStateNode = qs("ab_empty_state");
+  const rangeErrorNode = qs("ab_range_error");
+  if (!countrySelect || !saveBtn || !clearBtn) return;
+  const locale = uiLocale();
+  const items = Array.isArray(ctx?.data?.items) ? ctx.data.items : [];
+  const byCountry = new Map();
+  items.forEach((item) => {
+    const normalized = normalizeCountryBackground(item, item?.country || "");
+    if (normalized?.country) byCountry.set(normalized.country, normalized);
+  });
+  const counts = new Map();
+  (Array.isArray(ctx?.data?.country_counts) ? ctx.data.country_counts : []).forEach((item) => {
+    const country = normalizeSongCountry(item?.country || "");
+    const count = Number(item?.count || 0);
+    if (country && count > 0) counts.set(country, count);
+  });
+  const searchText = (value = "") => String(value || "").toLowerCase().trim().replace(/\s+/g, " ");
+  const countryOptions = Array.from(countrySelect.options)
+    .map((opt) => {
+      const value = normalizeSongCountry(opt.value || "") || "";
+      const label = String(opt.textContent || "").trim();
+      return value && label ? { value, label, count: Number(counts.get(value) || 0) } : null;
+    })
+    .filter(Boolean)
+    .sort((a, b) => b.count - a.count || a.label.localeCompare(b.label));
+  const countLabel = (count) => {
+    const n = Math.max(0, Number(count) || 0);
+    if (locale === "ru") {
+      const mod100 = n % 100;
+      const mod10 = n % 10;
+      const word = mod100 >= 11 && mod100 <= 14 ? "песен" : mod10 === 1 ? "песня" : mod10 >= 2 && mod10 <= 4 ? "песни" : "песен";
+      return `${n} ${word}`;
+    }
+    return `${n} ${locale === "et" ? "laulu" : "songs"}`;
+  };
+  countrySelect.innerHTML = `<option value="">${esc(uiText("selectCountry"))}</option>${countryOptions.map((opt) => `<option value="${esc(opt.value)}">${esc(opt.label)}</option>`).join("")}`;
+  const filteredOptions = (queryRaw = "") => {
+    const query = searchText(queryRaw);
+    const list = query ? countryOptions.filter((opt) => searchText(opt.label).includes(query) || opt.value.includes(query)) : countryOptions;
+    return list.slice(0, 12);
+  };
+  const renderEntityResults = (queryRaw = "", force = false) => {
+    if (!countryResultsNode) return;
+    const query = searchText(queryRaw);
+    const shouldShow = force || !!query;
+    countryResultsNode.classList.toggle("hidden", !shouldShow);
+    if (!shouldShow) {
+      countryResultsNode.innerHTML = "";
+      return;
+    }
+    const selected = normalizeSongCountry(countrySelect.value || "") || "";
+    const list = filteredOptions(queryRaw);
+    countryResultsNode.innerHTML = list.length
+      ? list.map((opt) => `<button class="ab-entity-result ${opt.value === selected ? "is-active" : ""}" type="button" data-country="${esc(opt.value)}"><span class="ab-entity-result-title">${esc(opt.label)}</span><span class="ab-entity-result-count">${esc(countLabel(opt.count))}</span></button>`).join("")
+      : `<div class="muted small ab-entity-result-empty">${esc(locale === "ru" ? "Ничего не найдено" : "No matches")}</div>`;
+  };
+  const pickCountry = (queryRaw = "") => {
+    const query = searchText(queryRaw);
+    if (!query) return "";
+    return countryOptions.find((opt) => searchText(opt.label) === query)?.value
+      || countryOptions.find((opt) => searchText(opt.label).startsWith(query))?.value
+      || filteredOptions(queryRaw)[0]?.value
+      || "";
+  };
+
+  const categoryDefs = {
+    desktop: { title: locale === "ru" ? "Фон ПК" : "Desktop background", type: "background", standard: COUNTRY_BACKGROUND_STANDARDS.desktop, previewClass: "ab-preview-desktop" },
+    mobile: { title: locale === "ru" ? "Фон телефона" : "Phone background", type: "background", standard: COUNTRY_BACKGROUND_STANDARDS.mobile, previewClass: "ab-preview-mobile" },
+    flag: { title: locale === "ru" ? "Флаг превью" : "Preview flag", type: "symbol", standard: FLAG_CARD_STANDARDS.desktopLong, previewClass: "ab-symbol-preview-wide" },
+    sticker: { title: locale === "ru" ? "Стикер превью" : "Preview sticker", type: "symbol", standard: { width: 512, height: 512 }, previewClass: "ab-symbol-preview-square" },
+  };
+  let visualProfileState = normalizeVisualProfile(createEmptyVisualProfile());
+
+  const setError = (message = "") => {
+    if (!rangeErrorNode) return;
+    rangeErrorNode.textContent = String(message || "");
+    rangeErrorNode.classList.toggle("hidden", !message);
+  };
+  const currentCountry = () => normalizeSongCountry(countrySelect.value || "") || "";
+  const getCategory = (key) => visualProfileState.categories?.[key] || normalizeVisualProfile(createEmptyVisualProfile()).categories[key];
+  const normalizeRowValue = (key, value = {}) => categoryDefs[key].type === "symbol" ? normalizeVisualSymbol(value) : normalizeVisualBackground(value);
+  const categoryHasImage = (key, value = {}) => {
+    const normalized = normalizeRowValue(key, value);
+    return categoryDefs[key].type === "symbol"
+      ? !!(normalized.long || normalized.long_mobile || normalized.square)
+      : !!normalized.image_url;
+  };
+  const imageForRow = (key, value = {}) => {
+    const normalized = normalizeRowValue(key, value);
+    if (categoryDefs[key].type === "symbol") return normalized.long || normalized.long_mobile || normalized.square || "";
+    return normalized.image_url || "";
+  };
+  const rowHtml = (key, row, index) => {
+    const isDefault = index < 0;
+    const value = isDefault ? row.default : row.value;
+    const isBackground = categoryDefs[key].type === "background";
+    const focus = isBackground ? normalizeVisualBackground(value) : { focus_x: 50, focus_y: 50, zoom: 1 };
+    const image = isBackground ? (focus.source_url || focus.image_url || "") : imageForRow(key, value);
+    const zoom = clampZoomLevel(focus.zoom || 1);
+    const zoomScale = Math.round(zoomLevelToScale(zoom) * 1000) / 10;
+    const zoomControl = isBackground
+      ? `<div class="ab-file-zoom"><div class="fieldLabel">${esc(locale === "ru" ? "Зум" : "Zoom")}: <span class="ab-visual-zoom-value">${esc(zoom)}</span></div><input class="input ab-visual-zoom" type="range" min="1" max="100" step="1" value="${esc(zoom)}" data-category="${esc(key)}" data-index="${index}" /></div>`
+      : "";
+    return `
+      <div class="ab-visual-row" data-category="${esc(key)}" data-index="${index}">
+        <div class="ab-visual-row-head">
+          <span class="ab-visual-kind">${esc(isDefault ? (locale === "ru" ? "Дефолт" : "Default") : `${row.from || ""}-${row.to || ""}`)}</span>
+          ${isDefault ? "" : `<button class="btn ghost ab-remove-variant" type="button" data-category="${esc(key)}" data-index="${index}">${esc(locale === "ru" ? "Удалить" : "Remove")}</button>`}
+        </div>
+        <div class="ab-visual-grid">
+          <label class="field ab-file-field"><div class="fieldLabel">${esc(locale === "ru" ? "Файл" : "File")}</div><input class="input ab-visual-file" type="file" accept="image/*" data-category="${esc(key)}" data-index="${index}" />${zoomControl}</label>
+          ${isDefault ? `<div></div><div></div>` : `
+            <label class="field"><div class="fieldLabel">${esc(locale === "ru" ? "С" : "From")}</div><input class="input ab-year-from" type="number" min="1" max="3000" value="${esc(row.from || "")}" data-category="${esc(key)}" data-index="${index}" /></label>
+            <label class="field"><div class="fieldLabel">${esc(locale === "ru" ? "По" : "To")}</div><input class="input ab-year-to" type="number" min="1" max="3000" value="${esc(row.to || "")}" data-category="${esc(key)}" data-index="${index}" /></label>
+          `}
+          <div></div>
+          <div class="ab-crop-buttons hidden" data-category="${esc(key)}" data-index="${index}">
+            <button class="btn ghost" type="button" data-dx="0" data-dy="-4">^</button>
+            <button class="btn ghost" type="button" data-dx="-4" data-dy="0"><</button>
+            <button class="btn ghost" type="button" data-center="1">${esc(locale === "ru" ? "Центр" : "Center")}</button>
+            <button class="btn ghost" type="button" data-dx="4" data-dy="0">></button>
+            <button class="btn ghost" type="button" data-dx="0" data-dy="4">v</button>
+          </div>
+          <div class="ab-visual-preview ${esc(categoryDefs[key].previewClass)} ${image ? "" : "is-empty"} ${isBackground ? "is-draggable" : ""}" data-empty="${esc(locale === "ru" ? "Нет изображения" : "No image")}" style="${image ? `background-image:url('${esc(image)}');background-position:${focus.focus_x || 50}% ${focus.focus_y || 50}%;${isBackground ? `background-size:${zoomScale}% auto;` : ""}` : ""}"></div>
+        </div>
+      </div>
+    `;
+  };
+  const renderCategories = () => {
+    const hasCountry = !!currentCountry();
+    emptyStateNode?.classList.toggle("hidden", hasCountry);
+    document.querySelectorAll(".ab-category-card").forEach((card) => {
+      card.classList.toggle("hidden", !hasCountry);
+      const key = card.getAttribute("data-visual-category") || "";
+      const rows = card.querySelector(`[data-category-rows="${CSS.escape(key)}"]`);
+      const category = getCategory(key);
+      if (rows) rows.innerHTML = rowHtml(key, category, -1) + category.variants.map((row, index) => rowHtml(key, row, index)).join("");
+    });
+    saveBtn.disabled = !hasCountry;
+    clearBtn.disabled = !hasCountry;
+  };
+  const setCountry = (country) => {
+    const normalized = normalizeSongCountry(country || "") || "";
+    const option = countryOptions.find((item) => item.value === normalized);
+    if (!option) return;
+    countrySelect.value = normalized;
+    if (countrySearchInput) countrySearchInput.value = option.label;
+    const row = byCountry.get(normalized);
+    visualProfileState = normalizeVisualProfile(row?.visual_profile || row?.visual_profile_json || createEmptyVisualProfile());
+    setError("");
+    renderCategories();
+  };
+  const rowTarget = (target) => {
+    const node = target instanceof HTMLElement ? target.closest("[data-category][data-index]") : null;
+    if (!(node instanceof HTMLElement)) return null;
+    const key = node.getAttribute("data-category") || "";
+    const index = Number(node.getAttribute("data-index"));
+    const category = getCategory(key);
+    const row = index < 0 ? category : category.variants[index];
+    return { key, index, category, row };
+  };
+  const setRowValue = (key, index, value) => {
+    const category = getCategory(key);
+    if (index < 0) category.default = normalizeRowValue(key, value);
+    else if (category.variants[index]) category.variants[index].value = normalizeRowValue(key, value);
+  };
+  const standardizeSource = async (key, source, focusX = 50, focusY = 50, zoom = 1) => {
+    if (categoryDefs[key].type === "background") {
+      const std = categoryDefs[key].standard;
+      return normalizeVisualBackground({
+        image_url: await standardizeBackgroundImage(source, std.width, std.height, focusX, focusY, zoom, std.maxDataUrlLength),
+        source_url: isDataImageUrl(source) ? "" : source,
+        focus_x: focusX,
+        focus_y: focusY,
+        zoom,
+      });
+    }
+    const std = categoryDefs[key].standard;
+    const image = await standardizeFlagImageHorizontalCrop(source, std.width, std.height);
+    return key === "sticker" ? normalizeVisualSymbol({ square: image }) : normalizeVisualSymbol({ long: image, long_mobile: image });
+  };
+  const previewStyleForBackground = (preview, value) => {
+    if (!(preview instanceof HTMLElement)) return;
+    const current = normalizeVisualBackground(value);
+    const previewSource = current.source_url || current.image_url || "";
+    if (!previewSource) return;
+    preview.style.backgroundImage = `url("${previewSource.replaceAll("\"", "%22")}")`;
+    preview.style.backgroundPosition = `${current.focus_x || 50}% ${current.focus_y || 50}%`;
+    preview.style.backgroundSize = `${Math.round(zoomLevelToScale(current.zoom || 1) * 1000) / 10}% auto`;
+  };
+  const restandardizeTimers = new Map();
+  const scheduleRestandardize = (key, index, preview, delay = 220) => {
+    const id = `${key}:${index}`;
+    window.clearTimeout(restandardizeTimers.get(id));
+    restandardizeTimers.set(id, window.setTimeout(async () => {
+      const category = getCategory(key);
+      const row = index < 0 ? category : category.variants[index];
+      const current = normalizeVisualBackground(index < 0 ? category.default : row?.value);
+      const source = current.source_url || current.image_url || "";
+      if (!source || categoryDefs[key]?.type !== "background") return;
+      const next = await standardizeSource(key, source, current.focus_x, current.focus_y, current.zoom || 1);
+      setRowValue(key, index, next);
+      previewStyleForBackground(preview, next);
+    }, delay));
+  };
+
+  countrySearchInput?.addEventListener("input", () => renderEntityResults(countrySearchInput.value || "", true));
+  countrySearchInput?.addEventListener("focus", () => renderEntityResults(countrySearchInput.value || "", true));
+  countrySearchInput?.addEventListener("keydown", (event) => {
+    if (event.key === "Escape") {
+      countryResultsNode?.classList.add("hidden");
+      return;
+    }
+    if (event.key !== "Enter") return;
+    event.preventDefault();
+    const picked = pickCountry(countrySearchInput.value || "");
+    if (picked) setCountry(picked);
+    countryResultsNode?.classList.add("hidden");
+  });
+  countryResultsNode?.addEventListener("click", (event) => {
+    const target = event.target instanceof HTMLElement ? event.target.closest("[data-country]") : null;
+    const country = target instanceof HTMLElement ? target.getAttribute("data-country") || "" : "";
+    if (country) setCountry(country);
+    countryResultsNode.classList.add("hidden");
+  });
+  document.addEventListener("pointerdown", (event) => {
+    const target = event.target;
+    if (!(target instanceof Node)) return;
+    if (countrySearchInput?.contains(target) || countryResultsNode?.contains(target)) return;
+    countryResultsNode?.classList.add("hidden");
+  });
+  document.querySelectorAll(".ab-add-variant").forEach((button) => {
+    button.addEventListener("click", () => {
+      const key = button.getAttribute("data-category") || "";
+      const category = getCategory(key);
+      category.variants.push({ from: "", to: "", value: normalizeRowValue(key, {}) });
+      renderCategories();
+    });
+  });
+  qs("ab_category_stack")?.addEventListener("click", (event) => {
+    const target = event.target instanceof HTMLElement ? event.target : null;
+    const remove = target?.closest(".ab-remove-variant");
+    if (remove instanceof HTMLElement) {
+      const key = remove.getAttribute("data-category") || "";
+      const index = Number(remove.getAttribute("data-index"));
+      getCategory(key).variants.splice(index, 1);
+      renderCategories();
+      return;
+    }
+    const crop = target?.closest(".ab-crop-buttons button");
+    if (crop instanceof HTMLElement) {
+      const data = rowTarget(crop);
+      if (!data || categoryDefs[data.key].type !== "background") return;
+      const current = normalizeVisualBackground(data.index < 0 ? data.category.default : data.row.value);
+      const next = crop.getAttribute("data-center")
+        ? { ...current, focus_x: 50, focus_y: 50 }
+        : { ...current, focus_x: clampPercent(current.focus_x + Number(crop.getAttribute("data-dx") || 0)), focus_y: clampPercent(current.focus_y + Number(crop.getAttribute("data-dy") || 0)) };
+      setRowValue(data.key, data.index, next);
+      renderCategories();
+    }
+  });
+  qs("ab_category_stack")?.addEventListener("pointerdown", (event) => {
+    const preview = event.target instanceof HTMLElement ? event.target.closest(".ab-visual-preview.is-draggable") : null;
+    if (!(preview instanceof HTMLElement)) return;
+    const data = rowTarget(preview);
+    if (!data || categoryDefs[data.key]?.type !== "background") return;
+    const current = normalizeVisualBackground(data.index < 0 ? data.category.default : data.row.value);
+    if (!current.image_url) return;
+    event.preventDefault();
+    preview.classList.add("is-dragging");
+    preview.setPointerCapture?.(event.pointerId);
+    const rect = preview.getBoundingClientRect();
+    const start = {
+      x: event.clientX,
+      y: event.clientY,
+      focusX: current.focus_x,
+      focusY: current.focus_y,
+      width: Math.max(1, rect.width),
+      height: Math.max(1, rect.height),
+    };
+    const zoomScale = zoomLevelToScale(current.zoom || 1);
+    const xSensitivity = start.width * Math.max(2.2, zoomScale * 2.8);
+    const ySensitivity = start.height * Math.max(2.2, zoomScale * 2.8);
+    let pendingMove = null;
+    let dragFrame = 0;
+    let latest = current;
+    const applyPendingMove = () => {
+      dragFrame = 0;
+      if (!pendingMove) return;
+      const moveEvent = pendingMove;
+      pendingMove = null;
+      latest = {
+        ...current,
+        focus_x: clampPercent(start.focusX - ((moveEvent.clientX - start.x) / xSensitivity) * 100),
+        focus_y: clampPercent(start.focusY - ((moveEvent.clientY - start.y) / ySensitivity) * 100),
+      };
+      previewStyleForBackground(preview, latest);
+    };
+    const move = (moveEvent) => {
+      pendingMove = moveEvent;
+      if (!dragFrame) dragFrame = window.requestAnimationFrame(applyPendingMove);
+    };
+    const finish = () => {
+      if (dragFrame) {
+        window.cancelAnimationFrame(dragFrame);
+        applyPendingMove();
+      }
+      setRowValue(data.key, data.index, latest);
+      preview.classList.remove("is-dragging");
+      preview.releasePointerCapture?.(event.pointerId);
+      preview.removeEventListener("pointermove", move);
+      preview.removeEventListener("pointerup", finish);
+      preview.removeEventListener("pointercancel", finish);
+      scheduleRestandardize(data.key, data.index, preview, 0);
+    };
+    preview.addEventListener("pointermove", move);
+    preview.addEventListener("pointerup", finish);
+    preview.addEventListener("pointercancel", finish);
+  });
+  qs("ab_category_stack")?.addEventListener("input", (event) => {
+    const target = event.target;
+    const data = rowTarget(target);
+    if (!data || !(target instanceof HTMLInputElement)) return;
+    if (target.classList.contains("ab-year-from")) data.row.from = target.value;
+    if (target.classList.contains("ab-year-to")) data.row.to = target.value;
+    if (target.classList.contains("ab-visual-zoom") && categoryDefs[data.key]?.type === "background") {
+      const current = normalizeVisualBackground(data.index < 0 ? data.category.default : data.row.value);
+      const next = { ...current, zoom: clampZoomLevel(target.value || 1) };
+      setRowValue(data.key, data.index, next);
+      const rowNode = target.closest(".ab-visual-row");
+      const label = rowNode?.querySelector(".ab-visual-zoom-value");
+      const preview = rowNode?.querySelector(".ab-visual-preview");
+      if (label) label.textContent = String(next.zoom);
+      previewStyleForBackground(preview, next);
+      scheduleRestandardize(data.key, data.index, preview, 260);
+    }
+  });
+  qs("ab_category_stack")?.addEventListener("change", async (event) => {
+    const input = event.target;
+    if (!(input instanceof HTMLInputElement) || !input.classList.contains("ab-visual-file")) return;
+    const data = rowTarget(input);
+    const file = input.files?.[0];
+    input.value = "";
+    if (!data || !file) return;
+    try {
+      const source = await readFileAsDataUrl(file);
+      setRowValue(data.key, data.index, await standardizeSource(data.key, source));
+      renderCategories();
+    } catch {
+      showStatusOverlay(locale === "ru" ? "Неверный формат изображения." : "Invalid image format.", "error");
+    }
+  });
+  const buildPayload = () => {
+    const profile = normalizeVisualProfile(visualProfileState);
+    const validation = validateVisualProfileRanges(profile);
+    if (!validation.ok) return null;
+    return profile;
+  };
+  saveBtn.addEventListener("click", async () => {
+    const country = currentCountry();
+    if (!country) return;
+    const profile = buildPayload();
+    if (!profile) {
+      setError(locale === "ru" ? "Диапазоны внутри одной категории не должны пересекаться." : "Ranges inside one category must not overlap.");
+      return;
+    }
+    setError("");
+    const original = saveBtn.textContent;
+    saveBtn.disabled = true;
+    try {
+      const out = await api.adminSaveCountryBackground({ country, visual_profile: profile });
+      const saved = normalizeCountryBackground(out?.item || { country, visual_profile_json: serializeVisualProfile(profile) }, country);
+      byCountry.set(country, saved);
+      showStatusOverlay(locale === "ru" ? "Визуалы сохранены" : "Visuals saved", "success");
+    } catch (error) {
+      showStatusOverlay(`${t("common.error")}: ${error?.message || t("common.error")}`, "error");
+    } finally {
+      saveBtn.disabled = false;
+      saveBtn.textContent = original;
+    }
+  });
+  clearBtn.addEventListener("click", async () => {
+    const country = currentCountry();
+    if (!country) return;
+    await api.adminDeleteCountryBackground(country);
+    byCountry.delete(country);
+    visualProfileState = normalizeVisualProfile(createEmptyVisualProfile());
+    renderCategories();
+    showStatusOverlay(locale === "ru" ? "Визуалы очищены" : "Visuals cleared", "success");
+  });
+  renderEntityResults("");
+  renderCategories();
+}
+
 function bindAdminHistoricalVisuals(ctx) {
+  bindAdminVisualCategories(ctx);
+  return;
   const updatedNode = qs("ab_updated");
   const langSelect = qs("ab_lang");
   const countrySelect = qs("ab_country");
+  const countrySearchInput = qs("ab_country_search");
+  const countryResultsNode = qs("ab_country_results");
   const saveBtn = qs("ab_save");
   const clearBtn = qs("ab_clear");
   const openPreviewBtn = qs("ab_open_preview");
@@ -11544,6 +12628,15 @@ function bindAdminHistoricalVisuals(ctx) {
 
   const savedText = uiLocale() === "ru" ? "\u0412\u0438\u0437\u0443\u0430\u043b \u0441\u043e\u0445\u0440\u0430\u043d\u0435\u043d" : uiLocale() === "uk" ? "\u0412\u0456\u0437\u0443\u0430\u043b \u0437\u0431\u0435\u0440\u0435\u0436\u0435\u043d\u043e" : uiLocale() === "et" ? "Visuaal salvestatud" : "Visual saved";
   const clearedText = uiLocale() === "ru" ? "\u0412\u0438\u0437\u0443\u0430\u043b \u043e\u0447\u0438\u0449\u0435\u043d" : uiLocale() === "uk" ? "\u0412\u0456\u0437\u0443\u0430\u043b \u043e\u0447\u0438\u0449\u0435\u043d\u043e" : uiLocale() === "et" ? "Visuaal eemaldatud" : "Visual cleared";
+  const fromLabel = uiLocale() === "ru" ? "\u0421" : uiLocale() === "uk" ? "\u0412\u0456\u0434" : uiLocale() === "et" ? "Algus" : "From";
+  const toLabel = uiLocale() === "ru" ? "\u041f\u043e" : uiLocale() === "uk" ? "\u0414\u043e" : uiLocale() === "et" ? "L\u00f5pp" : "To";
+  const defaultRangeHint = uiLocale() === "ru"
+    ? "\u0414\u0435\u0444\u043e\u043b\u0442 \u043f\u043e\u043a\u0430\u0437\u044b\u0432\u0430\u0435\u0442\u0441\u044f, \u043a\u043e\u0433\u0434\u0430 \u0433\u043e\u0434 \u043f\u0435\u0441\u043d\u0438 \u043d\u0435 \u043f\u043e\u043f\u0430\u043b \u0432 \u0434\u0438\u0430\u043f\u0430\u0437\u043e\u043d."
+    : uiLocale() === "uk"
+      ? "\u0414\u0435\u0444\u043e\u043b\u0442 \u043f\u043e\u043a\u0430\u0437\u0443\u0454\u0442\u044c\u0441\u044f, \u043a\u043e\u043b\u0438 \u0440\u0456\u043a \u043f\u0456\u0441\u043d\u0456 \u043d\u0435 \u043f\u043e\u0442\u0440\u0430\u043f\u0438\u0432 \u0443 \u0434\u0456\u0430\u043f\u0430\u0437\u043e\u043d."
+      : uiLocale() === "et"
+        ? "Vaikimisi kuvatakse siis, kui laulu aasta ei kuulu vahemikku."
+        : "Default is shown when a song year does not match any range.";
   const previewSongTitle = uiLocale() === "ru" ? "\u0414\u0435\u043c\u043e \u043f\u0435\u0441\u043d\u044f" : uiLocale() === "uk" ? "\u0414\u0435\u043c\u043e \u043f\u0456\u0441\u043d\u044f" : uiLocale() === "et" ? "Demo laul" : "Demo song";
   const invalidImageText = uiLocale() === "ru" ? "\u041d\u0435\u0432\u0435\u0440\u043d\u044b\u0439 \u0444\u043e\u0440\u043c\u0430\u0442 \u0438\u0437\u043e\u0431\u0440\u0430\u0436\u0435\u043d\u0438\u044f." : uiLocale() === "uk" ? "\u041d\u0435\u0432\u0456\u0440\u043d\u0438\u0439 \u0444\u043e\u0440\u043c\u0430\u0442 \u0437\u043e\u0431\u0440\u0430\u0436\u0435\u043d\u043d\u044f." : uiLocale() === "et" ? "Vale pildiformaat." : "Invalid image format.";
   const invalidRangeText = uiLocale() === "ru" ? "\u0417\u0430\u043f\u043e\u043b\u043d\u0438\u0442\u0435 \u043a\u043e\u0440\u0440\u0435\u043a\u0442\u043d\u044b\u0435 \u0434\u0438\u0430\u043f\u0430\u0437\u043e\u043d\u044b \u043b\u0435\u0442 \u0431\u0435\u0437 \u043f\u0435\u0440\u0435\u0441\u0435\u0447\u0435\u043d\u0438\u0439." : uiLocale() === "uk" ? "\u0417\u0430\u043f\u043e\u0432\u043d\u0456\u0442\u044c \u043a\u043e\u0440\u0435\u043a\u0442\u043d\u0456 \u0434\u0456\u0430\u043f\u0430\u0437\u043e\u043d\u0438 \u0440\u043e\u043a\u0456\u0432 \u0431\u0435\u0437 \u043f\u0435\u0440\u0435\u0442\u0438\u043d\u0456\u0432." : uiLocale() === "et" ? "Sisesta korrektsed kattumatud aastavahemikud." : "Use valid non-overlapping year ranges.";
@@ -11606,6 +12699,96 @@ function bindAdminHistoricalVisuals(ctx) {
     const normalized = normalizeCountryBackground(item, item?.country || "");
     if (normalized?.country) byCountry.set(normalized.country, normalized);
   });
+  const countryCountMap = new Map();
+  (Array.isArray(ctx?.data?.country_counts) ? ctx.data.country_counts : []).forEach((item) => {
+    const country = normalizeSongCountry(item?.country || "");
+    const count = Number(item?.count || 0);
+    if (country && count > 0) countryCountMap.set(country, count);
+  });
+  const normalizeEntitySearch = (value = "") => String(value || "")
+    .toLowerCase()
+    .trim()
+    .replace(/\s+/g, " ");
+  const countryOptions = Array.from(countrySelect.options)
+    .map((opt) => {
+      const value = normalizeSongCountry(opt.value || "") || "";
+      const label = String(opt.textContent || "").trim();
+      return value && label
+        ? { value, label, count: Number(countryCountMap.get(value) || 0) }
+        : null;
+    })
+    .filter(Boolean)
+    .sort((a, b) => b.count - a.count || a.label.localeCompare(b.label));
+  const renderHiddenCountryOptions = () => {
+    countrySelect.innerHTML = `<option value="">${esc(uiText("selectCountry"))}</option>${countryOptions
+      .map((opt) => `<option value="${esc(opt.value)}">${esc(opt.label)}</option>`)
+      .join("")}`;
+  };
+  const entitySongCountLabel = (count) => {
+    const safeCount = Math.max(0, Number(count) || 0);
+    if (uiLocale() === "ru") {
+      const mod100 = safeCount % 100;
+      const mod10 = safeCount % 10;
+      const word = mod100 >= 11 && mod100 <= 14 ? "песен" : mod10 === 1 ? "песня" : mod10 >= 2 && mod10 <= 4 ? "песни" : "песен";
+      return `${safeCount} ${word}`;
+    }
+    if (uiLocale() === "uk") return `${safeCount} пісень`;
+    if (uiLocale() === "et") return `${safeCount} laulu`;
+    return `${safeCount} songs`;
+  };
+  const filteredCountryOptions = (queryRaw = "") => {
+    const query = normalizeEntitySearch(queryRaw);
+    const list = query
+      ? countryOptions.filter((opt) => (
+        normalizeEntitySearch(opt.label).includes(query)
+        || opt.value.includes(query)
+      ))
+      : countryOptions;
+    return list.slice(0, 28);
+  };
+  const renderCountryResults = (queryRaw = "", options = {}) => {
+    if (!countryResultsNode) return;
+    const query = normalizeEntitySearch(queryRaw);
+    const shouldShow = !!query || !!options.force;
+    countryResultsNode.classList.toggle("hidden", !shouldShow);
+    if (!shouldShow) {
+      countryResultsNode.innerHTML = "";
+      return;
+    }
+    const selected = normalizeSongCountry(countrySelect.value || "") || "";
+    const list = filteredCountryOptions(queryRaw).slice(0, 12);
+    countryResultsNode.innerHTML = list.length
+      ? list.map((opt) => `
+          <button class="ab-entity-result ${opt.value === selected ? "is-active" : ""}" type="button" data-country="${esc(opt.value)}">
+            <span class="ab-entity-result-title">${esc(opt.label)}</span>
+            <span class="ab-entity-result-count">${esc(entitySongCountLabel(opt.count))}</span>
+          </button>
+        `).join("")
+      : `<div class="muted small ab-entity-result-empty">${esc(uiLocale() === "ru" ? "Ничего не найдено" : uiLocale() === "uk" ? "Нічого не знайдено" : uiLocale() === "et" ? "Tulemusi pole" : "No matches")}</div>`;
+  };
+  const setCountryFromSearch = (country, options = {}) => {
+    const nextCountry = normalizeSongCountry(country || "") || "";
+    if (!nextCountry) return false;
+    const found = countryOptions.find((opt) => opt.value === nextCountry);
+    if (!found) return false;
+    const changed = countrySelect.value !== nextCountry;
+    countrySelect.value = nextCountry;
+    if (countrySearchInput) countrySearchInput.value = found.label;
+    renderCountryResults(countrySearchInput?.value || "");
+    if (changed && options.triggerChange !== false) countrySelect.dispatchEvent(new Event("change"));
+    return true;
+  };
+  const pickCountryFromQuery = (queryRaw = "") => {
+    const query = normalizeEntitySearch(queryRaw);
+    if (!query) return "";
+    return (
+      countryOptions.find((opt) => normalizeEntitySearch(opt.label) === query)?.value
+      || countryOptions.find((opt) => normalizeEntitySearch(opt.label).startsWith(query))?.value
+      || filteredCountryOptions(queryRaw)[0]?.value
+      || ""
+    );
+  };
+  renderHiddenCountryOptions();
 
   const desktopRefs = {
     url: qs("ab_desktop_url"),
@@ -12222,7 +13405,15 @@ function bindAdminHistoricalVisuals(ctx) {
     const baseSource = variantBaseSource[kind];
     if (!refs || !baseSource) return;
     const { focusX, focusY } = readVariantFocus(kind);
-    const out = await standardizeBackgroundImage(baseSource, refs.standard.width, refs.standard.height, focusX, focusY, readVariantZoom(kind));
+    const out = await standardizeBackgroundImage(
+      baseSource,
+      refs.standard.width,
+      refs.standard.height,
+      focusX,
+      focusY,
+      readVariantZoom(kind),
+      refs.standard.maxDataUrlLength,
+    );
     if (refs.url) refs.url.value = out;
     syncActiveScopeFromInputs();
   }
@@ -12395,12 +13586,48 @@ function bindAdminHistoricalVisuals(ctx) {
     return { ok: true, profile: normalizeVisualProfile(payload) };
   }
 
-  const binder = bindHistoricalSelectors({
-    langId: "ab_lang",
-    countryId: "ab_country",
-    onRefresh: ({ country }) => fillEditor(country),
-    onLangChange: ({ country }) => fillEditor(country),
-    onCountryChange: ({ country }) => fillEditor(country),
+  countrySelect.addEventListener("change", () => {
+    const selected = normalizeSongCountry(countrySelect.value || "") || "";
+    const selectedOption = countryOptions.find((opt) => opt.value === selected);
+    if (countrySearchInput && selectedOption) countrySearchInput.value = selectedOption.label;
+    renderCountryResults(countrySearchInput?.value || "", { force: !!normalizeEntitySearch(countrySearchInput?.value || "") });
+    fillEditor(countrySelect.value || "");
+  });
+  countrySearchInput?.addEventListener("input", () => {
+    renderCountryResults(countrySearchInput.value || "", { force: true });
+  });
+  countrySearchInput?.addEventListener("focus", () => {
+    renderCountryResults(countrySearchInput.value || "", { force: true });
+  });
+  countrySearchInput?.addEventListener("keydown", (event) => {
+    if (event.key === "Escape") {
+      event.preventDefault();
+      countryResultsNode?.classList.add("hidden");
+      return;
+    }
+    if (event.key !== "Enter") return;
+    event.preventDefault();
+    const picked = pickCountryFromQuery(countrySearchInput.value || "");
+    if (picked) setCountryFromSearch(picked);
+  });
+  countrySearchInput?.addEventListener("change", () => {
+    const picked = pickCountryFromQuery(countrySearchInput.value || "");
+    if (picked) setCountryFromSearch(picked);
+  });
+  countryResultsNode?.addEventListener("click", (event) => {
+    const target = event.target instanceof HTMLElement ? event.target.closest("[data-country]") : null;
+    const country = target instanceof HTMLElement ? target.getAttribute("data-country") || "" : "";
+    if (country) {
+      setCountryFromSearch(country);
+      countryResultsNode.classList.add("hidden");
+    }
+  });
+  document.addEventListener("pointerdown", (event) => {
+    if (!countryResultsNode || countryResultsNode.classList.contains("hidden")) return;
+    const target = event.target;
+    if (!(target instanceof Node)) return;
+    if (countrySearchInput?.contains(target) || countryResultsNode.contains(target)) return;
+    countryResultsNode.classList.add("hidden");
   });
 
   wireVariant("desktop", desktopRefs);
@@ -12748,10 +13975,7 @@ function bindAdminHistoricalVisuals(ctx) {
     }
   });
 
-  if (langSelect && !normalizeSongLanguage(langSelect.value || "")) {
-    setSelectValueWithLegacy("ab_lang", "language", "", uiText("selectLanguage"));
-    binder.refresh({ country: "" });
-  }
+  renderCountryResults("");
   fillEditor(currentCountry(), { scope: "default" });
 }
 
@@ -12800,13 +14024,19 @@ export function bind(route, ctx) {
       const canKeepCurrent = !!currentPeriod && allowedPeriods instanceof Set && allowedPeriods.has(currentPeriod);
       if (!canKeepCurrent) periodSelect.value = "";
     };
-    const goWith = (extra = {}) => {
-      const all = { ...collectHomeFilters(), ...extra };
-      if (lockedCountry) {
-        all.country = lockedCountry;
-      }
-      location.hash = makeHash("#/", all, ["q", "lang", "country", "words_author", "music_author", "verified", "recent", "multi_versions", "performer", "year", "adv", "searched", "page"]);
-    };
+      const goWith = (extra = {}) => {
+        const all = {
+          entity: String(params.entity || "").trim(),
+          path: String(params.path || "").trim(),
+          country_exact: String(params.country_exact || "").trim(),
+          ...collectHomeFilters(),
+          ...extra,
+        };
+        if (lockedCountry) {
+          all.country = lockedCountry;
+        }
+        location.hash = makeHash("#/", all, ["q", "lang", "entity", "path", "country", "country_exact", "words_author", "music_author", "verified", "recent", "multi_versions", "performer", "year", "adv", "searched", "page"]);
+      };
 
     ["yt_q", "yt_performer", "yt_words_author", "yt_music_author", "yt_year", "yt_country", "yt_lang"].forEach((id) => qs(id)?.addEventListener("keydown", (e) => {
       if (e.key === "Enter") {
@@ -15860,7 +17090,7 @@ export function bind(route, ctx) {
     const keepRecent = String(ctx?.params?.recent || "").trim() === "1" ? "1" : "";
     const currentSort = String(ctx?.params?.sort || "newest").trim() || "newest";
     const buildHash = (extra = {}) => makeHash(
-      "#/admin/songs",
+      "#/admin/bulk-import",
       {
         q: qs("ac_q")?.value || "",
         status: qs("ac_status")?.value || "",
@@ -15885,22 +17115,17 @@ export function bind(route, ctx) {
     const bulkText = qs("ac_bulk_text");
     const bulkLang = qs("ac_bulk_lang");
     const bulkSource = qs("ac_bulk_source");
-    const bulkPreview = qs("ac_bulk_preview");
     const bulkStats = qs("ac_bulk_stats");
     const bulkSubmit = qs("ac_bulk_submit");
     const bulkClear = qs("ac_bulk_clear");
-    if (bulkText && bulkPreview && bulkStats && bulkSubmit) {
-      let removedSongIndexes = new Set();
-
+    if (bulkText && bulkStats && bulkSubmit) {
       const collectBulkSongs = () => {
         const parsed = splitNumberedSongbookText(bulkText.value || "");
-        return (parsed.songs || []).filter((item) => !removedSongIndexes.has(item.index));
+        return parsed.songs || [];
       };
 
-      const renderBulkPreview = () => {
+      const updateBulkStats = () => {
         const songs = collectBulkSongs();
-        bulkPreview.innerHTML = adminBulkImportPreviewMarkup(songs);
-        applyGlobalStagedReveal(bulkPreview);
         bulkStats.textContent = songs.length
           ? bulkImportUiText("stats", { count: songs.length })
           : String((bulkText.value || "").trim())
@@ -15909,22 +17134,12 @@ export function bind(route, ctx) {
       };
 
       bulkText.addEventListener("input", () => {
-        removedSongIndexes = new Set();
-        renderBulkPreview();
-      });
-      bulkPreview.addEventListener("click", (event) => {
-        const target = event.target;
-        if (!(target instanceof HTMLElement)) return;
-        const removeIndex = target.getAttribute("data-bulk-remove");
-        if (removeIndex == null) return;
-        removedSongIndexes.add(Number(removeIndex));
-        renderBulkPreview();
+        updateBulkStats();
       });
       bulkClear?.addEventListener("click", () => {
         bulkText.value = "";
         if (bulkSource) bulkSource.value = "";
-        removedSongIndexes = new Set();
-        renderBulkPreview();
+        updateBulkStats();
       });
       bulkSubmit.addEventListener("click", async () => {
         const lang = normalizeSongLanguage(bulkLang?.value || "");
@@ -15953,15 +17168,14 @@ export function bind(route, ctx) {
           showStatusOverlay(bulkImportUiText("success", { count: songs.length }), "success");
           bulkText.value = "";
           if (bulkSource) bulkSource.value = "";
-          removedSongIndexes = new Set();
-          renderBulkPreview();
+          updateBulkStats();
         } catch (error) {
           showStatusOverlay(`${t("common.error")}: ${error?.message || t("common.error")}`, "error");
         } finally {
           bulkSubmit.disabled = false;
         }
       });
-      renderBulkPreview();
+      updateBulkStats();
     }
     return;
   }
@@ -18389,7 +19603,7 @@ export function bind(route, ctx) {
         await api.adminDeleteSong(id);
         clearContentDraft(id);
         showStatusOverlay(t("admin.deleted"), "success");
-        location.hash = "#/admin/songs";
+        location.hash = "#/admin/bulk-import";
       } catch (e) {
         showStatusOverlay(`${t("admin.deleteError")}: ${e?.message || t("common.error")}`, "error");
       }
@@ -19090,7 +20304,15 @@ export function bind(route, ctx) {
       if (!refs || !baseSource) return;
       const { focusX, focusY } = readVariantFocus(kind);
       const zoomLevel = readVariantZoom(kind);
-      const out = await standardizeBackgroundImage(baseSource, refs.standard.width, refs.standard.height, focusX, focusY, zoomLevel);
+      const out = await standardizeBackgroundImage(
+        baseSource,
+        refs.standard.width,
+        refs.standard.height,
+        focusX,
+        focusY,
+        zoomLevel,
+        refs.standard.maxDataUrlLength,
+      );
       if (refs.url) refs.url.value = out;
       persistVariantScopeValue(kind);
     };

@@ -17,11 +17,15 @@ import {
   SEARCH_INDEX_SCHEMA_MARKER_VALUE,
   rebuildSongSearchIndex,
 } from "./song-search.mjs";
+import {
+  getEntityLinks,
+  getEntityNodes,
+} from "../../shared/entity-graph.js";
 
 const ADMIN_ALL_PERMISSIONS = [...ADMIN_PERMISSION_VALUES];
 export const FULL_SCHEMA_MARKER_KEY = "schema.full.version";
 export const AUTH_SCHEMA_MARKER_KEY = "schema.auth.version";
-export const FULL_SCHEMA_MARKER_VALUE = "2026-04-13-full-v8";
+export const FULL_SCHEMA_MARKER_VALUE = "2026-04-26-full-v9-entity-graph";
 export const AUTH_SCHEMA_MARKER_VALUE = "2026-03-21-auth-v2";
 export const VERIFICATION_RESET_MARKER_KEY = "data.verification_reset.version";
 export const VERIFICATION_RESET_MARKER_VALUE = "2026-04-20-reset-v1";
@@ -852,6 +856,58 @@ async function ensureSongbookImportTables(env) {
   await dbRun(env, `CREATE INDEX IF NOT EXISTS idx_songbook_import_sessions_creator ON songbook_import_sessions(created_by, updated_at DESC)`);
 }
 
+async function ensureEntityGraphTables(env) {
+  await dbRun(
+    env,
+    `CREATE TABLE IF NOT EXISTS entity_nodes (
+      id TEXT PRIMARY KEY,
+      name TEXT NOT NULL UNIQUE,
+      kind TEXT NOT NULL,
+      is_virtual INTEGER NOT NULL DEFAULT 0
+    )`
+  );
+  await dbRun(
+    env,
+    `CREATE TABLE IF NOT EXISTS entity_links (
+      id TEXT PRIMARY KEY,
+      child_name TEXT NOT NULL,
+      parent_name TEXT NOT NULL,
+      link_type TEXT NOT NULL CHECK(link_type IN ('по_стране','в_составе','автономия_в_составе','зависимый_режим','категория','контекст')),
+      sort_order INTEGER NOT NULL DEFAULT 0,
+      CHECK(child_name <> parent_name),
+      UNIQUE(child_name, parent_name, link_type)
+    )`
+  );
+  await dbRun(env, `CREATE INDEX IF NOT EXISTS idx_entity_nodes_name ON entity_nodes(name)`);
+  await dbRun(env, `CREATE INDEX IF NOT EXISTS idx_entity_links_child ON entity_links(child_name, sort_order)`);
+  await dbRun(env, `CREATE INDEX IF NOT EXISTS idx_entity_links_parent ON entity_links(parent_name, sort_order)`);
+  await dbRun(env, `CREATE INDEX IF NOT EXISTS idx_entity_links_type ON entity_links(link_type, sort_order)`);
+}
+
+async function seedEntityGraph(env) {
+  await ensureEntityGraphTables(env);
+  const links = getEntityLinks();
+  const nodes = getEntityNodes(links);
+  await dbRun(env, `DELETE FROM entity_links`);
+  await dbRun(env, `DELETE FROM entity_nodes`);
+  for (const node of nodes) {
+    await dbRun(
+      env,
+      `INSERT INTO entity_nodes (id, name, kind, is_virtual)
+       VALUES (?, ?, ?, ?)`,
+      [node.id, node.name, node.kind, node.is_virtual ? 1 : 0]
+    );
+  }
+  for (const link of links) {
+    await dbRun(
+      env,
+      `INSERT INTO entity_links (id, child_name, parent_name, link_type, sort_order)
+       VALUES (?, ?, ?, ?, ?)`,
+      [link.id, link.child_name, link.parent_name, link.link_type, link.sort_order]
+    );
+  }
+}
+
 async function ensureSearchIndexTables(env) {
   await dbRun(
     env,
@@ -1058,6 +1114,7 @@ export async function ensureSchema(env) {
   await ensureCountryBackgroundColumns(env);
   await ensureDraftTables(env);
   await ensureSongbookImportTables(env);
+  await ensureEntityGraphTables(env);
   await ensureSearchIndexTables(env);
 
   await dbRun(
@@ -1292,6 +1349,7 @@ export async function ensureSchemaAndSeed(env) {
     await ensureSuperAdmin(env);
     await ensureUsersNicknameData(env);
     await ensureSeed(env);
+    await seedEntityGraph(env);
     await ensureCanonicalDemoSongMetadata(env);
     await ensureHistoricalVerificationReset(env);
     const searchMarker = await readSchemaMarker(env, SEARCH_INDEX_SCHEMA_MARKER_KEY);

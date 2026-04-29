@@ -3,12 +3,12 @@ import { dbAll, dbGet } from "../_lib/db.js";
 import { ensureSchemaAndSeed } from "../_lib/schema.js";
 import {
   buildVisualProfileFromLegacyFields,
+  compactVisualProfile,
   extractBackgroundVisualProfile,
   extractFlagVisualProfile,
   mergeVisualProfiles,
   normalizeVisualProfile,
   resolveVisualVariant,
-  serializeVisualProfile,
 } from "../../shared/song-visuals.js";
 import { normalizeSongCountry } from "../../shared/song-catalogs.js";
 
@@ -22,6 +22,12 @@ function clampFocus(value) {
   const n = Number(value);
   if (!Number.isFinite(n)) return 50;
   return Math.max(0, Math.min(100, n));
+}
+
+function visualProfileNeedsPublicProfile(profile) {
+  const normalized = normalizeVisualProfile(profile);
+  const categories = normalized.categories || {};
+  return Object.values(categories).some((category) => Array.isArray(category?.variants) && category.variants.length > 0);
 }
 
 async function resolveChunkedValue(env, country, field, storedValue) {
@@ -70,17 +76,11 @@ async function normalizeRow(env, row) {
   const visualProfile = mergeVisualProfiles(backgroundProfile, flagProfile);
   const defaultVariant = resolveVisualVariant(visualProfile, {});
 
-  return {
+  const item = {
     country,
     desktop_image_url: desktopImageUrl || String(defaultVariant?.desktop?.image_url || "").trim(),
     mobile_image_url: mobileImageUrl || String(defaultVariant?.mobile?.image_url || "").trim(),
     preview_flag_image_url: previewFlagImageUrl || String(defaultVariant?.symbol?.long || defaultVariant?.symbol?.long_mobile || defaultVariant?.symbol?.square || "").trim(),
-    background_profile_json: backgroundProfileJson || serializeVisualProfile(backgroundProfile),
-    flag_profile_json: flagProfileJson || serializeVisualProfile(flagProfile),
-    visual_profile_json: visualProfileJson || serializeVisualProfile(visualProfile),
-    background_profile: backgroundProfile,
-    flag_profile: flagProfile,
-    visual_profile: visualProfile,
     desktop_focus_x: clampFocus(row.desktop_focus_x),
     desktop_focus_y: clampFocus(row.desktop_focus_y),
     mobile_focus_x: clampFocus(row.mobile_focus_x),
@@ -88,6 +88,10 @@ async function normalizeRow(env, row) {
     image_url: "",
     updated_at: String(row.updated_at || "").trim(),
   };
+  if (visualProfileNeedsPublicProfile(visualProfile)) {
+    item.visual_profile = compactVisualProfile(visualProfile);
+  }
+  return item;
 }
 
 async function fetchCountryBackground(env, country) {

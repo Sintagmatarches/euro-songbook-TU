@@ -607,6 +607,12 @@ export const api = {
   async langCountryPeriodCounts() {
     return req("api/lang-country-period-counts");
   },
+  async entities(name = "") {
+    const q = new URLSearchParams();
+    if (String(name || "").trim()) q.set("name", String(name || "").trim());
+    const suffix = q.toString();
+    return req(`api/entities${suffix ? `?${suffix}` : ""}`);
+  },
   async login(login, password) {
     const value = String(login || "").trim();
     const data = await req("api/auth/login", {

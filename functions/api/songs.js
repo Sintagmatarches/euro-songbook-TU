@@ -4,12 +4,43 @@ import { SONG_DUPLICATE_KEY_SQL } from "../_lib/song-dedupe.js";
 import { ensureSchemaAndSeed } from "../_lib/schema.js";
 import { normalizeSongCountry, normalizeSongLanguage, normalizeSongPeriod } from "../../shared/song-catalogs.js";
 import {
+  buildCountryDescendantMap,
+  buildEntityDescendantMap,
+  getEntityCountryNameIndex,
+  getEntityLinks,
+} from "../../shared/entity-graph.js";
+import {
   searchSongs,
   normalizeSearchText,
 } from "../_lib/song-search.mjs";
 
 const GERMAN_COLLABORATORS_FILTER_VALUES = ["german_collaborators", "latvian_ss_legion", "estonian_ss_division"];
 const SONGS_PAGE_SIZE = 10;
+const ENTITY_LINKS = getEntityLinks();
+const COUNTRY_DESCENDANTS = buildCountryDescendantMap(ENTITY_LINKS);
+const ENTITY_DESCENDANTS = buildEntityDescendantMap(ENTITY_LINKS);
+const ENTITY_NAME_TO_COUNTRY = getEntityCountryNameIndex(ENTITY_LINKS).nameToCountry;
+
+function expandCountryFilter(country) {
+  const normalized = normalizeSongCountry(country || "");
+  if (!normalized) return [];
+  if (normalized === "german_collaborators") return [...GERMAN_COLLABORATORS_FILTER_VALUES];
+  return Array.from(COUNTRY_DESCENDANTS.get(normalized) || [normalized]);
+}
+
+function expandEntityFilter(entityName) {
+  const name = String(entityName || "").trim();
+  if (!name) return [];
+  const countries = new Set();
+  const addName = (entryName) => {
+    const country = ENTITY_NAME_TO_COUNTRY.get(String(entryName || "").trim());
+    if (!country) return;
+    expandCountryFilter(country).forEach((value) => countries.add(value));
+  };
+  addName(name);
+  for (const descendantName of ENTITY_DESCENDANTS.get(name) || []) addName(descendantName);
+  return Array.from(countries);
+}
 
 function buildCreditSearchPatterns(value = "", kind = "words") {
   const needle = String(value || "").trim().toLowerCase();
@@ -80,14 +111,13 @@ function buildSqlFilters(filters = {}, options = {}) {
     where.push("lower(coalesce(s.lang, '')) = ?");
     params.push(filters.lang);
   }
-  if (filters.country) {
-    if (filters.country === "german_collaborators") {
-      where.push(`lower(coalesce(s.country, '')) IN (${GERMAN_COLLABORATORS_FILTER_VALUES.map(() => "?").join(", ")})`);
-      params.push(...GERMAN_COLLABORATORS_FILTER_VALUES);
-    } else {
-      where.push("lower(coalesce(s.country, '')) = ?");
-      params.push(filters.country);
-    }
+  if (Array.isArray(filters.countryValues) && filters.countryValues.length) {
+    where.push(`lower(coalesce(s.country, '')) IN (${filters.countryValues.map(() => "?").join(", ")})`);
+    params.push(...filters.countryValues);
+  } else if (filters.country) {
+    const countryValues = expandCountryFilter(filters.country);
+    where.push(`lower(coalesce(s.country, '')) IN (${countryValues.map(() => "?").join(", ")})`);
+    params.push(...countryValues);
   }
   if (filters.period) {
     where.push("lower(coalesce(s.period, '')) = ?");
@@ -134,7 +164,9 @@ export async function onRequestGet({ env, request }) {
     const access = await getOptionalUserAccess(env, request);
     const includeAdminContent = canViewAdminContent(access);
     const rawLang = (url.searchParams.get("lang") || "").trim();
+    const rawEntity = (url.searchParams.get("entity") || "").trim();
     const rawCountry = (url.searchParams.get("country") || "").trim();
+    const rawCountryExact = (url.searchParams.get("country_exact") || "").trim();
     const rawPeriod = (url.searchParams.get("period") || "").trim();
     const rawPerformer = (url.searchParams.get("performer") || "").trim();
     const rawWordsAuthor = (url.searchParams.get("words_author") || "").trim();
@@ -144,7 +176,9 @@ export async function onRequestGet({ env, request }) {
     const rawRecent = (url.searchParams.get("recent") || "").trim();
     const rawMultiVersions = (url.searchParams.get("multi_versions") || "").trim();
     const lang = rawLang ? (normalizeSongLanguage(rawLang) || "") : "";
+    const entityCountries = rawEntity ? expandEntityFilter(rawEntity) : [];
     const country = rawCountry ? (normalizeSongCountry(rawCountry) || "") : "";
+    const countryExact = rawCountryExact === "1";
     const period = rawPeriod ? (normalizeSongPeriod(rawPeriod) || "") : "";
     const performer = rawPerformer;
     const wordsAuthor = rawWordsAuthor;
@@ -159,7 +193,19 @@ export async function onRequestGet({ env, request }) {
       return json({ items: [], total: 0, page, pages: 1 });
     }
 
-    const filters = { lang, country, period, performer, wordsAuthor, musicAuthor, year, verified, recent, multiVersions };
+    const filters = {
+      lang,
+      country,
+      countryValues: country && countryExact ? [country] : (!country && entityCountries.length ? entityCountries : []),
+      period,
+      performer,
+      wordsAuthor,
+      musicAuthor,
+      year,
+      verified,
+      recent,
+      multiVersions,
+    };
     const versionCountsJoinSql = `
       LEFT JOIN (
         SELECT song_id, COUNT(*) AS version_rows
@@ -168,11 +214,7 @@ export async function onRequestGet({ env, request }) {
       ) vc ON vc.song_id = s.id
     `;
     if (q) {
-      const countryValues = country === "german_collaborators"
-        ? [...GERMAN_COLLABORATORS_FILTER_VALUES]
-        : country
-          ? [country]
-          : [];
+      const countryValues = country ? (countryExact ? [country] : expandCountryFilter(country)) : entityCountries;
       try {
         const out = await searchSongs(env, {
           q,
@@ -240,7 +282,7 @@ export async function onRequestGet({ env, request }) {
            ) AS duplicate_rank
          FROM filtered
        )
-       SELECT s.id, s.title, s.subtitle, s.lyrics, s.lang, s.country, s.period, s.region, s.event, s.theme, coalesce(s.verified, 0) AS verified, s.year, s.created_at,
+       SELECT s.id, s.title, s.subtitle, '' AS lyrics, s.lang, s.country, s.period, s.region, s.event, s.theme, coalesce(s.verified, 0) AS verified, s.year, s.created_at,
               '' AS snippet, ranked.version_rows
        FROM ranked
        JOIN songs s ON s.id = ranked.id
