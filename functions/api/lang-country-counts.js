@@ -2,12 +2,21 @@ import { json } from "../_lib/utils.js";
 import { dbAll, getOptionalUserAccess, canViewAdminContent } from "../_lib/db.js";
 import { SONG_DUPLICATE_KEY_SQL } from "../_lib/song-dedupe.js";
 import { ensureSchemaAndSeed } from "../_lib/schema.js";
+import { readRuntimeJsonCache, writeRuntimeJsonCache } from "../_lib/runtime-cache.js";
 import { normalizeSongCountry, normalizeSongLanguage } from "../../shared/song-catalogs.js";
+
+const CACHE_MAX_AGE_MS = 30 * 60 * 1000;
+const PUBLIC_CACHE_HEADERS = {
+  "Cache-Control": "public, max-age=300, s-maxage=1800, stale-while-revalidate=86400",
+};
 
 export async function onRequestGet({ env, request }) {
   await ensureSchemaAndSeed(env);
   const access = await getOptionalUserAccess(env, request);
   const includeAdminContent = canViewAdminContent(access);
+  const cacheKey = `counts:lang-country:${includeAdminContent ? "admin" : "public"}`;
+  const cached = await readRuntimeJsonCache(env, cacheKey, { maxAgeMs: CACHE_MAX_AGE_MS });
+  if (cached) return json(cached, 200, PUBLIC_CACHE_HEADERS);
 
   const where = ["s.status='published'"];
   if (!includeAdminContent) where.push("coalesce(is_admin_content,0)=0");
@@ -52,5 +61,7 @@ export async function onRequestGet({ env, request }) {
     return b.count - a.count || a.country.localeCompare(b.country);
   });
 
-  return json({ items });
+  const payload = { items };
+  await writeRuntimeJsonCache(env, cacheKey, payload);
+  return json(payload, 200, PUBLIC_CACHE_HEADERS);
 }

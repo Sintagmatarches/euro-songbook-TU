@@ -2,6 +2,7 @@
 import { dbAll, dbGet, getOptionalUserAccess, canViewAdminContent } from "../_lib/db.js";
 import { SONG_DUPLICATE_KEY_SQL } from "../_lib/song-dedupe.js";
 import { ensureSchemaAndSeed } from "../_lib/schema.js";
+import { readRuntimeJsonCache, writeRuntimeJsonCache } from "../_lib/runtime-cache.js";
 import { normalizeSongCountry, normalizeSongLanguage, normalizeSongPeriod } from "../../shared/song-catalogs.js";
 import {
   buildCountryDescendantMap,
@@ -16,6 +17,10 @@ import {
 
 const GERMAN_COLLABORATORS_FILTER_VALUES = ["german_collaborators", "latvian_ss_legion", "estonian_ss_division"];
 const SONGS_PAGE_SIZE = 10;
+const BROWSE_CACHE_MAX_AGE_MS = 10 * 60 * 1000;
+const PUBLIC_BROWSE_CACHE_HEADERS = {
+  "Cache-Control": "public, max-age=120, s-maxage=600, stale-while-revalidate=3600",
+};
 const ENTITY_LINKS = getEntityLinks();
 const COUNTRY_DESCENDANTS = buildCountryDescendantMap(ENTITY_LINKS);
 const ENTITY_DESCENDANTS = buildEntityDescendantMap(ENTITY_LINKS);
@@ -98,6 +103,14 @@ function clamp(n, a, b) {
   n = parseInt(n || "1", 10);
   if (Number.isNaN(n)) n = 1;
   return Math.max(a, Math.min(b, n));
+}
+
+function buildBrowseCacheKey(url, includeAdminContent) {
+  const entries = Array.from(url.searchParams.entries())
+    .filter(([key]) => key !== "q")
+    .sort((a, b) => a[0].localeCompare(b[0]) || a[1].localeCompare(b[1]));
+  const normalized = new URLSearchParams(entries).toString();
+  return `songs:browse:${includeAdminContent ? "admin" : "public"}:${normalized}`;
 }
 
 function buildSqlFilters(filters = {}, options = {}) {
@@ -243,6 +256,10 @@ export async function onRequestGet({ env, request }) {
       }
     }
 
+    const browseCacheKey = buildBrowseCacheKey(url, includeAdminContent);
+    const cachedBrowse = await readRuntimeJsonCache(env, browseCacheKey, { maxAgeMs: BROWSE_CACHE_MAX_AGE_MS });
+    if (cachedBrowse) return json(cachedBrowse, 200, PUBLIC_BROWSE_CACHE_HEADERS);
+
     const { where, params } = buildSqlFilters(filters, { includeAdminContent });
     if (filters.multiVersions) where.push("coalesce(vc.version_rows, 0) >= 1");
     const whereSql = `WHERE ${where.join(" AND ")}`;
@@ -292,7 +309,7 @@ export async function onRequestGet({ env, request }) {
       [...params, per, offset]
     );
 
-    return json({
+    const payload = {
       items,
       total,
       page: safePage,
@@ -307,7 +324,9 @@ export async function onRequestGet({ env, request }) {
         corrected_tokens: [],
         literal_hits: { phrase: 0, tokens: 0, prefix: 0, fuzzy: 0 },
       },
-    });
+    };
+    await writeRuntimeJsonCache(env, browseCacheKey, payload);
+    return json(payload, 200, PUBLIC_BROWSE_CACHE_HEADERS);
   } catch (cause) {
     if (q) {
       console.error("[songs/search] request failed before response:", {

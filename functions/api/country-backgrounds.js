@@ -13,6 +13,9 @@ import {
 import { normalizeSongCountry } from "../../shared/song-catalogs.js";
 
 const CHUNK_MARKER_PREFIX = "__chunked__:country_background:";
+const PUBLIC_CACHE_HEADERS = {
+  "Cache-Control": "public, max-age=300, s-maxage=3600, stale-while-revalidate=86400",
+};
 
 function chunkMarker(field) {
   return `${CHUNK_MARKER_PREFIX}${field}`;
@@ -113,7 +116,7 @@ export async function onRequestGet({ env, request }) {
 
   if (country) {
     const item = await fetchCountryBackground(env, country);
-    return json({ item });
+    return json({ item }, 200, PUBLIC_CACHE_HEADERS);
   }
 
   const rows = await dbAll(
@@ -124,5 +127,5 @@ export async function onRequestGet({ env, request }) {
     []
   );
   const items = (await Promise.all(rows.map((row) => normalizeRow(env, row)))).filter(Boolean);
-  return json({ items });
+  return json({ items }, 200, PUBLIC_CACHE_HEADERS);
 }

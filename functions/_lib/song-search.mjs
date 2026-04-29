@@ -1,4 +1,5 @@
 import { dbAll, dbGet, dbRun } from "./db.js";
+import { invalidateCatalogRuntimeCache } from "./runtime-cache.js";
 
 export const SEARCH_INDEX_SCHEMA_MARKER_KEY = "schema.search.version";
 export const SEARCH_INDEX_SCHEMA_MARKER_VALUE = "2026-04-19-search-v2";
@@ -377,6 +378,7 @@ export async function syncSongSearchIndex(env, song = {}) {
 
   const nextTerms = rows.map((row) => row.term_norm);
   await recomputeSearchAuxiliaryForTerms(env, [...previousTerms, ...nextTerms]);
+  await invalidateCatalogRuntimeCache(env);
 }
 
 export async function deleteSongSearchIndex(env, songId) {
@@ -387,6 +389,7 @@ export async function deleteSongSearchIndex(env, songId) {
   await dbRun(env, `DELETE FROM songs_fts WHERE song_id=?`, [safeSongId]);
   await dbRun(env, `DELETE FROM song_search_terms WHERE song_id=?`, [safeSongId]);
   await recomputeSearchAuxiliaryForTerms(env, previousTerms);
+  await invalidateCatalogRuntimeCache(env);
 }
 
 export async function rebuildSongSearchIndex(env) {

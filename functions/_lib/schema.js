@@ -1330,13 +1330,9 @@ export async function ensureSeed(env) {
 
 export async function ensureSchemaAndSeed(env) {
   if (schemaSeedReady) {
-    await ensureCanonicalDemoSongMetadata(env);
-    await ensureHistoricalVerificationReset(env);
     return;
   }
   if (await hasFreshFullSchema(env)) {
-    await ensureCanonicalDemoSongMetadata(env);
-    await ensureHistoricalVerificationReset(env);
     return;
   }
   if (schemaSeedWork) {

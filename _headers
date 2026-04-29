@@ -5,16 +5,16 @@
   Cache-Control: no-cache, no-store, must-revalidate
 
 /app.js
-  Cache-Control: no-cache, no-store, must-revalidate
+  Cache-Control: public, max-age=0, must-revalidate
 
 /app.css
-  Cache-Control: no-cache, no-store, must-revalidate
+  Cache-Control: public, max-age=0, must-revalidate
 
 /ui/*
-  Cache-Control: no-cache, no-store, must-revalidate
+  Cache-Control: public, max-age=0, must-revalidate
 
 /shared/*
-  Cache-Control: no-cache, no-store, must-revalidate
+  Cache-Control: public, max-age=0, must-revalidate
 
 /manifest.webmanifest
   Cache-Control: no-cache, no-store, must-revalidate

@@ -5,6 +5,7 @@ import {
   normalizeConfidenceValue,
   normalizeConfidenceSegments,
 } from "../../shared/lyrics-confidence.js";
+import { invalidateCatalogRuntimeCache } from "./runtime-cache.js";
 
 const META_FIELDS = new Set([
   "title",
@@ -1147,6 +1148,7 @@ export async function publishDraftToSong(env, { draftId, userId }) {
     `INSERT OR REPLACE INTO songs_fts(song_id,title,lyrics) VALUES (?,?,?)`,
     [songId, snapshot.title || "Untitled draft", lyrics]
   );
+  await invalidateCatalogRuntimeCache(env);
   await markDraftPublished(env, { draftId, songId, updatedAt: now });
   return { songId, lyricsMeta };
 }

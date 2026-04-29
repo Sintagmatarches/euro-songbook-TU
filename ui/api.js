@@ -560,7 +560,11 @@ export const api = {
   async songs(params = {}) {
     const q = new URLSearchParams(params);
     try {
-      const data = await req(`api/songs?${q.toString()}`, { noCache: true, cache: "no-store" });
+      const hasTextQuery = String(params?.q || "").trim().length > 0;
+      const data = await req(
+        `api/songs?${q.toString()}`,
+        hasTextQuery ? { noCache: true, cache: "no-store" } : {}
+      );
       return sanitizeSongDisplayItem(data);
     } catch (error) {
       console.warn("[api/songs] returning empty fallback:", error?.message || error);

@@ -1,4 +1,4 @@
-const CACHE_VERSION = "v55";
+const CACHE_VERSION = "v56";
 const CACHE_NAME = `songbook-app-${CACHE_VERSION}`;
 
 function scopeUrl(path) {
@@ -88,12 +88,12 @@ self.addEventListener("fetch", (event) => {
 
   const destination = request.destination || "";
   if (destination === "script") {
-    event.respondWith(fetch(request).catch(() => Response.error()));
+    event.respondWith(staleWhileRevalidate(request));
     return;
   }
 
   if (destination === "style") {
-    event.respondWith(networkFirst(request));
+    event.respondWith(staleWhileRevalidate(request));
     return;
   }
 
