@@ -1,133 +1,0 @@
-<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
-<html>
-<head>
-<title>Расскажи-ка, песенка-подруга... (</title>
-<meta name="Description" content="Текст фронтовой переделки песни про трех танкистов">
-<meta name="Keywords" content="три танкиста, черная орда, танки, экипаж"> 
-<meta http-equiv="Content-Type" content="text/html; charset=utf-8">
-<link rel="stylesheet" href="../../style.css" type="text/css" />
-
-
-
-
-</head>
-
-<body bgcolor="#000000" link="#000000" vlink="#000000" leftmargin="0" topmargin="0" marginwidth="0" marginheight="0">
-<table width="920" border="0" cellspacing="0" cellpadding="0">
-  <tr> 
-    <td width="72" height="120" valign="top" bgcolor="#FFFFFF">&nbsp;</td>
-    <td width="776" height="120" valign="top" bgcolor="#FFFFFF"> 
-      
-	  ﻿ 
-<table width="100%" valign="top" border="0" cellspacing="0" cellpadding="0">
-  <tr>
-    <td><a href="http://a-pesni.org/index.php"><img src="http://a-pesni.org/music/apesni.png" width="776" height="95" border="0"></a><br>
-      <span class="text"> 
-      <div align="center"><strong><a href="http://a-pesni.org">ГЛАВНАЯ</a> - <a href="http://a-pesni.org/letra.php">БИБЛИОТЕКА</a> - <a href="http://a-pesni.org/squat/Sguat.php">СКВОТЫ</a> - <a href="http://a-pesni.org/collection.php">КОЛЛЕКЦИЯ НОТ</a> - <a href="http://a-pesni.org/about.php">О ПРОЕКТЕ</a> - dzanni@ gmail.com</strong></div>
-    </span></td>
-  </tr>
-</table>
-
-    </td>
-    <td width="72"  height="120" valign="top" bgcolor="#FFFFFF">&nbsp;</td>
-  </tr>
-  <tr>
-    <td valign="top" bgcolor="#FFFFFF">&nbsp;</td>
-    <td valign="top" bgcolor="#FFFFFF"> 
-      ﻿ <div align="center"><form action="http://www.google.com/search" method="get" name="f" target="_blank">
-   <input name="submit" type="submit" value="Поиск"/>
-    <input name="as_q" value="" size="20" onchange="javascript:submit();"/>
-<input name="as_sitesearch" value="a-pesni.org" type="hidden"/>
-<input name="hl" value="ru" type="hidden"/> 
-</form></div>
-    </td>
-    <td valign="top" bgcolor="#FFFFFF">&nbsp;</td>
-  </tr>
-  <tr> 
-    <td width="72" valign="top" bgcolor="#FFFFFF"> 
-      
-	  
-	  
-    </td>
-    <td width="776" valign="top" bgcolor="#FFFFFF"> 
-	<div align="justify"><span class="text"><a href="Folk.php"><img src="folk-ww2.png" width="138" height="60" border="0"></a><br>
-<br>	
-<span class="header"><strong>РАССКАЖИ-КА, ПЕСЕНКА-ПОДРУГА... </strong><br></span>
-	<br>
-	Расскажи-ка, песенка-подруга,<br>
-	Как дерутся с черною ордой<br>
-	Три танкиста, три веселых друга,<br>
-	Экипаж машины боевой.<br>
-	 <br>Не дают они немецким танкам<br>
-	    Темной ночью в тыл пробраться к нам.<br>
-	    Без пощады бьют фашистов с фланга,<br>
-	    Угощают крепко по зубам.<br>
-	<br>Не одну немецкую гадюку<br>
-	    Укротили в схватке огневой<br>
-	    Три танкиста, три веселых друга,<br>
-	    Экипаж машины боевой.<br>
-	<br>Под огнем, горя святою местью,<br>
-	    Шел их танк на целый батальон,<br>
-	    И за подвиг доблести и чести<br>
-	    Экипаж отважных награжден.<br>
-        <em><br> 
-Песня записана Владимиром Бахтиным, исполнительница ее получила в письме от брата с фронта. <br>	  
-<br>
-	  Жили-были... Разговоры с В.С. Бахтиным / Сост. О.А. Комарова. - СПб.: Композитор • Санкт-Петербург, 2006, с. 91. <br>
-        </em>
-	  <br>	 
-	  	  <br>	  
-	  	  Переработка песни <a href="../oficial/3tankista.php">&quot;Три танкиста&quot;</a> из кинофильма 1939 года &quot;Трактористы&quot; (музыка Даниила и Дмитрия Покрассов, слова Бориса Ласкина). <br>
-	  <br>	  
- <br>
-      </span></div></td>
-    <td width="72" valign="top" bgcolor="#FFFFFF"> 
-      
-    </td>
-  </tr>
-  <tr> 
-    <td valign="top" bgcolor="#FFFFFF">&nbsp;</td>
-    <td valign="top" bgcolor="#FFFFFF">
-      ﻿<form action="http://www.google.com/search" method="get" name="f" target="_blank">
-  <div align="center"> 
-   <input name="submit" type="submit" value="Поиск"/>
-    <input name="as_q" value="" size="20" onchange="javascript:submit();"/>
-<input name="as_sitesearch" value="a-pesni.org" type="hidden"/>
-<input name="hl" value="ru" type="hidden"/>
-</div>
-</form>
-<div align="center"><!--LiveInternet counter--><script type="text/javascript"><!--
-document.write("<a href='http://www.liveinternet.ru/click' "+
-"target=_blank><img src='//counter.yadro.ru/hit?t20.1;r"+
-escape(document.referrer)+((typeof(screen)=="undefined")?"":
-";s"+screen.width+"*"+screen.height+"*"+(screen.colorDepth?
-screen.colorDepth:screen.pixelDepth))+";u"+escape(document.URL)+
-";h"+escape(document.title.substring(0,80))+";"+Math.random()+
-"' alt='' title='LiveInternet: показано число просмотров за 24"+
-" часа, посетителей за 24 часа и за сегодня' "+
-"border='0' width='88' height='31'><\/a>")
-//--></script><!--/LiveInternet--> 
- </div>
-<script type="text/javascript">
-
-  var _gaq = _gaq || [];
-  _gaq.push(['_setAccount', 'UA-27932735-1']);
-  _gaq.push(['_trackPageview']);
-
-  (function() {
-    var ga = document.createElement('script'); ga.type = 'text/javascript'; ga.async = true;
-    ga.src = ('https:' == document.location.protocol ? 'https://ssl' : 'http://www') + '.google-analytics.com/ga.js';
-    var s = document.getElementsByTagName('script')[0]; s.parentNode.insertBefore(ga, s);
-  })();
-
-</script><br>
-<br>
-
-    </td>
-    <td valign="top" bgcolor="#FFFFFF">&nbsp;</td>
-  </tr>
-</table>
-<br>
-<br>
-</body>
-</html>

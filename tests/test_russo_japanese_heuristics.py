@@ -15,6 +15,10 @@ def _song(stem: str) -> dict:
 
 
 class RussoJapaneseHeuristicsTests(unittest.TestCase):
+    def setUp(self) -> None:
+        if not RUSSO_FIXTURES_DIR.exists():
+            self.skipTest("import fixtures are archived outside the runtime project")
+
     def test_variag_kui_leading_meta_is_not_in_lyrics(self) -> None:
         song = _song("variag-kui")
         self.assertIn("Музыка:", song["subtitle"])

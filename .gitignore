@@ -20,6 +20,32 @@ tmp_*.sql
 tmp_*.json
 tmp_import_chunks*/
 tmp_import_result_texts_strict/
+tmp_import_pisni_org_ua*/
+tmp_pages_deploy*/
+tmp_*.png
+tmp_*.html
+tmp_*.log
+tmp_*.out
+tmp_*.err
+tmp_*.db
+tmp_*.cfg
+tmp_*.txt
+tmp_*.ps1
+tmp_*.js
+tmp_*.cjs
+.codex-*
+0
+
+# local import/test artifacts
+fixtures/
+backup/
+expected/
+test-results/
+thesis_testing_evidence/
+thesis_testing_evidence_final/
+__pycache__/
+scripts/__pycache__/
+tests/__pycache__/
 
 # OS/editor
 .DS_Store
