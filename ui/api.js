@@ -407,6 +407,31 @@ function readPersistentGetCacheEntry(key) {
   return entry;
 }
 
+async function refreshPersistentGetCacheEntry(absoluteUrl, opts, key, sessionScoped) {
+  if (!key || sessionScoped) return;
+  const headers = new Headers(opts.headers || {});
+  headers.set("Accept", "application/json");
+  try {
+    const res = await fetch(absoluteUrl, {
+      ...opts,
+      headers,
+      method: "GET",
+      credentials: opts.credentials || "same-origin",
+      cache: opts.cache || "default",
+    });
+    if (!res.ok) return;
+    const text = await res.text();
+    let data = null;
+    try { data = text ? JSON.parse(text) : null; } catch { return; }
+    data = repairMojibakeDeep(data);
+    getCache.set(key, {
+      expiresAt: Date.now() + GET_CACHE_TTL_MS,
+      data: cloneJsonLike(data),
+    });
+    rememberPersistentGetCacheEntry(key, data);
+  } catch {}
+}
+
 function rememberPersistentGetCacheEntry(key, data) {
   if (!key) return;
   let serialized = "";
@@ -502,6 +527,18 @@ async function req(path, opts = {}) {
     const cached = getCache.get(key);
     if (cached && cached.expiresAt > Date.now()) {
       return cloneJsonLike(cached.data);
+    }
+    if (opts.stalePersistent === true && !sessionScoped) {
+      const persistent = readPersistentGetCacheEntry(key);
+      if (persistent) {
+        const fallbackData = cloneJsonLike(persistent.data);
+        getCache.set(key, {
+          expiresAt: Date.now() + GET_CACHE_TTL_MS,
+          data: cloneJsonLike(fallbackData),
+        });
+        refreshPersistentGetCacheEntry(absoluteUrl, opts, key, sessionScoped);
+        return fallbackData;
+      }
     }
   }
 
@@ -600,16 +637,16 @@ export const api = {
   },
   async countryBackground(country) {
     const q = new URLSearchParams({ country: String(country || "") });
-    return req(`api/country-backgrounds?${q.toString()}`);
+    return req(`api/country-backgrounds?${q.toString()}`, { stalePersistent: true });
   },
   async countryCounts() {
-    return req("api/country-counts");
+    return req("api/country-counts", { stalePersistent: true });
   },
   async langCountryCounts() {
-    return req("api/lang-country-counts");
+    return req("api/lang-country-counts", { stalePersistent: true });
   },
   async langCountryPeriodCounts() {
-    return req("api/lang-country-period-counts");
+    return req("api/lang-country-period-counts", { stalePersistent: true });
   },
   async entities(name = "") {
     const q = new URLSearchParams();
