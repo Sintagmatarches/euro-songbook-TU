@@ -30,6 +30,27 @@ function extractDirectScanRows(sql, params, songs) {
     const period = String(params[index++] || "").toLowerCase();
     rows = rows.filter((song) => String(song.period || "").toLowerCase() === period);
   }
+  if (sql.includes("CAST(trim(coalesce(s.year, '')) AS INTEGER)") && sql.includes("lower(coalesce(s.period, '')) IN (")) {
+    const countryMatches = Array.from(sql.matchAll(/lower\(coalesce\(s\.country, ''\)\) IN \(([^)]+)\)/g));
+    const countryMatch = countryMatches[countryMatches.length - 1];
+    const countryParamCount = countPlaceholders(countryMatch?.[1] || "");
+    const countries = params.slice(index, index + countryParamCount).map((value) => String(value).toLowerCase());
+    index += countryParamCount;
+    const fromYear = Number(params[index++] || 0);
+    const toYear = Number(params[index++] || 0);
+    const periodMatch = sql.match(/lower\(coalesce\(s\.period, ''\)\) IN \(([^)]+)\)/);
+    const periodParamCount = countPlaceholders(periodMatch?.[1] || "");
+    const periods = params.slice(index, index + periodParamCount).map((value) => String(value).toLowerCase());
+    index += periodParamCount;
+    rows = rows.filter((song) => {
+      const rawYear = String(song.year || "").trim();
+      const year = /^\d{4}/.test(rawYear) ? Number(rawYear) : 0;
+      if (year) {
+        return countries.includes(String(song.country || "").toLowerCase()) && year >= fromYear && year < toYear;
+      }
+      return periods.includes(String(song.period || "").toLowerCase());
+    });
+  }
 
   const queryTokens = [];
   while (index < params.length) {
@@ -197,4 +218,63 @@ test("searchSongs paginates filtered results for page navigation", async () => {
     pageTwo.items.map((item) => item.id),
     ["page-song-11", "page-song-12"]
   );
+});
+
+test("searchSongs period filters use song year before stale period metadata", async () => {
+  const songs = [
+    {
+      id: "match-by-year",
+      title: "Harbor Song",
+      subtitle: "Choir",
+      lyrics: "Harbor lights in the evening.",
+      lang: "ru",
+      country: "ussr",
+      period: "ussr_1946_1953",
+      year: "1967",
+      status: "published",
+      is_admin_content: 0,
+      created_at: "2024-01-01T00:00:00.000Z",
+      version_rows: 0,
+    },
+    {
+      id: "stale-period-only",
+      title: "Harbor Song Old",
+      subtitle: "Choir",
+      lyrics: "Harbor lights in the evening.",
+      lang: "ru",
+      country: "ussr",
+      period: "ussr_1946_1953",
+      year: "1967",
+      status: "published",
+      is_admin_content: 0,
+      created_at: "2024-01-01T00:00:00.000Z",
+      version_rows: 0,
+    },
+  ];
+
+  const env = createDirectScanEnv(songs);
+  const thaw = await searchSongs(env, {
+    q: "harbor",
+    page: 1,
+    includeAdminContent: false,
+    filters: {
+      lang: "ru",
+      countryValues: ["ussr"],
+      period: "ussr_1953_1964",
+    },
+  });
+  const brezhnev = await searchSongs(env, {
+    q: "harbor",
+    page: 1,
+    includeAdminContent: false,
+    filters: {
+      lang: "ru",
+      countryValues: ["ussr"],
+      period: "ussr_1964_1985",
+    },
+  });
+
+  assert.equal(thaw.total, 0);
+  assert.equal(brezhnev.total, 2);
+  assert.deepEqual(brezhnev.items.map((item) => item.id), ["match-by-year", "stale-period-only"]);
 });

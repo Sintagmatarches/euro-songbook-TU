@@ -52,25 +52,26 @@ CYR_MARKERS: dict[str, str] = {
 
 # Distinctive function words to separate closely related languages.
 DISTINCT_WORDS: dict[str, set[str]] = {
-    "ru": {"что", "это", "чтоб", "только", "если", "еще", "ещё", "нет", "бы", "где", "когда", "чем", "чтобы", "без"},
-    "uk": {"що", "це", "мене", "тобі", "тобою", "коли", "де", "хай", "є", "її", "й", "пісня", "украї", "воля", "країна"},
-    "be": {"што", "гэта", "калі", "дзе", "няма", "дзякуй", "радзіма", "шчасце", "зноў", "схадзіла", "прасторы", "песняю"},
-    "de": {"und", "der", "die", "das", "nicht", "ein", "eine", "wir", "ich", "mit", "ist", "auf", "den", "dem"},
-    "et": {"ja", "on", "ei", "mis", "kui", "ning", "sind", "kõik", "veel", "oled", "ole", "see", "üks", "mu"},
-    "fi": {"ja", "on", "ei", "että", "kun", "se", "sinä", "minä", "me", "te", "hän", "yön", "sydän", "nyt"},
-    "pl": {"że", "się", "nie", "jest", "jak", "dla", "czy", "ten", "tam", "nas", "was", "przez"},
+    "ru": {"что", "это", "чтоб", "только", "если", "еще", "ещё", "нет", "бы", "где", "когда", "чем", "чтобы", "без", "мой", "твой", "наш", "как", "над", "под", "все", "всё", "тебя", "меня"},
+    "uk": {"що", "це", "мене", "тобі", "тобою", "коли", "де", "хай", "є", "її", "й", "пісня", "украї", "воля", "країна", "мій", "твій", "наш", "козак", "доля", "серце", "ніч", "знов", "вже", "нема"},
+    "be": {"што", "гэта", "калі", "дзе", "няма", "дзякуй", "радзіма", "шчасце", "зноў", "схадзіла", "прасторы", "песняю", "мой", "твой", "наш", "сэрца", "воля", "край", "будзе"},
+    "de": {"und", "der", "die", "das", "nicht", "ein", "eine", "wir", "ich", "mit", "ist", "auf", "den", "dem", "des", "du", "sie", "mein", "dein", "unser", "bruder", "freiheit"},
+    "et": {"ja", "on", "ei", "mis", "kui", "ning", "sind", "kõik", "veel", "oled", "ole", "see", "üks", "mu", "ma", "me", "sa", "ta", "oma", "eesti", "maa", "süda", "öö", "päev"},
+    "fi": {"ja", "on", "ei", "että", "kun", "se", "sinä", "minä", "me", "te", "hän", "yön", "sydän", "nyt", "maa", "laulu", "vapaus", "kansa"},
+    "pl": {"że", "się", "nie", "jest", "jak", "dla", "czy", "ten", "tam", "nas", "was", "przez", "mój", "twój", "nasz", "ojczyzna", "wolność", "serce", "bracia", "hej"},
     "fr": {"le", "la", "les", "des", "dans", "avec", "pour", "que", "qui", "est", "nous", "vous"},
     "es": {"el", "la", "los", "las", "que", "con", "por", "para", "una", "del", "como", "más"},
     "pt": {"não", "uma", "para", "com", "que", "dos", "das", "está", "você", "pelo", "pela"},
     "it": {"che", "con", "per", "gli", "della", "delle", "questo", "quella", "noi", "voi", "sono"},
     "nl": {"de", "het", "een", "met", "voor", "niet", "dat", "zijn", "wij", "jij", "als", "van"},
-    "lv": {"un", "ir", "ne", "kā", "mēs", "jūs", "par", "vai", "tas", "man", "tevi"},
-    "lt": {"ir", "ne", "kad", "kaip", "mes", "jūs", "su", "už", "tai", "yra", "man", "tave"},
+    "lv": {"un", "ir", "ne", "kā", "mēs", "jūs", "par", "vai", "tas", "man", "tevi", "latvija", "dziesma", "brīvība", "sirds", "mana"},
+    "lt": {"ir", "ne", "kad", "kaip", "mes", "jūs", "su", "už", "tai", "yra", "man", "tave", "lietuva", "daina", "laisvė", "širdis", "mano"},
     "sv": {"och", "inte", "för", "med", "det", "som", "är", "vi", "jag", "du"},
     "no": {"og", "ikke", "med", "det", "som", "er", "vi", "jeg", "du", "til"},
     "da": {"og", "ikke", "med", "det", "som", "er", "vi", "jeg", "du", "til"},
     "ro": {"și", "în", "să", "este", "cu", "din", "pentru", "noi", "voi", "fără"},
     "hu": {"és", "nem", "hogy", "mint", "van", "egy", "még", "nekem", "neked", "velünk"},
+    "is": {"og", "ekki", "það", "sem", "við", "ég", "þú", "hún", "hann", "með", "fyrir", "minn"},
     "tr": {"ve", "bir", "bu", "ben", "sen", "biz", "için", "değil", "ile", "çok"},
     "az": {"və", "bir", "bu", "mən", "sən", "biz", "üçün", "deyil", "ilə", "çox"},
     "kk": {"және", "үшін", "біз", "емес", "қалай", "тағы", "мен", "сен", "ол"},
@@ -94,6 +95,7 @@ DIACRITICS: dict[str, re.Pattern[str]] = {
     "no": re.compile(r"[æøå]", re.IGNORECASE),
     "da": re.compile(r"[æøå]", re.IGNORECASE),
     "hu": re.compile(r"[áéíóöőúüű]", re.IGNORECASE),
+    "is": re.compile(r"[ðþæöáéíóúý]", re.IGNORECASE),
     "tr": re.compile(r"[çğıöşüİ]", re.IGNORECASE),
     "az": re.compile(r"[əğıöşüç]", re.IGNORECASE),
 }
@@ -112,7 +114,7 @@ LANG_HINTS: list[tuple[str, re.Pattern[str]]] = [
     ("pt", re.compile(r"\b(португал|portuguese|portugu[eê]s)\w*\b", re.IGNORECASE)),
     ("it", re.compile(r"\b(итальян|italian|italiano)\w*\b", re.IGNORECASE)),
     ("nl", re.compile(r"\b(нидерланд|голланд|dutch|nederlands?)\w*\b", re.IGNORECASE)),
-    ("ro", re.compile(r"\b(румын|romanian|rom[aâ]n)\w*\b", re.IGNORECASE)),
+    ("ro", re.compile(r"\b(румын\w*|romanian|română|romana|român|romaneste|românește|românesc|romaneasca|românească)\b", re.IGNORECASE)),
     ("fi", re.compile(r"\b(финск|finnish|suomi)\w*\b", re.IGNORECASE)),
     ("sv", re.compile(r"\b(шведск|swedish|svenska)\w*\b", re.IGNORECASE)),
     ("da", re.compile(r"\b(датск|danish|dansk)\w*\b", re.IGNORECASE)),
@@ -352,7 +354,7 @@ def classify_latin(sample: str, title: str, subtitle: str, tokens: list[str], hi
     pred, prob = lid_classify(LID_ALL, sample[:7000])
     if pred in LAT_LANGS and prob >= 0.92:
         # Rare labels should be backed by explicit hint or stronger lexical evidence.
-        if pred in {"lb", "fo", "ga", "mt", "cy", "sq", "eu", "gl"}:
+        if pred in {"lb", "fo", "ga", "mt", "cy", "sq", "eu", "gl", "is"}:
             hinted = (hint_title == pred or hint_meta == pred)
             lexical = lang_score_by_words_and_diacritics(pred, sample, tokens) >= 10
             if hinted or lexical:
@@ -453,6 +455,8 @@ def should_apply_language_change(old_lang: str, new_lang: str, confidence: float
 
     # Keep non-European-side labels conservative unless explicitly hinted.
     if new_lang in {"kk", "az", "uz"} and "hint" not in reason and "marker" not in reason:
+        return False
+    if new_lang == "is" and "hint" not in reason and "heuristic" not in reason:
         return False
 
     if old_lang in CYR_LANGS and new_lang in CYR_LANGS:

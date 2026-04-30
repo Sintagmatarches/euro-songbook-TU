@@ -25,6 +25,13 @@ YEAR_MAX = 2026
 YEAR_RE = re.compile(r"\b(1[6-9]\d{2}|20\d{2})\b")
 CYR_RE = re.compile(r"[\u0400-\u052f]")
 LAT_RE = re.compile(r"[A-Za-z\u00C0-\u024F\u1E00-\u1EFF]")
+LINE_LANG_MIN_WORDS = 3
+TRANSLATION_SCAN_MAX_LINES = 260
+LINE_LANG_CACHE: dict[str, str | None] = {}
+TRANSLATION_LABEL_RE = re.compile(
+    r"\b(перевод|translation|translated|tłumacz|tlumacz|przekład|przeklad|переклад|übersetzung|traduction)\b",
+    re.IGNORECASE,
+)
 
 PUB_RE = re.compile(
     r"(изд|изд-во|вып\.?|сост\.?|ред\.?|песенник|сборник|publisher|edition|issue|collection|"
@@ -424,6 +431,10 @@ class RowSignals:
     be_marker_count: int
     uz_marker_count: int
     yi_marker_count: int
+    line_lang_counts: dict[str, int]
+    line_lang_ratios: dict[str, float]
+    likely_translation_block: bool
+    translation_block_langs: list[str]
     title_is_polluted: bool
     notes_has_meta: bool
     geo_votes: dict[str, int]
@@ -637,6 +648,106 @@ def count_marker_words(tokens: list[str], markers: set[str]) -> int:
     return sum(1 for token in tokens if token in markers)
 
 
+def likely_line_language(line: str, lang_mod) -> str | None:
+    cache_key = normalize_inline(line).lower()
+    if cache_key in LINE_LANG_CACHE:
+        return LINE_LANG_CACHE[cache_key]
+    words = tokenize_words(line)
+    if len(words) < LINE_LANG_MIN_WORDS:
+        LINE_LANG_CACHE[cache_key] = None
+        return None
+    sample = cache_key
+    cyr, lat = count_scripts(sample)
+    if cyr < 6 and lat < 12:
+        LINE_LANG_CACHE[cache_key] = None
+        return None
+    tokens = tokenize_words(sample)
+    candidates = list(getattr(lang_mod, "CYR_LANGS", set()) if cyr >= lat else getattr(lang_mod, "LAT_LANGS", set()))
+    best_lang = None
+    best_score = -1
+    second_score = -1
+    for lang in candidates:
+        score = int(lang_mod.lang_score_by_words_and_diacritics(lang, sample, tokens))
+        if lang == "uk":
+            score += count_chars(sample, "їєґЇЄҐ") * 8
+        elif lang == "be":
+            score += count_chars(sample, "ўЎ") * 8
+        elif lang == "uz":
+            score += count_chars(sample, "ҳҲўЎқҚғҒ") * 4
+        elif lang == "ru":
+            score += count_chars(sample, "ыэёЫЭЁ") * 3
+        if score > best_score:
+            second_score = best_score
+            best_score = score
+            best_lang = lang
+        elif score > second_score:
+            second_score = score
+    if best_lang and best_score >= 9 and best_score >= second_score + 3:
+        LINE_LANG_CACHE[cache_key] = str(best_lang)
+        return str(best_lang)
+    LINE_LANG_CACHE[cache_key] = None
+    return None
+
+
+def detect_translation_blocks(lyrics: str, primary_lang: str, lang_mod) -> tuple[dict[str, int], dict[str, float], bool, list[str]]:
+    counts: Counter[str] = Counter()
+    total = 0
+    last_lang = None
+    switches = 0
+    scanned = 0
+    for raw in normalize_newlines(lyrics).splitlines():
+        line = raw.strip()
+        if not line or LYRIC_STRUCTURE_LINE_RE.match(line) or is_commentary_line(line):
+            continue
+        scanned += 1
+        if scanned > TRANSLATION_SCAN_MAX_LINES:
+            break
+        lang = likely_line_language(line, lang_mod)
+        if not lang:
+            continue
+        counts[lang] += 1
+        total += 1
+        if last_lang and lang != last_lang:
+            switches += 1
+        last_lang = lang
+    ratios = {lang: count / total for lang, count in counts.items()} if total else {}
+    secondary = [
+        lang
+        for lang, ratio in sorted(ratios.items(), key=lambda item: item[1], reverse=True)
+        if lang != primary_lang and counts[lang] >= 3 and ratio >= 0.18
+    ]
+    likely = bool(secondary and counts.get(primary_lang, 0) >= 3 and switches >= 1)
+    return dict(counts), ratios, likely, secondary
+
+
+def should_scan_translation_blocks(
+    row: SongRow,
+    lyrics_norm: str,
+    lyrics_song: str,
+    cyr_count: int,
+    lat_count: int,
+    uk_marker_count: int,
+    be_marker_count: int,
+    uz_marker_count: int,
+    lang_mod,
+) -> bool:
+    if len(lyrics_song) < 160:
+        return False
+    old_lang = row.lang
+    meta_scope = "\n".join([lyrics_norm[:1200], row.source[:800], row.notes[:800]])
+    if TRANSLATION_LABEL_RE.search(meta_scope):
+        return True
+    if cyr_count >= 80 and lat_count >= 80:
+        return True
+    if old_lang != "uk" and uk_marker_count >= 2:
+        return True
+    if old_lang != "be" and be_marker_count >= 2:
+        return True
+    if old_lang != "uz" and uz_marker_count >= 2:
+        return True
+    return False
+
+
 def parse_catalog_values(var_name: str) -> list[str]:
     text = CATALOG_JS.read_text(encoding="utf-8")
     match = re.search(rf"export const {re.escape(var_name)}\s*=\s*\[(.*?)\];", text, re.S)
@@ -761,7 +872,7 @@ def is_country_ambiguous(votes: dict[str, int], lyrics_votes: dict[str, int]) ->
     return (close_top or lyrics_dominant_scatter), low_signal
 
 
-def build_row_signals(row: SongRow, country_values: set[str], policy: FilterPolicy) -> RowSignals:
+def build_row_signals(row: SongRow, country_values: set[str], policy: FilterPolicy, lang_mod=None) -> RowSignals:
     title_norm = normalize_inline(row.title)
     subtitle_norm = normalize_inline(row.subtitle)
     lyrics_norm = normalize_newlines(row.lyrics).strip()
@@ -796,6 +907,26 @@ def build_row_signals(row: SongRow, country_values: set[str], policy: FilterPoli
     be_marker_count = be_unique_chars + be_word_marker_count
     uz_marker_count = uz_unique_chars + uz_word_marker_count
     yi_marker_count = count_marker_words(tokens, YI_WORD_MARKERS)
+    line_lang_counts: dict[str, int] = {}
+    line_lang_ratios: dict[str, float] = {}
+    likely_translation_block = False
+    translation_block_langs: list[str] = []
+    if lang_mod is not None and should_scan_translation_blocks(
+        row,
+        lyrics_norm,
+        lyrics_song,
+        cyr_count,
+        lat_count,
+        uk_marker_count,
+        be_marker_count,
+        uz_marker_count,
+        lang_mod,
+    ):
+        line_lang_counts, line_lang_ratios, likely_translation_block, translation_block_langs = detect_translation_blocks(
+            lyrics_song,
+            row.lang,
+            lang_mod,
+        )
     geo_votes, geo_lyrics_votes = country_votes_from_scope(
         title_norm,
         subtitle_norm,
@@ -833,6 +964,10 @@ def build_row_signals(row: SongRow, country_values: set[str], policy: FilterPoli
         be_marker_count=be_marker_count,
         uz_marker_count=uz_marker_count,
         yi_marker_count=yi_marker_count,
+        line_lang_counts=line_lang_counts,
+        line_lang_ratios=line_lang_ratios,
+        likely_translation_block=likely_translation_block,
+        translation_block_langs=translation_block_langs,
         title_is_polluted=is_polluted_title(title_norm),
         notes_has_meta=has_import_meta_noise(notes_norm),
         geo_votes=geo_votes,
@@ -924,6 +1059,10 @@ def classify_language(
     policy: FilterPolicy,
 ) -> tuple[str, float, str, bool]:
     old_lang = row.lang if row.lang in lang_values else "ru"
+    source_identity = "\n".join([signals.source_norm, signals.notes_norm]).lower()
+    if old_lang == "et" and re.search(r"(tallinn university|eestilaulud|eestikeelsed laulud|tlu\.ee)", source_identity):
+        return "et", 1.0, "source_guard_eestilaulud", False
+
     cyr_langs = set(getattr(lang_mod, "CYR_LANGS", {"ru", "uk", "be", "bg", "mk", "sr", "kk", "uz"}))
     lat_dominant = signals.lat_count >= max(40, int(signals.cyr_count * 1.6))
     base_lang = old_lang
@@ -961,6 +1100,14 @@ def classify_language(
     if pred not in lang_values:
         pred, conf, reason = old_lang, 0.0, "keep_old_unknown"
 
+    if old_lang == "pl" and pred == "ro" and "hint" not in str(reason):
+        sample = signals.lyrics_song[:7000].lower()
+        sample_tokens = tokenize_words(sample)
+        ro_score = int(lang_mod.lang_score_by_words_and_diacritics("ro", sample, sample_tokens))
+        pl_score = int(lang_mod.lang_score_by_words_and_diacritics("pl", sample, sample_tokens))
+        if ro_score < max(18, pl_score + 6):
+            pred, conf, reason = old_lang, 1.0, "keep_old_pl_ro_weak"
+
     if signals.cyr_count >= max(28, int(signals.lat_count * 1.2)) and pred not in cyr_langs:
         pred, conf, reason = (old_lang if old_lang in cyr_langs else "ru"), 1.0, "script_guard_cyr"
     elif signals.lat_count >= max(30, int(signals.cyr_count * 1.25)) and pred in cyr_langs and old_lang not in cyr_langs:
@@ -997,7 +1144,7 @@ def should_apply_language_change(old_lang: str, new_lang: str, confidence: float
     marker_reason = reason in {"uk_marker", "be_marker", "uz_marker", "aggressive_uk_markers", "aggressive_be_markers"}
     if marker_reason and new_lang in {"uk", "be", "uz"}:
         return confidence >= 0.9
-    if new_lang in {"lb", "fo", "ga", "mt", "cy", "sq", "eu", "gl", "ca", "me"} and "hint" not in reason:
+    if new_lang in {"lb", "fo", "ga", "mt", "cy", "sq", "eu", "gl", "ca", "me", "is"} and "hint" not in reason:
         return False
     if hasattr(lang_mod, "should_apply_language_change"):
         return bool(lang_mod.should_apply_language_change(old_lang, new_lang, confidence, reason))
@@ -2329,11 +2476,12 @@ def build_updates(
     country_ambiguous_count = 0
     country_ambiguous_to_other_count = 0
     examples: list[dict] = []
+    translation_candidates: list[dict] = []
 
     duplicate_drops, duplicate_reason_counts, duplicate_group_counts = duplicate_drop_ids(rows)
 
     for row in rows:
-        row_signals = build_row_signals(row, country_values, policy)
+        row_signals = build_row_signals(row, country_values, policy, lang_mod)
         old_lang = row.lang if row.lang in lang_values else "ru"
         pred_lang, lang_conf, lang_reason, lang_forced = classify_language(
             row,
@@ -2344,6 +2492,20 @@ def build_updates(
         )
         if pred_lang not in lang_values:
             pred_lang = old_lang
+        if row_signals.likely_translation_block:
+            validation_flags["translation_block_candidate"] += 1
+            if len(translation_candidates) < 300:
+                translation_candidates.append(
+                    {
+                        "id": row.id,
+                        "title": row.title,
+                        "primary_lang": old_lang,
+                        "detected_lang_counts": row_signals.line_lang_counts,
+                        "detected_secondary_langs": row_signals.translation_block_langs,
+                    }
+                )
+            if pred_lang in row_signals.translation_block_langs and old_lang in row_signals.line_lang_counts:
+                pred_lang, lang_conf, lang_reason, lang_forced = old_lang, 1.0, "keep_old_translation_block", False
         final_lang = pred_lang if should_apply_language_change(old_lang, pred_lang, lang_conf, lang_reason, lang_mod) else old_lang
         if lang_forced and final_lang != old_lang:
             lang_forced_count += 1
@@ -2391,7 +2553,7 @@ def build_updates(
             status=old_status,
             created_at=row.created_at,
         )
-        clean_signals = build_row_signals(row_clean, country_values, policy)
+        clean_signals = build_row_signals(row_clean, country_values, policy, lang_mod)
         new_year, year_reason = infer_song_year(row_clean, clean_signals)
         country_year = infer_country_context_year(row_clean, clean_signals, new_year)
 
@@ -2540,6 +2702,7 @@ def build_updates(
         "duplicate_group_counts": [{"reason": r, "count": c} for r, c in duplicate_group_counts.most_common()],
         "non_song_drafted": status_reasons.get("non_song", 0),
         "validation_flags": dict(validation_flags),
+        "translation_block_candidates": translation_candidates,
         "policy": {
             "country_ambiguity_policy": policy.country_ambiguity_policy,
             "cyr_lang_switch_policy": policy.cyr_lang_switch_policy,

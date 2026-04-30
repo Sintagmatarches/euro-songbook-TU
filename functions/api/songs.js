@@ -3,7 +3,14 @@ import { dbAll, dbGet, getOptionalUserAccess, canViewAdminContent } from "../_li
 import { SONG_DUPLICATE_KEY_SQL } from "../_lib/song-dedupe.js";
 import { ensureSchemaAndSeed } from "../_lib/schema.js";
 import { readRuntimeJsonCache, writeRuntimeJsonCache } from "../_lib/runtime-cache.js";
-import { normalizeSongCountry, normalizeSongLanguage, normalizeSongPeriod } from "../../shared/song-catalogs.js";
+import {
+  getCountryFilterValues,
+  getPeriodFilterValues,
+  getPeriodMeta,
+  normalizeSongCountry,
+  normalizeSongLanguage,
+  normalizeSongPeriod,
+} from "../../shared/song-catalogs.js";
 import {
   buildCountryDescendantMap,
   buildEntityDescendantMap,
@@ -30,7 +37,11 @@ function expandCountryFilter(country) {
   const normalized = normalizeSongCountry(country || "");
   if (!normalized) return [];
   if (normalized === "german_collaborators") return [...GERMAN_COLLABORATORS_FILTER_VALUES];
-  return Array.from(COUNTRY_DESCENDANTS.get(normalized) || [normalized]);
+  const values = new Set(getCountryFilterValues(normalized));
+  for (const descendant of COUNTRY_DESCENDANTS.get(normalized) || []) {
+    getCountryFilterValues(descendant).forEach((value) => values.add(value));
+  }
+  return Array.from(values);
 }
 
 function expandEntityFilter(entityName) {
@@ -133,8 +144,11 @@ function buildSqlFilters(filters = {}, options = {}) {
     params.push(...countryValues);
   }
   if (filters.period) {
-    where.push("lower(coalesce(s.period, '')) = ?");
-    params.push(filters.period);
+    const periodFilter = buildEffectivePeriodSql("s", filters.period);
+    if (periodFilter) {
+      where.push(periodFilter.sql);
+      params.push(...periodFilter.params);
+    }
   }
   if (filters.year) {
     where.push("trim(coalesce(s.year, '')) = ?");
@@ -166,6 +180,46 @@ function buildSqlFilters(filters = {}, options = {}) {
   }
 
   return { where, params };
+}
+
+function buildEffectivePeriodSql(alias, period) {
+  const rawPeriod = String(period || "").trim().toLowerCase();
+  const meta = getPeriodMeta(period);
+  const periodValues = getPeriodFilterValues(period).map((value) => String(value).toLowerCase());
+  if (!meta && !periodValues.length) {
+    return rawPeriod
+      ? { sql: `lower(coalesce(${alias}.period, '')) = ?`, params: [rawPeriod] }
+      : null;
+  }
+  const yearExpr = `CAST(trim(coalesce(${alias}.year, '')) AS INTEGER)`;
+  const hasYearExpr = `trim(coalesce(${alias}.year, '')) GLOB '[0-9][0-9][0-9][0-9]*'`;
+  const parts = [];
+  const params = [];
+
+  if (meta?.yearRange && Array.isArray(meta.countries) && meta.countries.length) {
+    parts.push(`(
+      ${hasYearExpr}
+      AND lower(coalesce(${alias}.country, '')) IN (${meta.countries.map(() => "?").join(", ")})
+      AND ${yearExpr} >= ?
+      AND ${yearExpr} < ?
+    )`);
+    params.push(...meta.countries.map((value) => String(value).toLowerCase()));
+    params.push(Number(meta.yearRange.from), Number(meta.yearRange.to));
+  }
+
+  if (periodValues.length) {
+    parts.push(`(
+      NOT (${hasYearExpr})
+      AND lower(coalesce(${alias}.period, '')) IN (${periodValues.map(() => "?").join(", ")})
+    )`);
+    params.push(...periodValues);
+  }
+
+  if (!parts.length) return null;
+  return {
+    sql: `(${parts.join(" OR ")})`,
+    params,
+  };
 }
 
 export async function onRequestGet({ env, request }) {

@@ -2670,6 +2670,16 @@ export function normalizeSongCountry(value) {
   return normalizeWithAliases(value, COUNTRY_SET, COUNTRY_ALIASES);
 }
 
+export function getCountryFilterValues(value) {
+  const canonical = normalizeSongCountry(value);
+  if (!canonical) return [];
+  const values = new Set([canonical]);
+  Object.entries(COUNTRY_ALIASES).forEach(([rawAlias, aliasValue]) => {
+    if (aliasValue === canonical) values.add(rawAlias);
+  });
+  return Array.from(values);
+}
+
 export function normalizeSongPeriod(value) {
   return normalizeWithAliases(value, PERIOD_SET, PERIOD_ALIASES);
 }
@@ -2677,6 +2687,16 @@ export function normalizeSongPeriod(value) {
 export function getPeriodMeta(value) {
   const canonical = normalizeSongPeriod(value);
   return canonical ? (PERIOD_META_BY_VALUE.get(canonical) || null) : null;
+}
+
+export function getPeriodFilterValues(value) {
+  const canonical = normalizeSongPeriod(value);
+  if (!canonical) return [];
+  const values = new Set([canonical]);
+  Object.entries(PERIOD_ALIASES).forEach(([rawAlias, aliasValue]) => {
+    if (aliasValue === canonical) values.add(rawAlias);
+  });
+  return Array.from(values);
 }
 
 export function getPeriodValuesForCountry(country) {

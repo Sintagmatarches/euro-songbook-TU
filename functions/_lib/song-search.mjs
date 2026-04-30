@@ -1,5 +1,6 @@
 import { dbAll, dbGet, dbRun } from "./db.js";
 import { invalidateCatalogRuntimeCache } from "./runtime-cache.js";
+import { getPeriodFilterValues, getPeriodMeta } from "../../shared/song-catalogs.js";
 
 export const SEARCH_INDEX_SCHEMA_MARKER_KEY = "schema.search.version";
 export const SEARCH_INDEX_SCHEMA_MARKER_VALUE = "2026-04-19-search-v2";
@@ -448,8 +449,11 @@ function buildSearchWhereClause(filters = {}, options = {}) {
     params.push(...filters.countryValues.map((value) => String(value).toLowerCase()));
   }
   if (filters.period) {
-    where.push("lower(coalesce(s.period, '')) = ?");
-    params.push(String(filters.period).toLowerCase());
+    const periodFilter = buildEffectivePeriodSql("s", filters.period);
+    if (periodFilter) {
+      where.push(periodFilter.sql);
+      params.push(...periodFilter.params);
+    }
   }
   if (filters.year) {
     where.push("trim(coalesce(s.year, '')) = ?");
@@ -477,6 +481,41 @@ function buildSearchWhereClause(filters = {}, options = {}) {
   if (filters.recent) where.push("datetime(s.created_at) >= datetime('now','-30 day')");
   if (filters.multiVersions) where.push("coalesce(vc.version_rows, 0) >= 1");
   return { where, params };
+}
+
+function buildEffectivePeriodSql(alias, period) {
+  const rawPeriod = String(period || "").trim().toLowerCase();
+  const meta = getPeriodMeta(period);
+  const periodValues = getPeriodFilterValues(period).map((value) => String(value).toLowerCase());
+  if (!meta && !periodValues.length) {
+    return rawPeriod ? { sql: `lower(coalesce(${alias}.period, '')) = ?`, params: [rawPeriod] } : null;
+  }
+
+  const yearExpr = `CAST(trim(coalesce(${alias}.year, '')) AS INTEGER)`;
+  const hasYearExpr = `trim(coalesce(${alias}.year, '')) GLOB '[0-9][0-9][0-9][0-9]*'`;
+  const parts = [];
+  const params = [];
+
+  if (meta?.yearRange && Array.isArray(meta.countries) && meta.countries.length) {
+    parts.push(`(
+      ${hasYearExpr}
+      AND lower(coalesce(${alias}.country, '')) IN (${meta.countries.map(() => "?").join(", ")})
+      AND ${yearExpr} >= ?
+      AND ${yearExpr} < ?
+    )`);
+    params.push(...meta.countries.map((value) => String(value).toLowerCase()));
+    params.push(Number(meta.yearRange.from), Number(meta.yearRange.to));
+  }
+
+  if (periodValues.length) {
+    parts.push(`(
+      NOT (${hasYearExpr})
+      AND lower(coalesce(${alias}.period, '')) IN (${periodValues.map(() => "?").join(", ")})
+    )`);
+    params.push(...periodValues);
+  }
+
+  return parts.length ? { sql: `(${parts.join(" OR ")})`, params } : null;
 }
 
 function buildMatchSet(tokens = []) {
