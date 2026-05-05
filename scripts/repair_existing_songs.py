@@ -18,6 +18,7 @@ EXPORT_SQL = ROOT / "tmp_songs_export.sql"
 UPDATE_SQL = ROOT / "tmp_repair_existing_songs.sql"
 REPORT_JSON = ROOT / "out" / "repair_existing_songs_report.json"
 REVIEW_JSONL = ROOT / "out" / "repair_existing_songs_review.jsonl"
+AMBIGUOUS_REVIEW_JSONL = ROOT / "out" / "repair_existing_songs_ambiguous_review.jsonl"
 
 STRUCTURE_VERSION = 2
 YEAR_MIN = 1600
@@ -256,15 +257,34 @@ def is_chordish_line(line: str) -> bool:
 
 
 def chord_token_weight(token: str) -> int:
+    bare = token.strip("()[]{}").strip()
+    if bare.lower() in {"do", "re", "mi", "fa", "sol", "la", "si"}:
+        return 0
+    if bare and bare[0].islower():
+        return 0
     if CHORD_TOKEN_RE.match(token):
         return 1
     # Imported chord sheets sometimes merge adjacent chords without a separator: C7A7, DmG7.
-    compact = re.sub(r"[^A-Ha-h#b0-9mM+/susadijorng-]", "", token)
+    compact = re.sub(r"[^A-Ha-h#b0-9mM+/()-]", "", token).strip("()")
     if len(compact) < 4 or len(compact) > 14:
         return 0
-    hits = re.findall(r"(?:[A-H](?:#|b)?(?:maj|min|m|M|dim|aug|sus|add)?\d*)", compact, re.IGNORECASE)
+    if compact.islower():
+        return 0
+    if sum(1 for ch in compact if ch in "ABCDEFGH") < 2:
+        return 0
+    if not re.search(r"(?:[#b0-9m/]|maj|min|dim|aug|sus|add)", compact):
+        return 0
+    hits = re.findall(r"(?:[A-H](?:#|b)?(?:maj|min|dim|aug|sus|add|m|M)?(?:[-+]?\d+(?:/\d+)?)?(?:/[A-H](?:#|b)?)?)", compact)
     joined = "".join(hits)
-    return len(hits) if len(hits) >= 2 and joined.lower() == compact.lower() else 0
+    return len(hits) if len(hits) >= 2 and joined == compact else 0
+
+
+def line_has_embedded_chord_tokens(line: str) -> bool:
+    parts = [p.strip("()[]{}.,;:!?") for p in re.split(r"[\s|,;:/\\-вЂ“вЂ”]+", normalize_line(line)) if p.strip()]
+    weights = [chord_token_weight(part) for part in parts]
+    if sum(weights) >= 2:
+        return True
+    return any(weight and re.search(r"(?:#|b|\d|maj|min|dim|aug|sus|add|/|m|M)", part) for part, weight in zip(parts, weights))
 
 
 def is_guitar_instruction_line(line: str) -> bool:
@@ -272,9 +292,29 @@ def is_guitar_instruction_line(line: str) -> bool:
     if not s:
         return False
     if TONALITY_RE.search(s):
-        return True
-    if CAPO_RE.search(s) or BARRE_RE.search(s) or PICKING_RE.search(s):
-        return len(tokenize(s)) <= 18 or GUITAR_VERB_RE.search(s)
+        words = tokenize(s)
+        return bool(
+            len(words) <= 8
+            or GUITAR_VERB_RE.search(s)
+            or line_has_embedded_chord_tokens(s)
+            or re.search(r"\bkey\s+of\b", s, re.IGNORECASE)
+            or ":" in s
+        )
+    words = tokenize(s)
+    if re.search(r"\bda capo\b", s, re.IGNORECASE):
+        return False
+    if re.search(r"\bбаре\b", s, re.IGNORECASE) and not re.search(r"\bbarre\b", s, re.IGNORECASE):
+        return False
+    if CAPO_RE.search(s):
+        return len(words) <= 18 or GUITAR_VERB_RE.search(s) or line_has_embedded_chord_tokens(s)
+    if BARRE_RE.search(s):
+        return bool(GUITAR_VERB_RE.search(s) or line_has_embedded_chord_tokens(s) or (re.match(r"^\s*(?:barre|барр?е)\b", s, re.IGNORECASE) and len(words) <= 6))
+    if PICKING_RE.search(s):
+        if GUITAR_VERB_RE.search(s) or line_has_embedded_chord_tokens(s):
+            return True
+        if re.match(r"^\s*(?:РїРµСЂРµР±[С–РёРѕ]СЂ|picking|strumming|riff)\b", s, re.IGNORECASE):
+            return len(words) <= 8
+        return False
     if CHORD_SUBSTITUTION_RE.search(s):
         parts = [p.strip("()[]{}.,;:") for p in re.split(r"[\s|,;:/\\-–—]+", s) if p.strip()]
         if sum(chord_token_weight(part) for part in parts) >= 1:
@@ -285,6 +325,8 @@ def is_guitar_instruction_line(line: str) -> bool:
 def is_single_chord_line(line: str) -> bool:
     token = normalize_line(line).strip("()[]{}")
     if not token or any(ch.isspace() for ch in token):
+        return False
+    if token.lower() in {"do", "re", "mi", "fa", "sol", "la", "si"}:
         return False
     if token.islower():
         return False
@@ -454,6 +496,14 @@ def analyze_text(row: TextRow) -> dict[str, Any]:
             continue
 
         if in_tail_chord_block:
+            if not (is_chordish_line(line) or is_guitar_instruction_line(line)):
+                add_unique(extracted.setdefault("ambiguous_cleanup_lines", []), {"line": line, "reason": "chord_tail_block"})
+                add_unique(extracted["warnings"], "ambiguous_cleanup_needs_manual_review")
+                clean_lines.append(line)
+                content_lines_seen += 1
+                in_tail_chord_block = False
+                in_chord_block = False
+                continue
             add_unique(extracted["removed_chords"], {"line": line, "reason": "chord_tail_block"})
             chord_hits += 1
             continue
@@ -496,6 +546,13 @@ def analyze_text(row: TextRow) -> dict[str, Any]:
                 continue
 
         if CHORD_HEADER_RE.match(line):
+            header_words = tokenize(line)
+            if len(header_words) > 10 or ((len(header_words) > 4 and ("," in line or "." in line)) and not any(sym in line for sym in ":([")):
+                add_unique(extracted.setdefault("ambiguous_cleanup_lines", []), {"line": line, "reason": "chord_header"})
+                add_unique(extracted["warnings"], "ambiguous_cleanup_needs_manual_review")
+                clean_lines.append(line)
+                content_lines_seen += 1
+                continue
             in_chord_block = True
             # A chord-service section after real lyrics is an appended duplicate block.
             in_tail_chord_block = content_lines_seen >= 4
@@ -507,6 +564,14 @@ def analyze_text(row: TextRow) -> dict[str, Any]:
             chord_hits += 1
             continue
         if is_guitar_instruction_line(line):
+            if (PICKING_RE.search(line) and not GUITAR_VERB_RE.search(line) and not line_has_embedded_chord_tokens(line) and len(tokenize(line)) > 5) or (
+                re.search(r"\bбаре\b", line, re.IGNORECASE) and not re.search(r"\bbarre\b", line, re.IGNORECASE)
+            ):
+                add_unique(extracted.setdefault("ambiguous_cleanup_lines", []), {"line": line, "reason": "guitar_instruction"})
+                add_unique(extracted["warnings"], "ambiguous_cleanup_needs_manual_review")
+                clean_lines.append(line)
+                content_lines_seen += 1
+                continue
             add_unique(extracted["removed_chords"], {"line": line, "reason": "guitar_instruction"})
             chord_hits += 1
             continue
@@ -575,9 +640,26 @@ def merge_meta(raw_meta: str, extracted: dict[str, Any]) -> tuple[str, bool]:
     return json.dumps(meta, ensure_ascii=False, separators=(",", ":")), before != after
 
 
-def build_updates(rows: Iterable[TextRow], args: argparse.Namespace) -> tuple[list[str], dict[str, Any], list[dict[str, Any]]]:
+def is_section_only_extraction(extracted: dict[str, Any]) -> bool:
+    keys = set(extracted.keys()) - {"structure_version", "row_type", "song_id", "source_row_id", "review_flags", "warnings", "sections"}
+    return not keys and bool(extracted.get("sections"))
+
+
+def strip_section_data(extracted: dict[str, Any]) -> dict[str, Any]:
+    out = dict(extracted)
+    out.pop("sections", None)
+    flags = [flag for flag in out.get("review_flags", []) if flag not in {"sections_detected", "chorus_detected"}]
+    if flags:
+        out["review_flags"] = flags
+    else:
+        out.pop("review_flags", None)
+    return out
+
+
+def build_updates(rows: Iterable[TextRow], args: argparse.Namespace) -> tuple[list[str], dict[str, Any], list[dict[str, Any]], list[dict[str, Any]]]:
     updates: list[str] = []
     review_rows: list[dict[str, Any]] = []
+    ambiguous_review_rows: list[dict[str, Any]] = []
     counters: Counter[str] = Counter()
     table_counters: Counter[str] = Counter()
     warning_counters: Counter[str] = Counter()
@@ -603,8 +685,54 @@ def build_updates(rows: Iterable[TextRow], args: argparse.Namespace) -> tuple[li
         clean_lyrics = analysis["clean_lyrics"]
         original_lyrics = analysis["original_lyrics"]
         has_structure = bool(analysis["has_structure"])
+        if args.anchor_garbage_only:
+            extracted = strip_section_data(extracted)
+            has_structure = bool(
+                set(extracted.keys()) - {"structure_version", "row_type", "song_id", "source_row_id", "warnings", "review_flags"}
+            )
+            anchor_action_keys = {
+                "removed_chords",
+                "removed_metadata_lines",
+                "removed_source_lines",
+                "removed_import_meta_lines",
+                "words_author",
+                "music_author",
+                "translator",
+                "performer",
+            }
+            if not any(key in extracted for key in anchor_action_keys | {"ambiguous_cleanup_lines"}):
+                continue
+
+        ambiguous_only = bool(extracted.get("ambiguous_cleanup_lines")) and not bool(
+            set(extracted.keys()) - {"structure_version", "row_type", "song_id", "source_row_id", "warnings", "review_flags", "ambiguous_cleanup_lines"}
+        )
+        if extracted.get("warnings") and "ambiguous_cleanup_needs_manual_review" in extracted.get("warnings", []):
+            counters["ambiguous_review_rows"] += 1
+            ambiguous_review_rows.append(
+                {
+                    "table": row.table,
+                    "id": row.id,
+                    "song_id": row.song_id,
+                    "title": row.title,
+                    "lang": row.lang,
+                    "country": row.country,
+                    "year": row.year,
+                    "flags": extracted.get("review_flags", []),
+                    "warnings": extracted.get("warnings", []),
+                    "removed_chords": extracted.get("removed_chords", []),
+                    "ambiguous_cleanup_lines": extracted.get("ambiguous_cleanup_lines", []),
+                    "old_lyrics_preview": original_lyrics[:700],
+                }
+            )
+            continue
+        if ambiguous_only:
+            counters["ambiguous_review_rows"] += 1
+            continue
 
         if not has_structure:
+            continue
+        if is_section_only_extraction(extracted):
+            counters["skipped_section_only_rows"] += 1
             continue
 
         for warning in extracted.get("warnings", []):
@@ -677,6 +805,7 @@ def build_updates(rows: Iterable[TextRow], args: argparse.Namespace) -> tuple[li
         "mode": "report_only" if args.report_only else "sql_generated",
         "update_sql": str(UPDATE_SQL),
         "review_jsonl": str(REVIEW_JSONL),
+        "ambiguous_review_jsonl": str(AMBIGUOUS_REVIEW_JSONL),
         "export_sql": str(EXPORT_SQL),
         "structure_version": STRUCTURE_VERSION,
         "counts": dict(counters),
@@ -691,7 +820,7 @@ def build_updates(rows: Iterable[TextRow], args: argparse.Namespace) -> tuple[li
             "No confidence data in draft_line_variants is modified by this script.",
         ],
     }
-    return updates, report, review_rows
+    return updates, report, review_rows, ambiguous_review_rows
 
 
 def safe_to_update_lyrics(original: str, clean: str, extracted: dict[str, Any], args: argparse.Namespace) -> bool:
@@ -710,12 +839,15 @@ def safe_to_update_lyrics(original: str, clean: str, extracted: dict[str, Any], 
     return bool(flags & destructive_flags)
 
 
-def write_outputs(updates: list[str], report: dict[str, Any], review_rows: list[dict[str, Any]]) -> None:
+def write_outputs(updates: list[str], report: dict[str, Any], review_rows: list[dict[str, Any]], ambiguous_review_rows: list[dict[str, Any]]) -> None:
     REPORT_JSON.parent.mkdir(parents=True, exist_ok=True)
     UPDATE_SQL.write_text("\n".join(["-- generated by scripts/repair_existing_songs.py", *updates, ""]), encoding="utf-8")
     REPORT_JSON.write_text(json.dumps(report, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
     with REVIEW_JSONL.open("w", encoding="utf-8") as fh:
         for item in review_rows:
+            fh.write(json.dumps(item, ensure_ascii=False, separators=(",", ":")) + "\n")
+    with AMBIGUOUS_REVIEW_JSONL.open("w", encoding="utf-8") as fh:
+        for item in ambiguous_review_rows:
             fh.write(json.dumps(item, ensure_ascii=False, separators=(",", ":")) + "\n")
 
 
@@ -766,8 +898,8 @@ def main() -> None:
     rows = load_rows_from_export(EXPORT_SQL, include_versions=not args.only_main)
     if args.sample_size and args.sample_size > 0 and len(rows) > args.sample_size:
         rows = random.Random(args.seed).sample(rows, args.sample_size)
-    updates, report, review_rows = build_updates(rows, args)
-    write_outputs(updates, report, review_rows)
+    updates, report, review_rows, ambiguous_review_rows = build_updates(rows, args)
+    write_outputs(updates, report, review_rows, ambiguous_review_rows)
     print(json.dumps({
         "counts": report["counts"],
         "update_statements": report["update_statements"],
