@@ -6,6 +6,7 @@ import {
   getUserAccess,
   getOptionalUserAccess,
   canViewAdminContent,
+  hasAccessPermission,
 } from "../../../../_lib/db.js";
 import { ensureSchemaAndSeed } from "../../../../_lib/schema.js";
 
@@ -35,10 +36,16 @@ async function getComment(env, songId, commentId) {
   );
 }
 
-function canManageComment(access, comment) {
+function canEditComment(access, comment) {
+  if (!access || !comment) return false;
+  return String(access.id || "") === String(comment.user_id || "");
+}
+
+function canDeleteComment(access, comment) {
   if (!access || !comment) return false;
   if (String(access.role || "") === "super_admin") return true;
-  return String(access.id || "") === String(comment.user_id || "");
+  if (String(access.id || "") === String(comment.user_id || "")) return true;
+  return hasAccessPermission(access, "songs.delete");
 }
 
 async function readCommentItem(env, commentId) {
@@ -81,7 +88,7 @@ export async function onRequestPut({ env, request, params }) {
 
   const comment = await getComment(env, songId, commentId);
   if (!comment) return err("Comment not found", 404);
-  if (!canManageComment(access, comment)) return err("Forbidden", 403);
+  if (!canEditComment(access, comment)) return err("Forbidden", 403);
 
   const body = await readJSON(request);
   const text = normalizeBody(body?.body);
@@ -121,7 +128,7 @@ export async function onRequestDelete({ env, request, params }) {
 
   const comment = await getComment(env, songId, commentId);
   if (!comment) return err("Comment not found", 404);
-  if (!canManageComment(access, comment)) return err("Forbidden", 403);
+  if (!canDeleteComment(access, comment)) return err("Forbidden", 403);
 
   await dbRun(env, `DELETE FROM song_comments WHERE id=? AND song_id=?`, [commentId, songId]);
   return json({ ok: true });

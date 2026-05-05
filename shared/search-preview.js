@@ -66,7 +66,7 @@ export function isPreviewMetaLine(line = "", titleNormalized = "") {
   if (/^[\[(].*[\])]\s*$/.test(normalized)) return true;
   if (!hasTextOrDigit(normalized)) return true;
   if (/^(музыка|слова|музика|текст|исполнитель|исполняет|исп\.|виконує|виконавець|виконують|виконання|муз\.|сл\.|music|lyrics|words|performed by|composer|author)\s*[:.-]/i.test(normalized)) return true;
-  if (/^(интродукция|інтродукція|вступ|вступление|куплет|припев|приспів|приспев|chorus|verse|bridge|intro|outro|проигрыш|програш|refren|refrain)\s*\d*\s*[:.-]?$/i.test(normalized)) return true;
+  if (/^(интродукция|інтродукція|вступ|вступление|куплет|припев|приспів|приспев|chorus|verse|bridge|intro|outro|проигрыш|програш|refren|refrain|refrään)\s*\d*\s*[:.-]?$/i.test(normalized)) return true;
   return false;
 }
 

@@ -7,6 +7,17 @@ import { enforceRateLimit } from "../../_lib/rate-limit.js";
 import { extractPasswordHashCandidates } from "../../_lib/user-password-store.js";
 import { isSafeJwtSecret } from "../../_lib/security-config.js";
 
+function normalizeNicknameCandidate(value) {
+  return String(value || "")
+    .trim()
+    .toLowerCase()
+    .replace(/\s+/g, "_")
+    .replace(/[^a-z0-9._-]/g, "_")
+    .replace(/_+/g, "_")
+    .replace(/^[_\-.]+|[_\-.]+$/g, "")
+    .slice(0, 28);
+}
+
 export async function onRequestPost({ env, request }) {
   try {
     await ensureSchemaAndSeed(env);
@@ -28,6 +39,7 @@ export async function onRequestPost({ env, request }) {
 
   const login = String(body.login || body.nickname || body.email || "").trim().toLowerCase();
   if (!login) return err("login and password required", 400);
+  const normalizedNickname = normalizeNicknameCandidate(login);
   const password = String(body.password);
   const emailRate = await enforceRateLimit(env, request, {
     scope: "auth_login_email",
@@ -40,9 +52,11 @@ export async function onRequestPost({ env, request }) {
   const user = await dbGet(
     env,
     `SELECT * FROM users
-     WHERE lower(email)=lower(?) OR lower(trim(coalesce(nickname,'')))=lower(trim(?))
+     WHERE lower(email)=lower(?)
+        OR lower(trim(coalesce(nickname,'')))=lower(trim(?))
+        OR lower(trim(coalesce(nickname,'')))=lower(trim(?))
      LIMIT 1`,
-    [login, login]
+    [login, login, normalizedNickname || login]
   );
   if (!user) return err("invalid credentials", 401);
 

@@ -1,6 +1,7 @@
 import { dbAll, dbGet, dbRun } from "./db.js";
 
 const PASSWORD_HASH_COLUMNS = ["pass_hash", "password_hash", "hash", "password", "passwd"];
+const HASH_PREFIX = "pbkdf2$";
 
 function normalizeColumnName(value) {
   return String(value || "").trim().toLowerCase();
@@ -134,16 +135,37 @@ export async function getUsersTableProfile(env) {
   };
 }
 
+function decodeHashCandidate(value) {
+  if (typeof value === "string") {
+    const safeValue = value.trim();
+    return safeValue.startsWith(HASH_PREFIX) ? safeValue : "";
+  }
+  if (value instanceof Uint8Array) {
+    const decoded = new TextDecoder().decode(value).trim();
+    return decoded.startsWith(HASH_PREFIX) ? decoded : "";
+  }
+  if (value instanceof ArrayBuffer) {
+    const decoded = new TextDecoder().decode(new Uint8Array(value)).trim();
+    return decoded.startsWith(HASH_PREFIX) ? decoded : "";
+  }
+  if (ArrayBuffer.isView(value) && value?.buffer instanceof ArrayBuffer) {
+    const decoded = new TextDecoder().decode(new Uint8Array(value.buffer, value.byteOffset || 0, value.byteLength || 0)).trim();
+    return decoded.startsWith(HASH_PREFIX) ? decoded : "";
+  }
+  return "";
+}
+
 export function extractPasswordHashCandidates(user) {
   const out = [];
   if (!user || typeof user !== "object") return out;
 
   for (const key of PASSWORD_HASH_COLUMNS) {
-    const v = user[key];
-    if (typeof v === "string" && v.startsWith("pbkdf2$")) out.push(v);
+    const candidate = decodeHashCandidate(user[key]);
+    if (candidate) out.push(candidate);
   }
   for (const v of Object.values(user)) {
-    if (typeof v === "string" && v.startsWith("pbkdf2$")) out.push(v);
+    const candidate = decodeHashCandidate(v);
+    if (candidate) out.push(candidate);
   }
   return unique(out);
 }

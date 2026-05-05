@@ -1,6 +1,6 @@
 import { dbAll } from "./db.js";
 
-const SECTION_LINE_RE = /^(?:ref|refr|refrain|chorus|verse|bridge|intro|outro|куплет|припев|приспів|приспев|запев)\b[\s.:#-]*\d*$/iu;
+const SECTION_LINE_RE = /^(?:ref|refr|refrain|refrään|chorus|verse|bridge|intro|outro|куплет|припев|приспів|приспев|запев)\b[\s.:#-]*\d*$/iu;
 
 function normalizeComparableChunk(value = "") {
   return String(value || "")

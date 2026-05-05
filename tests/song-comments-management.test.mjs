@@ -13,6 +13,7 @@ function createCommentsEnv() {
     ["user-owner", { id: "user-owner", email: "owner@example.com", nickname: "owner", role: "user", created_at: "2024-01-01T00:00:00.000Z" }],
     ["user-other", { id: "user-other", email: "other@example.com", nickname: "other", role: "user", created_at: "2024-01-01T00:00:00.000Z" }],
     ["user-super", { id: "user-super", email: "super@example.com", nickname: "super", role: "super_admin", created_at: "2024-01-01T00:00:00.000Z" }],
+    ["user-admin-delete", { id: "user-admin-delete", email: "admin@example.com", nickname: "admin", role: "admin", created_at: "2024-01-01T00:00:00.000Z" }],
   ]);
   const comments = new Map([
     ["comment-1", {
@@ -35,6 +36,9 @@ function createCommentsEnv() {
     }
 
     if (sql.includes("SELECT permission FROM user_permissions WHERE user_id=?")) {
+      if (String(params[0] || "") === "user-admin-delete") {
+        return [{ permission: "songs.delete" }];
+      }
       return [];
     }
 
@@ -145,6 +149,61 @@ test("non-owner cannot edit another user's comment", async () => {
 test("super admin can delete any comment", async () => {
   const { env, comments } = createCommentsEnv();
   const cookie = await authCookie(env, { id: "user-super", email: "super@example.com", nickname: "super", role: "super_admin" });
+  const response = await onRequestDelete({
+    env,
+    request: new Request("https://example.com/api/songs/song-1/comments/comment-1", {
+      method: "DELETE",
+      headers: {
+        Cookie: cookie,
+      },
+    }),
+    params: { id: "song-1", comment_id: "comment-1" },
+  });
+
+  assert.equal(response.status, 200);
+  assert.equal(comments.has("comment-1"), false);
+});
+
+test("super admin cannot edit another user's comment", async () => {
+  const { env } = createCommentsEnv();
+  const cookie = await authCookie(env, { id: "user-super", email: "super@example.com", nickname: "super", role: "super_admin" });
+  const response = await onRequestPut({
+    env,
+    request: new Request("https://example.com/api/songs/song-1/comments/comment-1", {
+      method: "PUT",
+      headers: {
+        "Content-Type": "application/json",
+        Cookie: cookie,
+      },
+      body: JSON.stringify({ body: "Moderator rewrite" }),
+    }),
+    params: { id: "song-1", comment_id: "comment-1" },
+  });
+
+  assert.equal(response.status, 403);
+});
+
+test("comment owner can delete own comment", async () => {
+  const { env, comments } = createCommentsEnv();
+  const cookie = await authCookie(env, { id: "user-owner", email: "owner@example.com", nickname: "owner", role: "user" });
+  const response = await onRequestDelete({
+    env,
+    request: new Request("https://example.com/api/songs/song-1/comments/comment-1", {
+      method: "DELETE",
+      headers: {
+        Cookie: cookie,
+      },
+    }),
+    params: { id: "song-1", comment_id: "comment-1" },
+  });
+
+  assert.equal(response.status, 200);
+  assert.equal(comments.has("comment-1"), false);
+});
+
+test("admin with songs.delete can delete another user's comment", async () => {
+  const { env, comments } = createCommentsEnv();
+  const cookie = await authCookie(env, { id: "user-admin-delete", email: "admin@example.com", nickname: "admin", role: "admin" });
   const response = await onRequestDelete({
     env,
     request: new Request("https://example.com/api/songs/song-1/comments/comment-1", {

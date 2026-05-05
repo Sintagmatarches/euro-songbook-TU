@@ -28,6 +28,76 @@ export function createEmptyVisualBackground() {
   };
 }
 
+export function mapTopAnchoredBackgroundFocusY(value) {
+  const focusY = clampVisualFocus(value);
+  if (focusY <= 50) return 0;
+  return clampVisualFocus((focusY - 50) * 2);
+}
+
+export function resolveBackgroundPreviewPosition(value = {}) {
+  const background = normalizeVisualBackground(value);
+  return {
+    x: clampVisualFocus(background.focus_x),
+    y: mapTopAnchoredBackgroundFocusY(background.focus_y),
+  };
+}
+
+export function computeParallaxScrollProgress(scrollY = 0, documentHeight = 0, viewportHeight = 0) {
+  const safeViewportHeight = Math.max(1, Number(viewportHeight || 0) || 1);
+  const safeDocumentHeight = Math.max(safeViewportHeight, Number(documentHeight || 0) || safeViewportHeight);
+  const scrollRange = Math.max(0, safeDocumentHeight - safeViewportHeight);
+  if (scrollRange <= 0) return 0;
+  const safeScrollY = Math.max(0, Number(scrollY || 0) || 0);
+  return Math.max(0, Math.min(1, safeScrollY / scrollRange));
+}
+
+export function computeParallaxCoverFrame(sourceWidth = 0, sourceHeight = 0, viewportWidth = 0, viewportHeight = 0) {
+  const safeSourceWidth = Math.max(1, Number(sourceWidth || 0) || 1);
+  const safeSourceHeight = Math.max(1, Number(sourceHeight || 0) || 1);
+  const safeViewportWidth = Math.max(1, Number(viewportWidth || 0) || 1);
+  const safeViewportHeight = Math.max(1, Number(viewportHeight || 0) || 1);
+  const scale = Math.max(safeViewportWidth / safeSourceWidth, safeViewportHeight / safeSourceHeight);
+  const renderWidth = safeSourceWidth * scale;
+  const renderHeight = safeSourceHeight * scale;
+  return {
+    scale,
+    renderWidth,
+    renderHeight,
+    overflowX: Math.max(0, renderWidth - safeViewportWidth),
+    overflowY: Math.max(0, renderHeight - safeViewportHeight),
+    viewportWidth: safeViewportWidth,
+    viewportHeight: safeViewportHeight,
+    sourceWidth: safeSourceWidth,
+    sourceHeight: safeSourceHeight,
+  };
+}
+
+export function computeParallaxOffsets(options = {}) {
+  const geometry = computeParallaxCoverFrame(
+    options.sourceWidth,
+    options.sourceHeight,
+    options.viewportWidth,
+    options.viewportHeight,
+  );
+  const progress = computeParallaxScrollProgress(
+    options.scrollY,
+    options.documentHeight,
+    options.viewportHeight,
+  );
+  const focusX = clampVisualFocus(options.focusX ?? 50);
+  const focusY = clampVisualFocus(options.focusY ?? 0);
+  const anchorTop = geometry.overflowY * (focusY / 100);
+  const travelY = Math.max(0, geometry.overflowY - anchorTop);
+  return {
+    ...geometry,
+    progress,
+    anchorTop,
+    travelY,
+    offsetX: -(geometry.overflowX * (focusX / 100)),
+    offsetY: -(anchorTop + travelY * progress),
+  };
+}
+
 export function createEmptyVisualSymbol() {
   return {
     long: "",

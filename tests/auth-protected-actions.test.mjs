@@ -91,9 +91,12 @@ async function createAuthEnv(options = {}) {
       && sql.includes("OR lower(trim(coalesce(nickname,'')))=lower(trim(?))")
     ) {
       const login = String(params[0] || "").toLowerCase();
+      const exactNickname = String(params[1] || "").trim().toLowerCase();
+      const normalizedNickname = String(params[2] || "").trim().toLowerCase();
       return users.find((user) => (
         String(user.email || "").toLowerCase() === login
-        || String(user.nickname || "").trim().toLowerCase() === login
+        || String(user.nickname || "").trim().toLowerCase() === exactNickname
+        || String(user.nickname || "").trim().toLowerCase() === normalizedNickname
       )) || null;
     }
 
@@ -270,6 +273,57 @@ test("login accepts nickname credentials and sets auth cookies", async () => {
   assert.equal(body.nickname, "tester");
   const setCookie = response.headers.get("set-cookie") || "";
   assert.match(setCookie, /songbook_session=/);
+});
+
+test("login accepts normalized nickname input for legacy admin-style accounts", async () => {
+  const { env } = await createAuthEnv({
+    seedUsers: [
+      {
+        id: "u-login-normalized",
+        email: "legacy.admin@example.com",
+        nickname: "legacy_admin",
+        password: "secret123",
+      },
+    ],
+  });
+
+  const response = await loginHandler({
+    env,
+    request: makeJsonRequest("https://example.com/api/auth/login", {
+      login: "Legacy Admin",
+      password: "secret123",
+    }),
+  });
+
+  assert.equal(response.status, 200);
+  const body = await readJson(response);
+  assert.equal(body.nickname, "legacy_admin");
+});
+
+test("login accepts legacy blob password hashes", async () => {
+  const hashed = await hashPassword("secret123");
+  const { env } = await createAuthEnv({
+    seedUsers: [
+      {
+        id: "u-login-blob",
+        email: "blob@example.com",
+        nickname: "blob_user",
+        pass_hash: new TextEncoder().encode(hashed),
+      },
+    ],
+  });
+
+  const response = await loginHandler({
+    env,
+    request: makeJsonRequest("https://example.com/api/auth/login", {
+      login: "blob_user",
+      password: "secret123",
+    }),
+  });
+
+  assert.equal(response.status, 200);
+  const body = await readJson(response);
+  assert.equal(body.nickname, "blob_user");
 });
 
 test("favorites add endpoint rejects unauthenticated requests", async () => {

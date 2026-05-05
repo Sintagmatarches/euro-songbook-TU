@@ -171,6 +171,20 @@ async function tableExists(env, tableName) {
   return !!String(row?.name || "").trim();
 }
 
+async function tableHasColumns(env, tableName, requiredColumns = []) {
+  const required = (Array.isArray(requiredColumns) ? requiredColumns : [requiredColumns])
+    .map((value) => String(value || "").trim())
+    .filter(Boolean);
+  if (!required.length) return true;
+  try {
+    const rows = await dbAll(env, `PRAGMA table_info(${tableName})`);
+    const present = new Set((Array.isArray(rows) ? rows : []).map((row) => String(row?.name || "").trim()).filter(Boolean));
+    return required.every((column) => present.has(column));
+  } catch {
+    return false;
+  }
+}
+
 async function hasAuthSchemaArtifacts(env) {
   const [hasUsers, hasRateLimits] = await Promise.all([
     tableExists(env, "users"),
@@ -183,6 +197,9 @@ async function hasFreshFullSchema(env) {
   const marker = await readSchemaMarker(env, FULL_SCHEMA_MARKER_KEY);
   if (marker !== FULL_SCHEMA_MARKER_VALUE) return false;
   if (!(await hasAuthSchemaArtifacts(env))) return false;
+  if (!(await tableHasColumns(env, "songs", ["region", "event", "theme", "verified_translation", "lyrics_meta_json"]))) {
+    return false;
+  }
   schemaSeedReady = true;
   authSchemaReady = true;
   return true;

@@ -35,16 +35,19 @@ import {
 import {
   buildVisualProfileFromLegacyFields,
   clampVisualFocus,
+  computeParallaxOffsets,
   createEmptyVisualProfile,
   createEmptyVisualVariant,
   extractBackgroundVisualProfile,
   extractFlagVisualProfile,
   hasVisualProfileContent,
+  mapTopAnchoredBackgroundFocusY,
   mergeVisualProfiles,
   normalizeVisualBackground,
   normalizeVisualProfile,
   normalizeVisualRange,
   normalizeVisualSymbol,
+  resolveBackgroundPreviewPosition,
   resolveVisualBackground,
   resolveVisualSymbolUrl,
   resolveVisualVariant,
@@ -706,9 +709,7 @@ function clampPercent(value) {
 }
 
 function normalizeTopAnchoredBackgroundFocusY(value) {
-  const focusY = clampPercent(value);
-  if (focusY <= 50) return 0;
-  return clampPercent((focusY - 50) * 2);
+  return mapTopAnchoredBackgroundFocusY(value);
 }
 
 function clampZoomLevel(value) {
@@ -878,6 +879,103 @@ function clearSongPageBackgroundFromBody() {
   document.body.style.removeProperty("--song-page-bg-focus-y-desktop");
   document.body.style.removeProperty("--song-page-bg-focus-x-mobile");
   document.body.style.removeProperty("--song-page-bg-focus-y-mobile");
+  document.body.style.removeProperty("--song-page-bg-render-width");
+  document.body.style.removeProperty("--song-page-bg-render-height");
+  document.body.style.removeProperty("--song-page-bg-offset-x");
+  document.body.style.removeProperty("--song-page-bg-offset-y");
+  delete document.body.dataset.songPageBgHasDesktop;
+  delete document.body.dataset.songPageBgHasMobile;
+  delete document.body.dataset.songPageBgWidthDesktop;
+  delete document.body.dataset.songPageBgHeightDesktop;
+  delete document.body.dataset.songPageBgWidthMobile;
+  delete document.body.dataset.songPageBgHeightMobile;
+  delete document.body.dataset.songPageBgFocusXDesktop;
+  delete document.body.dataset.songPageBgFocusYDesktop;
+  delete document.body.dataset.songPageBgFocusXMobile;
+  delete document.body.dataset.songPageBgFocusYMobile;
+}
+
+let songPageBackgroundParallaxFrame = 0;
+let songPageBackgroundParallaxBound = false;
+let songPageBackgroundParallaxResizeObserver = null;
+
+function songPageBackgroundUsesCssTimeline() {
+  try {
+    return typeof CSS !== "undefined" && typeof CSS.supports === "function" && CSS.supports("animation-timeline: scroll(root block)");
+  } catch {
+    return false;
+  }
+}
+
+function currentSongPageBackgroundMeta() {
+  const body = document.body;
+  if (!body.classList.contains("song-page-country-bg")) return null;
+  const prefersMobile = window.matchMedia?.("(max-width: 960px)")?.matches === true;
+  const useMobile = prefersMobile && body.dataset.songPageBgHasMobile === "1";
+  const kind = useMobile ? "mobile" : "desktop";
+  const fallbackKind = kind === "mobile" ? "desktop" : "mobile";
+  const hasKind = body.dataset[`songPageBgHas${kind[0].toUpperCase()}${kind.slice(1)}`] === "1";
+  const resolvedKind = hasKind ? kind : fallbackKind;
+  const width = Number(body.dataset[`songPageBgWidth${resolvedKind[0].toUpperCase()}${resolvedKind.slice(1)}`] || 0);
+  const height = Number(body.dataset[`songPageBgHeight${resolvedKind[0].toUpperCase()}${resolvedKind.slice(1)}`] || 0);
+  const focusX = Number(body.dataset[`songPageBgFocusX${resolvedKind[0].toUpperCase()}${resolvedKind.slice(1)}`] || 50);
+  const focusY = Number(body.dataset[`songPageBgFocusY${resolvedKind[0].toUpperCase()}${resolvedKind.slice(1)}`] || 0);
+  if (!width || !height) return null;
+  return { kind: resolvedKind, width, height, focusX, focusY };
+}
+
+function syncSongPageBackgroundParallax() {
+  songPageBackgroundParallaxFrame = 0;
+  const body = document.body;
+  if (!body.classList.contains("song-page-country-bg")) return;
+  const meta = currentSongPageBackgroundMeta();
+  if (!meta) return;
+  const doc = document.documentElement;
+  const viewportWidth = Math.max(1, Math.round(Number(window.visualViewport?.width || window.innerWidth || doc.clientWidth || 1)));
+  const viewportHeight = Math.max(1, Math.round(Number(window.visualViewport?.height || window.innerHeight || doc.clientHeight || 1)));
+  const documentHeight = Math.max(
+    viewportHeight,
+    Math.round(Number(doc.scrollHeight || 0)),
+    Math.round(Number(document.body?.scrollHeight || 0)),
+  );
+  const scrollY = Math.max(0, Number(window.scrollY || window.pageYOffset || 0));
+  const offsets = computeParallaxOffsets({
+    sourceWidth: meta.width,
+    sourceHeight: meta.height,
+    viewportWidth,
+    viewportHeight,
+    focusX: meta.focusX,
+    focusY: meta.focusY,
+    scrollY: body.classList.contains("song-page-country-bg-static") ? 0 : scrollY,
+    documentHeight,
+  });
+  body.style.setProperty("--song-page-bg-render-width", `${Math.round(offsets.renderWidth)}px`);
+  body.style.setProperty("--song-page-bg-render-height", `${Math.round(offsets.renderHeight)}px`);
+  body.style.setProperty("--song-page-bg-offset-x", `${Math.round(offsets.offsetX)}px`);
+  body.style.setProperty("--song-page-bg-offset-y", `${Math.round(offsets.offsetY)}px`);
+  body.style.setProperty("--song-page-bg-anchor-y", `${Math.round(offsets.anchorTop)}px`);
+  body.style.setProperty("--song-page-bg-travel", `${Math.round(offsets.travelY)}px`);
+}
+
+function scheduleSongPageBackgroundParallaxSync() {
+  if (songPageBackgroundParallaxFrame) return;
+  songPageBackgroundParallaxFrame = window.requestAnimationFrame(syncSongPageBackgroundParallax);
+}
+
+function ensureSongPageBackgroundParallaxBindings() {
+  if (songPageBackgroundParallaxBound) return;
+  songPageBackgroundParallaxBound = true;
+  if (!songPageBackgroundUsesCssTimeline()) {
+    window.addEventListener("scroll", scheduleSongPageBackgroundParallaxSync, { passive: true });
+    window.visualViewport?.addEventListener("scroll", scheduleSongPageBackgroundParallaxSync, { passive: true });
+  }
+  window.addEventListener("resize", scheduleSongPageBackgroundParallaxSync, { passive: true });
+  window.visualViewport?.addEventListener("resize", scheduleSongPageBackgroundParallaxSync, { passive: true });
+  if (window.ResizeObserver) {
+    songPageBackgroundParallaxResizeObserver = new window.ResizeObserver(() => scheduleSongPageBackgroundParallaxSync());
+    songPageBackgroundParallaxResizeObserver.observe(document.documentElement);
+    songPageBackgroundParallaxResizeObserver.observe(document.body);
+  }
 }
 
 function applyCountryBackgroundToBody(item, country, options = {}) {
@@ -905,6 +1003,18 @@ function applyCountryBackgroundToBody(item, country, options = {}) {
   document.body.style.setProperty("--song-page-bg-focus-y-desktop", `${desktopFocusY}%`);
   document.body.style.setProperty("--song-page-bg-focus-x-mobile", `${mobileFocusX}%`);
   document.body.style.setProperty("--song-page-bg-focus-y-mobile", `${mobileFocusY}%`);
+  document.body.dataset.songPageBgHasDesktop = desktopImageUrl ? "1" : "0";
+  document.body.dataset.songPageBgHasMobile = mobileImageUrl ? "1" : "0";
+  document.body.dataset.songPageBgWidthDesktop = String(COUNTRY_BACKGROUND_STANDARDS.desktop.width);
+  document.body.dataset.songPageBgHeightDesktop = String(COUNTRY_BACKGROUND_STANDARDS.desktop.height);
+  document.body.dataset.songPageBgWidthMobile = String(COUNTRY_BACKGROUND_STANDARDS.mobile.width);
+  document.body.dataset.songPageBgHeightMobile = String(COUNTRY_BACKGROUND_STANDARDS.mobile.height);
+  document.body.dataset.songPageBgFocusXDesktop = String(desktopFocusX);
+  document.body.dataset.songPageBgFocusYDesktop = String(desktopFocusY);
+  document.body.dataset.songPageBgFocusXMobile = String(mobileFocusX);
+  document.body.dataset.songPageBgFocusYMobile = String(mobileFocusY);
+  ensureSongPageBackgroundParallaxBindings();
+  scheduleSongPageBackgroundParallaxSync();
   return normalized;
 }
 
@@ -1961,8 +2071,61 @@ function homeEntityOpenLabel() {
   return "Open";
 }
 
+const HOME_ENTITY_LABEL_OVERRIDES = {
+  uk: {
+    "Балтийское сопротивление": "Балтійський спротив",
+    "Ирландское республиканское движение": "Ірландський республіканський рух",
+    "Исторические события": "Історичні події",
+    "Карелия": "Карелія",
+    "Киевская Русь": "Київська Русь",
+    "Косово": "Косово",
+    "Крым": "Крим",
+    "Польское сопротивление": "Польський спротив",
+    "Русское антисоветское движение": "Російський антирадянський рух",
+    "Русское революционное движение": "Російський революційний рух",
+    "Сербское движение": "Сербський рух",
+    "Украинское национальное движение": "Український національний рух",
+    "Югославия": "Югославія",
+  },
+  et: {
+    "Балтийское сопротивление": "Balti vastupanu",
+    "Ирландское республиканское движение": "Iiri vabariiklik liikumine",
+    "Исторические события": "Ajaloolised sündmused",
+    "Карелия": "Karjala",
+    "Киевская Русь": "Kiievi-Vene",
+    "Косово": "Kosovo",
+    "Крым": "Krimm",
+    "Польское сопротивление": "Poola vastupanuliikumine",
+    "Русское антисоветское движение": "Vene nõukogudevastane liikumine",
+    "Русское революционное движение": "Vene revolutsiooniline liikumine",
+    "Сербское движение": "Serbia liikumine",
+    "Украинское национальное движение": "Ukraina rahvuslik liikumine",
+    "Югославия": "Jugoslaavia",
+  },
+  en: {
+    "Балтийское сопротивление": "Baltic resistance",
+    "Ирландское республиканское движение": "Irish republican movement",
+    "Исторические события": "Historical events",
+    "Карелия": "Karelia",
+    "Киевская Русь": "Kyivan Rus",
+    "Косово": "Kosovo",
+    "Крым": "Crimea",
+    "Польское сопротивление": "Polish resistance",
+    "Русское антисоветское движение": "Russian anti-Soviet movement",
+    "Русское революционное движение": "Russian revolutionary movement",
+    "Сербское движение": "Serbian movement",
+    "Украинское национальное движение": "Ukrainian national movement",
+    "Югославия": "Yugoslavia",
+  },
+};
+
 function homeEntityNameLabel(entityName = "") {
-  return String(entityName || "").trim();
+  const safeName = String(entityName || "").trim();
+  if (!safeName) return "";
+  const ownCountry = homeEntityOwnCountry(safeName);
+  const localizedCountryLabel = ownCountry ? compactHistoricalCountryLabel(ownCountry) : "";
+  const override = HOME_ENTITY_LABEL_OVERRIDES[uiLocale()]?.[safeName];
+  return localizedCountryLabel || override || safeName;
 }
 
 function homeEntityCountries(entityName = "", visited = new Set()) {
@@ -2340,6 +2503,13 @@ function homeEntityBranchState(entityName = "", directCounts) {
   };
 }
 
+function homeEntityBranchCollapsesToDirectSongs(entityName = "", directCounts) {
+  const safeName = String(entityName || "").trim();
+  if (!safeName) return false;
+  const children = directVisibleEntityChildren(safeName, directCounts);
+  return children.length === 1 && children[0]?.isDirectSongsEntry === true && children[0]?.name === safeName;
+}
+
 function renderHomeEntityBreadcrumbs(path = [], lang = "") {
   const cleanPath = (Array.isArray(path) ? path : [])
     .map((item) => String(item || "").trim())
@@ -2357,11 +2527,12 @@ function renderHomeEntityBreadcrumbs(path = [], lang = "") {
   `;
 }
 
-function renderHomeEntityChildRow(child, lang = "", path = []) {
+function renderHomeEntityChildRow(child, lang = "", path = [], directCounts) {
   if (!child) return "";
   const childPath = [...path, child.name];
-  const href = child.isDirectSongsEntry
-    ? homeEntityDirectSongsHref(child.name, lang, path)
+  const shouldOpenDirectSongs = child.isDirectSongsEntry || homeEntityBranchCollapsesToDirectSongs(child.name, directCounts);
+  const href = shouldOpenDirectSongs
+    ? homeEntityDirectSongsHref(child.name, lang, child.isDirectSongsEntry ? path : childPath)
     : catalogHashForEntity(child.name, { lang, path: childPath });
   const content = `
     <span class="home-entity-nav-child-title">${esc(child.label)}</span>
@@ -2377,7 +2548,7 @@ function renderHomeEntityBranch(entityName = "", directCounts, lang = "", pathPa
   const safeName = String(entityName || "").trim();
   if (!safeName) return "";
   const state = homeEntityBranchState(safeName, directCounts);
-  if (state.count <= 0) return "";
+  if (state.count <= 0 || homeEntityBranchCollapsesToDirectSongs(safeName, directCounts)) return "";
   const path = entityPathFromParam(pathParam, safeName);
   return `
     <section class="home-entity-branch">
@@ -2389,7 +2560,7 @@ function renderHomeEntityBranch(entityName = "", directCounts, lang = "", pathPa
         </div>
       </div>
       ${state.children.length ? `<div class="home-entity-branch-list">
-        ${state.children.map((child) => renderHomeEntityChildRow(child, lang, path)).join("")}
+        ${state.children.map((child) => renderHomeEntityChildRow(child, lang, path, directCounts)).join("")}
       </div>` : ""}
     </section>
   `;
@@ -2605,7 +2776,7 @@ function buildHomeSongSecondaryPreview(song = {}, options = {}) {
     if (/^[\[(].*[\])]\s*$/.test(normalized)) return true;
     if (!hasTextOrDigit(normalized)) return true;
     if (/^(музыка|слова|музика|текст|исполнитель|исполняет|исп\.|виконує|виконавець|виконують|виконання|муз\.|сл\.|music|lyrics|words|performed by|composer|author)\s*[:.-]/i.test(normalized)) return true;
-    if (/^(интродукция|інтродукція|вступ|вступление|куплет|припев|приспів|приспев|chorus|verse|bridge|intro|outro|проигрыш|програш|refren|refrain)\s*\d*\s*[:.-]?$/i.test(normalized)) return true;
+    if (/^(интродукция|інтродукція|вступ|вступление|куплет|припев|приспів|приспев|chorus|verse|bridge|intro|outro|проигрыш|програш|refren|refrain|refrään)\s*\d*\s*[:.-]?$/i.test(normalized)) return true;
     return false;
   };
   const titleNormalized = String(song?.title || "");
@@ -4295,7 +4466,7 @@ function splitLyricsLines(input) {
 
 let lyricsHtmlEntityDecoder = null;
 const LYRICS_VARIANT_HEADING_RE = /^(?:вариант|version|variant|versioon|versija|версія)\s*(?:[ivxlcdm]+|\d+)\s*[:.)-]*$/iu;
-const LYRICS_SECTION_HEADING_RE = /^(?:куплет|припев|приспів|приспев|chorus|verse|bridge|intro|outro|рефрен|refrain)\s*(?:[ivxlcdm]+|\d+)?\s*[:.)-]*$/iu;
+const LYRICS_SECTION_HEADING_RE = /^(?:куплет|припев|приспів|приспев|chorus|verse|bridge|intro|outro|рефрен|refrain|refrään)\s*(?:[ivxlcdm]+|\d+)?\s*[:.)-]*$/iu;
 const LYRICS_ARCHIVE_REF_RE = /(?:^|[\s(])(?:№\s*\d+|[ФF]\.\s*[-\w]+|Оп\.\s*\d+|Д\.\s*\d+|Л\.\s*[\d-]+)(?:$|[\s).,;:])/iu;
 const LYRICS_DATE_RE = /\b(?:\d{1,2}[./]\d{1,2}[./]\d{2,4}|\d{1,2}\s+(?:январ[ьяе]?|феврал[ьяе]?|март[а]?|апрел[ьяе]?|ма[йяе]?|июн[ьяе]?|июл[ьяе]?|август[ае]?|сентябр[ьяе]?|октябр[ьяе]?|ноябр[ьяе]?|декабр[ьяе]?))\b/iu;
 const LYRICS_DOC_KEYWORD_RE = /\b(?:письмо|правлени[ея]|войсков(?:ого|ому|ое)|атаман(?:у|а)?|канцелярия|архив|машинопись|подлинник|доклад|протокол|телеграмма|рапорт|получено|генерал(?:-| )?лейтенант|есаул|адъютант)\b/iu;
@@ -5090,13 +5261,13 @@ function buildPrompt(kind, song) {
   return head + `\n${t("prompt.explainTask")}\n` + body;
 }
 
-const CHORUS_KEYWORDS = ["припев", "приспiв", "приспів", "рефрен", "chorus", "refrain", "refr", "refren", "koor"];
+const CHORUS_KEYWORDS = ["припев", "приспiв", "приспів", "рефрен", "chorus", "refrain", "refr", "refren", "koor", "refrään"];
 const VERSE_KEYWORDS = ["куплет", "verse", "stanza", "salm"];
 
 function chorusMarkerLabel() {
   if (uiLocale() === "ru") return "Припев";
   if (uiLocale() === "uk") return "Приспів";
-  if (uiLocale() === "et") return "Koor";
+  if (uiLocale() === "et") return "Refrään";
   return "Chorus";
 }
 
@@ -5114,7 +5285,7 @@ function repeatMarkerLabel() {
 function chorusFieldLabel() {
   if (uiLocale() === "ru") return "Припев";
   if (uiLocale() === "uk") return "Приспів";
-  if (uiLocale() === "et") return "Koor";
+  if (uiLocale() === "et") return "Refrään";
   return "Chorus";
 }
 
@@ -5864,11 +6035,11 @@ function renderStructuredLyrics(rawLyrics, options = {}) {
       .map((entry) => ({ text: entry.text, index: entry.index }));
     return {
       html: fallbackText
-        ? `<div class="song-lyric-block is-verse">${
+        ? `<div class="song-lyric-block is-verse"><div class="song-lyric-prefix" aria-hidden="true"><span class="song-chorus-spacer"></span></div>${
           hasVisibleStructuredConfidence
             ? `<div class="lyrics song-primary-lyrics song-primary-lyrics-structured song-text song-lyric-text">${renderEntriesWithConfidence(fallbackEntries)}</div>`
             : `<pre class="lyrics song-primary-lyrics song-text song-lyric-text">${renderWithUnknownMarks(fallbackText)}</pre>`
-        }<span class="song-lyric-marker song-lyric-marker-empty" aria-hidden="true"></span></div>`
+        }</div>`
         : "",
       expanded: fallbackText,
     };
@@ -5885,14 +6056,15 @@ function renderStructuredLyrics(rawLyrics, options = {}) {
     ].filter(Boolean).join(" ");
     return `
       <div class="${classes}">
-        ${isChorus ? `<div class="song-chorus-label">${esc(`${chorusMarkerLabel()}:`)}</div>` : ``}
+        <div class="song-lyric-prefix" aria-hidden="${isChorus ? "false" : "true"}">
+          ${isChorus ? `<div class="song-chorus-label">${esc(`${chorusMarkerLabel()}:`)}</div>` : `<span class="song-chorus-spacer"></span>`}
+        </div>
         ${isRepeat ? `<div class="song-repeat-label">${esc(repeatMarkerLabel())}</div>` : ``}
         ${
           hasVisibleStructuredConfidence
             ? `<div class="lyrics song-primary-lyrics song-primary-lyrics-structured song-text song-lyric-text">${renderEntriesWithConfidence(block.lines || [])}</div>`
             : `<pre class="lyrics song-primary-lyrics song-text song-lyric-text">${renderWithUnknownMarks(block.text)}</pre>`
         }
-        <span class="song-lyric-marker song-lyric-marker-empty" aria-hidden="true"></span>
       </div>
     `;
   }).join("");
@@ -6278,7 +6450,7 @@ function lyricsComposerTitle() {
 function lyricsComposerHint() {
   if (uiLocale() === "ru") return "Сначала добавьте полноценный припев, потом для повторов используйте блок «Повтор припева».";
   if (uiLocale() === "uk") return "Спочатку додайте повний приспів, потім для повторів використовуйте блок «Повтор приспіву».";
-  if (uiLocale() === "et") return "Lisa esmalt täis koor, korduste jaoks kasuta plokki \"Koori kordus\".";
+  if (uiLocale() === "et") return "Lisa esmalt täielik refrään, korduste jaoks kasuta plokki \"Refrääni kordus\".";
   return "Add a full chorus first, then use the chorus repeat block for repeated sections.";
 }
 
@@ -6308,12 +6480,12 @@ function lyricsTemplateLabel(kind) {
   if (kind === "chorus-full") {
     if (uiLocale() === "ru") return "Припев (с текстом)";
     if (uiLocale() === "uk") return "Приспів (з текстом)";
-    if (uiLocale() === "et") return "Koor (tekstiga)";
+    if (uiLocale() === "et") return "Refrään (tekstiga)";
     return "Chorus (with text)";
   }
   if (uiLocale() === "ru") return "Повтор припева";
   if (uiLocale() === "uk") return "Повтор приспіву";
-  if (uiLocale() === "et") return "Koori kordus";
+  if (uiLocale() === "et") return "Refrääni kordus";
   return "Chorus repeat";
 }
 
@@ -6577,6 +6749,55 @@ function songCommentAddedText() {
   return "Comment added";
 }
 
+function songCommentUpdatedText() {
+  if (uiLocale() === "ru") return "Комментарий обновлён";
+  if (uiLocale() === "uk") return "Коментар оновлено";
+  if (uiLocale() === "et") return "Kommentaar uuendatud";
+  return "Comment updated";
+}
+
+function songCommentDeletedText() {
+  if (uiLocale() === "ru") return "Комментарий удалён";
+  if (uiLocale() === "uk") return "Коментар видалено";
+  if (uiLocale() === "et") return "Kommentaar kustutatud";
+  return "Comment deleted";
+}
+
+function songCommentEditLabel() {
+  if (uiLocale() === "ru") return "Редактировать";
+  if (uiLocale() === "uk") return "Редагувати";
+  if (uiLocale() === "et") return "Muuda";
+  return "Edit";
+}
+
+function songCommentSaveLabel() {
+  if (uiLocale() === "ru") return "Сохранить";
+  if (uiLocale() === "uk") return "Зберегти";
+  if (uiLocale() === "et") return "Salvesta";
+  return "Save";
+}
+
+function songCommentCancelLabel() {
+  if (uiLocale() === "ru") return "Отмена";
+  if (uiLocale() === "uk") return "Скасувати";
+  if (uiLocale() === "et") return "Tühista";
+  return "Cancel";
+}
+
+function songCommentDeleteLabel() {
+  if (uiLocale() === "ru") return "Удалить";
+  if (uiLocale() === "uk") return "Видалити";
+  if (uiLocale() === "et") return "Kustuta";
+  return "Delete";
+}
+
+function songCommentDeleteConfirmText() {
+  if (uiLocale() === "ru") return "Удалить этот комментарий?";
+  if (uiLocale() === "uk") return "Видалити цей коментар?";
+  if (uiLocale() === "et") return "Kas kustutada see kommentaar?";
+  return "Delete this comment?";
+}
+
 function songCommentsCountText(count = 0) {
   const safeCount = Math.max(0, Number(count) || 0);
   if (uiLocale() === "ru") {
@@ -6621,6 +6842,11 @@ function requestKindLabel(kind = "") {
 
 function renderSongCommentsSection(song = {}, comments = []) {
   const items = Array.isArray(comments) ? comments : [];
+  const viewerId = String(state.user?.id || "").trim();
+  const viewerRole = String(state.user?.role || "").trim();
+  const canDeleteAny = viewerRole === "super_admin" || can("songs.delete");
+  const canEditCommentItem = (item) => viewerId && String(item?.user_id || "") === viewerId;
+  const canDeleteCommentItem = (item) => canEditCommentItem(item) || canDeleteAny;
   return `
     <div class="card song-comments-card" id="songCommentsSection">
       <div class="song-comments-head">
@@ -6637,6 +6863,12 @@ function renderSongCommentsSection(song = {}, comments = []) {
               <span>${esc(String(item.created_at || ""))}</span>
             </div>
             <div class="song-comment-body">${esc(String(item.body || ""))}</div>
+            ${(canEditCommentItem(item) || canDeleteCommentItem(item)) ? `
+              <div class="song-comment-actions">
+                ${canEditCommentItem(item) ? `<button class="btn ghost song-comment-edit" type="button" data-comment-id="${esc(item.id || "")}">${esc(songCommentEditLabel())}</button>` : ``}
+                ${canDeleteCommentItem(item) ? `<button class="btn ghost song-comment-delete" type="button" data-comment-id="${esc(item.id || "")}">${esc(songCommentDeleteLabel())}</button>` : ``}
+              </div>
+            ` : ``}
           </article>
         `).join("") : `<div class="muted song-comments-empty">${esc(songCommentsEmptyText())}</div>`}
       </div>
@@ -8750,7 +8982,7 @@ function bulkImportUiText(key, vars = {}) {
     formatExampleText: {
       ru: "1. \u041d\u0430\u0437\u0432\u0430\u043d\u0438\u0435 \u043f\u0435\u0441\u043d\u0438\n\u041f\u0435\u0440\u0432\u0430\u044f \u0441\u0442\u0440\u043e\u043a\u0430 \u043a\u0443\u043f\u043b\u0435\u0442\u0430\n\u0412\u0442\u043e\u0440\u0430\u044f \u0441\u0442\u0440\u043e\u043a\u0430 \u043a\u0443\u043f\u043b\u0435\u0442\u0430\n\n\u041f\u0440\u0438\u043f\u0435\u0432:\n\u0421\u0442\u0440\u043e\u043a\u0430 \u043f\u0440\u0438\u043f\u0435\u0432\u0430\n\u0412\u0442\u043e\u0440\u0430\u044f \u0441\u0442\u0440\u043e\u043a\u0430 \u043f\u0440\u0438\u043f\u0435\u0432\u0430\n\n2. \u0412\u0442\u043e\u0440\u0430\u044f \u043f\u0435\u0441\u043d\u044f\n\u041f\u0435\u0440\u0432\u0430\u044f \u0441\u0442\u0440\u043e\u043a\u0430",
       uk: "1. \u041d\u0430\u0437\u0432\u0430 \u043f\u0456\u0441\u043d\u0456\n\u041f\u0435\u0440\u0448\u0438\u0439 \u0440\u044f\u0434\u043e\u043a \u043a\u0443\u043f\u043b\u0435\u0442\u0443\n\u0414\u0440\u0443\u0433\u0438\u0439 \u0440\u044f\u0434\u043e\u043a \u043a\u0443\u043f\u043b\u0435\u0442\u0443\n\n\u041f\u0440\u0438\u0441\u043f\u0456\u0432:\n\u0420\u044f\u0434\u043e\u043a \u043f\u0440\u0438\u0441\u043f\u0456\u0432\u0443\n\u0414\u0440\u0443\u0433\u0438\u0439 \u0440\u044f\u0434\u043e\u043a \u043f\u0440\u0438\u0441\u043f\u0456\u0432\u0443\n\n2. \u0414\u0440\u0443\u0433\u0430 \u043f\u0456\u0441\u043d\u044f\n\u041f\u0435\u0440\u0448\u0438\u0439 \u0440\u044f\u0434\u043e\u043a",
-      et: "1. Laulu pealkiri\nEsimene salmirida\nTeine salmirida\n\nRefrain:\nRefraini rida\nTeine refraini rida\n\n2. Teine laul\nEsimene rida",
+      et: "1. Laulu pealkiri\nEsimene salmirida\nTeine salmirida\n\nRefrään:\nRefrääni rida\nTeine refrääni rida\n\n2. Teine laul\nEsimene rida",
       en: "1. Song title\nFirst verse line\nSecond verse line\n\nChorus:\nFirst chorus line\nSecond chorus line\n\n2. Second song\nFirst line",
     },
     note: {
@@ -9849,7 +10081,7 @@ function adminHistoricalVisualsUI(data) {
         </div>
         <div class="ab-inline-error hidden" id="ab_range_error" role="status" aria-live="polite"></div>
         <div class="ab-category-stack" id="ab_category_stack">${visualCategoryCards}</div>
-        <div class="songCard ab-range-card" id="ab_range_card">
+        <div class="songCard ab-range-card hidden" id="ab_range_card">
           <div class="ab-range-head">
             <div>
               <div class="h2">${esc(rangesTitle)}</div>
@@ -9870,7 +10102,7 @@ function adminHistoricalVisualsUI(data) {
           ></div>
           <div class="ab-inline-error hidden" id="ab_range_error" role="status" aria-live="polite"></div>
         </div>
-        <div class="songCard ab-scope-card" id="ab_scope_card">
+        <div class="songCard ab-scope-card hidden" id="ab_scope_card">
           <div class="h2">${esc(scopeTitle)}</div>
           <label class="field">
             <div class="fieldLabel">${esc(scopeLabel)}</div>
@@ -9891,7 +10123,7 @@ function adminHistoricalVisualsUI(data) {
             </div>
           ` : `<div class="muted small">${esc(flagSuperAdminHint)}</div>`}
         </div>
-        <div class="ab-variants-grid" id="ab_variants_grid">
+        <div class="ab-variants-grid hidden" id="ab_variants_grid">
           <div class="songCard ab-variant" id="ab_desktop_variant">
             <div class="h2">${esc(desktopLabel)}</div>
             <div class="muted small ab-variant-meta">${esc(sizesLabel)} ${ratioText(desktopStd.width, desktopStd.height)} (${desktopStd.width}x${desktopStd.height}) &middot; ${esc(viewportLabel)} ${ratioText(desktopViewport.width, desktopViewport.height)} (${desktopViewport.width}x${desktopViewport.height})</div>
@@ -10018,7 +10250,7 @@ function adminHistoricalVisualsUI(data) {
             </details>
           </div>
         </div>
-        <div class="songCard ab-flag-card" id="ab_flag_card">
+        <div class="songCard ab-flag-card hidden" id="ab_flag_card">
           <div class="h2">${esc(flagTitle)}</div>
           ${canEditFlag ? `
             <label class="field">
@@ -12448,6 +12680,7 @@ function bindAdminVisualCategories(ctx) {
     const value = isDefault ? row.default : row.value;
     const isBackground = categoryDefs[key].type === "background";
     const focus = isBackground ? normalizeVisualBackground(value) : { focus_x: 50, focus_y: 50, zoom: 1 };
+    const previewFocus = isBackground ? resolveBackgroundPreviewPosition(focus) : { x: 50, y: 50 };
     const image = isBackground ? (focus.source_url || focus.image_url || "") : imageForRow(key, value);
     const zoom = clampZoomLevel(focus.zoom || 1);
     const zoomScale = Math.round(zoomLevelToScale(zoom) * 1000) / 10;
@@ -12467,14 +12700,14 @@ function bindAdminVisualCategories(ctx) {
             <label class="field"><div class="fieldLabel">${esc(locale === "ru" ? "По" : "To")}</div><input class="input ab-year-to" type="number" min="1" max="3000" value="${esc(row.to || "")}" data-category="${esc(key)}" data-index="${index}" /></label>
           `}
           <div></div>
-          <div class="ab-crop-buttons hidden" data-category="${esc(key)}" data-index="${index}">
+          <div class="ab-crop-buttons" data-category="${esc(key)}" data-index="${index}">
             <button class="btn ghost" type="button" data-dx="0" data-dy="-4">^</button>
             <button class="btn ghost" type="button" data-dx="-4" data-dy="0"><</button>
             <button class="btn ghost" type="button" data-center="1">${esc(locale === "ru" ? "Центр" : "Center")}</button>
             <button class="btn ghost" type="button" data-dx="4" data-dy="0">></button>
             <button class="btn ghost" type="button" data-dx="0" data-dy="4">v</button>
           </div>
-          <div class="ab-visual-preview ${esc(categoryDefs[key].previewClass)} ${image ? "" : "is-empty"} ${isBackground ? "is-draggable" : ""}" data-empty="${esc(locale === "ru" ? "Нет изображения" : "No image")}" style="${image ? `background-image:url('${esc(image)}');background-position:${focus.focus_x || 50}% ${focus.focus_y || 50}%;${isBackground ? `background-size:${zoomScale}% auto;` : ""}` : ""}"></div>
+          <div class="ab-visual-preview ${esc(categoryDefs[key].previewClass)} ${image ? "" : "is-empty"}" data-empty="${esc(locale === "ru" ? "Нет изображения" : "No image")}" style="${image ? `background-image:url('${esc(image)}');background-position:${previewFocus.x}% ${previewFocus.y}%;${isBackground ? `background-size:${zoomScale}% auto;` : ""}` : ""}"></div>
         </div>
       </div>
     `;
@@ -12519,10 +12752,9 @@ function bindAdminVisualCategories(ctx) {
   };
   const standardizeSource = async (key, source, focusX = 50, focusY = 50, zoom = 1) => {
     if (categoryDefs[key].type === "background") {
-      const std = categoryDefs[key].standard;
       return normalizeVisualBackground({
-        image_url: await standardizeBackgroundImage(source, std.width, std.height, focusX, focusY, zoom, std.maxDataUrlLength),
-        source_url: isDataImageUrl(source) ? "" : source,
+        image_url: String(source || "").trim(),
+        source_url: String(source || "").trim(),
         focus_x: focusX,
         focus_y: focusY,
         zoom,
@@ -12537,24 +12769,63 @@ function bindAdminVisualCategories(ctx) {
     const current = normalizeVisualBackground(value);
     const previewSource = current.source_url || current.image_url || "";
     if (!previewSource) return;
+    const previewFocus = resolveBackgroundPreviewPosition(current);
     preview.style.backgroundImage = `url("${previewSource.replaceAll("\"", "%22")}")`;
-    preview.style.backgroundPosition = `${current.focus_x || 50}% ${current.focus_y || 50}%`;
+    preview.style.backgroundPosition = `${previewFocus.x}% ${previewFocus.y}%`;
     preview.style.backgroundSize = `${Math.round(zoomLevelToScale(current.zoom || 1) * 1000) / 10}% auto`;
   };
-  const restandardizeTimers = new Map();
-  const scheduleRestandardize = (key, index, preview, delay = 220) => {
-    const id = `${key}:${index}`;
-    window.clearTimeout(restandardizeTimers.get(id));
-    restandardizeTimers.set(id, window.setTimeout(async () => {
+  const finalizeBackgroundValue = async (key, value = {}) => {
+    const current = normalizeVisualBackground(value);
+    const source = String(current.source_url || current.image_url || "").trim();
+    if (!source) return normalizeVisualBackground({});
+    const std = categoryDefs[key].standard;
+    return normalizeVisualBackground({
+      image_url: await standardizeBackgroundImage(
+        source,
+        std.width,
+        std.height,
+        current.focus_x,
+        current.focus_y,
+        current.zoom || 1,
+        std.maxDataUrlLength,
+      ),
+      source_url: isDataImageUrl(source) ? "" : source,
+      focus_x: current.focus_x,
+      focus_y: current.focus_y,
+      zoom: current.zoom || 1,
+    });
+  };
+  const finalizeProfileForSave = async () => {
+    const profile = normalizeVisualProfile(visualProfileState);
+    const validation = validateVisualProfileRanges(profile);
+    if (!validation.ok) return { profile: null, validation };
+    const finalizedCategories = {};
+    for (const key of Object.keys(categoryDefs)) {
       const category = getCategory(key);
-      const row = index < 0 ? category : category.variants[index];
-      const current = normalizeVisualBackground(index < 0 ? category.default : row?.value);
-      const source = current.source_url || current.image_url || "";
-      if (!source || categoryDefs[key]?.type !== "background") return;
-      const next = await standardizeSource(key, source, current.focus_x, current.focus_y, current.zoom || 1);
-      setRowValue(key, index, next);
-      previewStyleForBackground(preview, next);
-    }, delay));
+      if (categoryDefs[key].type === "background") {
+        const nextDefault = await finalizeBackgroundValue(key, category.default);
+        const nextVariants = [];
+        for (const row of Array.isArray(category.variants) ? category.variants : []) {
+          nextVariants.push({
+            from: row.from,
+            to: row.to,
+            value: await finalizeBackgroundValue(key, row.value),
+          });
+        }
+        finalizedCategories[key] = { default: nextDefault, variants: nextVariants };
+      } else {
+        finalizedCategories[key] = normalizeVisualProfile({
+          categories: {
+            desktop: { default: {}, variants: [] },
+            mobile: { default: {}, variants: [] },
+            flag: key === "flag" ? category : {},
+            sticker: key === "sticker" ? category : {},
+          },
+        }).categories[key];
+      }
+    }
+    const finalized = normalizeVisualProfile({ categories: finalizedCategories });
+    return { profile: finalized, validation };
   };
 
   countrySearchInput?.addEventListener("input", () => renderEntityResults(countrySearchInput.value || "", true));
@@ -12612,64 +12883,6 @@ function bindAdminVisualCategories(ctx) {
       renderCategories();
     }
   });
-  qs("ab_category_stack")?.addEventListener("pointerdown", (event) => {
-    const preview = event.target instanceof HTMLElement ? event.target.closest(".ab-visual-preview.is-draggable") : null;
-    if (!(preview instanceof HTMLElement)) return;
-    const data = rowTarget(preview);
-    if (!data || categoryDefs[data.key]?.type !== "background") return;
-    const current = normalizeVisualBackground(data.index < 0 ? data.category.default : data.row.value);
-    if (!current.image_url) return;
-    event.preventDefault();
-    preview.classList.add("is-dragging");
-    preview.setPointerCapture?.(event.pointerId);
-    const rect = preview.getBoundingClientRect();
-    const start = {
-      x: event.clientX,
-      y: event.clientY,
-      focusX: current.focus_x,
-      focusY: current.focus_y,
-      width: Math.max(1, rect.width),
-      height: Math.max(1, rect.height),
-    };
-    const zoomScale = zoomLevelToScale(current.zoom || 1);
-    const xSensitivity = start.width * Math.max(2.2, zoomScale * 2.8);
-    const ySensitivity = start.height * Math.max(2.2, zoomScale * 2.8);
-    let pendingMove = null;
-    let dragFrame = 0;
-    let latest = current;
-    const applyPendingMove = () => {
-      dragFrame = 0;
-      if (!pendingMove) return;
-      const moveEvent = pendingMove;
-      pendingMove = null;
-      latest = {
-        ...current,
-        focus_x: clampPercent(start.focusX - ((moveEvent.clientX - start.x) / xSensitivity) * 100),
-        focus_y: clampPercent(start.focusY - ((moveEvent.clientY - start.y) / ySensitivity) * 100),
-      };
-      previewStyleForBackground(preview, latest);
-    };
-    const move = (moveEvent) => {
-      pendingMove = moveEvent;
-      if (!dragFrame) dragFrame = window.requestAnimationFrame(applyPendingMove);
-    };
-    const finish = () => {
-      if (dragFrame) {
-        window.cancelAnimationFrame(dragFrame);
-        applyPendingMove();
-      }
-      setRowValue(data.key, data.index, latest);
-      preview.classList.remove("is-dragging");
-      preview.releasePointerCapture?.(event.pointerId);
-      preview.removeEventListener("pointermove", move);
-      preview.removeEventListener("pointerup", finish);
-      preview.removeEventListener("pointercancel", finish);
-      scheduleRestandardize(data.key, data.index, preview, 0);
-    };
-    preview.addEventListener("pointermove", move);
-    preview.addEventListener("pointerup", finish);
-    preview.addEventListener("pointercancel", finish);
-  });
   qs("ab_category_stack")?.addEventListener("input", (event) => {
     const target = event.target;
     const data = rowTarget(target);
@@ -12685,7 +12898,6 @@ function bindAdminVisualCategories(ctx) {
       const preview = rowNode?.querySelector(".ab-visual-preview");
       if (label) label.textContent = String(next.zoom);
       previewStyleForBackground(preview, next);
-      scheduleRestandardize(data.key, data.index, preview, 260);
     }
   });
   qs("ab_category_stack")?.addEventListener("change", async (event) => {
@@ -12703,17 +12915,11 @@ function bindAdminVisualCategories(ctx) {
       showStatusOverlay(locale === "ru" ? "Неверный формат изображения." : "Invalid image format.", "error");
     }
   });
-  const buildPayload = () => {
-    const profile = normalizeVisualProfile(visualProfileState);
-    const validation = validateVisualProfileRanges(profile);
-    if (!validation.ok) return null;
-    return profile;
-  };
   saveBtn.addEventListener("click", async () => {
     const country = currentCountry();
     if (!country) return;
-    const profile = buildPayload();
-    if (!profile) {
+    const { profile, validation } = await finalizeProfileForSave();
+    if (!profile || !validation?.ok) {
       setError(locale === "ru" ? "Диапазоны внутри одной категории не должны пересекаться." : "Ranges inside one category must not overlap.");
       return;
     }
@@ -14165,7 +14371,7 @@ export function bind(route, ctx) {
         const all = {
           entity: String(params.entity || "").trim(),
           path: String(params.path || "").trim(),
-          country_exact: String(params.country_exact || "").trim(),
+          country_exact: "",
           ...collectHomeFilters(),
           ...extra,
         };
@@ -14658,6 +14864,11 @@ export function bind(route, ctx) {
     const commentCount = qs("songCommentsCount");
     const commentSubmit = qs("songCommentSubmit");
     const commentItems = Array.isArray(ctx?.comments) ? [...ctx.comments] : [];
+    const currentUserId = String(state.user?.id || "").trim();
+    const currentUserRole = String(state.user?.role || "").trim();
+    const canDeleteAnyComment = currentUserRole === "super_admin" || can("songs.delete");
+    const canEditCommentItem = (item) => !!currentUserId && String(item?.user_id || "") === currentUserId;
+    const canDeleteCommentItem = (item) => canEditCommentItem(item) || canDeleteAnyComment;
     const renderCommentItems = () => {
       if (!(commentList instanceof HTMLElement)) return;
       if (commentCount instanceof HTMLElement) {
@@ -14674,10 +14885,99 @@ export function bind(route, ctx) {
             <span>${esc(String(item.created_at || ""))}</span>
           </div>
           <div class="song-comment-body">${esc(String(item.body || ""))}</div>
+          ${(canEditCommentItem(item) || canDeleteCommentItem(item)) ? `
+            <div class="song-comment-actions">
+              ${canEditCommentItem(item) ? `<button class="btn ghost song-comment-edit" type="button" data-comment-id="${esc(item.id || "")}">${esc(songCommentEditLabel())}</button>` : ``}
+              ${canDeleteCommentItem(item) ? `<button class="btn ghost song-comment-delete" type="button" data-comment-id="${esc(item.id || "")}">${esc(songCommentDeleteLabel())}</button>` : ``}
+            </div>
+          ` : ``}
         </article>
       `).join("");
     };
     renderCommentItems();
+    commentList?.addEventListener("click", async (event) => {
+      const target = event.target instanceof HTMLElement ? event.target : null;
+      if (!target) return;
+      const editButton = target.closest(".song-comment-edit");
+      if (editButton instanceof HTMLElement) {
+        const commentId = String(editButton.getAttribute("data-comment-id") || "").trim();
+        const item = commentItems.find((entry) => String(entry?.id || "") === commentId);
+        if (!item || !canEditCommentItem(item)) return;
+        const card = editButton.closest(".song-comment-item");
+        const bodyNode = card?.querySelector(".song-comment-body");
+        const actionsNode = card?.querySelector(".song-comment-actions");
+        if (!(card instanceof HTMLElement) || !(bodyNode instanceof HTMLElement) || !(actionsNode instanceof HTMLElement)) return;
+        const currentText = String(item.body || "");
+        bodyNode.innerHTML = `
+          <textarea class="textarea song-comment-edit-textarea" rows="4">${esc(currentText)}</textarea>
+        `;
+        actionsNode.innerHTML = `
+          <button class="btn primary song-comment-save" type="button" data-comment-id="${esc(commentId)}">${esc(songCommentSaveLabel())}</button>
+          <button class="btn ghost song-comment-cancel" type="button" data-comment-id="${esc(commentId)}">${esc(songCommentCancelLabel())}</button>
+          ${canDeleteCommentItem(item) ? `<button class="btn ghost song-comment-delete" type="button" data-comment-id="${esc(commentId)}">${esc(songCommentDeleteLabel())}</button>` : ``}
+        `;
+        const textarea = bodyNode.querySelector(".song-comment-edit-textarea");
+        if (textarea instanceof HTMLTextAreaElement) {
+          autoGrowTextarea(textarea, { preserveViewport: false, extraBottomSpace: 0 });
+          textarea.focus();
+          textarea.setSelectionRange(textarea.value.length, textarea.value.length);
+        }
+        return;
+      }
+      const cancelButton = target.closest(".song-comment-cancel");
+      if (cancelButton instanceof HTMLElement) {
+        renderCommentItems();
+        return;
+      }
+      const saveButton = target.closest(".song-comment-save");
+      if (saveButton instanceof HTMLElement) {
+        const commentId = String(saveButton.getAttribute("data-comment-id") || "").trim();
+        const itemIndex = commentItems.findIndex((entry) => String(entry?.id || "") === commentId);
+        if (itemIndex < 0) return;
+        const item = commentItems[itemIndex];
+        if (!canEditCommentItem(item)) return;
+        const card = saveButton.closest(".song-comment-item");
+        const textarea = card?.querySelector(".song-comment-edit-textarea");
+        if (!(textarea instanceof HTMLTextAreaElement)) return;
+        const nextBody = String(textarea.value || "").trim();
+        if (!nextBody) {
+          showStatusOverlay(songCommentPlaceholder(), "error");
+          return;
+        }
+        saveButton.disabled = true;
+        try {
+          const out = await api.updateSongComment(song.id, commentId, nextBody);
+          if (out?.item) commentItems[itemIndex] = out.item;
+          renderCommentItems();
+          showStatusOverlay(songCommentUpdatedText(), "success");
+        } catch (cause) {
+          showStatusOverlay(String(cause?.message || t("common.error")), "error");
+        } finally {
+          saveButton.disabled = false;
+        }
+        return;
+      }
+      const deleteButton = target.closest(".song-comment-delete");
+      if (deleteButton instanceof HTMLElement) {
+        const commentId = String(deleteButton.getAttribute("data-comment-id") || "").trim();
+        const itemIndex = commentItems.findIndex((entry) => String(entry?.id || "") === commentId);
+        if (itemIndex < 0) return;
+        const item = commentItems[itemIndex];
+        if (!canDeleteCommentItem(item)) return;
+        if (!window.confirm(songCommentDeleteConfirmText())) return;
+        deleteButton.disabled = true;
+        try {
+          await api.deleteSongComment(song.id, commentId);
+          commentItems.splice(itemIndex, 1);
+          renderCommentItems();
+          showStatusOverlay(songCommentDeletedText(), "success");
+        } catch (cause) {
+          showStatusOverlay(String(cause?.message || t("common.error")), "error");
+        } finally {
+          deleteButton.disabled = false;
+        }
+      }
+    });
     commentForm?.addEventListener("submit", async (event) => {
       event.preventDefault();
       if (!(commentBody instanceof HTMLTextAreaElement)) return;

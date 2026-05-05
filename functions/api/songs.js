@@ -240,12 +240,13 @@ export async function onRequestGet({ env, request }) {
     const rawMusicAuthor = (url.searchParams.get("music_author") || "").trim();
     const rawYear = (url.searchParams.get("year") || "").trim();
     const rawVerified = (url.searchParams.get("verified") || "").trim();
-    const rawRecent = (url.searchParams.get("recent") || "").trim();
-    const rawMultiVersions = (url.searchParams.get("multi_versions") || "").trim();
-    const lang = rawLang ? (normalizeSongLanguage(rawLang) || "") : "";
-    const entityCountries = rawEntity ? expandEntityFilter(rawEntity) : [];
-    const country = rawCountry ? (normalizeSongCountry(rawCountry) || "") : "";
-    const countryExact = rawCountryExact === "1";
+      const rawRecent = (url.searchParams.get("recent") || "").trim();
+      const rawMultiVersions = (url.searchParams.get("multi_versions") || "").trim();
+      const lang = rawLang ? (normalizeSongLanguage(rawLang) || "") : "";
+      const entityCountries = rawEntity ? expandEntityFilter(rawEntity) : [];
+      const entityOwnCountry = rawEntity ? (ENTITY_NAME_TO_COUNTRY.get(rawEntity) || "") : "";
+      const country = rawCountry ? (normalizeSongCountry(rawCountry) || "") : "";
+      const countryExact = rawCountryExact === "1" || (!!country && !!entityOwnCountry && country === entityOwnCountry);
     const period = rawPeriod ? (normalizeSongPeriod(rawPeriod) || "") : "";
     const performer = rawPerformer;
     const wordsAuthor = rawWordsAuthor;
@@ -338,28 +339,28 @@ export async function onRequestGet({ env, request }) {
            s.id,
            s.title,
            s.created_at,
-           coalesce(vc.version_rows, 0) AS version_rows,
-           ${SONG_DUPLICATE_KEY_SQL} AS duplicate_key
-         FROM songs s
-         ${versionCountsJoinSql}
-         ${whereSql}
+            coalesce(vc.version_rows, 0) AS version_rows,
+            ${SONG_DUPLICATE_KEY_SQL} AS duplicate_key
+          FROM songs s
+          ${versionCountsJoinSql}
+          ${whereSql}
        ),
        ranked AS (
-         SELECT
-           filtered.*,
-           ROW_NUMBER() OVER (
-             PARTITION BY filtered.duplicate_key
-             ORDER BY filtered.version_rows DESC, datetime(filtered.created_at) DESC, filtered.id ASC
-           ) AS duplicate_rank
-         FROM filtered
-       )
-       SELECT s.id, s.title, s.subtitle, '' AS lyrics, s.lang, s.country, s.period, s.region, s.event, s.theme, coalesce(s.verified, 0) AS verified, s.year, s.created_at,
-              '' AS snippet, ranked.version_rows
-       FROM ranked
-       JOIN songs s ON s.id = ranked.id
-       WHERE ranked.duplicate_rank = 1
-       ORDER BY ${filters.multiVersions ? "ranked.version_rows DESC, s.title ASC" : recent ? "datetime(s.created_at) DESC, s.title ASC" : "s.title ASC"}
-       LIMIT ? OFFSET ?`,
+          SELECT
+            filtered.*,
+            ROW_NUMBER() OVER (
+              PARTITION BY filtered.duplicate_key
+              ORDER BY filtered.version_rows DESC, datetime(filtered.created_at) DESC, filtered.id ASC
+            ) AS duplicate_rank
+          FROM filtered
+        )
+          SELECT s.id, s.title, s.subtitle, '' AS lyrics, s.lang, s.country, s.period, s.region, s.event, s.theme, coalesce(s.verified, 0) AS verified, s.year, s.created_at,
+               '' AS snippet, ranked.version_rows
+          FROM ranked
+          JOIN songs s ON s.id = ranked.id
+         WHERE ranked.duplicate_rank = 1
+        ORDER BY ${filters.multiVersions ? "ranked.version_rows DESC, s.title ASC" : recent ? "datetime(s.created_at) DESC, s.title ASC" : "s.title ASC"}
+          LIMIT ? OFFSET ?`,
       [...params, per, offset]
     );
 

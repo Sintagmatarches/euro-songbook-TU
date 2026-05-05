@@ -131,8 +131,9 @@ function createSongEnv() {
 }
 
 test("song card endpoint returns metadata, versions, and external links", async () => {
+  const env = createSongEnv();
   const response = await onRequestGet({
-    env: createSongEnv(),
+    env,
     request: new Request("https://example.com/api/songs/song-public"),
     params: { id: "song-public" },
   });
@@ -152,8 +153,9 @@ test("song card endpoint returns metadata, versions, and external links", async 
 });
 
 test("song card endpoint hides unpublished songs", async () => {
+  const env = createSongEnv();
   const response = await onRequestGet({
-    env: createSongEnv(),
+    env,
     request: new Request("https://example.com/api/songs/song-draft"),
     params: { id: "song-draft" },
   });
@@ -164,8 +166,9 @@ test("song card endpoint hides unpublished songs", async () => {
 });
 
 test("song card endpoint hides admin-only songs from visitors", async () => {
+  const env = createSongEnv();
   const response = await onRequestGet({
-    env: createSongEnv(),
+    env,
     request: new Request("https://example.com/api/songs/song-admin"),
     params: { id: "song-admin" },
   });
