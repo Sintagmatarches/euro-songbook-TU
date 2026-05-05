@@ -1248,6 +1248,10 @@ const COUNTRY_LABEL_OVERRIDES = {
     france_before_1900: "Франція до 1900 року",
     italy_before_1900: "Італія до 1900 року",
     ukraine_before_1917: "Україна до 1917 року",
+    ussr: "Радянський Союз - 1922-1991",
+    russian_empire_1900_1917: "Російська імперія - 1721-1917",
+    austro_hungary_1900_1918: "Австро-Угорщина - 1867-1918",
+    ireland_republic_1949: "Ірландія - з 1937",
     narodnaya_volya: "Народна воля",
     armia_krajowa: "Армія Крайова",
     armia_ludowa: "Армія Людова",
@@ -1282,6 +1286,10 @@ const COUNTRY_LABEL_OVERRIDES = {
     france_before_1900: "Prantsusmaa enne 1900. aastat",
     italy_before_1900: "Itaalia enne 1900. aastat",
     ukraine_before_1917: "Ukraina enne 1917. aastat",
+    ussr: "Nõukogude Liit - 1922-1991",
+    russian_empire_1900_1917: "Vene Keisririik - 1721-1917",
+    austro_hungary_1900_1918: "Austria-Ungari - 1867-1918",
+    ireland_republic_1949: "Iirimaa - alates 1937",
     narodnaya_volya: "Narodnaja Volja",
     armia_krajowa: "Armia Krajowa",
     armia_ludowa: "Armia Ludowa",
@@ -1878,6 +1886,9 @@ const CURRENT_COUNTRY_SIMPLE_LABELS = {
     vatican_1929: "Ватикан",
   },
   uk: {
+    ussr: "Радянський Союз",
+    russian_empire_1900_1917: "Російська імперія",
+    austro_hungary_1900_1918: "Австро-Угорщина",
     russian_federation_1991: "Росія",
     finland_1917: "Фінляндія",
     estonia_1991: "Естонія",
@@ -1932,6 +1943,9 @@ const CURRENT_COUNTRY_SIMPLE_LABELS = {
     vatican_1929: "Ватикан",
   },
   et: {
+    ussr: "Nõukogude Liit",
+    russian_empire_1900_1917: "Vene Keisririik",
+    austro_hungary_1900_1918: "Austria-Ungari",
     russian_federation_1991: "Venemaa",
     finland_1917: "Soome",
     estonia_1991: "Eesti",
@@ -2269,7 +2283,9 @@ function ensureCountryLocaleLabels(locale) {
     : {};
   const next = { ...current };
   for (const [key, value] of Object.entries(base)) {
-    if (clean(next[key])) continue;
+    const currentValue = clean(next[key]);
+    const englishValue = clean(value);
+    if (currentValue && currentValue !== englishValue) continue;
     next[key] = translateCountryLabelFromEnglish(key, value, locale);
   }
   LABELS.country[locale] = next;
@@ -2606,6 +2622,28 @@ const COUNTRY_ALIASES = withCanonicalAliases(SONG_COUNTRY_VALUES, {
   muud_riigid: "other_countries",
   sortimata_riigid: "other_countries",
 });
+
+function registerCountryAliasLabel(label, value) {
+  const safeLabel = clean(label);
+  const safeValue = clean(value);
+  if (!safeLabel || !safeValue) return;
+  COUNTRY_ALIASES[fold(safeLabel)] = safeValue;
+  const compact = safeLabel.split(/\s[-–—]\s/)[0]?.trim() || "";
+  if (compact) COUNTRY_ALIASES[fold(compact)] = safeValue;
+}
+
+function registerDerivedCountryAliases() {
+  Object.entries(LABELS.country || {}).forEach(([, table]) => {
+    if (!table || typeof table !== "object") return;
+    Object.entries(table).forEach(([value, label]) => registerCountryAliasLabel(label, value));
+  });
+  Object.entries(CURRENT_COUNTRY_SIMPLE_LABELS || {}).forEach(([, table]) => {
+    if (!table || typeof table !== "object") return;
+    Object.entries(table).forEach(([value, label]) => registerCountryAliasLabel(label, value));
+  });
+}
+
+registerDerivedCountryAliases();
 
 const PERIOD_ALIASES = withCanonicalAliases(SONG_PERIOD_VALUES, {
   ussr_1922_1940: "ussr_1928_1941",
