@@ -656,6 +656,40 @@ def strip_section_data(extracted: dict[str, Any]) -> dict[str, Any]:
     return out
 
 
+def apply_ambiguous_cleanup(clean_lyrics: str, extracted: dict[str, Any]) -> tuple[str, dict[str, Any]]:
+    ambiguous = list(extracted.get("ambiguous_cleanup_lines", []))
+    if not ambiguous:
+        return clean_lyrics, extracted
+    lines = clean_lyrics.split("\n") if clean_lyrics else []
+    removed: list[dict[str, Any]] = list(extracted.get("removed_chords", []))
+    for item in ambiguous:
+        target = normalize_line(item.get("line", ""))
+        if not target:
+            continue
+        for idx, line in enumerate(lines):
+            if normalize_line(line) == target:
+                lines.pop(idx)
+                removed.append({"line": target, "reason": item.get("reason", "ambiguous_cleanup")})
+                break
+    while lines and lines[0] == "":
+        lines.pop(0)
+    while lines and lines[-1] == "":
+        lines.pop()
+    compact: list[str] = []
+    for line in lines:
+        if line == "" and compact and compact[-1] == "":
+            continue
+        compact.append(line)
+    out = dict(extracted)
+    if removed:
+        out["removed_chords"] = removed
+        flags = list(out.get("review_flags", []))
+        if "chords_or_tabs_removed" not in flags:
+            flags.append("chords_or_tabs_removed")
+        out["review_flags"] = flags
+    return "\n".join(compact).strip(), out
+
+
 def build_updates(rows: Iterable[TextRow], args: argparse.Namespace) -> tuple[list[str], dict[str, Any], list[dict[str, Any]], list[dict[str, Any]]]:
     updates: list[str] = []
     review_rows: list[dict[str, Any]] = []
@@ -685,6 +719,8 @@ def build_updates(rows: Iterable[TextRow], args: argparse.Namespace) -> tuple[li
         clean_lyrics = analysis["clean_lyrics"]
         original_lyrics = analysis["original_lyrics"]
         has_structure = bool(analysis["has_structure"])
+        if args.include_ambiguous_cleanup:
+            clean_lyrics, extracted = apply_ambiguous_cleanup(clean_lyrics, extracted)
         if args.anchor_garbage_only:
             extracted = strip_section_data(extracted)
             has_structure = bool(
@@ -706,7 +742,11 @@ def build_updates(rows: Iterable[TextRow], args: argparse.Namespace) -> tuple[li
         ambiguous_only = bool(extracted.get("ambiguous_cleanup_lines")) and not bool(
             set(extracted.keys()) - {"structure_version", "row_type", "song_id", "source_row_id", "warnings", "review_flags", "ambiguous_cleanup_lines"}
         )
-        if extracted.get("warnings") and "ambiguous_cleanup_needs_manual_review" in extracted.get("warnings", []):
+        if (
+            not args.include_ambiguous_cleanup
+            and extracted.get("warnings")
+            and "ambiguous_cleanup_needs_manual_review" in extracted.get("warnings", [])
+        ):
             counters["ambiguous_review_rows"] += 1
             ambiguous_review_rows.append(
                 {
@@ -725,7 +765,7 @@ def build_updates(rows: Iterable[TextRow], args: argparse.Namespace) -> tuple[li
                 }
             )
             continue
-        if ambiguous_only:
+        if ambiguous_only and not args.include_ambiguous_cleanup:
             counters["ambiguous_review_rows"] += 1
             continue
 
@@ -888,6 +928,7 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--max-lyrics-loss-ratio", type=float, default=0.35)
     parser.add_argument("--max-apply-rate", type=float, default=0.05)
     parser.add_argument("--allow-large-change-set", action="store_true")
+    parser.add_argument("--include-ambiguous-cleanup", action="store_true", help="Also apply cleanup to rows previously quarantined as ambiguous.")
     return parser.parse_args()
 
 
