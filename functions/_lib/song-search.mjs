@@ -56,6 +56,15 @@ function unique(values = []) {
   return Array.from(new Set(values.filter(Boolean)));
 }
 
+function buildUnicodeCaseLikePatterns(value = "") {
+  const raw = String(value || "").trim();
+  if (!raw) return [];
+  const lower = raw.toLocaleLowerCase();
+  const upper = raw.toLocaleUpperCase();
+  const titleCase = lower ? `${lower.slice(0, 1).toLocaleUpperCase()}${lower.slice(1)}` : "";
+  return unique([raw, lower, upper, titleCase]).map((item) => `%${escapeLikeValue(item)}%`);
+}
+
 async function runPreparedBatch(env, statements = []) {
   const safeStatements = Array.isArray(statements) ? statements.filter(Boolean) : [];
   if (!safeStatements.length) return;
@@ -1179,8 +1188,10 @@ async function fetchCandidateSongRows(env, songIds = []) {
 async function queryDirectScanRows(env, filters = {}, analysis = {}, options = {}) {
   const includeAdminContent = options.includeAdminContent === true;
   const significantTokens = getSignificantSearchTokens(analysis);
+  const allTokens = Array.isArray(analysis?.tokens) ? analysis.tokens : [];
+  const scanTitleFieldsOnly = !significantTokens.length;
   const rawTokens = unique(
-    significantTokens
+    (scanTitleFieldsOnly ? allTokens : significantTokens)
       .map((token) => String(token?.raw || token?.normalized || "").trim().toLowerCase())
       .filter(Boolean)
   ).slice(0, MAX_QUERY_TERMS_FOR_FUZZY);
@@ -1189,15 +1200,28 @@ async function queryDirectScanRows(env, filters = {}, analysis = {}, options = {
   const { where, params } = buildSearchWhereClause(filters, { includeAdminContent });
   const queryParams = [...params];
   for (const token of rawTokens) {
-    const pattern = `%${escapeLikeValue(token)}%`;
-    where.push(`(
-      lower(coalesce(s.title, '')) LIKE ? ESCAPE '\\'
-      OR lower(coalesce(va.version_titles, '')) LIKE ? ESCAPE '\\'
-      OR lower(coalesce(s.subtitle, '')) LIKE ? ESCAPE '\\'
-      OR lower(coalesce(s.lyrics, '')) LIKE ? ESCAPE '\\'
-      OR lower(coalesce(va.version_lyrics, '')) LIKE ? ESCAPE '\\'
-    )`);
-    queryParams.push(pattern, pattern, pattern, pattern, pattern);
+    const patterns = buildUnicodeCaseLikePatterns(token);
+    if (scanTitleFieldsOnly) {
+      const fieldSql = [
+        "coalesce(s.title, '')",
+        "coalesce(va.version_titles, '')",
+        "coalesce(s.subtitle, '')",
+      ];
+      where.push(`(${fieldSql.flatMap((field) => (
+        patterns.map(() => `${field} LIKE ? ESCAPE '\\'`)
+      )).join(" OR ")})`);
+      fieldSql.forEach(() => queryParams.push(...patterns));
+    } else {
+      const pattern = `%${escapeLikeValue(token)}%`;
+      where.push(`(
+        lower(coalesce(s.title, '')) LIKE ? ESCAPE '\\'
+        OR lower(coalesce(va.version_titles, '')) LIKE ? ESCAPE '\\'
+        OR lower(coalesce(s.subtitle, '')) LIKE ? ESCAPE '\\'
+        OR lower(coalesce(s.lyrics, '')) LIKE ? ESCAPE '\\'
+        OR lower(coalesce(va.version_lyrics, '')) LIKE ? ESCAPE '\\'
+      )`);
+      queryParams.push(pattern, pattern, pattern, pattern, pattern);
+    }
   }
 
   const countRow = await dbGet(
@@ -1221,7 +1245,11 @@ async function queryDirectScanRows(env, filters = {}, analysis = {}, options = {
     queryParams
   );
   const total = Number(countRow?.total || 0);
-  if (!shouldRunDirectScanFallback(analysis, total)) return [];
+  if (scanTitleFieldsOnly) {
+    if (!total || total > MAX_DIRECT_SCAN_CANDIDATES) return [];
+  } else if (!shouldRunDirectScanFallback(analysis, total)) {
+    return [];
+  }
 
   const rows = await dbAll(
     env,

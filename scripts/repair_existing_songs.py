@@ -2,243 +2,124 @@ from __future__ import annotations
 
 import argparse
 import json
+import random
 import re
 import sqlite3
 import subprocess
 import sys
+import unicodedata
+from collections import Counter, defaultdict
 from dataclasses import dataclass
 from pathlib import Path
-from typing import Iterable
-
+from typing import Iterable, Any
 
 ROOT = Path(__file__).resolve().parent.parent
 EXPORT_SQL = ROOT / "tmp_songs_export.sql"
 UPDATE_SQL = ROOT / "tmp_repair_existing_songs.sql"
 REPORT_JSON = ROOT / "out" / "repair_existing_songs_report.json"
+REVIEW_JSONL = ROOT / "out" / "repair_existing_songs_review.jsonl"
 
-YEAR_MIN = 1800
+STRUCTURE_VERSION = 2
+YEAR_MIN = 1600
 YEAR_MAX = 2026
+MAX_REVIEW_EXAMPLES = 250
 
-CYR_RE = re.compile(r"[\u0400-\u052f]")
-LAT_RE = re.compile(r"[A-Za-z\u00C0-\u024F\u1E00-\u1EFF]")
-GR_RE = re.compile(r"[\u0370-\u03ff\u1f00-\u1fff]")
-WORD_RE = re.compile(r"[0-9A-Za-z\u00C0-\u024F\u0370-\u03ff\u0400-\u052f\u1E00-\u1EFF]+")
-YEAR_RE = re.compile(r"\b(18\d{2}|19\d{2}|20\d{2})\b")
-YEAR_CONTEXT_RE = re.compile(
-    r"\b(исполнен|запис|record|recording|year|год|г\.|дата|date|от|изд|вып|феврал|март|апрел|май|июн|июл|август|сентябр|октябр|ноябр|декабр)\b",
-    re.IGNORECASE,
-)
-STANDALONE_YEAR_RE = re.compile(r"^\s*(18\d{2}|19\d{2}|20\d{2})\s*$")
+INVISIBLE_RE = re.compile(r"[\ufeff\u200b\u200c\u200d\u2060]")
+WS_RE = re.compile(r"[ \t]+")
+WORD_RE = re.compile(r"[0-9A-Za-z\u00C0-\u024F\u0370-\u03ff\u0400-\u052f\u1E00-\u1EFF']+")
+YEAR_RE = re.compile(r"\b(1[6-9]\d{2}|20\d{2})\b")
+YEAR_RANGE_RE = re.compile(r"\b(1[6-9]\d{2}|20\d{2})\s*[-–—]\s*(1[6-9]\d{2}|20\d{2})\b")
+LIFESPAN_RE = re.compile(r"\b(1[6-9]\d{2}|20\d{2})\s*[-–—]\s*(1[6-9]\d{2}|20\d{2})\b")
+URL_RE = re.compile(r"https?://|www\.|\b[a-z0-9.-]+\.(?:com|org|net|ru|ua|ee|pl|de|fi|fr|it|es|lt|lv|cz|sk|si|hr|rs|by|kz|uz)\b", re.IGNORECASE)
+IMPORT_META_RE = re.compile(r"^\s*(?:date|message_id|import_source|added|updated|merged_versions)\s*:", re.IGNORECASE)
+HTML_ENTITY_RE = re.compile(r"&(?:nbsp|amp|quot|apos|lt|gt|laquo|raquo|rsquo|lsquo|ldquo|rdquo);", re.IGNORECASE)
 
-TITLE_LIST_PREFIX_RE = re.compile(
-    r"^\s*\d+\s*(?:[).\-:]\s*|\s+(?=(?:исполняет|исполняют|из|from)\b))",
-    re.IGNORECASE,
-)
-TITLE_BAD_RE = re.compile(
-    r"^\s*(?:\d+\s*)?(?:исполняет|исполняют|sings?|performed by|performer)\s*[:\-]",
-    re.IGNORECASE,
-)
-TITLE_FILM_RE = re.compile(
-    r"^\s*(?:из|from)\s+(?:к/ф|к-ф|м/ф|м-ф|кинофильма|фильма)\b",
-    re.IGNORECASE,
-)
-TITLE_PUNCT_ONLY_RE = re.compile(r"^\s*[-–—.:]+\s*$")
+# Guitar chords. H is included for Central and Eastern European notation, but the detector requires chord-heavy lines.
+CHORD_ROOT = r"(?:[A-GH]|Do|Re|Mi|Fa|Sol|La|Si)"
+CHORD_QUALITY = r"(?:maj|min|m|M|dim|aug|sus|add|º|°)?"
+CHORD_EXT = r"(?:[-+]?\d+(?:/\d+)?|maj\d+|sus\d+)?"
+CHORD_BASS = rf"(?:/{CHORD_ROOT}(?:#|b)?)?"
+CHORD_TOKEN_RE = re.compile(rf"^\(?{CHORD_ROOT}(?:#|b)?{CHORD_QUALITY}{CHORD_EXT}{CHORD_BASS}\)?$", re.IGNORECASE)
+BRACKET_CHORD_RE = re.compile(rf"\[(?:{CHORD_ROOT})(?:#|b)?{CHORD_QUALITY}{CHORD_EXT}{CHORD_BASS}\]", re.IGNORECASE)
+TAB_LINE_RE = re.compile(r"^\s*(?:[eBGDAE]|[1-6])\|[-0-9hpsx/\\| ]{6,}\s*$", re.IGNORECASE)
+DIGIT_TAB_RE = re.compile(r"^\s*[1-6]\s+[-0-9hpsx/\\ ]{8,}\s*$", re.IGNORECASE)
+CHORD_HEADER_RE = re.compile(r"^\s*(?:аккорды|акорди|chords?|tabs?|acordes|accordi|akkorde|akordy|chwyty)\s*[:([]?\s*$", re.IGNORECASE)
+CAPO_RE = re.compile(r"\b(?:capo|каподастр|капо)\b", re.IGNORECASE)
 
-LEADING_NOISE_PATTERNS = [
-    re.compile(r"^\s*\d+\s*(?:[).\-:]?\s*)?исполня(?:ет|ют)\b", re.IGNORECASE),
-    re.compile(r"^\s*исполня(?:ет|ют)\b", re.IGNORECASE),
-    re.compile(r"^\s*(?:исполнение|recorded|recording)\b", re.IGNORECASE),
-    re.compile(r"^\s*\d+\s*(?:[).\-:])\s*(?:исполнение|исполня(?:ет|ют))\b", re.IGNORECASE),
-    re.compile(r"^\s*(?:музыка|слова|автор|композитор|текст)\s*:", re.IGNORECASE),
+# Labels that are allowed to be extracted out of lyrics. Keep this strict: ambiguous ordinary lyric lines must stay in lyrics.
+LABEL_ALIASES: list[tuple[str, re.Pattern[str]]] = [
+    ("words_author", re.compile(r"^\s*(?:слова|текст|автор\s+слов|автор\s+текста|lyrics(?:\s+by)?|words(?:\s+by)?|text(?:\s+by)?|słowa|slowa|tekst|teksti|sanat|paroles|letra|letras)\s*[:：\-–—]\s*(.+?)\s*$", re.IGNORECASE)),
+    ("music_author", re.compile(r"^\s*(?:музыка|муз\.|композитор|автор\s+музыки|music(?:\s+by)?|composed\s+by|composer|muzyka|melodia|melody|viis|sävel|música|musica)\s*[:：\-–—]\s*(.+?)\s*$", re.IGNORECASE)),
+    ("translator", re.compile(r"^\s*(?:перевод|переклад|перевёл|перевел|перевела|translation(?:\s+by)?|translated\s+by|translator|tłumaczenie|tlumaczenie|tłumacz|tlumacz|przekład|przeklad|übersetzung|uebersetzung|traduction)\s*[:：\-–—]\s*(.+?)\s*$", re.IGNORECASE)),
+    ("performer", re.compile(r"^\s*(?:исполняет|исполнитель|исп\.|singer|performed\s+by|performer|esitab|esittäjä|wykonuje|wykonawca|interprète|interprete)\s*[:：\-–—]\s*(.+?)\s*$", re.IGNORECASE)),
+    ("source", re.compile(r"^\s*(?:источник|джерело|source|quelle|źródło|zrodlo|allikas|lähde|fuente|fonte)\s*[:：\-–—]\s*(.+?)\s*$", re.IGNORECASE)),
+    ("notes", re.compile(r"^\s*(?:примечание|прим\.|комментарий|comment|note|notes|märkus|uwaga)\s*[:：\-–—]\s*(.+?)\s*$", re.IGNORECASE)),
 ]
 
-LANG_VALUES = {
-    "ru", "uk", "be", "pl", "lt", "lv", "et", "fi", "en", "sq", "hy", "az", "eu", "bs", "bg", "ca", "hr", "cs", "da",
-    "nl", "fo", "fr", "gl", "ka", "de", "el", "hu", "is", "ga", "it", "kk", "lb", "mk", "mt", "no", "pt", "ro",
-    "sr", "sk", "sl", "es", "sv", "tr", "cy", "ja",
-}
-
-CYR_LANGS = {"ru", "uk", "be", "bg", "mk", "sr", "kk"}
-LAT_LANGS = {
-    "pl", "lt", "lv", "et", "fi", "en", "sq", "az", "eu", "bs", "ca", "hr", "cs", "da", "nl", "fo", "fr", "gl", "de",
-    "hu", "is", "ga", "it", "lb", "mt", "no", "pt", "ro", "sk", "sl", "es", "sv", "tr", "cy",
-}
-
-STOPWORDS: dict[str, set[str]] = {
-    "ru": {"и", "в", "не", "на", "что", "как", "мы", "я", "ты", "но", "за", "с", "по", "это", "когда"},
-    "uk": {"і", "в", "не", "на", "що", "як", "ми", "я", "ти", "але", "за", "це", "мене", "тобі", "пісня"},
-    "be": {"і", "ў", "не", "на", "што", "як", "мы", "я", "ты", "але", "гэта", "калі", "дзе", "дзякуй", "няма"},
-    "bg": {"и", "в", "не", "на", "че", "как", "ние", "аз", "ти", "но", "за", "с", "това", "към", "ще"},
-    "mk": {"и", "во", "не", "на", "што", "како", "ние", "јас", "ти", "но", "за", "ова", "ќе", "со", "тоа"},
-    "sr": {"i", "u", "ne", "na", "što", "kako", "mi", "ja", "ti", "ali", "za", "je", "da", "se", "sam"},
-    "kk": {"және", "мен", "сен", "ол", "біз", "үшін", "бұл", "емес", "деп", "болып", "қалай", "тағы"},
-    "en": {"the", "and", "of", "to", "in", "for", "with", "is", "we", "you", "our", "that", "on", "at", "from"},
-    "de": {"und", "der", "die", "das", "ein", "eine", "nicht", "ist", "ich", "du", "wir", "mit", "zu", "den", "dem"},
-    "fr": {"le", "la", "les", "de", "des", "et", "dans", "sur", "avec", "pour", "nous", "vous", "une", "que", "qui"},
-    "es": {"el", "la", "los", "las", "de", "y", "en", "con", "para", "que", "nos", "una", "como", "por", "del"},
-    "pt": {"o", "a", "os", "as", "de", "e", "em", "com", "para", "que", "não", "nao", "uma", "por", "dos"},
-    "it": {"il", "la", "gli", "le", "di", "e", "in", "con", "per", "che", "noi", "voi", "una", "del", "della"},
-    "nl": {"de", "het", "een", "en", "van", "in", "met", "voor", "wij", "jij", "niet", "dat", "op", "te", "is"},
-    "pl": {"i", "w", "na", "nie", "to", "że", "ze", "jak", "my", "ja", "ty", "za", "się", "z", "do"},
-    "ro": {"și", "si", "în", "in", "cu", "la", "pe", "din", "să", "sa", "este", "nu", "un", "o", "de"},
-    "et": {"ja", "ei", "on", "see", "mis", "kui", "me", "ma", "sa", "te", "üks", "voi", "ning", "oma", "sind"},
-    "lv": {"un", "ir", "ne", "ka", "es", "tu", "mēs", "mes", "jūs", "jus", "ar", "par", "vai", "no", "tas"},
-    "lt": {"ir", "ne", "kad", "kaip", "aš", "as", "tu", "mes", "jūs", "jus", "su", "už", "uz", "tai", "yra"},
-    "fi": {"ja", "ei", "on", "se", "kun", "me", "minä", "mina", "sinä", "sina", "te", "että", "etta", "olen", "voi"},
-    "cs": {"a", "v", "na", "ne", "že", "ze", "jak", "my", "já", "ja", "ty", "s", "pro", "to", "je"},
-    "sk": {"a", "v", "na", "ne", "že", "ze", "ako", "my", "ja", "ty", "s", "pre", "to", "je", "som"},
-    "sl": {"in", "na", "ne", "je", "da", "kot", "mi", "jaz", "ti", "za", "s", "to", "sem", "so", "se"},
-    "hr": {"i", "u", "na", "ne", "je", "da", "kao", "mi", "ja", "ti", "za", "s", "to", "sam", "se"},
-    "bs": {"i", "u", "na", "ne", "je", "da", "kao", "mi", "ja", "ti", "za", "s", "to", "sam", "se"},
-    "hu": {"és", "es", "a", "az", "nem", "hogy", "mint", "mi", "én", "en", "te", "van", "egy", "még", "meg"},
-    "da": {"og", "i", "på", "pa", "ikke", "det", "vi", "jeg", "du", "med", "for", "som", "er", "til", "af"},
-    "no": {"og", "i", "på", "pa", "ikke", "det", "vi", "jeg", "du", "med", "for", "som", "er", "til", "av"},
-    "sv": {"och", "i", "på", "pa", "inte", "det", "vi", "jag", "du", "med", "för", "for", "som", "är", "ar"},
-    "is": {"og", "í", "i", "á", "a", "ekki", "við", "vid", "ég", "eg", "þú", "thu", "með", "med", "er"},
-    "fo": {"og", "í", "i", "á", "a", "ikki", "vit", "eg", "tu", "við", "vid", "við", "er", "tað", "tao"},
-    "ga": {"agus", "an", "na", "ní", "ni", "mé", "me", "tú", "tu", "le", "is", "do", "ar", "seo", "seo"},
-    "sq": {"dhe", "në", "ne", "jo", "është", "eshte", "unë", "une", "ti", "ne", "ju", "me", "për", "per", "nga"},
-    "az": {"və", "ve", "bir", "bu", "mən", "men", "sən", "sen", "biz", "siz", "üçün", "ucun", "deyil", "ilə", "ile"},
-    "eu": {"eta", "da", "ez", "bat", "hau", "ni", "zu", "gu", "zuek", "izan", "dut", "duzu", "nahi", "bai", "edo"},
-    "ca": {"el", "la", "els", "les", "de", "i", "en", "amb", "per", "que", "nosaltres", "vosaltres", "una", "del", "com"},
-    "gl": {"o", "a", "os", "as", "de", "e", "en", "con", "para", "que", "nós", "nos", "vós", "vos", "unha"},
-    "lb": {"an", "d'", "de", "an", "a", "ass", "net", "ech", "du", "mir", "dir", "mat", "fir", "wat", "sinn"},
-    "mt": {"u", "il", "tal", "li", "ma", "mhux", "jien", "int", "aħna", "ahna", "intom", "għal", "ghal", "dan", "hekk"},
-    "tr": {"ve", "bir", "bu", "ben", "sen", "biz", "siz", "için", "icin", "değil", "degil", "ile", "ama", "çok", "cok"},
-    "cy": {"a", "ac", "yn", "ar", "nid", "fi", "chi", "ni", "ti", "niw", "chi", "gyda", "am", "mae", "sy"},
-}
-
-DIACRITICS: dict[str, re.Pattern[str]] = {
-    "de": re.compile(r"[äöüß]", re.IGNORECASE),
-    "fr": re.compile(r"[àâæçéèêëîïôœùûüÿ]", re.IGNORECASE),
-    "es": re.compile(r"[áéíóúñ¡¿]", re.IGNORECASE),
-    "pt": re.compile(r"[áâãàçéêíóôõú]", re.IGNORECASE),
-    "it": re.compile(r"[àèéìíîòóùú]", re.IGNORECASE),
-    "nl": re.compile(r"[ëï]", re.IGNORECASE),
-    "pl": re.compile(r"[ąćęłńóśźż]", re.IGNORECASE),
-    "ro": re.compile(r"[ăâîșşțţ]", re.IGNORECASE),
-    "et": re.compile(r"[õäöü]", re.IGNORECASE),
-    "lv": re.compile(r"[āčēģīķļņšūž]", re.IGNORECASE),
-    "lt": re.compile(r"[ąčęėįšųūž]", re.IGNORECASE),
-    "fi": re.compile(r"[äöå]", re.IGNORECASE),
-    "cs": re.compile(r"[áčďéěíňóřšťúůýž]", re.IGNORECASE),
-    "sk": re.compile(r"[áäčďéíĺľňóôŕšťúýž]", re.IGNORECASE),
-    "sl": re.compile(r"[čšž]", re.IGNORECASE),
-    "hr": re.compile(r"[čćđšž]", re.IGNORECASE),
-    "bs": re.compile(r"[čćđšž]", re.IGNORECASE),
-    "hu": re.compile(r"[áéíóöőúüű]", re.IGNORECASE),
-    "da": re.compile(r"[æøå]", re.IGNORECASE),
-    "no": re.compile(r"[æøå]", re.IGNORECASE),
-    "sv": re.compile(r"[äöå]", re.IGNORECASE),
-    "is": re.compile(r"[áðéíóúýþæö]", re.IGNORECASE),
-    "fo": re.compile(r"[áðíóúýæø]", re.IGNORECASE),
-    "ga": re.compile(r"[áéíóú]", re.IGNORECASE),
-    "sq": re.compile(r"[ëç]", re.IGNORECASE),
-    "az": re.compile(r"[əğıöşüç]", re.IGNORECASE),
-    "eu": re.compile(r"[ñç]", re.IGNORECASE),
-    "ca": re.compile(r"[àèéíïòóúüç]", re.IGNORECASE),
-    "gl": re.compile(r"[áéíóúñç]", re.IGNORECASE),
-    "lb": re.compile(r"[äëé]", re.IGNORECASE),
-    "mt": re.compile(r"[ċġħż]", re.IGNORECASE),
-    "tr": re.compile(r"[çğıöşüİ]", re.IGNORECASE),
-    "cy": re.compile(r"[ŵŷ]", re.IGNORECASE),
-}
-
-UNIQUE_CHAR_BONUS: dict[str, str] = {
-    "uk": "іїєґ",
-    "be": "ў",
-    "kk": "әңғүұқөһ",
-    "mk": "ѓѕјљњќ",
-    "sr": "ђјљњћџ",
-    "bg": "ъ",
-    "et": "õ",
-    "tr": "ğışİ",
-    "az": "əğı",
-    "cy": "ŵŷ",
-    "da": "æøå",
-    "no": "æøå",
-    "sv": "å",
-    "pl": "ł",
-    "ro": "ăâîșț",
-    "de": "ß",
-}
-
-CYR_MARKERS: dict[str, str] = {
-    "ru": "ыэё",
-    "uk": "іїєґ",
-    "be": "ў",
-    "bg": "ъ",
-    "mk": "ѓѕјљњќ",
-    "sr": "ђјљњћџ",
-    "kk": "әқғүұһөң",
-}
-
-LANG_HINTS: list[tuple[str, re.Pattern[str]]] = [
-    ("ru", re.compile(r"\b(русск|russian|русский)\w*\b", re.IGNORECASE)),
-    ("uk", re.compile(r"\b(україн|ukrainian|украин)\w*\b", re.IGNORECASE)),
-    ("be", re.compile(r"\b(беларус|belarus|белорус)\w*\b", re.IGNORECASE)),
-    ("de", re.compile(r"\b(немец|german|deutsch)\w*\b", re.IGNORECASE)),
-    ("et", re.compile(r"\b(эстон|estonian|eesti)\w*\b", re.IGNORECASE)),
-    ("lv", re.compile(r"\b(латыш|latvian|latvie)\w*\b", re.IGNORECASE)),
-    ("lt", re.compile(r"\b(литов|lithuanian|lietuvi)\w*\b", re.IGNORECASE)),
-    ("pl", re.compile(r"\b(польск|polish|polski)\w*\b", re.IGNORECASE)),
-    ("fr", re.compile(r"\b(француз|french|fran[çc]ais)\w*\b", re.IGNORECASE)),
-    ("es", re.compile(r"\b(испан|spanish|espa[ñn]ol)\w*\b", re.IGNORECASE)),
-    ("pt", re.compile(r"\b(португал|portuguese|portugu[eê]s)\w*\b", re.IGNORECASE)),
-    ("it", re.compile(r"\b(итальян|italian|italiano)\w*\b", re.IGNORECASE)),
-    ("nl", re.compile(r"\b(нидерланд|голланд|dutch|nederlands?)\w*\b", re.IGNORECASE)),
-    ("ro", re.compile(r"\b(румын|romanian|rom[aâ]n)\w*\b", re.IGNORECASE)),
-    ("fi", re.compile(r"\b(финск|finnish|suomi)\w*\b", re.IGNORECASE)),
-    ("sv", re.compile(r"\b(шведск|swedish|svenska)\w*\b", re.IGNORECASE)),
-    ("da", re.compile(r"\b(датск|danish|dansk)\w*\b", re.IGNORECASE)),
-    ("no", re.compile(r"\b(норвеж|norwegian|norsk)\w*\b", re.IGNORECASE)),
-    ("cs", re.compile(r"\b(чешск|czech|češtin|cestin)\w*\b", re.IGNORECASE)),
-    ("sk", re.compile(r"\b(словац|slovak|slovenčin)\w*\b", re.IGNORECASE)),
-    ("sl", re.compile(r"\b(словенск|slovenian|slovenšč)\w*\b", re.IGNORECASE)),
-    ("hr", re.compile(r"\b(хорват|croatian|hrvatsk)\w*\b", re.IGNORECASE)),
-    ("bs", re.compile(r"\b(босни|bosnian|bosansk)\w*\b", re.IGNORECASE)),
-    ("mk", re.compile(r"\b(македон|macedonian|македонск)\w*\b", re.IGNORECASE)),
-    ("sr", re.compile(r"\b(серб|serbian|srpsk|српск)\w*\b", re.IGNORECASE)),
-    ("hu", re.compile(r"\b(венгер|hungarian|magyar)\w*\b", re.IGNORECASE)),
-    ("ga", re.compile(r"\b(ирланд|irish|gaeilge)\w*\b", re.IGNORECASE)),
-    ("is", re.compile(r"\b(исланд|icelandic|íslensk)\w*\b", re.IGNORECASE)),
-    ("sq", re.compile(r"\b(албан|albanian|shqip)\w*\b", re.IGNORECASE)),
-    ("tr", re.compile(r"\b(турец|turkish|türk)\w*\b", re.IGNORECASE)),
-    ("ca", re.compile(r"\b(каталан|catalan|català)\w*\b", re.IGNORECASE)),
-    ("gl", re.compile(r"\b(галисий|galician|galego)\w*\b", re.IGNORECASE)),
-    ("mt", re.compile(r"\b(мальт|maltese|malti)\w*\b", re.IGNORECASE)),
-    ("cy", re.compile(r"\b(валлий|welsh|cymraeg)\w*\b", re.IGNORECASE)),
-    ("el", re.compile(r"\b(гречес|greek|ellin|ελλην)\w*\b", re.IGNORECASE)),
-    ("en", re.compile(r"\b(англий|english)\w*\b", re.IGNORECASE)),
+YEAR_CONTEXTS: list[tuple[str, int, re.Pattern[str]]] = [
+    ("year_written", 95, re.compile(r"(?:написан|написана|написано|сочинен|сочинена|создан|создана|created|written|composed|złożon|ułożon|powstał|powstala|powstała|loodud|kirjutatud|scritto|escrito)", re.IGNORECASE)),
+    ("year_recorded", 88, re.compile(r"(?:записан|записана|записано|recorded|recording|nagran|salvestatud|äänitetty)", re.IGNORECASE)),
+    ("year_published", 82, re.compile(r"(?:опублик|издан|издана|издано|напечатан|published|edition|wydan|wydanie|avaldatud|julkaistu|edito|publié|publie)", re.IGNORECASE)),
+    ("year_event", 62, re.compile(r"(?:войн|war|revolution|революц|восстан|powstani|wojna|front|битв|battle|kampaania)", re.IGNORECASE)),
 ]
+WEAK_YEAR_CONTEXT_RE = re.compile(r"(?:год|г\.|year|anno|rok|roku|aastal|vuonna)", re.IGNORECASE)
+BAD_YEAR_CONTEXT_RE = re.compile(r"(?:род\.|родился|родилась|умер|умерла|born|died|г\.\s*р\.|р\.\s*\d{4}|date:|message_id|import_source|добавлен|updated|added|isbn|выпуск|issue|vol\.|том)", re.IGNORECASE)
 
+SECTION_MARKERS: list[tuple[str, re.Pattern[str]]] = [
+    ("chorus", re.compile(r"^\s*(?:\[|\()?\s*(?:припев|приспів|прыпеў|refrain|chorus|refr\.?|refren|refrein|refrään|kertosäe|koor|priedainis|priedėlis|refrão|estribillo|ritornello)\s*(?:\]|\))?\s*(?::|：|\.|-|–|—)?\s*(.*)$", re.IGNORECASE)),
+    ("verse", re.compile(r"^\s*(?:\[|\()?\s*(?:куплет|строфа|verse|strophe|strofa|zwrotka|salm|säkeistö)\s*\d*\s*(?:\]|\))?\s*(?::|：|\.|-|–|—)?\s*(.*)$", re.IGNORECASE)),
+    ("bridge", re.compile(r"^\s*(?:bridge|бридж|middle\s+eight)\s*(?::|：|\.|-|–|—)?\s*(.*)$", re.IGNORECASE)),
+    ("intro", re.compile(r"^\s*(?:intro|вступление|вступ|інтро|prolog)\s*(?::|：|\.|-|–|—)?\s*(.*)$", re.IGNORECASE)),
+    ("outro", re.compile(r"^\s*(?:outro|ending|финал|заключение|закінчення)\s*(?::|：|\.|-|–|—)?\s*(.*)$", re.IGNORECASE)),
+]
+REPEAT_ONLY_RE = re.compile(r"^\s*(?:\(?\s*)?(?:x|×|х)\s*\d+\s*\)?\s*$|^\s*(?:2\s*(?:раза|рази|times|korda)|bis)\s*$", re.IGNORECASE)
+LINE_REPEAT_SUFFIX_RE = re.compile(r"\s*(?:\(|\[)?(?:x|×|х)\s*\d+|\s+bis\s*$", re.IGNORECASE)
+
+NON_SONG_LINE_RE = re.compile(r"^\s*(?:содержание|оглавление|предисловие|послесловие|от\s+составителя|wikipedia|см\.\s*также|see\s+also)\b", re.IGNORECASE)
 
 @dataclass
-class SongRow:
+class TextRow:
+    table: str
     id: str
+    song_id: str
     title: str
     subtitle: str
     lang: str
+    country: str
+    period: str
     year: str
     source: str
     notes: str
     lyrics: str
+    verified_translation: str
+    lyrics_meta_json: str
+    sort_order: int = 0
 
 
 def norm_text(value: str | None) -> str:
-    return str(value or "")
+    text = str(value or "")
+    text = unicodedata.normalize("NFC", text)
+    text = INVISIBLE_RE.sub("", text)
+    return text
 
 
-def normalize_newlines(text: str) -> str:
+def normalize_newlines(text: str | None) -> str:
     return norm_text(text).replace("\r\n", "\n").replace("\r", "\n")
 
 
-def normalize_multiline(text: str) -> str:
-    lines = [re.sub(r"[ \t]+$", "", line) for line in normalize_newlines(text).split("\n")]
+def normalize_line(line: str) -> str:
+    line = HTML_ENTITY_RE.sub(lambda m: {"&nbsp;": " ", "&amp;": "&", "&quot;": '"', "&apos;": "'", "&lt;": "<", "&gt;": ">", "&laquo;": "«", "&raquo;": "»", "&rsquo;": "’", "&lsquo;": "‘", "&ldquo;": "“", "&rdquo;": "”"}.get(m.group(0).lower(), m.group(0)), line)
+    line = WS_RE.sub(" ", line).strip()
+    return line
+
+
+def normalize_multiline(text: str | None) -> str:
+    raw = normalize_newlines(text)
     out: list[str] = []
-    for line in lines:
-        if line.strip():
-            out.append(line.strip())
+    for line in raw.split("\n"):
+        cleaned = normalize_line(line)
+        if cleaned:
+            out.append(cleaned)
         elif out and out[-1] != "":
             out.append("")
     while out and out[0] == "":
@@ -252,542 +133,558 @@ def tokenize(text: str) -> list[str]:
     return [m.group(0).lower() for m in WORD_RE.finditer(norm_text(text))]
 
 
-def count_script(text: str) -> tuple[int, int, int]:
-    s = norm_text(text)
-    return len(CYR_RE.findall(s)), len(LAT_RE.findall(s)), len(GR_RE.findall(s))
+def sql_str(value: Any) -> str:
+    return "'" + str(value or "").replace("'", "''") + "'"
 
 
-def year_int(value: str | None) -> int | None:
-    raw = norm_text(value).strip()
-    if not raw:
-        return None
-    if raw.isdigit():
-        y = int(raw)
-        if YEAR_MIN <= y <= YEAR_MAX:
-            return y
-    return None
+def run_cmd(cmd: list[str], timeout_ms: int = 420000) -> None:
+    try:
+        subprocess.run(cmd, cwd=ROOT, check=True, timeout=timeout_ms / 1000)
+    except FileNotFoundError:
+        subprocess.run(subprocess.list2cmdline(cmd), cwd=ROOT, shell=True, check=True, timeout=timeout_ms / 1000)
 
 
-def find_years(text: str) -> list[int]:
-    years: list[int] = []
-    for match in YEAR_RE.finditer(norm_text(text)):
-        y = int(match.group(1))
-        if YEAR_MIN <= y <= YEAR_MAX:
-            years.append(y)
-    return years
+def ensure_export(db_name: str, refresh: bool, full_export: bool) -> None:
+    if EXPORT_SQL.exists() and not refresh:
+        return
+    cmd = ["npx", "wrangler", "d1", "export", db_name, "--remote", "--output", str(EXPORT_SQL)]
+    # Default to the songs table: this project has an FTS virtual table, and full D1 export can fail on virtual tables.
+    # If tmp_songs_export.sql already contains song_versions, they are processed automatically.
+    if not full_export:
+        cmd.extend(["--table", "songs"])
+    run_cmd(cmd)
 
 
-def contains_any(text: str, chars: str) -> int:
-    s = norm_text(text).lower()
-    return sum(1 for ch in chars if ch in s)
+def table_exists(conn: sqlite3.Connection, name: str) -> bool:
+    row = conn.execute("SELECT 1 FROM sqlite_master WHERE type IN ('table','virtual table') AND name=?", (name,)).fetchone()
+    return bool(row)
 
 
-def count_chars(text: str, chars: str) -> int:
-    s = norm_text(text).lower()
-    return sum(s.count(ch) for ch in set(chars))
-
-
-def cyr_marker_counts(text: str) -> dict[str, int]:
-    return {lang: count_chars(text, chars) for lang, chars in CYR_MARKERS.items()}
-
-
-def detect_lang_hint(*parts: str) -> str | None:
-    scope = "\n".join(norm_text(p).lower() for p in parts if norm_text(p).strip())
-    if not scope:
-        return None
-    for lang, pattern in LANG_HINTS:
-        if pattern.search(scope):
-            return lang
-    return None
-
-
-def score_lang(text: str, lang: str, token_map: dict[str, int]) -> int:
-    tokens_hit = sum(token_map.get(tok, 0) for tok in STOPWORDS.get(lang, set()))
-    score = tokens_hit * 2
-    dia_pattern = DIACRITICS.get(lang)
-    if dia_pattern:
-        score += len(dia_pattern.findall(text)) * 3
-    bonus_chars = UNIQUE_CHAR_BONUS.get(lang, "")
-    if bonus_chars:
-        score += contains_any(text, bonus_chars) * 3
-    return score
-
-
-def detect_language(
-    text: str,
-    title: str,
-    subtitle: str,
-    source: str,
-    notes: str,
-    old_lang: str,
-) -> tuple[str, int, bool, dict[str, int], str | None]:
-    sample = "\n".join([
-        norm_text(title),
-        norm_text(subtitle),
-        norm_text(source)[:800],
-        norm_text(notes)[:800],
-        norm_text(text)[:4000],
-    ]).lower()
-    cyr, lat, greek = count_script(sample)
-    hint = detect_lang_hint(title, subtitle, source, notes)
-    marker_counts = cyr_marker_counts(sample)
-    tokens = tokenize(sample)
-    token_map: dict[str, int] = {}
-    for tok in tokens:
-        token_map[tok] = token_map.get(tok, 0) + 1
-
-    if greek >= 20:
-        return "el", 100, True, marker_counts, hint
-
-    candidates: list[str]
-    if cyr >= max(20, int(lat * 0.8)):
-        candidates = sorted(CYR_LANGS)
-    elif lat >= 20:
-        candidates = sorted(LAT_LANGS)
-    elif hint:
-        return hint, 20, True, marker_counts, hint
-    else:
-        return (old_lang if old_lang in LANG_VALUES else "en"), 0, False, marker_counts, hint
-
-    scored: list[tuple[str, int]] = []
-    for lang in candidates:
-        scored.append((lang, score_lang(sample, lang, token_map)))
-    scored.sort(key=lambda x: x[1], reverse=True)
-    best_lang, best_score = scored[0]
-    second_score = scored[1][1] if len(scored) > 1 else 0
-
-    if hint and hint in candidates:
-        hint_score = score_lang(sample, hint, token_map) + 2
-        if hint_score >= best_score - 1:
-            best_lang = hint
-            best_score = max(best_score, hint_score)
-
-    # Strong cyrillic markers.
-    if cyr >= 20:
-        if marker_counts["kk"] >= 2:
-            return "kk", max(14, best_score), True, marker_counts, hint
-        if marker_counts["uk"] >= 2:
-            return "uk", max(12, best_score), True, marker_counts, hint
-        if marker_counts["be"] >= 1:
-            return "be", max(12, best_score), True, marker_counts, hint
-        if marker_counts["mk"] >= 1:
-            return "mk", max(10, best_score), True, marker_counts, hint
-        if marker_counts["sr"] >= 1:
-            return "sr", max(10, best_score), True, marker_counts, hint
-        if marker_counts["bg"] >= 2 and marker_counts["ru"] == 0 and marker_counts["uk"] == 0:
-            if best_lang not in {"ru", "uk", "be"}:
-                return "bg", max(8, best_score), True, marker_counts, hint
-
-    confidence = best_score - second_score
-    if best_score < 4 and hint:
-        return hint, 5, True, marker_counts, hint
-    if best_score < 4:
-        if cyr > lat:
-            return "ru", 2, False, marker_counts, hint
-        if lat > cyr:
-            return ("en" if old_lang not in LANG_VALUES else old_lang), 2, False, marker_counts, hint
-    return best_lang, max(confidence, 1), False, marker_counts, hint
-
-
-def should_apply_lang_change(
-    old_lang: str,
-    new_lang: str,
-    lang_conf: int,
-    lang_strong: bool,
-    marker_counts: dict[str, int],
-    hint_lang: str | None,
-) -> bool:
-    if new_lang not in LANG_VALUES or new_lang == old_lang:
+def col_exists(conn: sqlite3.Connection, table: str, col: str) -> bool:
+    try:
+        cols = [str(row[1]).lower() for row in conn.execute(f"PRAGMA table_info({table})").fetchall()]
+    except sqlite3.Error:
         return False
-    if old_lang not in LANG_VALUES:
-        return lang_conf >= 10 or (lang_strong and lang_conf >= 8)
-
-    if old_lang in CYR_LANGS and new_lang in CYR_LANGS:
-        if hint_lang == new_lang and lang_conf >= 4:
-            return True
-        if new_lang == "kk":
-            return marker_counts.get("kk", 0) >= 2 and (hint_lang == "kk" or lang_conf >= 30)
-        if new_lang == "uk":
-            return marker_counts.get("uk", 0) >= 3 and lang_conf >= 12
-        if new_lang == "be":
-            return marker_counts.get("be", 0) >= 2 and lang_conf >= 12
-        if new_lang in {"mk", "sr"}:
-            return False
-        if new_lang == "bg":
-            return marker_counts.get("bg", 0) >= 2 and lang_conf >= 12
-        if new_lang == "ru":
-            if hint_lang == "ru" and lang_conf >= 4:
-                return True
-            return (
-                marker_counts.get("uk", 0) == 0
-                and marker_counts.get("be", 0) == 0
-                and marker_counts.get("mk", 0) == 0
-                and marker_counts.get("sr", 0) == 0
-                and marker_counts.get("kk", 0) == 0
-                and lang_conf >= 16
-            )
-        return False
-
-    if old_lang in LAT_LANGS and new_lang in LAT_LANGS:
-        if hint_lang == new_lang and lang_conf >= 4:
-            return True
-        if old_lang == "en" or new_lang == "en":
-            return lang_conf >= 14
-        return lang_conf >= 10
-
-    if hint_lang == new_lang and lang_conf >= 4:
-        return True
-    if lang_strong and lang_conf >= 8:
-        return True
-    return lang_conf >= 10
+    return col.lower() in cols
 
 
-def is_noise_title(title: str) -> bool:
-    t = norm_text(title).strip()
-    if not t:
-        return True
-    if TITLE_BAD_RE.search(t):
-        return True
-    if TITLE_FILM_RE.search(t):
-        return True
-    if TITLE_PUNCT_ONLY_RE.match(t):
-        return True
-    if re.fullmatch(r"\d+\s*[-–—.]?\s*", t):
-        return True
-    return False
-
-
-def is_lyric_like_line(line: str) -> bool:
-    s = norm_text(line).strip()
-    if not s:
-        return False
-    if any(p.search(s) for p in LEADING_NOISE_PATTERNS):
-        return False
-    if len(s) > 110:
-        return False
-    words = tokenize(s)
-    if not words:
-        return False
-    if len(words) > 15:
-        return False
-    if s.endswith(":") and len(words) >= 3:
-        return False
-    if re.search(r"https?://|www\.|@\w", s, re.IGNORECASE):
-        return False
-    return True
-
-
-def extract_leading_noise(lines: list[str]) -> tuple[list[str], list[str]]:
-    noise: list[str] = []
-    i = 0
-    while i < len(lines):
-        line = lines[i].strip()
-        if not line:
-            if noise:
-                noise.append("")
-                i += 1
-                continue
-            i += 1
-            continue
-        if any(p.search(line) for p in LEADING_NOISE_PATTERNS):
-            noise.append(line)
-            i += 1
-            continue
-        if re.match(r"^\d+\s+[A-Za-zА-Яа-яЁё].{0,120}$", line):
-            # Numbered recording list line.
-            noise.append(line)
-            i += 1
-            continue
-        if re.search(r"\bисполнение\s+(18\d{2}|19\d{2}|20\d{2})", line, re.IGNORECASE):
-            noise.append(line)
-            i += 1
-            continue
-        break
-    return noise, lines[i:]
-
-
-def find_candidate_title(lines: list[str]) -> tuple[str | None, int]:
-    non_empty = [idx for idx, line in enumerate(lines) if line.strip()]
-    for idx in non_empty[:12]:
-        candidate = lines[idx].strip()
-        words = tokenize(candidate)
-        if len(words) < 1 or len(words) > 8:
-            continue
-        if re.search(r"[:.!?]$", candidate):
-            continue
-        if any(p.search(candidate) for p in LEADING_NOISE_PATTERNS):
-            continue
-        tail = [lines[j].strip() for j in non_empty if j > idx][:6]
-        lyric_like = sum(1 for row in tail if is_lyric_like_line(row))
-        if lyric_like >= 3:
-            return candidate, idx
-    return None, -1
-
-
-def append_note(base: str, addition: str) -> str:
-    base_clean = normalize_multiline(base)
-    add_clean = normalize_multiline(addition)
-    if not add_clean:
-        return base_clean
-    if add_clean in base_clean:
-        return base_clean
-    if not base_clean:
-        return add_clean
-    return normalize_multiline(f"{base_clean}\n\n{add_clean}")
-
-
-def clean_title_and_lyrics(title: str, lyrics: str, notes: str) -> tuple[str, str, str, list[str], str]:
-    clean_title = norm_text(title).strip()
-    clean_lyrics = normalize_multiline(lyrics)
-    clean_notes = normalize_multiline(notes)
-    changes: list[str] = []
-
-    original_title = clean_title
-    clean_title = TITLE_LIST_PREFIX_RE.sub("", clean_title).strip()
-    if clean_title != original_title:
-        changes.append("title_strip_numbering")
-
-    lines = clean_lyrics.split("\n") if clean_lyrics else []
-    noise_lines, body_lines = extract_leading_noise(lines)
-    moved_noise = ""
-    if noise_lines:
-        moved = normalize_multiline("\n".join(noise_lines))
-        moved_noise = moved
-        clean_notes = append_note(clean_notes, f"Служебные строки (перенесено из начала текста):\n{moved}")
-        changes.append("lyrics_drop_leading_noise")
-
-    if is_noise_title(clean_title):
-        candidate, cand_idx = find_candidate_title(body_lines)
-        if candidate:
-            clean_title = candidate
-            # Remove embedded title line from lyrics head.
-            trimmed = body_lines[cand_idx + 1 :]
-            while trimmed and not trimmed[0].strip():
-                trimmed.pop(0)
-            body_lines = trimmed
-            changes.append("title_from_lyrics_head")
-
-    clean_lyrics = normalize_multiline("\n".join(body_lines))
-    if clean_title != original_title:
-        changes.append("title_changed")
-    return clean_title, clean_lyrics, clean_notes, sorted(set(changes)), moved_noise
-
-
-def infer_year(existing_year: str, title: str, source: str, moved_noise: str) -> tuple[str, bool]:
-    existing = year_int(existing_year)
-    if existing:
-        return str(existing), False
-
-    probes = [source, title, moved_noise]
-    for block in probes:
-        text = normalize_multiline(block)
-        if not text:
-            continue
-        for line in text.split("\n"):
-            line_years = find_years(line)
-            if not line_years:
-                continue
-            if STANDALONE_YEAR_RE.match(line) or YEAR_CONTEXT_RE.search(line):
-                return str(line_years[0]), True
-
-    # Conservative fallback: allow source-only first year if source has no obvious import metadata.
-    source_text = normalize_multiline(source)
-    if source_text and "message_id:" not in source_text.lower() and "import_source:" not in source_text.lower():
-        src_years = find_years(source_text)
-        if src_years:
-            return str(src_years[0]), True
-
-    return "", False
-
-
-def load_songs_from_export(path: Path) -> list[SongRow]:
+def load_rows_from_export(path: Path, include_versions: bool = True) -> list[TextRow]:
     sql = path.read_text(encoding="utf-8", errors="replace")
     conn = sqlite3.connect(":memory:")
     conn.executescript(sql)
-    rows = conn.execute(
-        """
-        SELECT id, title, coalesce(subtitle,''), coalesce(lang,''), coalesce(year,''), coalesce(source,''), coalesce(notes,''), coalesce(lyrics,'')
-        FROM songs
-        """
-    ).fetchall()
+    rows: list[TextRow] = []
+    if table_exists(conn, "songs"):
+        for row in conn.execute(
+            """
+            SELECT id, coalesce(title,''), coalesce(subtitle,''), lower(trim(coalesce(lang,''))),
+                   lower(trim(coalesce(country,''))), coalesce(period,''), coalesce(year,''),
+                   coalesce(source,''), coalesce(notes,''), coalesce(lyrics,''),
+                   coalesce(verified_translation,''), coalesce(lyrics_meta_json,'{}')
+            FROM songs
+            """
+        ).fetchall():
+            rows.append(TextRow("songs", row[0], row[0], row[1], row[2], row[3], row[4], row[5], row[6], row[7], row[8], row[9], row[10], row[11]))
+    if include_versions and table_exists(conn, "song_versions"):
+        # Version rows inherit country/year/period from the parent song only for review context.
+        for row in conn.execute(
+            """
+            SELECT v.id, v.song_id, coalesce(v.title,''), coalesce(s.title,''), coalesce(s.subtitle,''),
+                   lower(trim(coalesce(v.lang, s.lang, ''))), lower(trim(coalesce(s.country,''))),
+                   coalesce(s.period,''), coalesce(s.year,''), coalesce(v.source, s.source, ''),
+                   coalesce(s.notes,''), coalesce(v.lyrics,''), coalesce(v.lyrics_meta_json,'{}'), coalesce(v.sort_order,0)
+            FROM song_versions v
+            LEFT JOIN songs s ON s.id = v.song_id
+            """
+        ).fetchall():
+            title = row[2] or row[3]
+            rows.append(TextRow("song_versions", row[0], row[1], title, row[4], row[5], row[6], row[7], row[8], row[9], row[10], row[11], "", row[12], int(row[13] or 0)))
     conn.close()
-    return [SongRow(*row) for row in rows]
+    return rows
 
 
-def sql_str(value: str) -> str:
-    return "'" + norm_text(value).replace("'", "''") + "'"
+def safe_json_loads(raw: str | None) -> dict[str, Any]:
+    try:
+        value = json.loads(raw or "{}")
+        return value if isinstance(value, dict) else {}
+    except Exception:
+        return {}
 
 
-def sql_nullable(value: str) -> str:
-    txt = norm_text(value).strip()
-    if not txt:
-        return "NULL"
-    return sql_str(txt)
+def is_chordish_line(line: str) -> bool:
+    s = normalize_line(line)
+    if not s:
+        return False
+    if TAB_LINE_RE.match(s) or DIGIT_TAB_RE.match(s) or CHORD_HEADER_RE.match(s):
+        return True
+    if CAPO_RE.search(s) and len(tokenize(s)) <= 8:
+        return True
+    parts = [p for p in re.split(r"[\s|,;:/\\]+", s.replace("-", " ")) if p]
+    if len(parts) < 2:
+        return False
+    chord_hits = sum(1 for p in parts if CHORD_TOKEN_RE.match(p.strip("()[]{}")))
+    if chord_hits < 2:
+        return False
+    words = tokenize(s)
+    # Avoid deleting normal short lines like "A my..."; require chord dominance.
+    return chord_hits / max(1, len(parts)) >= 0.75 and chord_hits >= max(2, len(words) - 1)
 
 
-def build_updates(rows: Iterable[SongRow]) -> tuple[list[str], dict]:
-    updates: list[str] = []
-    report = {
-        "total": 0,
-        "changed": 0,
-        "changed_tg3": 0,
-        "changed_other": 0,
-        "lang_changed": 0,
-        "year_filled": 0,
-        "title_changed": 0,
-        "lyrics_changed": 0,
-        "notes_changed": 0,
-        "examples": [],
-        "lang_change_examples": [],
+def remove_inline_chords(line: str) -> tuple[str, list[str]]:
+    removed = BRACKET_CHORD_RE.findall(line)
+    if not removed:
+        return line, []
+    cleaned = BRACKET_CHORD_RE.sub("", line)
+    cleaned = WS_RE.sub(" ", cleaned).strip()
+    return cleaned, list(removed)
+
+
+def split_label_line(line: str) -> tuple[str | None, str | None]:
+    for key, pattern in LABEL_ALIASES:
+        match = pattern.match(line)
+        if match:
+            value = normalize_line(match.group(1)).strip(" .;,")
+            if value:
+                return key, value
+    return None, None
+
+
+def classify_year_line(line: str) -> list[dict[str, Any]]:
+    s = normalize_line(line)
+    if not s or BAD_YEAR_CONTEXT_RE.search(s) or LIFESPAN_RE.search(s):
+        return []
+    years = [int(m.group(1)) for m in YEAR_RE.finditer(s) if YEAR_MIN <= int(m.group(1)) <= YEAR_MAX]
+    if not years:
+        return []
+    out: list[dict[str, Any]] = []
+    for field, conf, ctx_re in YEAR_CONTEXTS:
+        if ctx_re.search(s):
+            for year in years[:3]:
+                out.append({"field": field, "value": year, "confidence": conf, "line": s})
+            return out
+    if WEAK_YEAR_CONTEXT_RE.search(s) and len(years) == 1:
+        out.append({"field": "year_mentioned", "value": years[0], "confidence": 45, "line": s})
+    return out
+
+
+def detect_section_marker(line: str) -> tuple[str | None, str, str] | None:
+    s = normalize_line(line)
+    for section_type, pattern in SECTION_MARKERS:
+        match = pattern.match(s)
+        if not match:
+            continue
+        tail = normalize_line(match.group(1) or "")
+        label = s[: max(0, len(s) - len(match.group(1) or ""))].strip()
+        return section_type, label, tail
+    return None
+
+
+def section_key(text: str) -> str:
+    body = " ".join(tokenize(text))
+    return body[:240]
+
+
+def parse_sections(clean_lines: list[str]) -> list[dict[str, Any]]:
+    sections: list[dict[str, Any]] = []
+    current: dict[str, Any] | None = None
+    chorus_registry: dict[str, str] = {}
+    last_chorus_id: str | None = None
+
+    def close_current(end_index: int) -> None:
+        nonlocal current, last_chorus_id
+        if not current:
+            return
+        lines = current.pop("_lines")
+        text = "\n".join([line for line in lines if line.strip()]).strip()
+        current["end_line"] = max(current["start_line"], end_index)
+        current["text"] = text
+        if current["type"] == "chorus":
+            key = section_key(text)
+            if text and key in chorus_registry:
+                current["duplicate_of"] = chorus_registry[key]
+            elif text:
+                chorus_registry[key] = current["id"]
+                last_chorus_id = current["id"]
+            elif last_chorus_id:
+                current["repeat_of"] = last_chorus_id
+        sections.append(current)
+        current = None
+
+    for idx, line in enumerate(clean_lines):
+        marker = detect_section_marker(line)
+        if marker:
+            close_current(idx - 1)
+            section_type, label, tail = marker
+            section_id = f"{section_type}_{sum(1 for item in sections if item.get('type') == section_type) + 1}"
+            current = {"id": section_id, "type": section_type, "label": label or section_type, "start_line": idx, "_lines": []}
+            if tail and not REPEAT_ONLY_RE.match(tail):
+                current["_lines"].append(tail)
+            elif section_type == "chorus" and last_chorus_id:
+                current["repeat_of"] = last_chorus_id
+            continue
+        if current is not None:
+            if not line.strip():
+                close_current(idx - 1)
+                continue
+            current["_lines"].append(line)
+    close_current(len(clean_lines) - 1)
+    return sections
+
+
+def add_unique(target: list[Any], value: Any) -> None:
+    if value in target:
+        return
+    target.append(value)
+
+
+def analyze_text(row: TextRow) -> dict[str, Any]:
+    original = normalize_multiline(row.lyrics)
+    lines = original.split("\n") if original else []
+
+    extracted: dict[str, Any] = {
+        "structure_version": STRUCTURE_VERSION,
+        "row_type": row.table,
+        "song_id": row.song_id,
+        "source_row_id": row.id,
+        "words_author": [],
+        "music_author": [],
+        "translator": [],
+        "performer": [],
+        "year_written": [],
+        "year_published": [],
+        "year_recorded": [],
+        "year_event": [],
+        "year_mentioned": [],
+        "sections": [],
+        "removed_chords": [],
+        "removed_metadata_lines": [],
+        "removed_source_lines": [],
+        "removed_import_meta_lines": [],
+        "removed_non_song_lines": [],
+        "inline_chords": [],
+        "warnings": [],
+        "review_flags": [],
     }
-    for row in rows:
-        report["total"] += 1
-        new_title, new_lyrics, new_notes, cleanup_changes, moved_noise = clean_title_and_lyrics(row.title, row.lyrics, row.notes)
-        new_year, year_filled = infer_year(row.year, new_title, row.source, moved_noise)
-        detected_lang, lang_conf, lang_strong, marker_counts, hint_lang = detect_language(
-            new_lyrics,
-            new_title,
-            row.subtitle,
-            row.source,
-            new_notes,
-            row.lang,
-        )
 
-        new_lang = row.lang
-        if should_apply_lang_change(row.lang, detected_lang, lang_conf, lang_strong, marker_counts, hint_lang):
-            new_lang = detected_lang
+    clean_lines: list[str] = []
+    in_chord_block = False
+    metadata_hits = 0
+    chord_hits = 0
+    source_hits = 0
 
-        title_changed = new_title != norm_text(row.title).strip()
-        lyrics_changed = new_lyrics != normalize_multiline(row.lyrics)
-        notes_changed = new_notes != normalize_multiline(row.notes)
-        lang_changed = new_lang != row.lang
-        year_changed = (norm_text(new_year).strip() != norm_text(row.year).strip())
-
-        if not any([title_changed, lyrics_changed, notes_changed, lang_changed, year_changed]):
+    for raw_line in lines:
+        line = normalize_line(raw_line)
+        if not line:
+            if clean_lines and clean_lines[-1] != "":
+                clean_lines.append("")
+            in_chord_block = False
             continue
 
-        updates.append(
-            "UPDATE songs SET "
-            f"title={sql_str(new_title)}, "
-            f"lang={sql_str(new_lang)}, "
-            f"year={sql_nullable(new_year)}, "
-            f"notes={sql_nullable(new_notes)}, "
-            f"lyrics={sql_str(new_lyrics)}, "
-            "updated_at=datetime('now') "
-            f"WHERE id={sql_str(row.id)};"
-        )
-        if title_changed or lyrics_changed:
-            updates.append(
-                f"INSERT OR REPLACE INTO songs_fts(song_id,title,lyrics) VALUES ({sql_str(row.id)},{sql_str(new_title)},{sql_str(new_lyrics)});"
-            )
+        if IMPORT_META_RE.match(line):
+            add_unique(extracted["removed_import_meta_lines"], line)
+            continue
 
-        report["changed"] += 1
-        if row.id.startswith("tg3_"):
-            report["changed_tg3"] += 1
-        else:
-            report["changed_other"] += 1
-        if lang_changed:
-            report["lang_changed"] += 1
-            if len(report["lang_change_examples"]) < 80:
-                report["lang_change_examples"].append(
-                    {
-                        "id": row.id,
-                        "title": new_title,
-                        "old_lang": row.lang,
-                        "new_lang": new_lang,
-                        "lang_confidence": lang_conf,
-                        "lang_strong": lang_strong,
-                    }
-                )
-        if year_filled and year_changed:
-            report["year_filled"] += 1
-        if title_changed:
-            report["title_changed"] += 1
+        if NON_SONG_LINE_RE.search(line):
+            add_unique(extracted["removed_non_song_lines"], line)
+            continue
+
+        label_key, label_value = split_label_line(line)
+        if label_key:
+            metadata_hits += 1
+            if label_key in {"source", "notes"}:
+                add_unique(extracted["removed_source_lines" if label_key == "source" else "removed_metadata_lines"], line)
+            else:
+                add_unique(extracted[label_key], label_value)
+                add_unique(extracted["removed_metadata_lines"], line)
+            # A label line should not remain in clean lyrics.
+            continue
+
+        year_items = classify_year_line(line)
+        if year_items:
+            # Only remove explicit bibliographic/historical metadata lines; ordinary lyrics with a year stay.
+            removable = any(item["confidence"] >= 80 for item in year_items) and len(tokenize(line)) <= 16
+            for item in year_items:
+                add_unique(extracted[item["field"]], {"value": item["value"], "confidence": item["confidence"], "line": item["line"]})
+            if removable:
+                add_unique(extracted["removed_metadata_lines"], line)
+                metadata_hits += 1
+                continue
+
+        if URL_RE.search(line):
+            # Source URLs are metadata if the whole line is source-like. Keep poetic lines that merely contain punctuation.
+            if len(tokenize(line)) <= 10 or re.search(r"(?:source|источник|джерело|quelle|źródło|allikas|lähde)", line, re.IGNORECASE):
+                add_unique(extracted["removed_source_lines"], line)
+                source_hits += 1
+                continue
+
+        if CHORD_HEADER_RE.match(line):
+            in_chord_block = True
+            add_unique(extracted["removed_chords"], {"line": line, "reason": "chord_header"})
+            chord_hits += 1
+            continue
+        if in_chord_block and (is_chordish_line(line) or CAPO_RE.search(line)):
+            add_unique(extracted["removed_chords"], {"line": line, "reason": "chord_block"})
+            chord_hits += 1
+            continue
+        if is_chordish_line(line):
+            add_unique(extracted["removed_chords"], {"line": line, "reason": "chord_line"})
+            chord_hits += 1
+            continue
+
+        cleaned_line, inline_chords = remove_inline_chords(line)
+        if inline_chords:
+            extracted["inline_chords"].extend(inline_chords)
+            line = cleaned_line
+            if not line:
+                continue
+
+        clean_lines.append(line)
+
+    while clean_lines and clean_lines[0] == "":
+        clean_lines.pop(0)
+    while clean_lines and clean_lines[-1] == "":
+        clean_lines.pop()
+
+    clean_lyrics = "\n".join(clean_lines).strip()
+    sections = parse_sections(clean_lines)
+    extracted["sections"] = sections
+
+    if metadata_hits:
+        add_unique(extracted["review_flags"], "metadata_extracted_from_lyrics")
+    if chord_hits:
+        add_unique(extracted["review_flags"], "chords_or_tabs_removed")
+    if source_hits:
+        add_unique(extracted["review_flags"], "source_url_extracted_from_lyrics")
+    if len(sections) >= 1:
+        add_unique(extracted["review_flags"], "sections_detected")
+    if any(sec.get("type") == "chorus" for sec in sections):
+        add_unique(extracted["review_flags"], "chorus_detected")
+    if clean_lyrics and len(clean_lyrics) < max(20, int(len(original) * 0.35)):
+        add_unique(extracted["warnings"], "clean_lyrics_much_shorter_than_original")
+    if not clean_lyrics and original:
+        add_unique(extracted["warnings"], "clean_lyrics_empty_after_extraction")
+
+    # Compact empty fields out of metadata, but keep stable keys for important buckets.
+    for key in list(extracted.keys()):
+        if key in {"structure_version", "row_type", "song_id", "source_row_id"}:
+            continue
+        if extracted[key] in ([], {}, "", None):
+            extracted.pop(key)
+
+    return {
+        "original_lyrics": original,
+        "clean_lyrics": clean_lyrics,
+        "extracted": extracted,
+        "has_structure": any(k in extracted for k in ["words_author", "music_author", "translator", "performer", "year_written", "year_published", "year_recorded", "sections", "removed_chords", "removed_metadata_lines", "removed_source_lines", "removed_import_meta_lines"]),
+    }
+
+
+def merge_meta(raw_meta: str, extracted: dict[str, Any]) -> tuple[str, bool]:
+    meta = safe_json_loads(raw_meta)
+    before = json.dumps(meta, ensure_ascii=False, sort_keys=True, separators=(",", ":"))
+    meta["song_structure_extractor"] = {
+        "version": STRUCTURE_VERSION,
+        "extracted": extracted,
+    }
+    after = json.dumps(meta, ensure_ascii=False, sort_keys=True, separators=(",", ":"))
+    return json.dumps(meta, ensure_ascii=False, separators=(",", ":")), before != after
+
+
+def build_updates(rows: Iterable[TextRow], args: argparse.Namespace) -> tuple[list[str], dict[str, Any], list[dict[str, Any]]]:
+    updates: list[str] = []
+    review_rows: list[dict[str, Any]] = []
+    counters: Counter[str] = Counter()
+    table_counters: Counter[str] = Counter()
+    warning_counters: Counter[str] = Counter()
+    flag_counters: Counter[str] = Counter()
+    examples: list[dict[str, Any]] = []
+
+    for row in rows:
+        counters["total_rows"] += 1
+        table_counters[row.table] += 1
+        if args.song_id and row.song_id != args.song_id and row.id != args.song_id:
+            continue
+        if args.only_main and row.table != "songs":
+            continue
+        if args.only_versions and row.table != "song_versions":
+            continue
+
+        analysis = analyze_text(row)
+        extracted = analysis["extracted"]
+        clean_lyrics = analysis["clean_lyrics"]
+        original_lyrics = analysis["original_lyrics"]
+        has_structure = bool(analysis["has_structure"])
+
+        if not has_structure:
+            continue
+
+        for warning in extracted.get("warnings", []):
+            warning_counters[warning] += 1
+        for flag in extracted.get("review_flags", []):
+            flag_counters[flag] += 1
+        if "sections" in extracted:
+            counters["rows_with_sections"] += 1
+            counters["sections_total"] += len(extracted["sections"])
+            if any(sec.get("type") == "chorus" for sec in extracted["sections"]):
+                counters["rows_with_chorus"] += 1
+        for key in ["words_author", "music_author", "translator", "performer"]:
+            if key in extracted:
+                counters[f"rows_with_{key}"] += 1
+        if "removed_chords" in extracted:
+            counters["rows_with_chords"] += 1
+        if "removed_metadata_lines" in extracted:
+            counters["rows_with_metadata_lines"] += 1
+        if "removed_source_lines" in extracted:
+            counters["rows_with_source_lines"] += 1
+        if any(key in extracted for key in ["year_written", "year_published", "year_recorded", "year_event", "year_mentioned"]):
+            counters["rows_with_year_candidates"] += 1
+
+        next_meta, meta_changed = merge_meta(row.lyrics_meta_json, extracted)
+        lyrics_changed = args.include_clean_lyrics and clean_lyrics != original_lyrics and safe_to_update_lyrics(original_lyrics, clean_lyrics, extracted, args)
+
+        set_parts: list[str] = []
+        if meta_changed and not args.no_meta_update:
+            set_parts.append(f"lyrics_meta_json={sql_str(next_meta)}")
         if lyrics_changed:
-            report["lyrics_changed"] += 1
-        if notes_changed:
-            report["notes_changed"] += 1
+            set_parts.append(f"lyrics={sql_str(clean_lyrics)}")
+        if row.table == "songs" and (set_parts and not args.no_updated_at):
+            set_parts.append("updated_at=datetime('now')")
 
-        if len(report["examples"]) < 40:
-            report["examples"].append(
-                {
-                    "id": row.id,
-                    "old_title": row.title,
-                    "new_title": new_title,
-                    "old_lang": row.lang,
-                    "new_lang": new_lang,
-                    "old_year": row.year,
-                    "new_year": new_year or None,
-                    "cleanup_changes": cleanup_changes,
-                    "lang_confidence": lang_conf,
-                }
-            )
+        if set_parts and not args.report_only:
+            updates.append(f"UPDATE {row.table} SET " + ", ".join(set_parts) + f" WHERE id={sql_str(row.id)};")
+            if row.table == "songs" and lyrics_changed:
+                updates.append(f"INSERT OR REPLACE INTO songs_fts(song_id,title,lyrics) VALUES ({sql_str(row.id)},{sql_str(row.title)},{sql_str(clean_lyrics)});")
 
-    return updates, report
+        counters["candidate_rows"] += 1
+        if meta_changed:
+            counters["meta_changed"] += 1
+        if lyrics_changed:
+            counters["lyrics_changed"] += 1
+
+        review_item = {
+            "table": row.table,
+            "id": row.id,
+            "song_id": row.song_id,
+            "title": row.title,
+            "lang": row.lang,
+            "country": row.country,
+            "year": row.year,
+            "flags": extracted.get("review_flags", []),
+            "warnings": extracted.get("warnings", []),
+            "extracted": extracted,
+            "old_lyrics_preview": original_lyrics[:700],
+            "clean_lyrics_preview": clean_lyrics[:700],
+            "lyrics_changed_candidate": clean_lyrics != original_lyrics,
+            "lyrics_changed_in_sql": lyrics_changed,
+        }
+        review_rows.append(review_item)
+        if len(examples) < MAX_REVIEW_EXAMPLES:
+            examples.append(review_item)
+
+        if args.limit and counters["candidate_rows"] >= args.limit:
+            break
+
+    report = {
+        "mode": "report_only" if args.report_only else "sql_generated",
+        "update_sql": str(UPDATE_SQL),
+        "review_jsonl": str(REVIEW_JSONL),
+        "export_sql": str(EXPORT_SQL),
+        "structure_version": STRUCTURE_VERSION,
+        "counts": dict(counters),
+        "table_counts": dict(table_counters),
+        "flag_counts": dict(flag_counters),
+        "warning_counts": dict(warning_counters),
+        "update_statements": len(updates),
+        "examples": examples,
+        "notes": [
+            "Default mode updates lyrics_meta_json only. Clean lyrics are not written unless --include-clean-lyrics is passed.",
+            "Song versions are processed when the export contains song_versions.",
+            "No confidence data in draft_line_variants is modified by this script.",
+        ],
+    }
+    return updates, report, review_rows
 
 
-def run_cmd(cmd: list[str], cwd: Path, timeout_ms: int = 180000) -> None:
-    subprocess.run(cmd, cwd=cwd, check=True, timeout=timeout_ms / 1000)
+def safe_to_update_lyrics(original: str, clean: str, extracted: dict[str, Any], args: argparse.Namespace) -> bool:
+    if not original.strip() or not clean.strip():
+        return False
+    if "clean_lyrics_empty_after_extraction" in extracted.get("warnings", []):
+        return False
+    removed_ratio = 1.0 - (len(clean) / max(1, len(original)))
+    if removed_ratio > args.max_lyrics_loss_ratio:
+        return False
+    # Do not auto-clean if only sections were detected; markers are structural, not garbage.
+    flags = set(extracted.get("review_flags", []))
+    destructive_flags = {"metadata_extracted_from_lyrics", "chords_or_tabs_removed", "source_url_extracted_from_lyrics"}
+    return bool(flags & destructive_flags)
 
 
-def ensure_export(db_name: str, refresh: bool) -> None:
-    if EXPORT_SQL.exists() and not refresh:
-        return
-    cmd = [
-        "npx",
-        "wrangler",
-        "d1",
-        "export",
-        db_name,
-        "--remote",
-        "--table",
-        "songs",
-        "--output",
-        str(EXPORT_SQL),
-    ]
-    run_cmd(cmd, ROOT)
-
-
-def main() -> None:
-    parser = argparse.ArgumentParser(description="Repair existing songs metadata (lang/year/title/lyrics cleanup).")
-    parser.add_argument("--db-name", default="euro-songbook-db")
-    parser.add_argument("--refresh-export", action="store_true")
-    parser.add_argument("--execute-remote", action="store_true")
-    args = parser.parse_args()
-
+def write_outputs(updates: list[str], report: dict[str, Any], review_rows: list[dict[str, Any]]) -> None:
     REPORT_JSON.parent.mkdir(parents=True, exist_ok=True)
-    ensure_export(args.db_name, args.refresh_export)
-
-    rows = load_songs_from_export(EXPORT_SQL)
-    updates, report = build_updates(rows)
-
-    sql_lines = ["-- generated by scripts/repair_existing_songs.py", *updates, ""]
-    UPDATE_SQL.write_text("\n".join(sql_lines), encoding="utf-8")
-    report["update_sql"] = str(UPDATE_SQL)
-    report["export_sql"] = str(EXPORT_SQL)
-    report["update_statements"] = len(updates)
+    UPDATE_SQL.write_text("\n".join(["-- generated by scripts/repair_existing_songs.py", *updates, ""]), encoding="utf-8")
     REPORT_JSON.write_text(json.dumps(report, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
+    with REVIEW_JSONL.open("w", encoding="utf-8") as fh:
+        for item in review_rows:
+            fh.write(json.dumps(item, ensure_ascii=False, separators=(",", ":")) + "\n")
 
-    print(json.dumps(report, ensure_ascii=True, indent=2))
 
-    if not args.execute_remote:
-        return
+def apply_remote(db_name: str, updates: list[str], report: dict[str, Any], args: argparse.Namespace) -> None:
     if not updates:
         print("No updates to apply.")
         return
+    total = max(1, int(report.get("counts", {}).get("total_rows", 0) or 1))
+    changed = int(report.get("counts", {}).get("candidate_rows", 0) or 0)
+    rate = changed / total
+    if rate > args.max_apply_rate and not args.allow_large_change_set:
+        raise SystemExit(
+            f"Refusing remote apply: candidate rate {rate:.2%} exceeds {args.max_apply_rate:.2%}. "
+            "Review JSONL first or pass --allow-large-change-set."
+        )
+    cmd = ["npx", "wrangler", "d1", "execute", db_name, "--remote", "--file", str(UPDATE_SQL)]
+    run_cmd(cmd, timeout_ms=420000)
 
-    cmd = [
-        "npx",
-        "wrangler",
-        "d1",
-        "execute",
-        args.db_name,
-        "--remote",
-        "--file",
-        str(UPDATE_SQL),
-    ]
-    run_cmd(cmd, ROOT, timeout_ms=300000)
-    print("Remote updates applied.")
+
+def parse_args() -> argparse.Namespace:
+    parser = argparse.ArgumentParser(description="Extract song structure from lyrics into lyrics_meta_json and optionally prepare safe cleanup SQL.")
+    parser.add_argument("--db-name", default="euro-songbook-db")
+    parser.add_argument("--refresh-export", action="store_true")
+    parser.add_argument("--full-export", action="store_true", help="Try full D1 export. Default exports only songs because this project has an FTS virtual table.")
+    parser.add_argument("--songs-table-only", action="store_true", help="Legacy no-op: songs-only export is the default.")
+    parser.add_argument("--execute-remote", action="store_true")
+    parser.add_argument("--report-only", action="store_true", help="Generate JSON reports without SQL UPDATE statements.")
+    parser.add_argument("--include-clean-lyrics", action="store_true", help="Also write safe clean_lyrics back to lyrics. Default writes only lyrics_meta_json.")
+    parser.add_argument("--no-meta-update", action="store_true", help="Do not update lyrics_meta_json; useful for pure audit.")
+    parser.add_argument("--no-updated-at", action="store_true")
+    parser.add_argument("--only-main", action="store_true")
+    parser.add_argument("--only-versions", action="store_true")
+    parser.add_argument("--song-id", default="")
+    parser.add_argument("--limit", type=int, default=0, help="Stop after N candidate rows.")
+    parser.add_argument("--sample-size", type=int, default=0, help="Analyze a random sample of rows before filtering candidates.")
+    parser.add_argument("--seed", type=int, default=42)
+    parser.add_argument("--max-lyrics-loss-ratio", type=float, default=0.35)
+    parser.add_argument("--max-apply-rate", type=float, default=0.05)
+    parser.add_argument("--allow-large-change-set", action="store_true")
+    return parser.parse_args()
+
+
+def main() -> None:
+    args = parse_args()
+    REPORT_JSON.parent.mkdir(parents=True, exist_ok=True)
+    ensure_export(args.db_name, args.refresh_export, args.full_export)
+    rows = load_rows_from_export(EXPORT_SQL, include_versions=not args.only_main)
+    if args.sample_size and args.sample_size > 0 and len(rows) > args.sample_size:
+        rows = random.Random(args.seed).sample(rows, args.sample_size)
+    updates, report, review_rows = build_updates(rows, args)
+    write_outputs(updates, report, review_rows)
+    print(json.dumps({
+        "counts": report["counts"],
+        "update_statements": report["update_statements"],
+        "report": str(REPORT_JSON),
+        "review_jsonl": str(REVIEW_JSONL),
+        "sql": str(UPDATE_SQL),
+    }, ensure_ascii=False, indent=2))
+    if args.execute_remote:
+        apply_remote(args.db_name, updates, report, args)
+        print("Remote updates applied.")
 
 
 if __name__ == "__main__":

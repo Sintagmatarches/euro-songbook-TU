@@ -2043,7 +2043,11 @@ const CURRENT_COUNTRY_SIMPLE_LABELS = {
 
 Object.entries(REQUESTED_COUNTRY_LABELS).forEach(([locale, entries]) => {
   CURRENT_COUNTRY_SIMPLE_LABELS[locale] ||= {};
-  Object.assign(CURRENT_COUNTRY_SIMPLE_LABELS[locale], entries);
+  Object.entries(entries).forEach(([value, label]) => {
+    if (!CURRENT_COUNTRY_SIMPLE_LABELS[locale][value]) {
+      CURRENT_COUNTRY_SIMPLE_LABELS[locale][value] = label;
+    }
+  });
 });
 
 Object.entries(LABELS.period).forEach(([locale, table]) => {

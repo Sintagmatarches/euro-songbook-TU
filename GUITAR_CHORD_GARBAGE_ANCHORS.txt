@@ -1,0 +1,1375 @@
+Guitar chord / tab garbage anchors
+==================================
+
+Purpose
+-------
+This file is the approval list for finding and removing guitar-service garbage from song texts.
+The target garbage is not "any strange word"; it is guitar chords, tabs, fingering lines,
+transposition notes, capo/barre notes, and chord-section headers imported from source sites.
+
+Confirmed production examples
+-----------------------------
+
+Ukraine / pisni.org.ua-like imports:
+
+1. pisniua_8221205 - "Сама сама"
+   Garbage type: guitar tablature block.
+   Examples:
+   E|----------------------------------|------------------------|---3--6-6---5--3-3h1--------------|
+   B|---3-3-3-4--4h6--4-3-3--1---------|---4--6h8-6-4-4--3--1h4-|-4-------------------6-4-3-3h1--1-|
+   G|--------------------------3---3h6-|------------------------|----------------------------------|
+   D|----------------------------------|------------------------|----------------------------------|
+   A|----------------------------------|------------------------|----------------------------------|
+
+2. pisniua_628050 - "Without you"
+   Garbage type: numeric guitar/tab lines.
+   Examples:
+   5 -----6-6-5-5-3--------6-6-5-5-3-----
+   6 -3-3-----------3--3-3---------------
+
+3. pisniua_418838 - "Іди від мене"
+   Garbage type: chord-section header.
+   Example:
+   Акорди (варіант 2):
+
+4. pisniua_814358 - "Історія"
+   Garbage type: chord-section header plus chord line.
+   Examples:
+   Акорди (варіант 2):
+   F#m Em            C    Edim               Hm
+
+5. pisniua_650252 - "Алкоголь"
+   Garbage type: numeric tab block plus guitar instruction.
+   Examples:
+   5|-2-2--2--------5-5--5--------|
+   6|--------3-3--3--------5-5--5-|
+   Краще звучить, якщо усі акорди грати з баре
+
+6. pisniua_817518 - "Бандуристе, Орле Сизий"
+   Garbage type: chord-section headers.
+   Examples:
+   Акорди:*
+   Акорди [3]:
+
+7. pisniua_224379 - "Із полону"
+   Garbage type: transposition notes.
+   Examples:
+   Зміна тональності:  C#
+   Зміна тональності:  H *
+
+8. pisniua_58040 - "Іноземці"
+   Garbage type: guitar instruction.
+   Example:
+   Простіше буде зіграти, якщо використати такі акорди:
+
+9. pisniua_235624 - "Б'ють літаври гучні"
+   Garbage type: chord-section header.
+   Example:
+   Акорди у тональності G (за джерелом 1):
+
+10. pisniua_316766 - "Балада про Крути"
+    Garbage type: tonality note.
+    Example:
+    * У тональності Hm:
+
+High-confidence anchors
+-----------------------
+These anchors should be used to find candidate records cheaply with SQL LIKE / lower().
+They are strong enough to search globally, then sanitize only matching records.
+
+Ukrainian/Russian chord-section and guitar-instruction anchors:
+- "Акорди"
+- "акорди"
+- "Аккорды"
+- "аккорды"
+- "Ще акорди"
+- "Акорди:"
+- "Акорди ["
+- "Акорди ("
+- "у тональності"
+- "У тональності"
+- "Зміна тональності"
+- "тональності:"
+- "тональность"
+- "каподастр"
+- "капо"
+- "баре"
+- "перебір"
+- "перебор"
+- "зіграти"
+- "грати з баре"
+
+English/Latin anchors:
+- "chords:"
+- "chord:"
+- "tabs:"
+- "tab:"
+- "capo"
+- "transpose"
+- "transposition"
+- "barre"
+- "riff"
+
+High-confidence line patterns
+-----------------------------
+Use these as sanitizer regexes after candidate selection.
+
+1. Guitar tab string lines:
+   Lines beginning with a guitar string name or number, followed by a pipe and tab symbols.
+   Examples:
+   E|---0-1-3---
+   B|---3-3-4---
+   G|-----------
+   D|-----------
+   A|-----------
+   e|-----------
+   5|-2-2--2--------|
+   6|--------3-3--3-|
+
+   Pattern idea:
+   ^\s*(?:[eBGDAE]|[1-6])\|[-0-9hpsx/\\| ]{6,}\s*$
+
+2. Numeric tab lines without a pipe:
+   Examples:
+   5 -----6-6-5-5-3--------6-6-5-5-3-----
+   6 -3-3-----------3--3-3---------------
+
+   Pattern idea:
+   ^\s*[1-6]\s+[-0-9hpsx/\\ ]{8,}\s*$
+
+3. Plain chord lines:
+   Examples:
+   F#m Em            C    Edim               Hm
+   F#sus F#7   Bm
+   C G Am F
+
+   Pattern idea:
+   chord token = [A-H](#|b)?(maj|min|m|dim|aug|sus|add)?[0-9]*(/[A-H](#|b)?)?
+   remove a line if it contains only 3+ chord tokens and separators/spaces.
+
+4. Inline bracket chords:
+   Examples:
+   [Am]text [F]text [C]text
+
+   Pattern idea:
+   remove bracket tokens like \[(chord token)\], but keep the lyric text around them.
+
+5. Chord-section headers and notes:
+   Remove lines containing approved anchors such as:
+   Акорди (варіант 2):
+   Акорди у тональності G (за джерелом 1):
+   Зміна тональності: C#
+   Краще звучить, якщо усі акорди грати з баре
+   Простіше буде зіграти, якщо використати такі акорди:
+
+Important false positives
+-------------------------
+Do not remove these only because they contain similar substrings:
+
+- German "Tabak", "Kautabak", "Tabakswolkenduft" are normal lyric words.
+- German "Stab", "Zauberstab" are normal lyric words.
+- German "griff", "ergriff", "trifft" are normal lyric words.
+- German "Riff" can be a normal word meaning reef in lyrics.
+- Ukrainian/Russian "акордом" can be a lyric word, not a chord header.
+- Alphabet songs like "A, B, C, D" are not guitar chords unless surrounded by guitar context.
+
+Efficient cleanup strategy
+--------------------------
+
+Do not browse every page or fetch every song through the public API.
+
+1. Candidate selection in D1:
+   Use SQL to select only records whose lyrics contain strong anchors or tab-looking lines.
+   This should reduce the work from all songs to a small candidate set.
+
+   Candidate LIKE anchors for lyrics and song_versions.lyrics:
+   - %Акорди%
+   - %акорди%
+   - %Аккорды%
+   - %аккорды%
+   - %тональності%
+   - %тональность%
+   - %каподастр%
+   - %капо%
+   - %баре%
+   - %перебір%
+   - %перебор%
+   - %chords%
+   - %tabs%
+   - %capo%
+   - %transpose%
+   - %barre%
+   - %E|%
+   - %B|%
+   - %G|%
+   - %D|%
+   - %A|%
+   - %e|%
+   - %5|%
+   - %6|%
+
+2. Dry-run report:
+   For each candidate, run sanitizer in dry-run mode and output:
+   - song id
+   - title
+   - country
+   - source
+   - removed line count
+   - removed line samples
+   - before/after text length
+
+3. Human review:
+   Review only the dry-run report, not the full database.
+   Add new anchors here if the report reveals another recurring pattern.
+
+4. Apply cleanup:
+   Update only changed rows:
+   - songs.lyrics
+   - songs.verified_translation if needed
+   - song_versions.lyrics
+
+5. Rebuild/search sync:
+   After DB cleanup, rebuild the search auxiliary/index if this project requires it.
+
+6. Deploy:
+   If code/scripts are changed, deploy main production after verification.
+
+Proposed implementation shape
+-----------------------------
+
+Create a script such as:
+scripts/clean_guitar_chord_garbage_remote.mjs
+
+Modes:
+- --dry-run
+- --apply
+
+The script should:
+- query candidates by SQL anchors;
+- sanitize line-by-line;
+- write a JSONL/CSV dry-run report;
+- update only records where sanitized text differs;
+- preserve audit output so rollback is possible.
+
+Root-cause fix
+--------------
+After cleaning existing data, the same sanitizer must be applied in import/repair paths,
+especially pisni.org.ua import and any generic HTML parser/importer that can ingest chord blocks.
+Otherwise the garbage will return on the next import.
+
+Cross-language inspection notes
+-------------------------------
+
+Inspection date: 2026-04-29.
+Method:
+- public production API;
+- random pass across available languages;
+- targeted search for multilingual chord/tab anchors;
+- full song fetch for each candidate before judging the line.
+
+Important result:
+Broad musical words are too noisy as standalone anchors. They are useful only for candidate
+selection, not for deletion. Deletion must require one of:
+- tab-looking line;
+- chord-only line;
+- bracket chord tokens;
+- explicit chord-section header;
+- explicit guitar instruction line.
+
+Confirmed or likely real garbage beyond the first Ukraine sample
+----------------------------------------------------------------
+
+Ukraine:
+
+11. pisniua_12127 - "Мазури"
+    Garbage type: chord-section marker.
+    Example:
+    Акорди (3)
+
+12. pisniua_84777 - "Дощ"
+    Garbage type: chord instruction.
+    Example:
+    Деякі використані тут акорди:
+
+13. pisniua_5383302 - "Човен"
+    Garbage type: chord header plus numeric tablature block.
+    Examples:
+    Акорди:
+    1|------0--------------|------0------------|-------------------|----------0--|
+    2|----------3---1p3----|----------3---3----|------1-------1----|-------------|
+    3|----2---2---2-----2--|----2---2---2---2--|----------0--------|------1------|
+    4|---------------------|-------------------|----2---2---2---2--|----2---2----|
+    5|--0------------------|-------------------|--3----------------|-------------|
+    6|---------------------|--1----------------|-------------------|--0----------|
+
+14. pisniua_15127 - "Правда"
+    Garbage type: chord-section header with tonality.
+    Example:
+    Акорди (варіант 2, в тональності "Am"):
+
+15. pisniua_88373 - "Капелюх"
+    Garbage type: chord-section header.
+    Example:
+    Акорди (варіант 1):
+
+16. pisniua_6178 - "Марічка"
+    Garbage type: chord-section header.
+    Example:
+    Акорди:
+
+17. pisniua_36121 - "Смерічки"
+    Garbage type: chord-section header.
+    Example:
+    Акорди:
+
+18. pisniua_91383 - "Націоналісти"
+    Garbage type: multiple chord-section headers with tonalities.
+    Examples:
+    Акорди у тональності Am:
+    Акорди у тональності Dm:
+
+19. pisniua_8147705 - "Вазелін"
+    Garbage type: tonality instruction.
+    Example:
+    У тональності, нижчій 2 півтони
+
+20. pisniua_2264379 - "На небі"
+    Garbage type: chord and tonality section markers.
+    Examples:
+    Акорди:
+    В тональності Am
+    В тональності Em
+    Оригінальна тональність
+
+21. pisniua_6940 - "Гей, браття опришки"
+    Garbage type: chord-section headers with tonalities.
+    Examples:
+    Акорди (у тональності Em):
+    Акорди (у тональності Hm):
+
+22. pisniua_2275158 - "Оченька мої чорні"
+    Garbage type: tonality section marker.
+    Example:
+    Інші тональності
+
+23. pisniua_8156409 - "Квітка душа"
+    Garbage type: chord attribution / original tonality note.
+    Examples:
+    Акорди від Rostik Natkha
+    = оригінальна тональність.
+
+24. pisniua_2360818 - "У мене немає дому"
+    Garbage type: capo instruction.
+    Examples:
+    Акорди: капо на 4 ладі
+    = оригінальна тональність
+
+25. pisniua_526949 - "Люди, як кораблі"
+    Garbage type: simplified chord/capo instruction.
+    Example:
+    Простіші акорди, з капо на 3 ладі
+
+26. pisniua_416634 - "Дякую"
+    Garbage type: guitar tab block.
+    Examples:
+    E||----------------------|-----------------------|----------------------|
+    G||-----------------0----|--------0---------0----|-----------------0----|
+    D||-------2--------------|--2--3-----------------|-------2--------------|
+    A||--3-------------------|-----------------------|--3-------------------|
+    E||----------------------|-----------------------|----------------------|
+
+Russian / mixed-source:
+
+27. apcw_gospoda - "Господа офицеры..."
+    Garbage type: standalone chord-section header.
+    Example:
+    Аккорды
+
+Italian song with Russian source note:
+
+28. apww2_brigata - "La Brigata Garibaldi"
+    Garbage type: source/service note about soundtrack and chords.
+    Example:
+    там же фонограмма и аккорды
+
+False positives discovered during cross-language inspection
+----------------------------------------------------------
+
+Do not use these as deletion anchors by themselves:
+
+- "аккорды" / "акорд" as a normal lyric word:
+  Examples include "Позабытой сонаты аккорды", "Так берет аккорды он",
+  "Аккорды великой всесильной любви". These are lyric lines unless the line is a
+  standalone header like "Аккорды" or appears near chord/tab structure.
+
+- "акорди" as a normal lyric word:
+  Keep lines like "Щоб летіла акордом вона" unless they are section headers or
+  accompanied by chord/tab lines.
+
+- "баре" in Russian:
+  Often means "in a bar" or "masters/lords", not guitar barre.
+  Examples: "Сидим мы в баре...", "Гой! вы сгиньте, баре знатные."
+
+- "barre" in French:
+  Usually means helm/bar/rail in sea songs, not guitar barre.
+  Examples: "prends la barre", "tenir la barre".
+
+- "capo" in Italian:
+  Often means head/chief, not capo device.
+
+- "guitar", "gitarre", "gitara":
+  Often normal lyric content about a guitar. Do not delete unless the line is an
+  instruction/header or tab/chord structure.
+
+- "transpose":
+  Can be a normal English verb in lyrics. Do not delete without music-service context.
+
+- Short programming words like "var":
+  Too noisy in Scandinavian/Romance lyrics. Do not use standalone.
+
+Revised deletion rule
+---------------------
+
+Candidate search may use broad anchors, but deletion should be conservative:
+
+1. Always delete complete tab lines:
+   - E|..., B|..., G|..., D|..., A|..., e|...
+   - 1|..., 2|..., 3|..., 4|..., 5|..., 6|...
+   - numeric tab lines like "5 -----6-6-5-5-3-----"
+
+2. Delete chord-only lines:
+   - lines made almost entirely of 3+ chord tokens such as "F#m Em C Edim Hm";
+   - allow separators/spaces, but no normal lyric words.
+
+3. Delete explicit chord-section headers:
+   - "Акорди:"
+   - "Акорди (варіант 1):"
+   - "Акорди (варіант 2, в тональності \"Am\"):"
+   - "Аккорды" only when the whole line is a header.
+   - "Chords:", "Acordes:", "Accordi:", "Akkorde:", "Akordy:".
+
+4. Delete explicit guitar-service instruction lines:
+   - "Акорди: капо на 4 ладі"
+   - "Простіші акорди, з капо на 3 ладі"
+   - "Краще звучить, якщо усі акорди грати з баре"
+   - "Зміна тональності: C#"
+   - "Оригінальна тональність"
+   - "Інші тональності"
+
+5. Do not delete broad musical words unless they match one of the above structures.
+
+Other garbage candidates found outside chord search
+---------------------------------------------------
+
+Inspection date: 2026-04-29.
+Method:
+- 100 random songs across the whole public catalog: no suspicious lines found by current detector;
+- targeted public search for URL/HTML/source residue anchors found the following examples.
+
+These are not all necessarily deletion-approved yet. They are examples for human review.
+
+URL/source residue:
+
+29. sm_2997 - "To głupstwo" (pl)
+    Example:
+    (wersja Jurandów - kontynuacja nagrania: http://staremelodie.pl/piosenka/2992/Ja_wciaz_mam_pecha)
+
+30. vla_faehrt_ein_schiff - "Fährt ein Schiff" (de)
+    Example:
+    http://www.museenkoeln.de/ausstellungen/nsd_0404_edelweiss/db_index.html
+
+31. vla_profaschistische_version_der_internationalen - "Profaschistische Version der Internationalen" (de)
+    Example:
+    http://www.museenkoeln.de/ausstellungen/nsd_0404_edelweiss/db_index.html
+
+32. sm_700 - "Ameryka (wersja Fogg'a i Jarugi)" (pl)
+    Example:
+    (Wersja z http://www.bibliotekapiosenki.pl/Ameryka)
+
+33. vla_am_golf_von_biskaya_edelweisspiratenversion - "Am Golf von Biskaya (Edelweißpiratenversion)" (de)
+    Example:
+    Quelle:  http://www.museenkoeln.de/ausstellungen/nsd_0404_edelweiss/db_index.html
+
+34. vla_niene_geits_so_schoen_u_lustig - "Niene geit´s so schön u lustig" (de)
+    Example:
+    nach :    http://www.edimuster.ch/baernduetsch
+
+35. sm_3646 - "Wiązanka pieśni legionowych cz. I, II, III i IV" (pl)
+    Example:
+    Więcej: http://www.bibliotekapiosenki.pl/utwory/Armata_(piesn_legionowa)/tekst
+
+36. vla_drum_brueder_stosst_die_glaeser_an_reservemann - "Drum Brüder‚ stoßt die Gläser an (Reservemann)" (de)
+    Example:
+    (  http://www.lwl.org/medienarchiv_web/liederblaetter?id=181693  )
+
+37. pisniua_442333 - "Ой, служив я в пана..." (uk)
+    Example:
+    Акорди від Bohdanko (www.pisni.org.ua):
+
+38. aplibrc_zavody - "Гимн Коминтерна" (ru)
+    Example:
+    Расшифровка фонограммы советской эпохи http://download.sovmusic.ru/m/zavodivs.mp3
+
+HTML entity residue:
+
+39. rpp_9aa0679820c71ba5 - "Залётная" (ru)
+    Example:
+    Увидала кузнеца&nbsp;-
+
+40. rpp_bad8332498e6e519 - "Добрый жук" (ru)
+    Example:
+    Старика, добряка&nbsp;-
+
+41. rpp_4d0f00121e73b3e2 - "Ростов-город" (ru)
+    Examples:
+    Наш город&nbsp;- слава новая,
+    Наш город&nbsp;- жизнь суровая,
+
+42. rpp_5fdbf5ab0c5e3ee9 - "Армия, вперёд!" (ru)
+    Example:
+    За нашу жизнь счастливую&nbsp;-
+
+43. rpp_d902d05a0fbf7577 - "Чунга-чанга" (ru)
+    Examples:
+    Чунга-чанга! Лето&nbsp;- круглый год!
+    Наше счастье постоянно&nbsp;-
+
+44. rpp_12adaabd04129198 - "Песенка мамонтёнка" (ru)
+    Examples:
+    Меня не пугают ни волны, ни ветер,&nbsp;-
+    &laquo;Я здесь, я приехал!&raquo;,&nbsp;- я ей закричу.
+
+45. rpp_77a423ca4621f9d6 - "Здравствуй, юность" (ru)
+    Examples:
+    Здравствуй, праздник, праздник юности&nbsp;– фестиваль.
+    Мы поём, и наша песня пусть звенит не только здесь&nbsp;-
+
+Possible false positives from targeted source/UI search:
+
+46. mnf_lloyd_songs_roundingthehorn.html - "Rounding the Horn / The Gallant Frigate Amphitrite" (en)
+    Example:
+    Note: The italicised verses are from a handwritten copy in the Green/Larner
+    Comment: likely a legitimate note, not necessarily garbage. Needs review.
+
+47. vla_treibt_der_champagner_don_juan - "Treibt der Champagner (Don Juan)" (de)
+    Example:
+    zählt mein Register
+    Comment: false positive from "register"; do not use "register" as a cleanup anchor.
+
+48. vla_heute_gehn_wir_noch_nicht_weg - "Heute gehn wir noch nicht weg" (de)
+    Example:
+    scheißen wir in sein Register
+    Comment: false positive from "register"; do not use "register" as a cleanup anchor.
+
+Additional deletion rules for non-chord residue
+-----------------------------------------------
+
+1. HTML entities:
+   Replace harmless entities inside lyrics instead of deleting the line:
+   - &nbsp; -> normal space
+   - &laquo; -> «
+   - &raquo; -> »
+   - &amp; -> &
+   This is normalization, not line deletion.
+
+2. URL/source lines:
+   Do not delete every line containing a URL automatically. Some source notes may be useful.
+   For cleanup candidates, report lines containing:
+   - http://
+   - https://
+   - www.
+   - "Quelle:"
+   - "Wersja z"
+   - "Więcej:"
+   - "nach :"
+   The dry-run report must show these for manual approval.
+
+3. Unsafe source/UI anchors:
+   Do not use "register" as a cleanup anchor.
+
+HTML entity normalization candidates
+------------------------------------
+
+Inspection date: 2026-04-29.
+Method:
+- targeted public search for common HTML entity names;
+- full song fetch for candidates;
+- no DB changes.
+
+Entities found in the inspected candidate set:
+- &nbsp;  count in inspected hits: 97
+- &laquo; count in inspected hits: 148
+- &raquo; count in inspected hits: 146
+
+Meaning:
+- &nbsp; is a non-breaking space. It should become a normal space.
+- &laquo; is «.
+- &raquo; is ».
+
+This class should be normalized in place, not removed line-by-line.
+
+Replacement rules to approve:
+- &nbsp; -> regular space
+- &laquo; -> «
+- &raquo; -> »
+- &amp; -> &
+- &quot; -> "
+- &apos; -> '
+- &#NNN; -> decode numeric HTML entity
+- &#xHH; -> decode hex HTML entity
+
+Confirmed examples:
+
+49. rpp_9aa0679820c71ba5 - "Залётная" (ru)
+    Example:
+    Увидала кузнеца&nbsp;-
+    Proposed normalized text:
+    Увидала кузнеца -
+
+50. rpp_bad8332498e6e519 - "Добрый жук" (ru)
+    Example:
+    Старика, добряка&nbsp;-
+    Proposed normalized text:
+    Старика, добряка -
+
+51. rpp_4d0f00121e73b3e2 - "Ростов-город" (ru)
+    Examples:
+    Наш город&nbsp;- слава новая,
+    Наш город&nbsp;- жизнь суровая,
+
+52. rpp_d902d05a0fbf7577 - "Чунга-чанга" (ru)
+    Examples:
+    Чунга-чанга! Лето&nbsp;- круглый год!
+    Слушать песню &laquo;Чунга-чанга&raquo; композитора Владимира Шаинского ...
+    Comment:
+    The entity normalization is safe, but the "Слушать песню..." line is also a possible
+    source/site note and should be separately reviewed for deletion.
+
+53. rpp_12adaabd04129198 - "Песенка мамонтёнка" (ru)
+    Examples:
+    Меня не пугают ни волны, ни ветер,&nbsp;-
+    &laquo;Я здесь, я приехал!&raquo;,&nbsp;- я ей закричу.
+
+54. rpp_d83b6bcdebfd16a8 - "Штурвальный с “Марата”" (ru)
+    Examples:
+    В разбитом окопе штурвальный с &laquo;Марата&raquo;
+    -&nbsp;Стой на смерть, без страха, орёл молодой!
+
+55. rpp_77a423ca4621f9d6 - "Здравствуй, юность" (ru)
+    Examples:
+    Здравствуй, праздник, праздник юности&nbsp;– фестиваль.
+    Мы поём, и наша песня пусть звенит не только здесь&nbsp;-
+
+56. rpp_993a66d6c6c16d9b - "Песенка Львёнка и Черепахи" (ru)
+    Examples:
+    -&nbsp;Не &laquo;сижу&raquo;, а &laquo;лежу&raquo;...
+    -&nbsp;И всё-таки надо петь&nbsp;- &laquo;лежу&raquo;!
+
+57. rpp_fb87f94728db9feb - "Хас-Булат удалой" (ru)
+    Example:
+    Существует предположение, что музыку песни &laquo;Хас-Булат удалой&raquo; ...
+    Comment:
+    This contains both entities and a long explanatory note. Entity decoding is safe;
+    note deletion requires separate approval.
+
+Rule:
+HTML entity decoding should be a global text normalization step for:
+- songs.lyrics
+- songs.verified_translation
+- song_versions.lyrics
+It should not delete the row or line by itself.
+
+Estonian repeat notation candidates
+-----------------------------------
+
+Inspection date: 2026-04-29.
+Method:
+- full public pass over Estonian language catalog;
+- checked 292 Estonian songs;
+- found many lines with the notation :,: ... :,:.
+
+Meaning to approve:
+The notation appears to mark repeated text, usually "repeat twice". It should eventually be
+represented structurally, but until the UI supports repeat metadata, it should be normalized
+consistently rather than treated as garbage deletion.
+
+Important forms found:
+
+1. Single-line repeated segment:
+   :,: Prii olen ma! :,:
+
+2. Multi-line repeated segment:
+   :,: Konn astus usinasti mööda teed, ja-jaa, ja-jaa, :,:
+   or:
+   :,: me röövisime rikkaid ja vaeseid
+   ja neidude südameid ka. :,:
+
+3. Refrain marker plus repeat notation:
+   Refr. :,: Läks aga metsa mängima,
+   läks aga laande lauluga. :,:
+
+4. Repeat notation embedded inside a line:
+   Kord mõtetes istus :,: üks emake nii, :,:
+
+5. Shortened repeat:
+   Refr. :,: Läks aga jne. :,:
+   Refr. :,: Ei paremat .... :,:
+
+Representative examples:
+
+58. ee_tlu_063_0cb219248b - "Konn astus usinasti mööda teed" (et)
+    Examples:
+    :,: Konn astus usinasti mööda teed, ja-jaa, ja-jaa, :,:
+    :,: Nägi konn : on üsna tore ball, ohoo, ohoo, :,:
+    :,: Sõnas hiir : Ei meeldi mul see jutt,
+    mh-mm, mh-mm, :,:
+
+59. ee_tlu_065_00cd9e9351 - "Kord läksid kolm sõpra" (et)
+    Examples:
+    :,: kord läksid kolm sõpra üle Koivamaa jõe. :,:
+    :,: ja sõprade majja seal viis nende tee. :,:
+    :,:üks võttis tal rätiku silmade pealt. :,:
+
+60. ee_tlu_067_9bd579d5f6 - "Kord mõtetes istus üks emake nii" (et)
+    Examples:
+    Kord mõtetes istus :,: üks emake nii, :,:
+    Ta kodust läks välja :,: nii haledalt mult, :,:
+
+61. ee_tlu_069_2e8950897a - "Kord olin ma röövlite päälik" (et)
+    Examples:
+    :,: me röövisime rikkaid ja vaeseid
+    ja neidude südameid ka. :,:
+    :,: me panime voolama vered,
+    end rikkasti tasus me vaev. :,:
+
+62. ee_tlu_093_5c7ec91980 - "Kungla rahvas" (et)
+    Examples:
+    Refr. :,: Läks aga metsa mängima,
+    läks aga laande lauluga. :,:
+    Refr. :,: Läks aga jne. :,:
+
+63. ee_tlu_128_c044937888 - "Ma vaatan paadist kiikriga" (et)
+    Examples:
+    Refr. :,: Ei paremat ole kuskil maal,
+    Kui suisel ajal Saaremaal. :,:
+    Refr. :,: Ei paremat .... :,:
+
+64. ee_tlu_136_321599a080 - "Mats alati on tubli mees" (et)
+    Examples:
+    :,: Ei kummarda ta saksa ees,
+    Ei tõmba küüru selga. :,:
+    :,: Ja kui see laul meil korda lä'eb,
+    Ei meie kimpu jää. :,:
+
+65. ee_tlu_160_bd33222318 - "Mu isamaa on minu arm" (et)
+    Examples:
+    :,: Sull' laulan ma, mu ülem õnn,
+    mu õitsev Eestimaa! :,:
+    :,: su õnn ja rõõm mind rõõmsaks teeb, :,:
+
+Proposed temporary normalization options for Estonian repeats
+------------------------------------------------------------
+
+Option A: Preserve notation but standardize spacing.
+Examples:
+- ":,:text:,:" -> ":,: text :,:"
+- "Refr. :,:text" -> "Refr. :,: text"
+
+Pros:
+- Low risk.
+- Does not invent UI behavior.
+- Keeps source meaning.
+
+Option B: Convert to explicit text marker.
+Examples:
+- ":,: Prii olen ma! :,:" -> "Prii olen ma! [повторить 2 раза]"
+- multi-line block gets one marker after the closing ":,:"
+
+Pros:
+- Easier for users to understand.
+Cons:
+- Adds Russian UI text inside Estonian lyrics.
+- Not ideal for multilingual site.
+
+Option C: Future structured representation.
+Store repeat spans in metadata, render with UI.
+
+Pros:
+- Correct long-term model.
+Cons:
+- Requires product/UI work.
+
+Recommended for now:
+Do not remove :,: notation as garbage.
+For current cleanup, only standardize spacing and report all repeat blocks in dry-run.
+Later, implement a structured repeat marker.
+
+Current approved cleanup semantics after repeat UI implementation
+-----------------------------------------------------------------
+
+The site now supports a visual repeat marker. Therefore repeat notation is no longer a
+"future" cleanup item. It must be converted to structured repeat rendering, not deleted.
+
+Do not delete these repeat markers as garbage:
+- :,: ... :,:
+- x2
+- ×2
+- 2 раза
+- 2 рази
+- два раза
+- twice
+- repeat / repeats / repeated
+- повторить
+- повторяется
+- повторится
+- повторити
+- повторюється
+- повториться
+- kordub
+- korrata
+- last line repeats
+- previous line repeats
+- последняя строка повторяется
+- последняя строка повторится
+- последнюю строку повторить
+- остання строка повторюється
+- останній рядок повторюється
+
+Approved behavior:
+1. :,: opening and closing markers define a repeated span.
+   - Remove the literal :,: markers from visible lyrics.
+   - Render the affected line/block with the right-side repeat bar and x2 marker.
+   - Preserve normal colons inside lyrics, e.g. "nagi konn : on ..." or "sõnas hiir:".
+
+2. Chorus/refrain and repeat are separate entities.
+   - "Припев. (2 раза)" means chorus + repeat x2.
+   - "Refr. :,: ... :,:" means refrain/chorus + repeat x2.
+   - Do not convert chorus into repeat or repeat into chorus.
+   - If both are present, show chorus marker on the left and repeat marker on the right.
+
+3. Textual repeat instructions should become structured repeat metadata/rendering.
+   Examples:
+   - "Припев. (2 раза)" -> chorus block with repeatCount = 2.
+   - "Chorus x2" -> chorus block with repeatCount = 2.
+   - "last line repeats" -> previous lyric line gets repeatCount = 2; the instruction line is removed.
+   - "последняя строка повторяется" -> previous lyric line gets repeatCount = 2; the instruction line is removed.
+
+4. Repeat markers are not deletion anchors.
+   They are semantic markup. Deleting them without adding repeat metadata loses song structure.
+
+5. Cleanup output should distinguish actions:
+   - delete: guitar tabs, chord-only lines, chord-section headers, guitar instructions.
+   - normalize: HTML entities and spacing.
+   - convert to structure: repeat markers and textual repeat instructions.
+   - review manually: source notes, URL notes, explanatory notes.
+
+Current approved replacement/normalization map
+----------------------------------------------
+
+HTML entities:
+- &nbsp; -> regular space
+- &laquo; -> «
+- &raquo; -> »
+- &quot; -> "
+- &apos; -> '
+- &#NNN; -> decoded numeric Unicode character
+- &#xHH; -> decoded hexadecimal Unicode character
+
+Spacing/punctuation around entities:
+- After entity decoding, collapse repeated spaces.
+- Convert non-breaking spaces to normal spaces.
+- Do not delete punctuation just because it was adjacent to an entity.
+
+Repeat notation:
+- :,: text :,: -> text rendered as repeat x2.
+- Refr. :,: text :,: -> chorus/refrain rendered as repeat x2.
+- x2 / ×2 / 2 раза / 2 рази / два раза / twice near a section marker -> repeatCount = 2.
+- "last line repeats" and equivalents -> previous line rendered as repeat x2.
+
+Explicitly unsafe anchors / do not use globally
+-----------------------------------------------
+
+- "бой:"
+- "бій:"
+
+These are not safe cleanup anchors because war/military themed songs can contain these words
+as real lyrics or headings. They must not be used for automatic deletion.
+
+Real-site audit addendum: repeat, entity, and guitar delimiters
+---------------------------------------------------------------
+
+Audit date: 2026-04-29.
+Method:
+- targeted public API search for repeat expressions: x2, 2 раза, 2 рази, повтор*, last line repeats,
+  repeat twice, twice, chorus x2;
+- targeted public API search for HTML entities;
+- targeted public API search for guitar/chord words across Ukrainian, Russian, English, French,
+  German, Italian, Polish, and Estonian examples.
+
+This section is based on real production lines. Do not expand these rules by guessing without
+adding another real example.
+
+Confirmed repeat delimiters and punctuation forms
+-------------------------------------------------
+
+1. Estonian colon-comma repeat markers.
+   Action: convert to structured repeat x2; remove only the literal markers.
+
+   Real examples:
+   - ee_tlu_063_0cb219248b "Konn astus usinasti mööda teed"
+     L1: :,: Konn astus usinasti mööda teed, ja-jaa, ja-jaa, :,:
+     L13-L14:
+       :,: Sõnas hiir : Ei meeldi mul see jutt,
+       mh-mm, mh-mm, :,:
+
+   - ee_tlu_001_9d7be2c49e "Alati olen mina lustilik, lustilik"
+     L4-L5:
+       :,:et tema küll natuke uimastav, joovastav,
+       sellest ei ole suurt lugu.:,:
+
+   - ee_tlu_017_4428aef831 "Esimene tüürimees ei raatsi iial juua"
+     L3-L4:
+       Refr. :,:Jää jumalaga Mann, sest tuules oli ramm
+       ja reisusihiks oli meile Rotterdam.:,:
+
+   Important delimiter variants confirmed:
+   - ":,: text :,:"
+   - ":,:text:,:"
+   - ":,: text" on one line and "text :,:" on a later line
+   - "Refr. :,:text"
+   - punctuation next to the closing marker, e.g. "lugu.:,:" and "Rotterdam.:,:"
+
+   Safety:
+   - Preserve normal colons inside lyric text. Example:
+     "Nägi konn : on üsna tore ball" and "sõnas hiir:" are lyric punctuation, not deletion anchors.
+
+2. Ukrainian/Russian/Latin x2 around chorus/refrain markers.
+   Action: keep chorus/refrain; convert x2 to structured repeat x2.
+
+   Real examples:
+   - pisniua_112323 "Лента за лентою"
+     L4: Приспів (x2):
+     L11: Приспів (x2):
+     L17: Приспів (x2):
+
+   - pisniua_2264379 "На небі"
+     L73: Приспів. (x2)
+
+   - pisniua_418030 "Не бійся жити"
+     L40: Приспів.  (x2) ...
+
+   - pisniua_921484 "Варто чи ні"
+     L49: Приспів 2. (x2)**
+
+   - cdf_gens-du-pays "Gens du pays"
+     L24: (Refrain x2)
+
+   - cdf_meunier-tu "Meunier, tu dors"
+     L16: (Refrain x2)
+
+   - mnf_steeleye.span_songs_sheepcrookandblackdog.html
+     L1: Chorus (x2):
+
+   Confirmed punctuation forms:
+   - "Приспів (x2):"
+   - "Приспів. (x2)"
+   - "Приспів.  (x2) ..."
+   - "Приспів 2. (x2)**"
+   - "(Refrain x2)"
+   - "Chorus (x2):"
+
+   Safety:
+   - The word "Приспів", "Припев", "Refrain", "Chorus", "Refr." must not be deleted.
+   - These words define chorus/refrain structure. Only the repeat suffix is converted to repeatCount=2.
+
+3. x2 on ordinary lyric lines.
+   Action: remove the literal x2 marker and render that line/block as repeat x2.
+
+   Real examples:
+   - pisniua_2264379 "На небі"
+     L75: Літаю і знов, і знов... (x2)
+
+   - pisniua_224379 "Із полону"
+     L12: То повертай до Ізмаїлу!"   | (x2)
+     L24: Землі православні".        | (x2)
+     L39: Козаки своїх рубали.       | (x2)
+     L46: Братців дорогеньких.       | (x2)
+
+   - pisniua_621940 "На святого Яна"
+     L3: Ей Яне, Яне, святий Яне! (x2)
+     L7: Ей Яне, Яне, святий Яне! (x2)
+
+   Confirmed punctuation forms:
+   - "text (x2)"
+   - "text   | (x2)"
+   - quoted text followed by "| (x2)"
+   - exclamation mark before "(x2)"
+
+4. English repeat instructions.
+   Action: convert only when the line is an instruction/header, not normal lyric prose.
+
+   Real examples to convert:
+   - mnf_martin.carthy_songs_stainesmorris.html "Staines Morris"
+     L9: Chorus (twice after each verse):
+     L39: (repeat first verse)
+
+   - mnf_folk_songs_thebattleofwaterloo.html
+     L41: (repeat first verse)
+
+   - mnf_folk_songs_drinkoldenglanddry.html
+     L15: (last line of chorus repeats last line of each verse)
+
+   - mnf_folk_songs_yellowonthebroom.html
+     L9: Chorus (repeats the last line of each verse):
+
+   - mnf_folk_songs_theramblingirishman.html
+     L13: Chorus (twice after each verse):
+     version_1 L43: (repeat first verse)
+
+   Confirmed instruction forms:
+   - "Chorus (twice after each verse):"
+   - "(repeat first verse)"
+   - "(last line of chorus repeats last line of each verse)"
+   - "Chorus (repeats the last line of each verse):"
+
+   False positives found:
+   - "Well, look her over once or twice"
+   - "Oh, I repeat"
+   - "And another man twice as well."
+   - "Not once or twice, but ten times over;"
+   These are normal lyrics and must not become repeat markers.
+
+5. x2 inside guitar/chord blocks.
+   Action: do not treat these as lyric repeats by themselves. Clean the guitar block while preserving
+   any chorus marker if present.
+
+   Real examples:
+   - pisniua_2264379 "На небі"
+     L40: Вступ: Am Dm F G Am (x2)
+     L78: Вступ: Em Am C D Em (x2)
+     L80: Приспів: Em Am C D Em (x2)
+     L82: H Em C G (x2) | H
+     L83: Закінчення: С D Em (x2)
+
+   - pisniua_224379 "Із полону"
+     L1: Вступ:  E Am Em E Am H Em  (x2)
+     L6: Am         H   Em        | (x2)
+     L31: Hm      C#  F#m                 | (x2)
+     L48: Програш:  E Am Em E Am H Em  (x2)
+
+   - pisniua_526949 "Люди, як кораблі"
+     L14: Програш: Gm Cm F F7 F6* (x2)
+     L62: Програш: Em Am D D7 D6* (x2)
+
+   Rule:
+   - If a line is mostly chord tokens or starts with guitar arrangement labels like "Вступ:",
+     "Програш:", "Закінчення:" and contains chord tokens, delete/clean it as guitar garbage.
+   - If the line also contains "Приспів"/"Припев"/"Chorus"/"Refrain", preserve the section marker
+     and convert x2 to repeatCount=2; remove the chord tokens.
+   - Never delete the chorus word itself.
+
+Real-site audit addendum: HTML/service markup
+---------------------------------------------
+
+Confirmed entity counts in targeted public search:
+- &nbsp; 97 hits
+- &laquo; 148 hits
+- &raquo; 146 hits
+
+Confirmed entity examples:
+- rpp_9aa0679820c71ba5 "Залётная"
+  L3: Увидала кузнеца&nbsp;-
+  Action: "Увидала кузнеца -"
+
+- rpp_12adaabd04129198 "Песенка мамонтёнка"
+  L12: &laquo;Я здесь, я приехал!&raquo;,&nbsp;- я ей закричу.
+  Action: «Я здесь, я приехал!», - я ей закричу.
+
+- rpp_993a66d6c6c16d9b "Песенка Львёнка и Черепахи"
+  L5: -&nbsp;Не &laquo;сижу&raquo;, а &laquo;лежу&raquo;...
+  Action: - Не «сижу», а «лежу»...
+
+- rpp_d83b6bcdebfd16a8 "Штурвальный с “Марата”"
+  L7: В разбитом окопе штурвальный с &laquo;Марата&raquo;
+  Action: В разбитом окопе штурвальный с «Марата»
+
+Safety:
+- Decode entities globally, but do not delete the containing line solely because it has an entity.
+- Long source/explanatory lines can contain entities. Decode first; deletion of the source note is
+  a separate manual-review decision.
+
+Real-site audit addendum: guitar false positives
+------------------------------------------------
+
+The following words are not safe deletion anchors by themselves:
+- capo
+- barre
+- gitara
+- akordy
+- akkorde
+- accordi
+- chwyty
+- guitar
+
+Real false positives:
+- cdf_bella-ciao-version-des-mondines-444
+  L11: 3 - Il capo in piedi col suo bastone
+  This is Italian lyric text, not a capo instruction.
+
+- vla_brueder_lasst_die_sorgen_fahren
+  L36: (Da capo)
+  This may be a musical repeat instruction, not guitar garbage; review separately.
+
+- cdf_eh-garcon-prends-la-barre
+  L1: EH GARÇON, PRENDS LA BARRE
+  French "barre" is a normal word, not guitar barre.
+
+- sm_383 "Moja gitara"
+  L41: Ta gitara, choć tylko jest z drzewa
+  "gitara" is lyric content.
+
+- vla_ich_denke_dein_wenn_durch_den_hain_andenken
+  L4: Akkorde schallen
+  "Akkorde" is lyric content.
+
+- apfkpol_tancerze
+  L26: akordy słychać ostatnie.
+  "akordy" is lyric content.
+
+Deletion is approved only when there is structural guitar evidence:
+- standalone chord-section header, e.g. "Акорди:", "Акорди (варіант 2):", "Аккорды";
+- chord-only line, e.g. "F#m Em            C    Edim               Hm";
+- tab/fingering line, e.g. "1|------0--------------|";
+- guitar arrangement instruction, e.g. "Краще звучить, якщо усі акорди грати з баре";
+- chord/progression line with labels like "Вступ:", "Програш:", "Закінчення:".
+
+Confirmed guitar deletion examples:
+- pisniua_650252 "Алкоголь"
+  L1: 5|-2-2--2--------5-5--5--------|
+  L2: 6|--------3-3--3--------5-5--5-|
+  L4: Краще звучить, якщо усі акорди грати з баре
+
+- pisniua_814358 "Історія"
+  L26: Акорди (варіант 2):
+  L29: F#m Em            C    Edim               Hm
+
+- pisniua_5383302 "Човен"
+  L33: Акорди:
+  L36: 1|------0--------------|------0------------|-------------------|----------0--|
+
+- apcw_gospoda "Господа офицеры..."
+  L35: Аккорды
+
+Operational cleanup order
+-------------------------
+
+1. Decode HTML entities.
+2. Detect and preserve/convert structural repeat markers.
+3. Detect chorus/refrain markers; never delete the words "Припев", "Приспів", "Chorus",
+   "Refrain", or "Refr." by themselves.
+4. Remove guitar/tab/chord garbage only when structural guitar evidence exists.
+5. Report URL/source/explanatory notes for review; do not mass-delete them by URL alone.
+
+2026-04-30 addendum: remaining real chord garbage audit
+-------------------------------------------------------
+
+Scope:
+- Read-only SQL/site inspection after the first cleanup pass.
+- No D1 writes in this step because the daily D1 rows-written limit is exhausted.
+- Inspection was not limited to Ukraine. Real remaining examples also appeared in Soviet/Russian
+  imported sections and Telegram-imported records. Broad searches in German/English/French produced
+  many false positives, so the cleanup must be structural, not word-based.
+
+Title cleanup rule:
+- Some bad records have a chord progression as the song title.
+- Replace the title only when the title is mostly/all chord tokens: at least 2 chord tokens and at
+  least 75-80% of title tokens are chords.
+- New title = first non-empty lyric line after decoding HTML and skipping chord-only lines,
+  tab lines, source lines, chorus-only markers, and repeat instructions.
+- Do not use naive SQL/title anchors like "% Am %" or "% Em %" as deletion rules. In German and
+  English, "am" and "em" are normal text and create massive false positives.
+
+Confirmed title example:
+- pisniua_124323
+  Bad title: Em Am G H7
+  First real lyric line: Я йшов по воді і назад озирався
+  Action: title becomes "Я йшов по воді і назад озирався"; chord-only lines are removed from lyrics.
+
+New chord/token forms confirmed in real records:
+- Roman-position chords:
+  H7(II), C7(III), A(V), C#m(IV), G#(IV), G(III), Em(VII), D(V)
+- Extended/add/sus/dim/maj forms:
+  Am(add9), Hdim, Edim, Gm7, C9/7, F7M, Dsus2, Esus4, F6, F7, F6*, F-5/6*
+- Slash/bass forms:
+  Dm/A, bass: E F# G# A
+- Mixed/dirty spelling:
+  C D H7 Еm where Е may be Cyrillic, C Em Am F С Em Am F where С may be Cyrillic,
+  G#dіm/G#dім where the "i" may be Latin or Cyrillic-looking.
+- Repeat/count suffixes on arrangement lines:
+  (2), (4), (5), (x12), 4x, двічі.
+
+Confirmed real garbage examples:
+- pisniua_225879 "На Різдво Христове"
+  Вступ: Dm C Dm
+
+- pisniua_815116
+  Gm Dm/A Gm G#dіm A7 Dm
+
+- apstud_gimnpolozit
+  D G
+  E Am
+
+- pisniua_25457
+  Вступ: C Am C H Em
+
+- pisniua_214495
+  Вступ: Dm A7 (2)
+
+- apstud_izgnannik
+  Am Dm Am
+  E F A
+  Dm H E
+
+- pisniua_94889
+  Вступ: Em C G H7 (4)
+  Програш: Em C G H7 (2)
+  Програш: Em C G H7 (5)
+
+- pisniua_25471
+  Am Cm(III)
+  Dm(V) G(III) Am
+  Em(VII)
+
+- apstud_mai_rekl
+  Am Dm
+  G C
+  A7 Dm
+  H7 E E7
+
+- pisniua_412889
+  Вступ: G Em C D (2)
+  Програш: G Em C D (2)
+  G Em C D ...
+
+- pisniua_2539313
+  C D H7 Еm
+
+- pisniua_926786
+  Вступ: C G Am (x12)
+
+- apsestr_skolkojabrod
+  Em Am
+  H7 Em
+
+- pisniua_84171
+  Вступ: Am D H Em
+  Програш: Am H Em H
+
+- pisniua_814358
+  F#m Em C Edim Hm
+
+- pisniua_410787
+  Вступ: Am F-5/6* (2)
+  Am F6 Esus4 E7
+
+- pisniua_412583
+  A(V) A7M G(III) Dadd9 F (2)
+  A(V) C#m(IV) F G#(IV) G(III) (2)
+
+- pisniua_76969
+  Hm G D F#* Hm
+
+- pisniua_817373
+  Вступ: Em | G | Am H7
+
+- pisniua_237859
+  Вступ: | G | D H7 | Em | H7 Em H7 Em |
+  H7 Em H7 G D **
+
+- pisniua_640399
+  Am E Am E Am (bass: E F# G# A)
+
+- pisniua_9181
+  Програш (двічі): G C | D G H7 | Em Am | H7
+
+- pisniua_518545
+  Intro: D(V) Hm F#m G(III)
+  Hm F#m G(III) 4x
+
+- pisniua_3139766
+  Am Hdim E7 Am F
+  Hdim E7 Am F
+
+- pisniua_717240
+  Вступ: Gm7 C9/7 F7M Dm |
+  Gm7 A7 Dsus2 | (2)
+
+- pisniua_91281
+  C Em Am F С Em Am F
+
+- pisniua_28694
+  Hm Em Hm Em*
+  G A Esus2 G
+
+- tg3_jqqmpe
+  Am EmAm C G
+  C G F E
+  Am Em C G
+
+- tg3_js0hkz
+  Em H7
+  Em E Am
+  C F# H7 Em
+
+- pisniua_2360818
+  Вступ: Am(add9)
+  Куплет: Am(add9) Em F C Em
+  Приспів: Am Em F C Em
+
+- pisniua_38065
+  Вступ: Em G Em G C D G H7
+  Програш: Em G Em G C D G H7 (2)
+
+- pisniua_213420
+  A C D Em С D
+
+Important false-positive protections confirmed by inspection:
+- German "am" is a common word: never delete by standalone "Am/am".
+- English "I am", "among", "Emmanuel" and similar text are not chord evidence.
+- Italian/French/other normal words with "capo/capote/caporal/Caporetto" are not guitar capo
+  instructions. Treat "capo" as guitar only when it is standalone and followed by fret/number/roman.
+- Do not delete by "лад" because it hits normal words like "ладони".
+- Do not delete single-letter lyric lines or syllables like "A-a", "E", "I" as chords.
+
+Implementation requirement:
+- Cleanup must first decode entities, then detect repeat markers, then preserve chorus/refrain
+  words, then delete structural guitar garbage.
+- Chord-only title replacement must be included in reports and rollback SQL.
+- Search index rebuild is needed after D1 apply, but should be batched carefully because D1 rows-written
+  count is consumed by index rows, not only by song rows.
+
+Additional read-only spot check after title search
+-------------------------------------------------
+
+Targeted non-Ukraine query with structural chord anchors found one extra real problem and several
+important false positives:
+
+- apstud_jaopiat "Я опять прихожу на физфак..." / ru / russian_federation_1991
+  Inline chords after lyric lines:
+  Я опять прихожу на физфак, F#m,Hm,C#7,F#m
+  Растворяясь в его коридорах, Hm,E,A
+  В разговорах, каких-нибудь спорах Hm,F#m
+  Обо всем, ни о чем, просто так. D#,G#7,F# (F#m)
+  Action: remove trailing inline chord runs while preserving the lyric text before them.
+
+Title search findings:
+- pisniua_124323 is a confirmed chord-only title and must be replaced from lyrics.
+- sm_1155 "Hm, hm, oczarowałaś mnie" is not a chord-only title. "Hm, hm" is sung syllable text.
+- vla_ich_ging_einmal_spazieren_hm_hm is not a chord-only title. "hm hm" is lyric syllables.
+- vla_mein_gmuet_ist_mir_verwirret and vla_znachst_han_i_a_roas_gmacht_ins_steirische_land are
+  German spelling/title false positives from "Gm/gm"; do not clean by title substring alone.
+
+Rule added from this check:
+- Inline chord cleanup is allowed only when a lyric line ends with a compact run of 2+ chord tokens
+  separated by commas/spaces, e.g. ", F#m,Hm,C#7,F#m" or " Hm,F#m".
+- Preserve the lyric text before the chord run.

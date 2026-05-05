@@ -679,14 +679,14 @@ const LISTEN_SERVICES = [
 // We keep the viewport sizes stable for previews, while the stored asset can be "deeper"
 // to allow parallax/scroll reveal.
 const COUNTRY_BACKGROUND_VIEWPORTS = {
-  desktop: { width: 1600, height: 900 }, // 16:9
+  desktop: { width: 1600, height: 1200 }, // 4:3
   mobile: { width: 900, height: 2700 }, // tall phone background (9:27)
 };
 
 const COUNTRY_BACKGROUND_STANDARDS = {
   // Keep stored assets in the same base ratio as runtime viewports, but cap pixels
   // so uploaded camera/AI images do not become multi-megabyte data URLs in D1.
-  desktop: { width: 1280, height: 720, maxDataUrlLength: 260_000 }, // 16:9
+  desktop: { width: 1280, height: 960, maxDataUrlLength: 260_000 }, // 4:3
   mobile: { width: 720, height: 2160, maxDataUrlLength: 320_000 }, // tall phone background (9:27)
 };
 
@@ -5090,7 +5090,7 @@ function buildPrompt(kind, song) {
   return head + `\n${t("prompt.explainTask")}\n` + body;
 }
 
-const CHORUS_KEYWORDS = ["припев", "приспiв", "приспів", "chorus", "refrain", "koor"];
+const CHORUS_KEYWORDS = ["припев", "приспiв", "приспів", "рефрен", "chorus", "refrain", "refr", "refren", "koor"];
 const VERSE_KEYWORDS = ["куплет", "verse", "stanza", "salm"];
 
 function chorusMarkerLabel() {
@@ -5105,6 +5105,10 @@ function verseMarkerLabel() {
   if (uiLocale() === "uk") return "Куплет";
   if (uiLocale() === "et") return "Salm";
   return "Verse";
+}
+
+function repeatMarkerLabel() {
+  return "\u00d72";
 }
 
 function chorusFieldLabel() {
@@ -5129,6 +5133,33 @@ function isSectionToken(line, keywords) {
   return keywords.includes(normalized);
 }
 
+function repeatCountFromText(text = "") {
+  const source = String(text || "").toLowerCase();
+  if (/(?:\(|\s|^)(?:x|×)\s*2(?:\)|\s|$)/i.test(source)) return 2;
+  if (/(?:\(|\s|^)2\s*(?:раза|рази|раз|times|x|korda)(?:\)|\s|$)/i.test(source)) return 2;
+  if (/(?:\(|\s|^)(?:два\s+раза|двічі|twice|bis)(?:\)|\s|$)/i.test(source)) return 2;
+  if (/(?:\(|\s|^)(?:repeat(?:s|ed)?|повтор(?:ить|яется|ится)?|повторити|повторюється|повториться|kordub|korrata)(?:\s*2|\s+twice|\s+два\s+раза|\s+2\s*(?:раза|рази|раз|times|korda))?(?:\)|\s|$)/i.test(source)) return 2;
+  return 0;
+}
+
+function sectionTokenInfo(line, keywords) {
+  const token = normalizeSectionToken(line);
+  if (!token) return { match: false, repeatCount: 0 };
+  const withoutRepeat = token
+    .replace(/\b(?:x|×)\s*2\b/gi, " ")
+    .replace(/\b2\s*(?:раза|рази|раз|times|x|korda)\b/gi, " ")
+    .replace(/\b(?:два\s+раза|двічі|twice|bis)\b/gi, " ")
+    .replace(/\b(?:repeat(?:s|ed)?|повтор(?:ить|яется|ится)?|повторити|повторюється|повториться|kordub|korrata)(?:\s*2|\s+twice|\s+два\s+раза|\s+2\s*(?:раза|рази|раз|times|korda))?\b/gi, " ")
+    .replace(/\s+\d+$/, "")
+    .replace(/\s+/g, " ")
+    .trim();
+  const normalized = withoutRepeat || token.replace(/\s+\d+$/, "").trim();
+  return {
+    match: keywords.includes(normalized),
+    repeatCount: repeatCountFromText(line),
+  };
+}
+
 function stanzaPlainLines(stanza = {}) {
   const source = Array.isArray(stanza?.lines) ? stanza.lines : [];
   return source.map((item) => ({ ...item }));
@@ -5140,6 +5171,104 @@ function stanzaPlainText(stanza = {}) {
 
 function stanzaLineCount(stanza = {}) {
   return stanzaPlainLines(stanza).map((item) => String(item?.text || "").trim()).filter(Boolean).length;
+}
+
+function cleanRepeatNotationText(text = "") {
+  return String(text || "")
+    .replace(/\s*:,\s*:\s*/g, " ")
+    .replace(/\s+/g, " ")
+    .trim();
+}
+
+function isPreviousLineRepeatInstruction(text = "") {
+  const source = cleanRepeatNotationText(text).toLowerCase();
+  if (!source) return false;
+  const compact = source.replace(/[()[\]{}"'.:,;!?\-–—]+/g, " ").replace(/\s+/g, " ").trim();
+  if (!compact) return false;
+  return (
+    /^(?:последн(?:яя|юю)|крайн(?:яя|юю))\s+(?:строк(?:а|у)|строчк(?:а|у)|рядок)\s+(?:повтор(?:яется|ится|ить|и(?:ть)?))(?:\s*(?:2|два)\s*раза?)?$/.test(compact)
+    || /^(?:остання|останній)\s+(?:строк(?:а|у)|рядок)\s+(?:повторюється|повториться|повторити)(?:\s*(?:2|двічі|два)\s*рази?)?$/.test(compact)
+    || /^(?:last|previous)\s+line\s+(?:repeat|repeats|repeated|twice)(?:\s*(?:2|twice|times))?$/.test(compact)
+    || /^repeat\s+(?:the\s+)?(?:last|previous)\s+line(?:\s*(?:2|twice|times))?$/.test(compact)
+    || /^viimane\s+rida\s+(?:kordub|korrata)(?:\s*2\s*korda)?$/.test(compact)
+  );
+}
+
+function splitLinesIntoRepeatRuns(lines = []) {
+  const runs = [];
+  let activeType = "verse";
+  let activeLines = [];
+  const pushActive = () => {
+    const safeLines = activeLines
+      .map((item) => ({ ...item, text: String(item?.text || "").trim() }))
+      .filter((item) => item.text);
+    if (safeLines.length) runs.push({ type: activeType, lines: safeLines });
+    activeLines = [];
+  };
+  const addLine = (type, sourceLine, text) => {
+    const cleanText = cleanRepeatNotationText(text);
+    if (!cleanText) return;
+    if (activeType !== type) {
+      pushActive();
+      activeType = type;
+    }
+    activeLines.push({ ...sourceLine, text: cleanText });
+  };
+  const markPreviousLineRepeat = () => {
+    let lastLine = null;
+    if (activeLines.length) {
+      lastLine = activeLines.pop();
+      pushActive();
+    } else {
+      const lastRun = runs[runs.length - 1];
+      if (lastRun?.lines?.length) {
+        lastLine = lastRun.lines.pop();
+        if (!lastRun.lines.length) runs.pop();
+      }
+    }
+    if (!lastLine) return false;
+    runs.push({ type: "repeat", lines: [{ ...lastLine }] });
+    activeType = "verse";
+    activeLines = [];
+    return true;
+  };
+
+  for (const sourceLine of Array.isArray(lines) ? lines : []) {
+    let rest = String(sourceLine?.text || "");
+    if (isPreviousLineRepeatInstruction(rest)) {
+      markPreviousLineRepeat();
+      continue;
+    }
+    while (rest.includes(":,:")) {
+      const markerIndex = rest.indexOf(":,:");
+      addLine(activeType, sourceLine, rest.slice(0, markerIndex));
+      pushActive();
+      activeType = activeType === "repeat" ? "verse" : "repeat";
+      rest = rest.slice(markerIndex + 3);
+    }
+    addLine(activeType, sourceLine, rest);
+  }
+  pushActive();
+  return runs;
+}
+
+function appendRepeatAwareBlocks(blocks, lines, fallbackType = "verse", extra = {}) {
+  const runs = splitLinesIntoRepeatRuns(lines);
+  if (!runs.length) return false;
+  for (const run of runs) {
+    const safeLines = run.lines.map((item) => ({ ...item }));
+    const text = safeLines.map((item) => item.text).join("\n").trim();
+    if (!text) continue;
+    const repeatCount = run.type === "repeat" ? 2 : Number(extra?.repeatCount || 0) || undefined;
+    blocks.push({
+      ...extra,
+      type: fallbackType,
+      text,
+      lines: safeLines,
+      repeatCount,
+    });
+  }
+  return true;
 }
 
 function detectAutoChorusIndexes(stanzas = []) {
@@ -5216,14 +5345,17 @@ function parseStructuredLyrics(rawLyrics) {
   const mappedStanzas = stanzas.map((lines, index) => {
     const first = lines[0]?.text || "";
     const tailEntries = lines.slice(1);
+    const chorusInfo = sectionTokenInfo(first, CHORUS_KEYWORDS);
+    const verseInfo = sectionTokenInfo(first, VERSE_KEYWORDS);
     return {
       index,
       lines,
       first,
       tailEntries,
       tail: tailEntries.map((item) => item.text).join("\n").trim(),
-      isChorus: isSectionToken(first, CHORUS_KEYWORDS),
-      isVerse: isSectionToken(first, VERSE_KEYWORDS),
+      isChorus: chorusInfo.match,
+      isVerse: verseInfo.match,
+      repeatCount: chorusInfo.repeatCount || verseInfo.repeatCount || repeatCountFromText(first),
     };
   });
   const autoChorusIndexes = detectAutoChorusIndexes(mappedStanzas);
@@ -5234,23 +5366,24 @@ function parseStructuredLyrics(rawLyrics) {
 
   for (const stanza of mappedStanzas) {
     const { lines, tailEntries, tail, isChorus, isVerse } = stanza;
+    const stanzaRepeatCount = Number(stanza.repeatCount || 0) || undefined;
     const isAutoChorus = autoChorusIndexes.has(stanza.index);
     if (isChorus) {
       if (tailEntries.length && tail) {
         rememberedChorusText = tail;
         rememberedChorusLines = tailEntries.map((item) => ({ ...item }));
-        blocks.push({ type: "chorus", text: tail, lines: rememberedChorusLines, source: "full" });
+        appendRepeatAwareBlocks(blocks, rememberedChorusLines, "chorus", { source: "full", repeatCount: stanzaRepeatCount });
       } else if (rememberedChorusLines.length && rememberedChorusText) {
         blocks.push({
           type: "chorus",
           text: rememberedChorusText,
           lines: rememberedChorusLines.map((item) => ({ ...item })),
           source: "ref",
+          repeatCount: stanzaRepeatCount,
         });
       } else {
         const plainLines = lines.map((item) => ({ ...item }));
-        const plainText = plainLines.map((item) => item.text).join("\n").trim();
-        if (plainText) blocks.push({ type: "verse", text: plainText, lines: plainLines, source: "full" });
+        appendRepeatAwareBlocks(blocks, plainLines, "verse", { source: "full", repeatCount: stanzaRepeatCount });
       }
       continue;
     }
@@ -5268,18 +5401,20 @@ function parseStructuredLyrics(rawLyrics) {
 
     if (isVerse) {
       const verseLines = (tailEntries.length ? tailEntries : lines).map((item) => ({ ...item }));
-      const verseText = verseLines.map((item) => item.text).join("\n").trim();
-      if (verseText) blocks.push({ type: "verse", text: verseText, lines: verseLines, source: "full" });
+      appendRepeatAwareBlocks(blocks, verseLines, "verse", { source: "full", repeatCount: stanzaRepeatCount });
       continue;
     }
 
     const plainLines = lines.map((item) => ({ ...item }));
-    const plainText = plainLines.map((item) => item.text).join("\n").trim();
-    if (plainText) blocks.push({ type: "verse", text: plainText, lines: plainLines, source: "full" });
+    appendRepeatAwareBlocks(blocks, plainLines, "verse", { source: "full" });
   }
 
   const expanded = blocks.map((block) => {
+    if (block.type === "chorus" && Number(block.repeatCount || 0) > 1) {
+      return `${chorusMarkerLabel()}\n${block.text}\n${repeatMarkerLabel()}`.trim();
+    }
     if (block.type === "chorus") return `${chorusMarkerLabel()}\n${block.text}`.trim();
+    if (Number(block.repeatCount || 0) > 1) return `${block.text}\n${repeatMarkerLabel()}`.trim();
     return block.text;
   }).filter(Boolean).join("\n\n");
 
@@ -5741,15 +5876,17 @@ function renderStructuredLyrics(rawLyrics, options = {}) {
 
   const html = parsed.blocks.map((block) => {
     const isChorus = block.type === "chorus";
-    const marker = isChorus ? chorusMarkerLabel() : "";
+    const isRepeat = Number(block.repeatCount || 0) > 1;
     const classes = [
       "song-lyric-block",
       isChorus ? "is-chorus" : "is-verse",
+      isRepeat ? "is-repeat" : "",
       block.source === "ref" ? "is-chorus-ref" : "",
     ].filter(Boolean).join(" ");
     return `
       <div class="${classes}">
-        ${marker ? `<div class="song-chorus-label">${esc(`${marker}:`)}</div>` : ``}
+        ${isChorus ? `<div class="song-chorus-label">${esc(`${chorusMarkerLabel()}:`)}</div>` : ``}
+        ${isRepeat ? `<div class="song-repeat-label">${esc(repeatMarkerLabel())}</div>` : ``}
         ${
           hasVisibleStructuredConfidence
             ? `<div class="lyrics song-primary-lyrics song-primary-lyrics-structured song-text song-lyric-text">${renderEntriesWithConfidence(block.lines || [])}</div>`

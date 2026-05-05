@@ -1,4 +1,4 @@
-﻿from __future__ import annotations
+from __future__ import annotations
 
 import argparse
 import json
@@ -6,21 +6,23 @@ import re
 import sqlite3
 import subprocess
 import sys
+import unicodedata
 from collections import Counter
 from dataclasses import dataclass
 from pathlib import Path
 from typing import Iterable
 
-try:
-    import langid  # type: ignore
-except Exception:  # pragma: no cover - optional dependency
-    langid = None
+# Keep langid disabled by default: some environments load its model very slowly.
+# The classifier below is deterministic and works without external packages.
+langid = None
 
 
 ROOT = Path(__file__).resolve().parent.parent
 EXPORT_SQL = ROOT / "tmp_songs_export.sql"
 UPDATE_SQL = ROOT / "tmp_reclassify_languages.sql"
 REPORT_JSON = ROOT / "out" / "reclassify_languages_report.json"
+REVIEW_JSONL = ROOT / "out" / "reclassify_languages_review.jsonl"
+CATALOG_JS = ROOT / "shared" / "song-catalogs.js"
 
 LANG_VALUES = {
     "ru", "uk", "be", "pl", "lt", "lv", "et", "fi", "en", "sq", "hy", "az", "eu", "bs", "bg", "ca", "hr", "cs", "da",
@@ -38,6 +40,9 @@ WORD_RE = re.compile(r"[0-9A-Za-z\u00C0-\u024F\u0370-\u03ff\u0400-\u052f\u1E00-\
 CYR_RE = re.compile(r"[\u0400-\u052f]")
 LAT_RE = re.compile(r"[A-Za-z\u00C0-\u024F\u1E00-\u1EFF]")
 GR_RE = re.compile(r"[\u0370-\u03ff\u1f00-\u1fff]")
+INVISIBLE_RE = re.compile(r"[\ufeff\u200b\u200c\u200d\u2060]")
+URL_OR_HANDLE_RE = re.compile(r"https?://|www\.|@\w", re.IGNORECASE)
+SERVICE_LINE_RE = re.compile(r"^\s*(source|источник|note|notes|примеч|коммент|translation|перевод|date:|message_id:|import_source:|added:|updated:|merged_versions:)\b", re.IGNORECASE)
 
 CYR_MARKERS: dict[str, str] = {
     "uk": "іїєґ",
@@ -96,8 +101,8 @@ DIACRITICS: dict[str, re.Pattern[str]] = {
     "da": re.compile(r"[æøå]", re.IGNORECASE),
     "hu": re.compile(r"[áéíóöőúüű]", re.IGNORECASE),
     "is": re.compile(r"[ðþæöáéíóúý]", re.IGNORECASE),
-    "tr": re.compile(r"[çğıöşüİ]", re.IGNORECASE),
-    "az": re.compile(r"[əğıöşüç]", re.IGNORECASE),
+    "tr": re.compile(r"[çÇğĞıİöÖşŞüÜ]"),
+    "az": re.compile(r"[əƏğĞıİöÖşŞüÜçÇ]"),
 }
 
 LANG_HINTS: list[tuple[str, re.Pattern[str]]] = [
@@ -184,7 +189,12 @@ class SongRow:
 
 
 def norm_text(value: str | None) -> str:
-    return str(value or "")
+    # NFC gives one stable representation for letters with diacritics.
+    # It also strips BOM/zero-width noise that can poison tokenization.
+    text = str(value or "")
+    text = unicodedata.normalize("NFC", text)
+    text = INVISIBLE_RE.sub("", text)
+    return text
 
 
 def normalize_newlines(text: str) -> str:
@@ -275,6 +285,22 @@ def build_langid_identifier(langs: list[str]):
     return identifier
 
 
+def parse_catalog_values(var_name: str) -> set[str]:
+    if not CATALOG_JS.exists():
+        return set()
+    text = CATALOG_JS.read_text(encoding="utf-8", errors="replace")
+    match = re.search(rf"export const {re.escape(var_name)}\s*=\s*\[(.*?)\];", text, re.S)
+    if not match:
+        return set()
+    return set(re.findall(r'"([^"]+)"', match.group(1)))
+
+
+CATALOG_LANG_VALUES = parse_catalog_values("SONG_LANGUAGE_VALUES")
+if CATALOG_LANG_VALUES:
+    LANG_VALUES = {code for code in CATALOG_LANG_VALUES if re.fullmatch(r"[a-z]{2,3}", code)}
+    CYR_LANGS = CYR_LANGS & LANG_VALUES
+    LAT_LANGS = LAT_LANGS & LANG_VALUES
+
 LID_ALL = build_langid_identifier(sorted((LANG_VALUES - {"ja", "hy", "ka"})))
 LID_CYR = build_langid_identifier(sorted(CYR_LANGS))
 
@@ -342,6 +368,8 @@ def classify_cyr(sample: str, title: str, tokens: list[str], hint_meta: str | No
         return "uk", 0.9, "uk_words"
     if be_word >= 4 and be_word > ru_word + 1:
         return "be", 0.9, "be_words"
+    if ru_word >= 6 and ru_word > uk_word + 2 and ru_word > be_word + 2:
+        return "ru", 0.96, "ru_words"
 
     return "ru", max(prob, 0.7), "ru_default"
 
@@ -375,6 +403,10 @@ def classify_latin(sample: str, title: str, subtitle: str, tokens: list[str], hi
         elif score > second_score:
             second_score = score
 
+    if best_lang and best_score >= 18 and best_score >= second_score + 6:
+        # Strong lexical/diacritic evidence is allowed to fix wrong labels across scripts
+        # such as Polish text stored as Ukrainian, or Estonian text stored as Icelandic.
+        return best_lang, 0.985, "latin_heuristic_strong"
     if best_lang and best_score >= 8 and best_score >= second_score + 2:
         return best_lang, 0.75, "latin_heuristic"
 
@@ -428,6 +460,84 @@ def classify_song(row: SongRow) -> tuple[str, float, str]:
     return (row.lang if row.lang in LANG_VALUES else "ru"), 0.2, "keep_old"
 
 
+def is_content_line(line: str) -> bool:
+    s = norm_text(line).strip()
+    if not s or len(s) > 160:
+        return False
+    if URL_OR_HANDLE_RE.search(s) or SERVICE_LINE_RE.search(s):
+        return False
+    if s.endswith(":") and len(tokenize(s)) <= 4:
+        return False
+    return len(tokenize(s)) >= 3
+
+
+def likely_line_language(line: str) -> str | None:
+    sample = norm_text(line).lower()
+    tokens = tokenize(sample)
+    if len(tokens) < 3:
+        return None
+    cyr, lat, greek = count_script(sample)
+    if greek >= 4:
+        return "el"
+    candidates = CYR_LANGS if cyr >= lat else LAT_LANGS
+    best_lang = None
+    best_score = -1
+    second_score = -1
+    for lang in candidates:
+        score = lang_score_by_words_and_diacritics(lang, sample, tokens)
+        if lang in CYR_LANGS:
+            score += cyr_marker_counts(sample).get(lang, 0) * 5
+        if score > best_score:
+            second_score = best_score
+            best_score = score
+            best_lang = lang
+        elif score > second_score:
+            second_score = score
+    if best_lang and best_score >= 9 and best_score >= second_score + 3:
+        return str(best_lang)
+    return None
+
+
+def line_language_profile(row: SongRow, primary_lang: str) -> dict:
+    counts: Counter[str] = Counter()
+    scanned = 0
+    switches = 0
+    last_lang = None
+    for raw in normalize_newlines(row.lyrics).splitlines()[:320]:
+        if not is_content_line(raw):
+            continue
+        lang = likely_line_language(raw)
+        if not lang:
+            continue
+        counts[lang] += 1
+        scanned += 1
+        if last_lang and lang != last_lang:
+            switches += 1
+        last_lang = lang
+    total = sum(counts.values())
+    ratios = {lang: round(count / total, 4) for lang, count in counts.items()} if total else {}
+    secondary = [
+        lang for lang, count in counts.most_common()
+        if lang != primary_lang and count >= 3 and (count / max(1, total)) >= 0.18
+    ]
+    likely_translation = bool(total >= 6 and secondary and counts.get(primary_lang, 0) >= 3 and switches >= 1)
+    return {
+        "line_lang_counts": dict(counts),
+        "line_lang_ratios": ratios,
+        "line_lang_total": total,
+        "line_lang_switches": switches,
+        "translation_block_candidate": likely_translation,
+        "secondary_langs": secondary,
+    }
+
+
+def strongly_supported_reason(reason: str) -> bool:
+    return (
+        "hint" in reason
+        or "marker" in reason
+        or reason in {"greek_script", "latin_polish_context"}
+    )
+
 def load_songs(path: Path) -> list[SongRow]:
     sql = path.read_text(encoding="utf-8", errors="replace")
     conn = sqlite3.connect(":memory:")
@@ -446,7 +556,7 @@ def sql_str(value: str) -> str:
     return "'" + norm_text(value).replace("'", "''") + "'"
 
 
-def should_apply_language_change(old_lang: str, new_lang: str, confidence: float, reason: str) -> bool:
+def should_apply_language_change(old_lang: str, new_lang: str, confidence: float, reason: str, min_confidence: float = 0.98) -> bool:
     if new_lang not in LANG_VALUES or new_lang == old_lang:
         return False
 
@@ -454,7 +564,7 @@ def should_apply_language_change(old_lang: str, new_lang: str, confidence: float
         return True
 
     # Keep non-European-side labels conservative unless explicitly hinted.
-    if new_lang in {"kk", "az", "uz"} and "hint" not in reason and "marker" not in reason:
+    if new_lang in {"kk", "az", "uz"} and "hint" not in reason and "marker" not in reason and reason != "latin_heuristic_strong":
         return False
     if new_lang == "is" and "hint" not in reason and "heuristic" not in reason:
         return False
@@ -465,7 +575,7 @@ def should_apply_language_change(old_lang: str, new_lang: str, confidence: float
                 return True
             return confidence >= 0.98 and reason in {"lid_cyr_uk", "lid_cyr_be", "uk_words", "be_words"}
         if old_lang in {"uk", "be"} and new_lang == "ru":
-            return reason.startswith("ru_default") or confidence >= 0.97
+            return confidence >= 0.95 and reason in {"ru_words", "lid_cyr_supported", "meta_hint_cyr", "title_hint"}
         if reason.endswith("marker"):
             return True
         return confidence >= 0.98
@@ -473,22 +583,68 @@ def should_apply_language_change(old_lang: str, new_lang: str, confidence: float
     if old_lang in LAT_LANGS and new_lang in LAT_LANGS:
         if reason in {"latin_heuristic", "lid_low_conf"}:
             return False
+        if reason == "latin_heuristic_strong":
+            return confidence >= max(0.98, min_confidence)
         if old_lang in {"de", "et"} and new_lang in {"de", "et"}:
             return confidence >= 0.97 or "hint" in reason
         return confidence >= 0.95
 
-    return confidence >= 0.98
+    if reason == "latin_heuristic_strong":
+        # Cross-script fix: e.g. Latin Polish lyrics currently tagged as Cyrillic Ukrainian.
+        return confidence >= max(0.98, min_confidence)
+
+    return confidence >= max(0.98, min_confidence)
 
 
-def build_updates(rows: Iterable[SongRow]) -> tuple[list[str], dict]:
+def build_updates(
+    rows: Iterable[SongRow],
+    min_confidence: float = 0.98,
+    max_change_rate: float = 0.02,
+    allow_large_change_set: bool = False,
+    report_only: bool = False,
+    review_jsonl: Path = REVIEW_JSONL,
+) -> tuple[list[str], dict]:
+    rows = list(rows)
     updates: list[str] = []
     pair_counter: Counter[tuple[str, str]] = Counter()
+    reason_counter: Counter[str] = Counter()
+    veto_counter: Counter[str] = Counter()
     examples: list[dict] = []
+    review_rows: list[dict] = []
     changed = 0
 
     for row in rows:
         new_lang, conf, reason = classify_song(row)
-        if not should_apply_language_change(row.lang, new_lang, conf, reason):
+        profile = line_language_profile(row, new_lang if new_lang in LANG_VALUES else row.lang)
+
+        veto_reason = ""
+        if profile["translation_block_candidate"] and row.lang in profile["line_lang_counts"]:
+            # A mixed original/translation block must be reviewed, not mass-applied.
+            veto_reason = "translation_block_candidate"
+        elif not should_apply_language_change(row.lang, new_lang, conf, reason, min_confidence=min_confidence):
+            veto_reason = "policy_or_confidence"
+
+        item = {
+            "id": row.id,
+            "title": row.title,
+            "old_lang": row.lang,
+            "new_lang": new_lang,
+            "confidence": round(float(conf), 4),
+            "reason": reason,
+            "applied": not bool(veto_reason),
+            "veto_reason": veto_reason,
+            "script_counts": dict(zip(["cyr", "lat", "greek"], count_script("\n".join([row.title, row.subtitle, row.lyrics[:8000]])))),
+            "source": row.source[:500],
+            "notes": row.notes[:500],
+            "lyrics_head": normalize_newlines(row.lyrics)[:700],
+            **profile,
+        }
+        if row.lang != new_lang:
+            review_rows.append(item)
+
+        if veto_reason:
+            if row.lang != new_lang:
+                veto_counter[veto_reason] += 1
             continue
 
         updates.append(
@@ -499,32 +655,57 @@ def build_updates(rows: Iterable[SongRow]) -> tuple[list[str], dict]:
         )
         changed += 1
         pair_counter[(row.lang, new_lang)] += 1
+        reason_counter[reason] += 1
 
-        if len(examples) < 200:
-            examples.append(
-                {
-                    "id": row.id,
-                    "title": row.title,
-                    "old_lang": row.lang,
-                    "new_lang": new_lang,
-                    "confidence": round(conf, 4),
-                    "reason": reason,
-                }
-            )
+        if len(examples) < 300:
+            examples.append(item)
+
+    blocked_by_change_rate = False
+    max_allowed_changes = int(len(rows) * max_change_rate) if max_change_rate > 0 else len(rows)
+    if changed > max_allowed_changes and not allow_large_change_set:
+        blocked_by_change_rate = True
+        updates = []
+        for item in review_rows:
+            item["applied"] = False
+            if not item.get("veto_reason"):
+                item["veto_reason"] = "blocked_by_change_rate"
+
+    review_jsonl.parent.mkdir(parents=True, exist_ok=True)
+    review_jsonl.write_text(
+        "\n".join(json.dumps(item, ensure_ascii=False) for item in review_rows) + ("\n" if review_rows else ""),
+        encoding="utf-8",
+    )
+
+    if report_only:
+        updates = []
+        for item in review_rows:
+            item["applied"] = False
+            if not item.get("veto_reason"):
+                item["veto_reason"] = "report_only"
 
     report = {
-        "total": sum(1 for _ in rows),
-        "changed": changed,
+        "total": len(rows),
+        "changed": changed if not blocked_by_change_rate and not report_only else 0,
+        "candidate_lang_changes": len(review_rows),
+        "blocked_by_change_rate": blocked_by_change_rate,
+        "max_allowed_changes": max_allowed_changes,
+        "min_confidence": min_confidence,
+        "max_change_rate": max_change_rate,
+        "allow_large_change_set": allow_large_change_set,
+        "report_only": report_only,
         "pair_counts": [
             {"old_lang": old, "new_lang": new, "count": count}
             for (old, new), count in pair_counter.most_common()
         ],
+        "reason_counts": [{"reason": r, "count": c} for r, c in reason_counter.most_common()],
+        "veto_counts": [{"reason": r, "count": c} for r, c in veto_counter.most_common()],
         "examples": examples,
+        "review_jsonl": str(review_jsonl),
         "update_statements": len(updates),
         "langid_enabled": langid is not None,
+        "catalog_lang_values_loaded": bool(CATALOG_LANG_VALUES),
     }
     return updates, report
-
 
 def run_cmd(cmd: list[str], cwd: Path, timeout_ms: int = 180000) -> None:
     subprocess.run(cmd, cwd=cwd, check=True, timeout=timeout_ms / 1000)
@@ -553,13 +734,25 @@ def main() -> None:
     parser.add_argument("--db-name", default="euro-songbook-db")
     parser.add_argument("--refresh-export", action="store_true")
     parser.add_argument("--execute-remote", action="store_true")
+    parser.add_argument("--report-only", action="store_true", help="write JSON/JSONL report but emit no UPDATE SQL")
+    parser.add_argument("--min-confidence", type=float, default=0.98)
+    parser.add_argument("--max-change-rate", type=float, default=0.02, help="default 0.02 means block SQL if >2% rows would change")
+    parser.add_argument("--allow-large-change-set", action="store_true")
+    parser.add_argument("--review-jsonl", type=Path, default=REVIEW_JSONL)
     args = parser.parse_args()
 
     REPORT_JSON.parent.mkdir(parents=True, exist_ok=True)
     ensure_export(args.db_name, args.refresh_export)
 
     rows = load_songs(EXPORT_SQL)
-    updates, report = build_updates(rows)
+    updates, report = build_updates(
+        rows,
+        min_confidence=args.min_confidence,
+        max_change_rate=args.max_change_rate,
+        allow_large_change_set=args.allow_large_change_set,
+        report_only=args.report_only,
+        review_jsonl=args.review_jsonl,
+    )
 
     UPDATE_SQL.write_text("\n".join(["-- generated by reclassify_song_languages.py", *updates, ""]), encoding="utf-8")
     report["update_sql"] = str(UPDATE_SQL)

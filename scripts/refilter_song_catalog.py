@@ -1,4 +1,4 @@
-﻿from __future__ import annotations
+from __future__ import annotations
 
 import argparse
 import difflib
@@ -8,6 +8,7 @@ import re
 import sqlite3
 import subprocess
 import sys
+import unicodedata
 from collections import Counter, defaultdict
 from dataclasses import dataclass
 from pathlib import Path
@@ -17,6 +18,7 @@ ROOT = Path(__file__).resolve().parent.parent
 EXPORT_SQL = ROOT / "tmp_songs_export.sql"
 UPDATE_SQL = ROOT / "tmp_refilter_song_catalog.sql"
 REPORT_JSON = ROOT / "out" / "refilter_song_catalog_report.json"
+REVIEW_JSONL = ROOT / "out" / "refilter_song_catalog_review.jsonl"
 CATALOG_JS = ROOT / "shared" / "song-catalogs.js"
 
 YEAR_MIN = 1600
@@ -24,6 +26,7 @@ YEAR_MAX = 2026
 
 YEAR_RE = re.compile(r"\b(1[6-9]\d{2}|20\d{2})\b")
 CYR_RE = re.compile(r"[\u0400-\u052f]")
+INVISIBLE_RE = re.compile(r"[\ufeff\u200b\u200c\u200d\u2060]")
 LAT_RE = re.compile(r"[A-Za-z\u00C0-\u024F\u1E00-\u1EFF]")
 LINE_LANG_MIN_WORDS = 3
 TRANSLATION_SCAN_MAX_LINES = 260
@@ -392,6 +395,16 @@ class YearCandidate:
 
 @dataclass
 class FilterPolicy:
+    include_language: bool = True
+    include_year: bool = False
+    include_country: bool = False
+    include_text_cleanup: bool = False
+    include_status: bool = False
+    report_only: bool = False
+    min_lang_confidence: float = 0.98
+    max_lang_change_rate: float = 0.02
+    allow_large_change_set: bool = False
+    review_jsonl: Path = REVIEW_JSONL
     country_ambiguity_policy: str = "other_countries"
     cyr_lang_switch_policy: str = "aggressive"
     max_scope_chars: int = 3200
@@ -442,7 +455,10 @@ class RowSignals:
 
 
 def norm_text(value: str | None) -> str:
-    return str(value or "")
+    text = str(value or "")
+    text = unicodedata.normalize("NFC", text)
+    text = INVISIBLE_RE.sub("", text)
+    return text
 
 
 def normalize_newlines(text: str) -> str:
@@ -1153,6 +1169,26 @@ def should_apply_language_change(old_lang: str, new_lang: str, confidence: float
     return confidence >= 0.97
 
 
+
+def should_apply_language_change_safe(
+    old_lang: str,
+    new_lang: str,
+    confidence: float,
+    reason: str,
+    lang_mod,
+    policy: FilterPolicy,
+) -> bool:
+    if not policy.include_language:
+        return False
+    if not should_apply_language_change(old_lang, new_lang, confidence, reason, lang_mod):
+        return False
+    if "hint" in reason or "marker" in reason or new_lang == "yi":
+        return True
+    return confidence >= policy.min_lang_confidence
+
+
+def append_review_item(review_items: list[dict], item: dict) -> None:
+    review_items.append(item)
 def extract_year_candidates(text: str, origin: str) -> list[YearCandidate]:
     src = normalize_newlines(text)
     if not src:
@@ -2477,6 +2513,7 @@ def build_updates(
     country_ambiguous_to_other_count = 0
     examples: list[dict] = []
     translation_candidates: list[dict] = []
+    review_items: list[dict] = []
 
     duplicate_drops, duplicate_reason_counts, duplicate_group_counts = duplicate_drop_ids(rows)
 
@@ -2506,7 +2543,7 @@ def build_updates(
                 )
             if pred_lang in row_signals.translation_block_langs and old_lang in row_signals.line_lang_counts:
                 pred_lang, lang_conf, lang_reason, lang_forced = old_lang, 1.0, "keep_old_translation_block", False
-        final_lang = pred_lang if should_apply_language_change(old_lang, pred_lang, lang_conf, lang_reason, lang_mod) else old_lang
+        final_lang = pred_lang if should_apply_language_change_safe(old_lang, pred_lang, lang_conf, lang_reason, lang_mod, policy) else old_lang
         if lang_forced and final_lang != old_lang:
             lang_forced_count += 1
 
@@ -2605,6 +2642,28 @@ def build_updates(
                 new_status = "draft"
                 status_reason = current_period_reason
 
+        if final_lang != old_lang or pred_lang != old_lang:
+            append_review_item(
+                review_items,
+                {
+                    "id": row.id,
+                    "title": row.title,
+                    "old_lang": old_lang,
+                    "pred_lang": pred_lang,
+                    "final_lang": final_lang,
+                    "lang_conf": round(float(lang_conf), 4),
+                    "lang_reason": lang_reason,
+                    "applied_lang_change": final_lang != old_lang,
+                    "translation_block_candidate": row_signals.likely_translation_block,
+                    "detected_lang_counts": row_signals.line_lang_counts,
+                    "detected_secondary_langs": row_signals.translation_block_langs,
+                    "script_counts": {"cyr": row_signals.cyr_count, "lat": row_signals.lat_count},
+                    "source": row.source[:500],
+                    "notes": row.notes[:500],
+                    "lyrics_head": row.lyrics[:700],
+                },
+            )
+
         set_parts: list[str] = []
         if final_lang != old_lang:
             set_parts.append(f"lang={sql_str(final_lang)}")
@@ -2614,12 +2673,12 @@ def build_updates(
             if "lang_scope_conflict" in lang_reason:
                 validation_flags["lang_scope_conflict"] += 1
 
-        if new_year != old_year:
+        if policy.include_year and new_year != old_year:
             set_parts.append("year=NULL" if new_year is None else f"year={sql_str(str(new_year))}")
             year_changed += 1
             year_reasons[year_reason] += 1
 
-        if new_country != old_country or (old_country and old_country_raw != old_country):
+        if policy.include_country and (new_country != old_country or (old_country and old_country_raw != old_country)):
             set_parts.append(f"country={sql_str(new_country)}")
             country_changed += 1
             old_pair_value = old_country_raw or old_country or "<empty>"
@@ -2627,26 +2686,26 @@ def build_updates(
             country_reasons[country_reason] += 1
 
         row_text_changed = False
-        if clean_title != old_title:
+        if policy.include_text_cleanup and clean_title != old_title:
             set_parts.append(f"title={sql_str(clean_title)}")
             row_text_changed = True
-        if clean_subtitle != old_subtitle:
+        if policy.include_text_cleanup and clean_subtitle != old_subtitle:
             set_parts.append(f"subtitle={sql_str(clean_subtitle)}")
             row_text_changed = True
-        if clean_lyrics != old_lyrics:
+        if policy.include_text_cleanup and clean_lyrics != old_lyrics:
             set_parts.append(f"lyrics={sql_str(clean_lyrics)}")
             row_text_changed = True
-        if clean_source != old_source:
+        if policy.include_text_cleanup and clean_source != old_source:
             set_parts.append(f"source={sql_str(clean_source)}")
             row_text_changed = True
-        if clean_notes != old_notes:
+        if policy.include_text_cleanup and clean_notes != old_notes:
             set_parts.append(f"notes={sql_str(clean_notes)}")
             row_text_changed = True
             notes_cleaned += 1
         if row_text_changed:
             text_changed += 1
 
-        if new_status != old_status:
+        if policy.include_status and new_status != old_status:
             set_parts.append(f"status={sql_str(new_status)}")
             status_changed += 1
             if status_reason:
@@ -2704,6 +2763,16 @@ def build_updates(
         "validation_flags": dict(validation_flags),
         "translation_block_candidates": translation_candidates,
         "policy": {
+            "include_language": policy.include_language,
+            "include_year": policy.include_year,
+            "include_country": policy.include_country,
+            "include_text_cleanup": policy.include_text_cleanup,
+            "include_status": policy.include_status,
+            "report_only": policy.report_only,
+            "min_lang_confidence": policy.min_lang_confidence,
+            "max_lang_change_rate": policy.max_lang_change_rate,
+            "allow_large_change_set": policy.allow_large_change_set,
+            "review_jsonl": str(policy.review_jsonl),
             "country_ambiguity_policy": policy.country_ambiguity_policy,
             "cyr_lang_switch_policy": policy.cyr_lang_switch_policy,
             "max_scope_chars": policy.max_scope_chars,
@@ -2719,8 +2788,40 @@ def build_updates(
         "country_reason_counts": [{"reason": r, "count": c} for r, c in country_reasons.most_common()],
         "status_reason_counts": [{"reason": r, "count": c} for r, c in status_reasons.most_common()],
         "examples": examples,
+        "candidate_lang_changes": len(review_items),
         "update_statements": len(updates),
     }
+
+    policy.review_jsonl.parent.mkdir(parents=True, exist_ok=True)
+    policy.review_jsonl.write_text(
+        "\n".join(json.dumps(item, ensure_ascii=False) for item in review_items) + ("\n" if review_items else ""),
+        encoding="utf-8",
+    )
+
+    max_allowed_lang_changes = int(len(rows) * policy.max_lang_change_rate) if policy.max_lang_change_rate > 0 else len(rows)
+    if lang_changed > max_allowed_lang_changes and not policy.allow_large_change_set:
+        report["blocked_by_lang_change_rate"] = True
+        report["max_allowed_lang_changes"] = max_allowed_lang_changes
+        updates = []
+        report["blocked_changes_before_block"] = changed
+        report["changed"] = 0
+        report["lang_changed"] = 0
+        report["update_statements"] = 0
+    else:
+        report["blocked_by_lang_change_rate"] = False
+        report["max_allowed_lang_changes"] = max_allowed_lang_changes
+
+    if policy.report_only:
+        updates = []
+        report["report_only_changes_before_zero"] = changed
+        report["changed"] = 0
+        report["lang_changed"] = 0
+        report["year_changed"] = 0
+        report["country_changed"] = 0
+        report["text_changed"] = 0
+        report["status_changed"] = 0
+        report["update_statements"] = 0
+
     return updates, report
 
 
@@ -2754,6 +2855,16 @@ def main() -> None:
     parser.add_argument("--db-name", default="euro-songbook-db")
     parser.add_argument("--refresh-export", action="store_true")
     parser.add_argument("--execute-remote", action="store_true")
+    parser.add_argument("--report-only", action="store_true", help="write JSON/JSONL report but emit no UPDATE SQL")
+    parser.add_argument("--include-year", action="store_true")
+    parser.add_argument("--include-country", action="store_true")
+    parser.add_argument("--include-text-cleanup", action="store_true")
+    parser.add_argument("--include-status", action="store_true")
+    parser.add_argument("--all-fields", action="store_true", help="allow year/country/text/status changes too")
+    parser.add_argument("--min-lang-confidence", type=float, default=0.98)
+    parser.add_argument("--max-lang-change-rate", type=float, default=0.02)
+    parser.add_argument("--allow-large-change-set", action="store_true")
+    parser.add_argument("--review-jsonl", type=Path, default=REVIEW_JSONL)
     parser.add_argument(
         "--country-ambiguity-policy",
         choices=["keep_old", "other_countries", "first_match"],
@@ -2779,6 +2890,16 @@ def main() -> None:
     country_values.update({"other_countries", "other_movements"})
     aliases = build_country_aliases(country_values)
     policy = FilterPolicy(
+        include_language=True,
+        include_year=bool(args.include_year or args.all_fields),
+        include_country=bool(args.include_country or args.all_fields),
+        include_text_cleanup=bool(args.include_text_cleanup or args.all_fields),
+        include_status=bool(args.include_status or args.all_fields),
+        report_only=bool(args.report_only),
+        min_lang_confidence=float(args.min_lang_confidence),
+        max_lang_change_rate=float(args.max_lang_change_rate),
+        allow_large_change_set=bool(args.allow_large_change_set),
+        review_jsonl=args.review_jsonl,
         country_ambiguity_policy=args.country_ambiguity_policy,
         cyr_lang_switch_policy=args.cyr_lang_switch_policy,
         max_scope_chars=max(600, args.max_scope_chars),

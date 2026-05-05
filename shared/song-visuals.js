@@ -308,6 +308,17 @@ export function hasVisualProfileContent(profile = {}) {
 
 export function validateVisualProfileRanges(profile = {}) {
   const normalized = normalizeVisualProfile(profile);
+  const legacyVariants = Array.isArray(normalized.variants) ? normalized.variants : [];
+  for (let index = 0; index < legacyVariants.length; index += 1) {
+    const current = legacyVariants[index];
+    const previous = legacyVariants[index - 1];
+    if (previous && current.from <= previous.to) {
+      return {
+        ok: false,
+        error: `variants[${index}] overlaps variants[${index - 1}]`,
+      };
+    }
+  }
   const categoryEntries = Object.entries(normalized.categories || {});
   for (const [categoryKey, category] of categoryEntries) {
     const variants = Array.isArray(category?.variants) ? category.variants : [];

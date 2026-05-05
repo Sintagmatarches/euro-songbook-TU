@@ -443,6 +443,64 @@ test("searchSongs falls back to a direct song scan for a single long token query
   assert.equal(out.items[0]?.match_bucket, "exact");
 });
 
+test("searchSongs falls back to title-only direct scan for short exact title tokens", async () => {
+  const songRows = [
+    {
+      id: "ussr-anthem",
+      title: "\u0413\u0438\u043c\u043d \u0421\u0421\u0421\u0420",
+      subtitle: null,
+      lyrics: "\u0421\u043e\u044e\u0437 \u043d\u0435\u0440\u0443\u0448\u0438\u043c\u044b\u0439 \u0440\u0435\u0441\u043f\u0443\u0431\u043b\u0438\u043a \u0441\u0432\u043e\u0431\u043e\u0434\u043d\u044b\u0445",
+      lang: "ru",
+      country: "ussr",
+      period: "ussr_1941_1945",
+      region: null,
+      event: null,
+      theme: null,
+      verified: 0,
+      year: "1943",
+      created_at: "2024-01-01T00:00:00.000Z",
+      version_rows: 0,
+    },
+  ];
+
+  const env = {
+    DB: {
+      prepare(sql) {
+        return {
+          bind(...params) {
+            return {
+              async all() {
+                const hasUnicodeCasePatterns = params.includes("%\u0413\u0438\u043c\u043d%") && params.includes("%\u0421\u0421\u0421\u0420%");
+                if (sql.includes("ORDER BY s.id ASC") && hasUnicodeCasePatterns) return { results: songRows };
+                return { results: [] };
+              },
+              async first() {
+                const hasUnicodeCasePatterns = params.includes("%\u0413\u0438\u043c\u043d%") && params.includes("%\u0421\u0421\u0421\u0420%");
+                if (sql.includes("SELECT COUNT(*) AS total") && hasUnicodeCasePatterns) return { total: songRows.length };
+                return null;
+              },
+              async run() {
+                return {};
+              },
+            };
+          },
+        };
+      },
+    },
+  };
+
+  const out = await searchSongs(env, {
+    q: "\u0433\u0438\u043c\u043d \u0441\u0441\u0441\u0440",
+    page: 1,
+    filters: {},
+    includeAdminContent: false,
+  });
+
+  assert.equal(out.total, 1);
+  assert.equal(out.items[0]?.id, "ussr-anthem");
+  assert.equal(out.items[0]?.match_bucket, "exact");
+});
+
 test("searchSongs finds hits that exist only in a secondary version during direct scan fallback", async () => {
   const songRows = [
     {
