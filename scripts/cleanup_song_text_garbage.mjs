@@ -42,7 +42,7 @@ function translateArgs(rawArgs) {
       out.push("--include-clean-lyrics");
       continue;
     }
-    if (arg === "--report-only" || arg === "--refresh-export" || arg === "--songs-table-only" || arg === "--full-export" || arg === "--only-main" || arg === "--only-versions" || arg === "--allow-large-change-set") {
+    if (arg === "--report-only" || arg === "--refresh-export" || arg === "--songs-table-only" || arg === "--full-export" || arg === "--only-main" || arg === "--only-versions" || arg === "--allow-large-change-set" || arg === "--anchor-garbage-only") {
       out.push(arg);
       continue;
     }

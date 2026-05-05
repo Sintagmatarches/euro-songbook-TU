@@ -43,8 +43,32 @@ CHORD_TOKEN_RE = re.compile(rf"^\(?{CHORD_ROOT}(?:#|b)?{CHORD_QUALITY}{CHORD_EXT
 BRACKET_CHORD_RE = re.compile(rf"\[(?:{CHORD_ROOT})(?:#|b)?{CHORD_QUALITY}{CHORD_EXT}{CHORD_BASS}\]", re.IGNORECASE)
 TAB_LINE_RE = re.compile(r"^\s*(?:[eBGDAE]|[1-6])\|[-0-9hpsx/\\| ]{6,}\s*$", re.IGNORECASE)
 DIGIT_TAB_RE = re.compile(r"^\s*[1-6]\s+[-0-9hpsx/\\ ]{8,}\s*$", re.IGNORECASE)
-CHORD_HEADER_RE = re.compile(r"^\s*(?:аккорды|акорди|chords?|tabs?|acordes|accordi|akkorde|akordy|chwyty)\s*[:([]?\s*$", re.IGNORECASE)
-CAPO_RE = re.compile(r"\b(?:capo|каподастр|капо)\b", re.IGNORECASE)
+CHORD_HEADER_RE = re.compile(
+    r"^\s*(?:"
+    r"аккорды|акорди|chords?|tabs?|tablature|tablatura|acordes?|accordi|akkorde|akordy|chwyty"
+    r")\b(?:\s*(?:[:：*]|\[[^\]]{0,40}\]|\([^)]{0,80}\)|[-–—]\s*\S.*|\S{1,30}))*\s*[:：*]?\s*$",
+    re.IGNORECASE,
+)
+TONALITY_RE = re.compile(
+    r"\b(?:"
+    r"тональност[ьиі]|зміна\s+тональності|у\s+тональності|"
+    r"key|tonality|transpose|transposition|tonalidad|tonalit[aà]|tonacja"
+    r")\b",
+    re.IGNORECASE,
+)
+CAPO_RE = re.compile(r"\b(?:capo|каподастр|капо|cejilla|kapodaster)\b", re.IGNORECASE)
+BARRE_RE = re.compile(r"\b(?:barre|баре|barr[eè])\b", re.IGNORECASE)
+PICKING_RE = re.compile(r"\b(?:переб[іио]р|picking|strumming|riff)\b", re.IGNORECASE)
+GUITAR_VERB_RE = re.compile(r"\b(?:акорд[иы]?|chords?|tabs?|грати|сыграть|зіграти|играть|play)\b", re.IGNORECASE)
+CHORD_SUBSTITUTION_RE = re.compile(r"\b(?:зам[іе]сть|instead\s+of|rather\s+than)\b", re.IGNORECASE)
+GUITAR_ANCHOR_RE = re.compile(
+    r"(?:"
+    r"аккорды|акорди|тональност[ьиі]|зміна\s+тональності|каподастр|капо|баре|переб[іио]р|"
+    r"chords?|tabs?|tablature|tablatura|capo|transpose|transposition|barre|riff|"
+    r"acordes?|accordi|akkorde|akordy|chwyty|tonalidad|tonalit[aà]|tonacja"
+    r")",
+    re.IGNORECASE,
+)
 
 # Labels that are allowed to be extracted out of lyrics. Keep this strict: ambiguous ordinary lyric lines must stay in lyrics.
 LABEL_ALIASES: list[tuple[str, re.Pattern[str]]] = [
@@ -216,17 +240,64 @@ def is_chordish_line(line: str) -> bool:
         return False
     if TAB_LINE_RE.match(s) or DIGIT_TAB_RE.match(s) or CHORD_HEADER_RE.match(s):
         return True
-    if CAPO_RE.search(s) and len(tokenize(s)) <= 8:
+    if is_guitar_instruction_line(s):
+        return True
+    if is_single_chord_line(s):
         return True
     parts = [p for p in re.split(r"[\s|,;:/\\]+", s.replace("-", " ")) if p]
     if len(parts) < 2:
         return False
-    chord_hits = sum(1 for p in parts if CHORD_TOKEN_RE.match(p.strip("()[]{}")))
+    chord_hits = sum(chord_token_weight(p.strip("()[]{}")) for p in parts)
     if chord_hits < 2:
         return False
     words = tokenize(s)
     # Avoid deleting normal short lines like "A my..."; require chord dominance.
     return chord_hits / max(1, len(parts)) >= 0.75 and chord_hits >= max(2, len(words) - 1)
+
+
+def chord_token_weight(token: str) -> int:
+    if CHORD_TOKEN_RE.match(token):
+        return 1
+    # Imported chord sheets sometimes merge adjacent chords without a separator: C7A7, DmG7.
+    compact = re.sub(r"[^A-Ha-h#b0-9mM+/susadijorng-]", "", token)
+    if len(compact) < 4 or len(compact) > 14:
+        return 0
+    hits = re.findall(r"(?:[A-H](?:#|b)?(?:maj|min|m|M|dim|aug|sus|add)?\d*)", compact, re.IGNORECASE)
+    joined = "".join(hits)
+    return len(hits) if len(hits) >= 2 and joined.lower() == compact.lower() else 0
+
+
+def is_guitar_instruction_line(line: str) -> bool:
+    s = normalize_line(line)
+    if not s:
+        return False
+    if TONALITY_RE.search(s):
+        return True
+    if CAPO_RE.search(s) or BARRE_RE.search(s) or PICKING_RE.search(s):
+        return len(tokenize(s)) <= 18 or GUITAR_VERB_RE.search(s)
+    if CHORD_SUBSTITUTION_RE.search(s):
+        parts = [p.strip("()[]{}.,;:") for p in re.split(r"[\s|,;:/\\-–—]+", s) if p.strip()]
+        if sum(chord_token_weight(part) for part in parts) >= 1:
+            return True
+    return False
+
+
+def is_single_chord_line(line: str) -> bool:
+    token = normalize_line(line).strip("()[]{}")
+    if not token or any(ch.isspace() for ch in token):
+        return False
+    if token.islower():
+        return False
+    if not CHORD_TOKEN_RE.match(token):
+        return False
+    return bool(re.search(r"(?:#|b|\d|maj|min|dim|aug|sus|add|m|M)", token))
+
+
+def row_has_garbage_anchor(row: TextRow) -> bool:
+    scope = "\n".join([row.title, row.subtitle, row.source, row.notes, row.lyrics, row.verified_translation])
+    if GUITAR_ANCHOR_RE.search(scope) or BRACKET_CHORD_RE.search(scope):
+        return True
+    return any(is_chordish_line(line) for line in normalize_newlines(row.lyrics).splitlines())
 
 
 def remove_inline_chords(line: str) -> tuple[str, list[str]]:
@@ -367,16 +438,24 @@ def analyze_text(row: TextRow) -> dict[str, Any]:
 
     clean_lines: list[str] = []
     in_chord_block = False
+    in_tail_chord_block = False
     metadata_hits = 0
     chord_hits = 0
     source_hits = 0
+    content_lines_seen = 0
 
     for raw_line in lines:
         line = normalize_line(raw_line)
         if not line:
             if clean_lines and clean_lines[-1] != "":
                 clean_lines.append("")
-            in_chord_block = False
+            if not in_tail_chord_block:
+                in_chord_block = False
+            continue
+
+        if in_tail_chord_block:
+            add_unique(extracted["removed_chords"], {"line": line, "reason": "chord_tail_block"})
+            chord_hits += 1
             continue
 
         if IMPORT_META_RE.match(line):
@@ -418,11 +497,17 @@ def analyze_text(row: TextRow) -> dict[str, Any]:
 
         if CHORD_HEADER_RE.match(line):
             in_chord_block = True
+            # A chord-service section after real lyrics is an appended duplicate block.
+            in_tail_chord_block = content_lines_seen >= 4
             add_unique(extracted["removed_chords"], {"line": line, "reason": "chord_header"})
             chord_hits += 1
             continue
-        if in_chord_block and (is_chordish_line(line) or CAPO_RE.search(line)):
+        if in_chord_block and (is_chordish_line(line) or is_guitar_instruction_line(line)):
             add_unique(extracted["removed_chords"], {"line": line, "reason": "chord_block"})
+            chord_hits += 1
+            continue
+        if is_guitar_instruction_line(line):
+            add_unique(extracted["removed_chords"], {"line": line, "reason": "guitar_instruction"})
             chord_hits += 1
             continue
         if is_chordish_line(line):
@@ -438,6 +523,7 @@ def analyze_text(row: TextRow) -> dict[str, Any]:
                 continue
 
         clean_lines.append(line)
+        content_lines_seen += 1
 
     while clean_lines and clean_lines[0] == "":
         clean_lines.pop(0)
@@ -507,6 +593,10 @@ def build_updates(rows: Iterable[TextRow], args: argparse.Namespace) -> tuple[li
             continue
         if args.only_versions and row.table != "song_versions":
             continue
+        if args.anchor_garbage_only and not row_has_garbage_anchor(row):
+            continue
+        if args.anchor_garbage_only:
+            counters["anchor_matched_rows"] += 1
 
         analysis = analyze_text(row)
         extracted = analysis["extracted"]
@@ -610,11 +700,13 @@ def safe_to_update_lyrics(original: str, clean: str, extracted: dict[str, Any], 
     if "clean_lyrics_empty_after_extraction" in extracted.get("warnings", []):
         return False
     removed_ratio = 1.0 - (len(clean) / max(1, len(original)))
-    if removed_ratio > args.max_lyrics_loss_ratio:
-        return False
     # Do not auto-clean if only sections were detected; markers are structural, not garbage.
     flags = set(extracted.get("review_flags", []))
     destructive_flags = {"metadata_extracted_from_lyrics", "chords_or_tabs_removed", "source_url_extracted_from_lyrics"}
+    if "chords_or_tabs_removed" in flags and clean.strip() and len(clean) >= 160:
+        return removed_ratio <= max(args.max_lyrics_loss_ratio, 0.75)
+    if removed_ratio > args.max_lyrics_loss_ratio:
+        return False
     return bool(flags & destructive_flags)
 
 
@@ -657,6 +749,7 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--only-main", action="store_true")
     parser.add_argument("--only-versions", action="store_true")
     parser.add_argument("--song-id", default="")
+    parser.add_argument("--anchor-garbage-only", action="store_true", help="Analyze only rows containing guitar/tab/tonality anchors or chord-like lines.")
     parser.add_argument("--limit", type=int, default=0, help="Stop after N candidate rows.")
     parser.add_argument("--sample-size", type=int, default=0, help="Analyze a random sample of rows before filtering candidates.")
     parser.add_argument("--seed", type=int, default=42)

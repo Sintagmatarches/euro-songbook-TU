@@ -405,6 +405,7 @@ class FilterPolicy:
     max_lang_change_rate: float = 0.02
     allow_large_change_set: bool = False
     review_jsonl: Path = REVIEW_JSONL
+    candidate_only: bool = False
     country_ambiguity_policy: str = "other_countries"
     cyr_lang_switch_policy: str = "aggressive"
     max_scope_chars: int = 3200
@@ -539,7 +540,30 @@ def is_polluted_title(title: str) -> bool:
         return True
     if TITLE_SERVICE_RE.search(t):
         return True
+    if re.match(r"^\s*(?:translated\s+by|translation\s+by|перевод|переклад|source|note|comment)\b", t, re.IGNORECASE):
+        return True
+    if URL_RE.search(t):
+        return True
     if TITLE_CREDIT_RE.search(t) and ("музыка" in t.lower() or "music" in t.lower()):
+        return True
+    return False
+
+
+def row_has_refilter_anchor(row: SongRow, lang_mod, lang_values: set[str], country_values: set[str], aliases: dict[str, str]) -> bool:
+    if row.lang not in lang_values:
+        return True
+    if canonical_country_value(row.country, aliases, country_values) == "" and row.country:
+        return True
+    if is_polluted_title(row.title) or has_import_meta_noise(row.source) or has_import_meta_noise(row.notes):
+        return True
+    if TRANSLATION_LABEL_RE.search("\n".join([row.title, row.subtitle, row.source, row.notes, row.lyrics[:1200]])):
+        return True
+    cyr, lat = count_scripts("\n".join([row.title, row.subtitle, row.lyrics[:5000]]))
+    cyr_langs = set(getattr(lang_mod, "CYR_LANGS", {"ru", "uk", "be", "bg", "mk", "sr", "kk", "uz"}))
+    lat_langs = set(getattr(lang_mod, "LAT_LANGS", set()))
+    if row.lang in cyr_langs and lat > max(80, cyr * 2):
+        return True
+    if row.lang in lat_langs and cyr > max(80, lat * 2):
         return True
     return False
 
@@ -2516,8 +2540,12 @@ def build_updates(
     review_items: list[dict] = []
 
     duplicate_drops, duplicate_reason_counts, duplicate_group_counts = duplicate_drop_ids(rows)
+    analyzed = 0
 
     for row in rows:
+        if policy.candidate_only and not row_has_refilter_anchor(row, lang_mod, lang_values, country_values, aliases):
+            continue
+        analyzed += 1
         row_signals = build_row_signals(row, country_values, policy, lang_mod)
         old_lang = row.lang if row.lang in lang_values else "ru"
         pred_lang, lang_conf, lang_reason, lang_forced = classify_language(
@@ -2743,6 +2771,7 @@ def build_updates(
 
     report = {
         "total": len(rows),
+        "analyzed": analyzed,
         "changed": changed,
         "lang_changed": lang_changed,
         "year_changed": year_changed,
@@ -2769,6 +2798,7 @@ def build_updates(
             "include_text_cleanup": policy.include_text_cleanup,
             "include_status": policy.include_status,
             "report_only": policy.report_only,
+            "candidate_only": policy.candidate_only,
             "min_lang_confidence": policy.min_lang_confidence,
             "max_lang_change_rate": policy.max_lang_change_rate,
             "allow_large_change_set": policy.allow_large_change_set,
@@ -2865,6 +2895,7 @@ def main() -> None:
     parser.add_argument("--max-lang-change-rate", type=float, default=0.02)
     parser.add_argument("--allow-large-change-set", action="store_true")
     parser.add_argument("--review-jsonl", type=Path, default=REVIEW_JSONL)
+    parser.add_argument("--candidate-only", action="store_true", help="Analyze only rows with language, title, metadata, or country cleanup anchors.")
     parser.add_argument(
         "--country-ambiguity-policy",
         choices=["keep_old", "other_countries", "first_match"],
@@ -2900,6 +2931,7 @@ def main() -> None:
         max_lang_change_rate=float(args.max_lang_change_rate),
         allow_large_change_set=bool(args.allow_large_change_set),
         review_jsonl=args.review_jsonl,
+        candidate_only=bool(args.candidate_only),
         country_ambiguity_policy=args.country_ambiguity_policy,
         cyr_lang_switch_policy=args.cyr_lang_switch_policy,
         max_scope_chars=max(600, args.max_scope_chars),
