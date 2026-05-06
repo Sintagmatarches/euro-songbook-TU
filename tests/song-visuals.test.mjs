@@ -3,6 +3,7 @@ import assert from "node:assert/strict";
 
 import {
   buildVisualProfileFromLegacyFields,
+  computeVisualBackgroundRenderFrame,
   resolveVisualBackground,
   validateVisualProfileRanges,
 } from "../shared/song-visuals.js";
@@ -60,4 +61,23 @@ test("visual year ranges are inclusive and cannot overlap", () => {
     ],
   });
   assert.equal(overlapping.ok, false);
+});
+
+test("background preview/render frame always starts from cover geometry", () => {
+  const frame = computeVisualBackgroundRenderFrame(800, 1600, 320, 240);
+
+  assert.equal(frame.renderWidth, 320);
+  assert.equal(frame.renderHeight, 640);
+  assert.equal(frame.overflowX, 0);
+  assert.equal(frame.overflowY, 400);
+});
+
+test("background preview/render frame depends only on cover geometry", () => {
+  const coverFrame = computeVisualBackgroundRenderFrame(2000, 1000, 300, 600);
+  const sameFrame = computeVisualBackgroundRenderFrame(2000, 1000, 300, 600);
+
+  assert.equal(coverFrame.renderHeight, 600);
+  assert.ok(coverFrame.renderWidth >= 300);
+  assert.equal(sameFrame.renderWidth, coverFrame.renderWidth);
+  assert.equal(sameFrame.renderHeight, coverFrame.renderHeight);
 });

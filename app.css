@@ -15568,16 +15568,6 @@ html #ac_editor.ac-editor-request-mode {
   gap: 8px;
 }
 
-.ab-file-zoom {
-  display: grid;
-  gap: 4px;
-}
-
-.ab-file-zoom .input {
-  min-height: 28px;
-  padding: 0;
-}
-
 .ab-crop-buttons {
   display: grid;
   grid-template-columns: repeat(5, minmax(0, 1fr));

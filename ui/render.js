@@ -39,6 +39,7 @@ import {
   buildVisualProfileFromLegacyFields,
   clampVisualFocus,
   computeParallaxOffsets,
+  computeVisualBackgroundRenderFrame,
   createEmptyVisualProfile,
   createEmptyVisualVariant,
   extractBackgroundVisualProfile,
@@ -736,18 +737,6 @@ function clampPercent(value) {
 
 function normalizeTopAnchoredBackgroundFocusY(value) {
   return mapTopAnchoredBackgroundFocusY(value);
-}
-
-function clampZoomLevel(value) {
-  const n = Number(value);
-  if (!Number.isFinite(n)) return 1;
-  return Math.max(1, Math.min(100, Math.round(n)));
-}
-
-function zoomLevelToScale(level) {
-  const safe = clampZoomLevel(level);
-  const ratio = (safe - 1) / 99;
-  return 1 + ratio * 5;
 }
 
 function defaultCountryBackground(country) {
@@ -9717,8 +9706,8 @@ function adminCountryBackgroundsUI(data) {
     : uiLocale() === "uk"
       ? "Задайте окреі фони для ПК С– телефону, перетягніть кадр ишкою/пальце С– налаштуйте зу."
       : uiLocale() === "et"
-        ? "Maara eraldi taustad lauaarvutile ja telefonile, lohista kaadrit hiire/sormega ja sea suum."
-        : "Set separate desktop/mobile backgrounds, drag the frame with mouse/touch, and adjust zoom.";
+        ? "Maara eraldi taustad lauaarvutile ja telefonile ning lohista kaadrit hiire või sõrmega."
+        : "Set separate desktop/mobile backgrounds and drag the frame with mouse/touch.";
   const countryLabel = uiLocale() === "ru"
     ? "Страна"
     : uiLocale() === "uk"
@@ -9753,7 +9742,6 @@ function adminCountryBackgroundsUI(data) {
   const mobileLabel = uiLocale() === "ru" ? "Телефон" : uiLocale() === "uk" ? "Телефон" : uiLocale() === "et" ? "Telefon" : "Mobile";
   const uploadLabel = uiLocale() === "ru" ? "Загрузить файл" : uiLocale() === "uk" ? "Завантажити файл" : uiLocale() === "et" ? "Laadi fail" : "Upload file";
   const urlLabel = uiLocale() === "ru" ? "или URL изображения" : uiLocale() === "uk" ? "або URL зображення" : uiLocale() === "et" ? "või pildi URL" : "or image URL";
-  const zoomLabel = uiLocale() === "ru" ? "Зу" : uiLocale() === "uk" ? "Зу" : uiLocale() === "et" ? "Suum" : "Zoom";
   const saveLabel = uiLocale() === "ru" ? "Сохранить" : uiLocale() === "uk" ? "Зберегти" : uiLocale() === "et" ? "Salvesta" : "Save";
   const clearLabel = uiLocale() === "ru" ? "Очистить" : uiLocale() === "uk" ? "Очистити" : uiLocale() === "et" ? "Tühjenda" : "Clear";
   const previewLabel = uiLocale() === "ru" ? "Предпросмотр" : uiLocale() === "uk" ? "Попередній перегляд" : uiLocale() === "et" ? "Eelvaade" : "Preview";
@@ -9881,10 +9869,6 @@ function adminCountryBackgroundsUI(data) {
             </label>
             <input id="ab_desktop_focus_x" type="hidden" value="50" />
             <input id="ab_desktop_focus_y" type="hidden" value="50" />
-            <label class="field">
-              <div class="fieldLabel">${esc(zoomLabel)}: <span id="ab_desktop_zoom_val">1</span></div>
-              <input class="input" id="ab_desktop_zoom" type="range" min="1" max="100" step="1" value="1" />
-            </label>
             <div class="fieldLabel">${esc(previewLabel)}</div>
             <div class="muted small ab-preview-hint">${esc(dragHint)}</div>
             <div class="ab-preview-screen ab-preview-desktop" id="ab_preview_desktop" data-empty="${esc(noImage)}">
@@ -9927,10 +9911,6 @@ function adminCountryBackgroundsUI(data) {
             </label>
             <input id="ab_mobile_focus_x" type="hidden" value="50" />
             <input id="ab_mobile_focus_y" type="hidden" value="50" />
-            <label class="field">
-              <div class="fieldLabel">${esc(zoomLabel)}: <span id="ab_mobile_zoom_val">1</span></div>
-              <input class="input" id="ab_mobile_zoom" type="range" min="1" max="100" step="1" value="1" />
-            </label>
             <div class="fieldLabel">${esc(previewLabel)}</div>
             <div class="muted small ab-preview-hint">${esc(dragHint)}</div>
             <div class="ab-preview-screen ab-preview-mobile" id="ab_preview_mobile" data-empty="${esc(noImage)}">
@@ -10068,7 +10048,6 @@ function adminHistoricalVisualsUI(data) {
   const mobileLabel = pick("\u0422\u0435\u043b\u0435\u0444\u043e\u043d", "\u0422\u0435\u043b\u0435\u0444\u043e\u043d", "Telefon", "Mobile");
   const uploadLabel = pick("\u0424\u0430\u0439\u043b", "\u0424\u0430\u0439\u043b", "Fail", "File");
   const urlLabel = pick("\u0438\u043b\u0438 URL", "\u0430\u0431\u043e URL", "või URL", "or URL");
-  const zoomLabel = pick("\u0417\u0443\u043c", "\u0417\u0443\u043c", "Suum", "Zoom");
   const saveLabel = pick("\u0421\u043e\u0445\u0440\u0430\u043d\u0438\u0442\u044c", "\u0417\u0431\u0435\u0440\u0435\u0433\u0442\u0438", "Salvesta", "Save");
   const clearLabel = pick("\u041e\u0447\u0438\u0441\u0442\u0438\u0442\u044c", "\u041e\u0447\u0438\u0441\u0442\u0438\u0442\u0438", "Tühjenda", "Clear");
   const previewLabel = pick("\u041f\u0440\u0435\u0432\u044c\u044e", "\u041f\u0435\u0440\u0435\u0433\u043b\u044f\u0434", "Eelvaade", "Preview");
@@ -10208,10 +10187,6 @@ function adminHistoricalVisualsUI(data) {
             </div>
             <input id="ab_desktop_focus_x" type="hidden" value="50" />
             <input id="ab_desktop_focus_y" type="hidden" value="50" />
-            <label class="field">
-              <div class="fieldLabel">${esc(zoomLabel)}: <span id="ab_desktop_zoom_val">1</span></div>
-              <input class="input" id="ab_desktop_zoom" type="range" min="1" max="100" step="1" value="1" />
-            </label>
             <div class="fieldLabel">${esc(previewLabel)}</div>
             <div class="muted small ab-preview-hint">${esc(dragHint)}</div>
             <div class="ab-preview-screen ab-preview-desktop" id="ab_preview_desktop" data-empty="${esc(noImage)}">
@@ -10271,10 +10246,6 @@ function adminHistoricalVisualsUI(data) {
             </div>
             <input id="ab_mobile_focus_x" type="hidden" value="50" />
             <input id="ab_mobile_focus_y" type="hidden" value="50" />
-            <label class="field">
-              <div class="fieldLabel">${esc(zoomLabel)}: <span id="ab_mobile_zoom_val">1</span></div>
-              <input class="input" id="ab_mobile_zoom" type="range" min="1" max="100" step="1" value="1" />
-            </label>
             <div class="fieldLabel">${esc(previewLabel)}</div>
             <div class="muted small ab-preview-hint">${esc(dragHint)}</div>
             <div class="ab-preview-screen ab-preview-mobile" id="ab_preview_mobile" data-empty="${esc(noImage)}">
@@ -11247,12 +11218,11 @@ function loadImageElement(src) {
   });
 }
 
-function computeBackgroundCrop(sourceWidth, sourceHeight, targetWidth, targetHeight, focusX, focusY, zoomLevel = 1) {
+function computeBackgroundCrop(sourceWidth, sourceHeight, targetWidth, targetHeight, focusX, focusY) {
   const safeSourceWidth = Math.max(1, Number(sourceWidth || 1));
   const safeSourceHeight = Math.max(1, Number(sourceHeight || 1));
   const safeTargetWidth = Math.max(1, Math.round(Number(targetWidth) || 1));
   const safeTargetHeight = Math.max(1, Math.round(Number(targetHeight) || 1));
-  const zoomScale = zoomLevelToScale(zoomLevel);
 
   const targetAspect = safeTargetWidth / safeTargetHeight;
   const sourceAspect = safeSourceWidth / safeSourceHeight;
@@ -11266,8 +11236,8 @@ function computeBackgroundCrop(sourceWidth, sourceHeight, targetWidth, targetHei
     baseCropHeight = baseCropWidth / targetAspect;
   }
 
-  const cropWidth = Math.max(1, baseCropWidth / zoomScale);
-  const cropHeight = Math.max(1, baseCropHeight / zoomScale);
+  const cropWidth = Math.max(1, baseCropWidth);
+  const cropHeight = Math.max(1, baseCropHeight);
 
   const fx = clampPercent(focusX) / 100;
   const fy = normalizeTopAnchoredBackgroundFocusY(focusY) / 100;
@@ -11281,7 +11251,6 @@ function computeBackgroundCrop(sourceWidth, sourceHeight, targetWidth, targetHei
     cropY,
     cropWidth,
     cropHeight,
-    zoomScale,
     sourceWidth: safeSourceWidth,
     sourceHeight: safeSourceHeight,
     targetWidth: safeTargetWidth,
@@ -11305,13 +11274,13 @@ function compressedCanvasDataUrl(canvas, options = {}) {
   return best;
 }
 
-async function standardizeBackgroundImage(sourceUrl, width, height, focusX, focusY, zoomLevel = 1, maxDataUrlLength = 320_000) {
+async function standardizeBackgroundImage(sourceUrl, width, height, focusX, focusY, maxDataUrlLength = 320_000) {
   const image = await loadImageElement(sourceUrl);
   const sourceWidth = Math.max(1, Number(image.naturalWidth || image.width || 1));
   const sourceHeight = Math.max(1, Number(image.naturalHeight || image.height || 1));
   const targetWidth = Math.max(1, Math.round(Number(width) || 1));
   const targetHeight = Math.max(1, Math.round(Number(height) || 1));
-  const crop = computeBackgroundCrop(sourceWidth, sourceHeight, targetWidth, targetHeight, focusX, focusY, zoomLevel);
+  const crop = computeBackgroundCrop(sourceWidth, sourceHeight, targetWidth, targetHeight, focusX, focusY);
 
   const canvas = document.createElement("canvas");
   canvas.width = targetWidth;
@@ -11324,7 +11293,7 @@ async function standardizeBackgroundImage(sourceUrl, width, height, focusX, focu
   return compressedCanvasDataUrl(canvas, { maxDataUrlLength });
 }
 
-async function ensureStrictBackgroundImage(sourceUrl, width, height, focusX, focusY, zoomLevel = 1, maxDataUrlLength = 320_000) {
+async function ensureStrictBackgroundImage(sourceUrl, width, height, focusX, focusY, maxDataUrlLength = 320_000) {
   const image = await loadImageElement(sourceUrl);
   const sourceWidth = Math.max(1, Number(image.naturalWidth || image.width || 1));
   const sourceHeight = Math.max(1, Number(image.naturalHeight || image.height || 1));
@@ -11337,7 +11306,7 @@ async function ensureStrictBackgroundImage(sourceUrl, width, height, focusX, foc
   ) {
     return sourceUrl;
   }
-  return standardizeBackgroundImage(sourceUrl, targetWidth, targetHeight, focusX, focusY, zoomLevel, maxDataUrlLength);
+  return standardizeBackgroundImage(sourceUrl, targetWidth, targetHeight, focusX, focusY, maxDataUrlLength);
 }
 
 async function standardizeVisualBackgroundPair(entry = {}) {
@@ -11348,13 +11317,12 @@ async function standardizeVisualBackgroundPair(entry = {}) {
   const nextDesktop = desktopSource
     ? normalizeVisualBackground({
         ...desktop,
-      image_url: await ensureStrictBackgroundImage(
+        image_url: await ensureStrictBackgroundImage(
           desktopSource,
           COUNTRY_BACKGROUND_STANDARDS.desktop.width,
           COUNTRY_BACKGROUND_STANDARDS.desktop.height,
           desktop.focus_x,
           desktop.focus_y,
-          1,
           COUNTRY_BACKGROUND_STANDARDS.desktop.maxDataUrlLength,
         ),
         source_url: isDataImageUrl(desktop.source_url) ? "" : desktop.source_url,
@@ -11363,13 +11331,12 @@ async function standardizeVisualBackgroundPair(entry = {}) {
   const nextMobile = mobileSource
     ? normalizeVisualBackground({
         ...mobile,
-      image_url: await ensureStrictBackgroundImage(
+        image_url: await ensureStrictBackgroundImage(
           mobileSource,
           COUNTRY_BACKGROUND_STANDARDS.mobile.width,
           COUNTRY_BACKGROUND_STANDARDS.mobile.height,
           mobile.focus_x,
           mobile.focus_y,
-          1,
           COUNTRY_BACKGROUND_STANDARDS.mobile.maxDataUrlLength,
         ),
         source_url: isDataImageUrl(mobile.source_url) ? "" : mobile.source_url,
@@ -12715,6 +12682,7 @@ function bindAdminVisualCategories(ctx) {
     sticker: { title: locale === "ru" ? "Стикер превью" : "Preview sticker", type: "symbol", standard: { width: 512, height: 512 }, previewClass: "ab-symbol-preview-square" },
   };
   let visualProfileState = normalizeVisualProfile(createEmptyVisualProfile());
+  const backgroundPreviewMetricsCache = new Map();
 
   const setError = (message = "") => {
     if (!rangeErrorNode) return;
@@ -12739,14 +12707,9 @@ function bindAdminVisualCategories(ctx) {
     const isDefault = index < 0;
     const value = isDefault ? row.default : row.value;
     const isBackground = categoryDefs[key].type === "background";
-    const focus = isBackground ? normalizeVisualBackground(value) : { focus_x: 50, focus_y: 50, zoom: 1 };
+    const focus = isBackground ? normalizeVisualBackground(value) : { focus_x: 50, focus_y: 50 };
     const previewFocus = isBackground ? resolveBackgroundPreviewPosition(focus) : { x: 50, y: 50 };
     const image = isBackground ? (focus.source_url || focus.image_url || "") : imageForRow(key, value);
-    const zoom = clampZoomLevel(focus.zoom || 1);
-    const zoomScale = Math.round(zoomLevelToScale(zoom) * 1000) / 10;
-    const zoomControl = isBackground
-      ? `<div class="ab-file-zoom"><div class="fieldLabel">${esc(locale === "ru" ? "Зум" : "Zoom")}: <span class="ab-visual-zoom-value">${esc(zoom)}</span></div><input class="input ab-visual-zoom" type="range" min="1" max="100" step="1" value="${esc(zoom)}" data-category="${esc(key)}" data-index="${index}" /></div>`
-      : "";
     return `
       <div class="ab-visual-row" data-category="${esc(key)}" data-index="${index}">
         <div class="ab-visual-row-head">
@@ -12754,7 +12717,7 @@ function bindAdminVisualCategories(ctx) {
           ${isDefault ? "" : `<button class="btn ghost ab-remove-variant" type="button" data-category="${esc(key)}" data-index="${index}">${esc(locale === "ru" ? "Удалить" : "Remove")}</button>`}
         </div>
         <div class="ab-visual-grid">
-          <label class="field ab-file-field"><div class="fieldLabel">${esc(locale === "ru" ? "Файл" : "File")}</div><input class="input ab-visual-file" type="file" accept="image/*" data-category="${esc(key)}" data-index="${index}" />${zoomControl}</label>
+          <label class="field ab-file-field"><div class="fieldLabel">${esc(locale === "ru" ? "Файл" : "File")}</div><input class="input ab-visual-file" type="file" accept="image/*" data-category="${esc(key)}" data-index="${index}" /></label>
           ${isDefault ? `<div></div><div></div>` : `
             <label class="field"><div class="fieldLabel">${esc(locale === "ru" ? "С" : "From")}</div><input class="input ab-year-from" type="number" min="1" max="3000" value="${esc(row.from || "")}" data-category="${esc(key)}" data-index="${index}" /></label>
             <label class="field"><div class="fieldLabel">${esc(locale === "ru" ? "По" : "To")}</div><input class="input ab-year-to" type="number" min="1" max="3000" value="${esc(row.to || "")}" data-category="${esc(key)}" data-index="${index}" /></label>
@@ -12767,7 +12730,7 @@ function bindAdminVisualCategories(ctx) {
             <button class="btn ghost" type="button" data-dx="4" data-dy="0">></button>
             <button class="btn ghost" type="button" data-dx="0" data-dy="4">v</button>
           </div>
-          <div class="ab-visual-preview ${esc(categoryDefs[key].previewClass)} ${image ? "" : "is-empty"}" data-empty="${esc(locale === "ru" ? "Нет изображения" : "No image")}" style="${image ? `background-image:url('${esc(image)}');background-position:${previewFocus.x}% ${previewFocus.y}%;${isBackground ? `background-size:${zoomScale}% auto;` : ""}` : ""}"></div>
+          <div class="ab-visual-preview ${esc(categoryDefs[key].previewClass)} ${image ? "" : "is-empty"}" data-empty="${esc(locale === "ru" ? "Нет изображения" : "No image")}" style="${image ? `background-image:url('${esc(image)}');background-position:${previewFocus.x}% ${previewFocus.y}%;${isBackground ? `background-size:cover;` : ""}` : ""}"></div>
         </div>
       </div>
     `;
@@ -12784,6 +12747,7 @@ function bindAdminVisualCategories(ctx) {
     });
     saveBtn.disabled = !hasCountry;
     clearBtn.disabled = !hasCountry;
+    requestAnimationFrame(syncRenderedBackgroundPreviews);
   };
   const setCountry = (country) => {
     const normalized = normalizeSongCountry(country || "") || "";
@@ -12810,29 +12774,91 @@ function bindAdminVisualCategories(ctx) {
     if (index < 0) category.default = normalizeRowValue(key, value);
     else if (category.variants[index]) category.variants[index].value = normalizeRowValue(key, value);
   };
-  const standardizeSource = async (key, source, focusX = 50, focusY = 50, zoom = 1) => {
+  const standardizeSource = async (key, source, focusX = 50, focusY = 50) => {
     if (categoryDefs[key].type === "background") {
       return normalizeVisualBackground({
         image_url: String(source || "").trim(),
         source_url: String(source || "").trim(),
         focus_x: focusX,
         focus_y: focusY,
-        zoom,
       });
     }
     const std = categoryDefs[key].standard;
     const image = await standardizeFlagImageHorizontalCrop(source, std.width, std.height);
     return key === "sticker" ? normalizeVisualSymbol({ square: image }) : normalizeVisualSymbol({ long: image, long_mobile: image });
   };
-  const previewStyleForBackground = (preview, value) => {
+  const getBackgroundPreviewMetrics = async (source = "") => {
+    const safeSource = String(source || "").trim();
+    if (!safeSource) return null;
+    if (backgroundPreviewMetricsCache.has(safeSource)) return backgroundPreviewMetricsCache.get(safeSource);
+    const pending = loadImageElement(safeSource)
+      .then((image) => ({
+        width: Math.max(1, Number(image.naturalWidth || image.width || 1)),
+        height: Math.max(1, Number(image.naturalHeight || image.height || 1)),
+      }))
+      .catch((error) => {
+        backgroundPreviewMetricsCache.delete(safeSource);
+        throw error;
+      });
+    backgroundPreviewMetricsCache.set(safeSource, pending);
+    return pending;
+  };
+  const syncBackgroundPreviewNode = async (preview, key, value = {}) => {
     if (!(preview instanceof HTMLElement)) return;
     const current = normalizeVisualBackground(value);
-    const previewSource = current.source_url || current.image_url || "";
-    if (!previewSource) return;
+    const previewSource = String(current.source_url || current.image_url || "").trim();
     const previewFocus = resolveBackgroundPreviewPosition(current);
-    preview.style.backgroundImage = `url("${previewSource.replaceAll("\"", "%22")}")`;
+    if (!previewSource) {
+      preview.classList.add("is-empty");
+      preview.style.backgroundImage = "none";
+      preview.style.backgroundPosition = "50% 50%";
+      preview.style.backgroundSize = "cover";
+      delete preview.dataset.previewToken;
+      return;
+    }
+    const token = JSON.stringify([key, previewSource, current.focus_x, current.focus_y]);
+    preview.dataset.previewToken = token;
+    preview.classList.remove("is-empty");
+    preview.style.backgroundImage = toCssUrlValue(previewSource);
     preview.style.backgroundPosition = `${previewFocus.x}% ${previewFocus.y}%`;
-    preview.style.backgroundSize = `${Math.round(zoomLevelToScale(current.zoom || 1) * 1000) / 10}% auto`;
+    preview.style.backgroundSize = "cover";
+    try {
+      const metrics = await getBackgroundPreviewMetrics(previewSource);
+      if (preview.dataset.previewToken !== token) return;
+      const fallbackViewport = categoryDefs[key]?.standard || { width: 1, height: 1 };
+      const frame = computeVisualBackgroundRenderFrame(
+        metrics?.width || fallbackViewport.width,
+        metrics?.height || fallbackViewport.height,
+        Math.max(1, preview.clientWidth || fallbackViewport.width),
+        Math.max(1, preview.clientHeight || fallbackViewport.height)
+      );
+      const offsetX = -frame.overflowX * (previewFocus.x / 100);
+      const offsetY = -frame.overflowY * (previewFocus.y / 100);
+      preview.style.backgroundSize = `${Math.round(frame.renderWidth)}px ${Math.round(frame.renderHeight)}px`;
+      preview.style.backgroundPosition = `${Math.round(offsetX)}px ${Math.round(offsetY)}px`;
+    } catch {
+      if (preview.dataset.previewToken !== token) return;
+      preview.style.backgroundPosition = `${previewFocus.x}% ${previewFocus.y}%`;
+      preview.style.backgroundSize = "cover";
+    }
+  };
+  const syncRenderedBackgroundPreviews = () => {
+    const stack = qs("ab_category_stack");
+    if (!(stack instanceof HTMLElement)) return;
+    stack.querySelectorAll(".ab-visual-row").forEach((rowNode) => {
+      if (!(rowNode instanceof HTMLElement)) return;
+      const key = rowNode.getAttribute("data-category") || "";
+      if (categoryDefs[key]?.type !== "background") return;
+      const index = Number(rowNode.getAttribute("data-index"));
+      const category = getCategory(key);
+      const row = index < 0 ? category : category?.variants?.[index];
+      const value = index < 0 ? category?.default : row?.value;
+      const preview = rowNode.querySelector(".ab-visual-preview");
+      void syncBackgroundPreviewNode(preview, key, value);
+    });
+  };
+  const previewStyleForBackground = (preview, key, value) => {
+    void syncBackgroundPreviewNode(preview, key, value);
   };
   const finalizeBackgroundValue = async (key, value = {}) => {
     const current = normalizeVisualBackground(value);
@@ -12846,13 +12872,11 @@ function bindAdminVisualCategories(ctx) {
         std.height,
         current.focus_x,
         current.focus_y,
-        current.zoom || 1,
         std.maxDataUrlLength,
       ),
       source_url: isDataImageUrl(source) ? "" : source,
       focus_x: current.focus_x,
       focus_y: current.focus_y,
-      zoom: current.zoom || 1,
     });
   };
   const finalizeProfileForSave = async () => {
@@ -12949,16 +12973,7 @@ function bindAdminVisualCategories(ctx) {
     if (!data || !(target instanceof HTMLInputElement)) return;
     if (target.classList.contains("ab-year-from")) data.row.from = target.value;
     if (target.classList.contains("ab-year-to")) data.row.to = target.value;
-    if (target.classList.contains("ab-visual-zoom") && categoryDefs[data.key]?.type === "background") {
-      const current = normalizeVisualBackground(data.index < 0 ? data.category.default : data.row.value);
-      const next = { ...current, zoom: clampZoomLevel(target.value || 1) };
-      setRowValue(data.key, data.index, next);
-      const rowNode = target.closest(".ab-visual-row");
-      const label = rowNode?.querySelector(".ab-visual-zoom-value");
-      const preview = rowNode?.querySelector(".ab-visual-preview");
-      if (label) label.textContent = String(next.zoom);
-      previewStyleForBackground(preview, next);
-    }
+    
   });
   qs("ab_category_stack")?.addEventListener("change", async (event) => {
     const input = event.target;
@@ -13198,8 +13213,6 @@ function bindAdminHistoricalVisuals(ctx) {
     file: qs("ab_desktop_file"),
     focusX: qs("ab_desktop_focus_x"),
     focusY: qs("ab_desktop_focus_y"),
-    zoom: qs("ab_desktop_zoom"),
-    zoomVal: qs("ab_desktop_zoom_val"),
     preview: qs("ab_preview_desktop"),
     scroll: qs("ab_desktop_scroll"),
     scrollVal: qs("ab_desktop_scroll_val"),
@@ -13219,8 +13232,6 @@ function bindAdminHistoricalVisuals(ctx) {
     file: qs("ab_mobile_file"),
     focusX: qs("ab_mobile_focus_x"),
     focusY: qs("ab_mobile_focus_y"),
-    zoom: qs("ab_mobile_zoom"),
-    zoomVal: qs("ab_mobile_zoom_val"),
     preview: qs("ab_preview_mobile"),
     scroll: qs("ab_mobile_scroll"),
     scrollVal: qs("ab_mobile_scroll_val"),
@@ -13617,19 +13628,6 @@ function bindAdminHistoricalVisuals(ctx) {
     if (refs.focusY) refs.focusY.value = `${clampPercent(focusY)}`;
   }
 
-  function readVariantZoom(kind) {
-    return clampZoomLevel(variantRefs[kind]?.zoom?.value || 1);
-  }
-
-  function writeVariantZoom(kind, value) {
-    const refs = variantRefs[kind];
-    if (refs?.zoom) refs.zoom.value = `${clampZoomLevel(value)}`;
-  }
-
-  function updateZoomLabel(refs) {
-    if (refs?.zoomVal) refs.zoomVal.textContent = `${clampZoomLevel(refs.zoom?.value || 1)}`;
-  }
-
   function sourceUrlForKind(kind) {
     const refs = variantRefs[kind];
     return String(variantBaseSource[kind] || refs?.url?.value || "").trim();
@@ -13657,18 +13655,12 @@ function bindAdminHistoricalVisuals(ctx) {
     if (!previewNode || !metrics?.width || !metrics?.height) return null;
     const previewWidth = Math.max(1, previewNode.clientWidth || refs.viewport.width);
     const previewHeight = Math.max(1, previewNode.clientHeight || refs.viewport.height);
-    const sourceWidth = Math.max(1, metrics.width);
-    const sourceHeight = Math.max(1, metrics.height);
-    const baseScale = Math.max(previewWidth / sourceWidth, previewHeight / sourceHeight);
-    const zoomScale = zoomLevelToScale(readVariantZoom(kind));
-    const renderedWidth = sourceWidth * baseScale * zoomScale;
-    const renderedHeight = sourceHeight * baseScale * zoomScale;
-    return {
-      renderedWidth,
-      renderedHeight,
-      maxOffsetX: Math.max(0, renderedWidth - previewWidth),
-      maxOffsetY: Math.max(0, renderedHeight - previewHeight),
-    };
+    return computeVisualBackgroundRenderFrame(
+      Math.max(1, metrics.width),
+      Math.max(1, metrics.height),
+      previewWidth,
+      previewHeight,
+    );
   }
 
   function applyPreview(refs, kind) {
@@ -13676,7 +13668,6 @@ function bindAdminHistoricalVisuals(ctx) {
     const imageUrl = sourceUrlForKind(kind);
     const { focusX, focusY: rawFocusY } = readVariantFocus(kind);
     const focusY = normalizeTopAnchoredBackgroundFocusY(rawFocusY);
-    updateZoomLabel(refs);
     if (!imageUrl) {
       refs.preview.classList.add("is-empty");
       refs.preview.style.backgroundImage = "none";
@@ -13770,8 +13761,6 @@ function bindAdminHistoricalVisuals(ctx) {
     if (flagRefs.urlMobile) flagRefs.urlMobile.value = symbolDraft.long_mobile || "";
     writeVariantFocus("desktop", backgroundDraft?.desktop?.focus_x ?? 50, backgroundDraft?.desktop?.focus_y ?? 50);
     writeVariantFocus("mobile", backgroundDraft?.mobile?.focus_x ?? 50, backgroundDraft?.mobile?.focus_y ?? 50);
-    writeVariantZoom("desktop", 1);
-    writeVariantZoom("mobile", 1);
     Promise.all([
       loadMetricsForKind("desktop", desktopRefs.url?.value || "").catch(() => { variantMetrics.desktop = { src: "", width: 0, height: 0 }; }),
       loadMetricsForKind("mobile", mobileRefs.url?.value || "").catch(() => { variantMetrics.mobile = { src: "", width: 0, height: 0 }; }),
@@ -13814,7 +13803,6 @@ function bindAdminHistoricalVisuals(ctx) {
       refs.standard.height,
       focusX,
       focusY,
-      readVariantZoom(kind),
       refs.standard.maxDataUrlLength,
     );
     if (refs.url) refs.url.value = out;
@@ -13874,12 +13862,6 @@ function bindAdminHistoricalVisuals(ctx) {
       syncActiveScopeFromInputs();
       if (!nextSource) return;
       scheduleRebuild(kind);
-    });
-    refs.zoom?.addEventListener("input", () => {
-      updateZoomLabel(refs);
-      applyPreview(refs, kind);
-      applyScrollMinimap(kind);
-      if (variantBaseSource[kind]) scheduleRebuild(kind);
     });
     refs.file?.addEventListener("change", async () => {
       const file = refs.file?.files?.[0];
@@ -20288,8 +20270,6 @@ export function bind(route, ctx) {
       file: qs("ab_desktop_file"),
       focusX: qs("ab_desktop_focus_x"),
       focusY: qs("ab_desktop_focus_y"),
-      zoom: qs("ab_desktop_zoom"),
-      zoomVal: qs("ab_desktop_zoom_val"),
       preview: qs("ab_preview_desktop"),
       scroll: qs("ab_desktop_scroll"),
       scrollVal: qs("ab_desktop_scroll_val"),
@@ -20306,8 +20286,6 @@ export function bind(route, ctx) {
       file: qs("ab_mobile_file"),
       focusX: qs("ab_mobile_focus_x"),
       focusY: qs("ab_mobile_focus_y"),
-      zoom: qs("ab_mobile_zoom"),
-      zoomVal: qs("ab_mobile_zoom_val"),
       preview: qs("ab_preview_mobile"),
       scroll: qs("ab_mobile_scroll"),
       scrollVal: qs("ab_mobile_scroll_val"),
@@ -20428,22 +20406,6 @@ export function bind(route, ctx) {
       if (refs.focusY) refs.focusY.value = `${safeY}`;
     };
 
-    const readVariantZoom = (kind) => {
-      const refs = variantRefs[kind];
-      return clampZoomLevel(refs?.zoom?.value || 1);
-    };
-
-    const writeVariantZoom = (kind, value) => {
-      const refs = variantRefs[kind];
-      if (!refs?.zoom) return;
-      refs.zoom.value = `${clampZoomLevel(value)}`;
-    };
-
-    const updateZoomLabel = (refs) => {
-      if (!refs?.zoomVal) return;
-      refs.zoomVal.textContent = `${clampZoomLevel(refs.zoom?.value || 1)}`;
-    };
-
     const sourceUrlForKind = (kind) => {
       const refs = variantRefs[kind];
       return String(variantBaseSource[kind] || refs?.url?.value || "").trim();
@@ -20472,22 +20434,12 @@ export function bind(route, ctx) {
       const previewHeight = Math.max(1, Number(preview.clientHeight || 0));
       if (!previewWidth || !previewHeight) return null;
       const metric = variantMetrics[kind];
-      const sourceWidth = Math.max(1, Number(metric?.width || refs.standard.width));
-      const sourceHeight = Math.max(1, Number(metric?.height || refs.standard.height));
-      const baseScale = Math.max(previewWidth / sourceWidth, previewHeight / sourceHeight);
-      const zoomScale = zoomLevelToScale(readVariantZoom(kind));
-      const renderedWidth = sourceWidth * baseScale * zoomScale;
-      const renderedHeight = sourceHeight * baseScale * zoomScale;
-      const maxOffsetX = Math.max(0, renderedWidth - previewWidth);
-      const maxOffsetY = Math.max(0, renderedHeight - previewHeight);
-      return {
+      return computeVisualBackgroundRenderFrame(
+        Math.max(1, Number(metric?.width || refs.standard.width)),
+        Math.max(1, Number(metric?.height || refs.standard.height)),
         previewWidth,
         previewHeight,
-        renderedWidth,
-        renderedHeight,
-        maxOffsetX,
-        maxOffsetY,
-      };
+      );
     };
 
     const applyPreview = (refs, kind) => {
@@ -20495,7 +20447,6 @@ export function bind(route, ctx) {
       const imageUrl = sourceUrlForKind(kind);
       const { focusX, focusY: rawFocusY } = readVariantFocus(kind);
       const focusY = normalizeTopAnchoredBackgroundFocusY(rawFocusY);
-      updateZoomLabel(refs);
       if (!imageUrl) {
         refs.preview.classList.add("is-empty");
         refs.preview.style.backgroundImage = "none";
@@ -20758,8 +20709,6 @@ export function bind(route, ctx) {
       refreshVariantUrlsFromScope();
       writeVariantFocus("desktop", Math.round(background.desktop_focus_x), Math.round(background.desktop_focus_y));
       writeVariantFocus("mobile", Math.round(background.mobile_focus_x), Math.round(background.mobile_focus_y));
-      writeVariantZoom("desktop", 1);
-      writeVariantZoom("mobile", 1);
       const flagPreviewDesktopUrl = resolveFlagPreviewImage(background.preview_flag_config || null, {
         country: normalizedCountry,
         kind: "long",
@@ -20800,14 +20749,12 @@ export function bind(route, ctx) {
       const baseSource = variantBaseSource[kind];
       if (!refs || !baseSource) return;
       const { focusX, focusY } = readVariantFocus(kind);
-      const zoomLevel = readVariantZoom(kind);
       const out = await standardizeBackgroundImage(
         baseSource,
         refs.standard.width,
         refs.standard.height,
         focusX,
         focusY,
-        zoomLevel,
         refs.standard.maxDataUrlLength,
       );
       if (refs.url) refs.url.value = out;
@@ -20837,12 +20784,6 @@ export function bind(route, ctx) {
             applyPreview(refs, kind);
             applyScrollMinimap(kind);
           });
-      });
-      refs.zoom?.addEventListener("input", () => {
-        updateZoomLabel(refs);
-        applyPreview(refs, kind);
-        applyScrollMinimap(kind);
-        if (variantBaseSource[kind]) scheduleRebuild(kind);
       });
       refs.file?.addEventListener("change", async () => {
         const file = refs.file?.files?.[0];

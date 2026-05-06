@@ -24,7 +24,6 @@ export function createEmptyVisualBackground() {
     source_url: "",
     focus_x: 50,
     focus_y: 50,
-    zoom: 1,
   };
 }
 
@@ -70,6 +69,10 @@ export function computeParallaxCoverFrame(sourceWidth = 0, sourceHeight = 0, vie
     sourceWidth: safeSourceWidth,
     sourceHeight: safeSourceHeight,
   };
+}
+
+export function computeVisualBackgroundRenderFrame(sourceWidth = 0, sourceHeight = 0, viewportWidth = 0, viewportHeight = 0) {
+  return computeParallaxCoverFrame(sourceWidth, sourceHeight, viewportWidth, viewportHeight);
 }
 
 export function computeParallaxOffsets(options = {}) {
@@ -141,7 +144,6 @@ export function normalizeVisualBackground(value = {}) {
     source_url: cleanUrl(raw.source_url ?? raw.sourceUrl ?? raw.source ?? raw.original_url ?? raw.originalUrl ?? ""),
     focus_x: clampVisualFocus(raw.focus_x ?? raw.focusX ?? 50),
     focus_y: clampVisualFocus(raw.focus_y ?? raw.focusY ?? 50),
-    zoom: Math.max(1, Math.min(100, Math.round(Number(raw.zoom ?? raw.zoom_level ?? raw.zoomLevel ?? 1) || 1))),
   };
 }
 

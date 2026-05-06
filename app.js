@@ -133,6 +133,7 @@ const GLOBAL_WALLPAPER_ASSET_URLS = [];
 const LOGO_ASSET_URL = "/ui/assets/songbook-logo-ui-384.png";
 const LOGO_ASSET_INLINE_DATA_URI = LOGO_ASSET_URL;
 const AUTH_HINT_COOKIE_NAME = "songbook_session_hint";
+const AUTH_HINT_TTL_SECONDS = 60 * 60 * 24 * 14;
 let globalWallpaperAssetsPreloaded = false;
 let logoAssetReadyPromise = null;
 const STAGED_REVEAL_SELECTOR = ".card, .songCard, .yt-card, .home-language-card, .home-country-card, .home-country-group-card, .request-section, .request-repeater, .ss_link_row, .ss_version_row, .ac_item, .ab-flag-range-row, .pill, .badge, .song-version-btn, .pager-shell .btn, .song-aux-panel, .song-tools-panel, .yt-chips, .ac-editor-optional-menu, .ig-drawer-header, .ig-drawer-group, .ig-drawer-link, .ig-drawer-button, .ig-drawer .user-chip-drawer";
@@ -174,10 +175,20 @@ function clearAuthSessionHint() {
 }
 
 function rememberAuthSessionHint() {
-  document.cookie = `${AUTH_HINT_COOKIE_NAME}=1; Path=/; SameSite=Lax`;
+  document.cookie = `${AUTH_HINT_COOKIE_NAME}=1; Path=/; Max-Age=${AUTH_HINT_TTL_SECONDS}; SameSite=Lax`;
+}
+
+function isStandaloneApp() {
+  try {
+    return window.matchMedia?.("(display-mode: standalone)")?.matches === true
+      || window.navigator?.standalone === true;
+  } catch {
+    return false;
+  }
 }
 
 function shouldBootstrapAuthOnLoad() {
+  if (isStandaloneApp()) return true;
   if (hasAuthSessionHint()) return true;
   const hash = String(location.hash || "#/").trim().toLowerCase();
   return hash.startsWith("#/request")
@@ -1482,8 +1493,10 @@ async function refreshMe() {
   try {
     state.user = await api.me();
     if (state.user) rememberAuthSessionHint();
-  } catch {
-    clearAuthSessionHint();
+  } catch (error) {
+    if (error?.status === 401 || error?.status === 403) {
+      clearAuthSessionHint();
+    }
     state.user = null;
   }
   setActiveNav();

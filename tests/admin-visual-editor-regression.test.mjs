@@ -29,6 +29,12 @@ test("admin visual editor keeps manual crop controls visible and mobile drag bou
   assert.match(source, /class="ab-crop-buttons"/);
   assert.doesNotMatch(source, /class="ab-crop-buttons hidden"/);
   assert.match(source, /background-position:\$\{previewFocus\.x\}% \$\{previewFocus\.y\}%/);
+  assert.doesNotMatch(source, /background-size:\$\{zoomScale\}% auto/);
+  assert.match(source, /computeVisualBackgroundRenderFrame\(/);
+  assert.match(source, /requestAnimationFrame\(syncRenderedBackgroundPreviews\)/);
+  assert.doesNotMatch(source, /ab-visual-zoom/);
+  assert.doesNotMatch(source, /ab_desktop_zoom/);
+  assert.doesNotMatch(source, /ab_mobile_zoom/);
   assert.doesNotMatch(source, /qs\("ab_category_stack"\)\?\.addEventListener\("pointerdown"/);
   assert.match(source, /const \{ profile, validation \} = await finalizeProfileForSave\(\);/);
   assert.match(source, /image_url: await standardizeBackgroundImage\(/);
