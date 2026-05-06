@@ -3,7 +3,7 @@ import assert from "node:assert/strict";
 import fs from "node:fs";
 import path from "node:path";
 import vm from "node:vm";
-import { getCatalogLabel } from "../shared/song-catalogs.js";
+import { getCatalogLabel, getCompactCountryLabel, getCompactPeriodLabel } from "../shared/song-catalogs.js";
 
 const projectRoot = process.cwd();
 
@@ -95,26 +95,45 @@ test("country labels are not left in English on Ukrainian interface", () => {
   assert.notEqual(getCatalogLabel("country", "ireland_republic_1949", "uk"), "Ireland");
 });
 
-test("main catalog country labels use requested Ukrainian and Estonian names", () => {
-  assert.equal(getCatalogLabel("country", "ussr", "uk"), "Радянський Союз");
-  assert.equal(getCatalogLabel("country", "russian_empire_1900_1917", "uk"), "Російська імперія");
-  assert.equal(getCatalogLabel("country", "austro_hungary_1900_1918", "uk"), "Австро-Угорщина");
-  assert.equal(getCatalogLabel("country", "ireland_republic_1949", "uk"), "Ірландія");
-  assert.equal(getCatalogLabel("country", "ussr", "et"), "Nõukogude Liit");
-  assert.equal(getCatalogLabel("country", "russian_empire_1900_1917", "et"), "Vene Keisririik");
-  assert.equal(getCatalogLabel("country", "austro_hungary_1900_1918", "et"), "Austria-Ungari");
-  assert.equal(getCatalogLabel("country", "ireland_republic_1949", "et"), "Iirimaa");
+test("main catalog country labels use standardized hierarchy display names", () => {
+  assert.equal(getCatalogLabel("country", "ussr", "et"), "N\u00f5ukogude Liit (1922\u20131991)");
+  assert.equal(getCatalogLabel("country", "russian_empire_1900_1917", "et"), "Vene keisririik (1721\u20131917)");
+  assert.equal(getCatalogLabel("country", "austro_hungary_1900_1918", "et"), "Austria-Ungari (1867\u20131918)");
+  assert.equal(getCatalogLabel("country", "ireland_republic_1949", "et"), "Iirimaa (alates 1937)");
+  assert.ok(getCatalogLabel("country", "ussr", "uk").endsWith("(1922\u20131991)"));
+  assert.ok(getCatalogLabel("country", "russian_empire_1900_1917", "uk").endsWith("(1721\u20131917)"));
+  assert.ok(getCatalogLabel("country", "austro_hungary_1900_1918", "uk").endsWith("(1867\u20131918)"));
+  assert.ok(!getCatalogLabel("country", "ireland_republic_1949", "uk").includes("Ireland"));
+});
+
+test("compact navigation labels stay aligned with standardized menu naming for historical countries", () => {
+  assert.equal(getCompactCountryLabel("ussr", "et"), "N\u00f5ukogude Liit (1922\u20131991)");
+  assert.equal(getCompactCountryLabel("lithuanian_ssr_1940_1990", "et"), "Leedu NSV (1940\u20131990)");
+  assert.equal(getCompactCountryLabel("bssr_1919_1991", "en"), "Byelorussian SSR (1919\u20131991)");
+  assert.ok(getCompactCountryLabel("russian_empire_1900_1917", "uk").endsWith("(1721\u20131917)"));
+  assert.ok(getCompactCountryLabel("ukr_ssr_1919_1991", "uk").endsWith("(1919\u20131991)"));
+  assert.equal(
+    getCompactCountryLabel("kingdom_of_poland_within_russian_empire_1815_1915", "uk"),
+    getCompactCountryLabel("kingdom_of_poland_within_russian_empire_1900_1915", "uk"),
+  );
+});
+
+test("compact period labels keep the standardized country naming base without duplicating country year badges", () => {
+  assert.equal(getCompactPeriodLabel("ussr_1941_1953", "et"), "N\u00f5ukogude Liit, stalinlik ajastu");
+  assert.equal(getCompactPeriodLabel("ussr_1964_1985", "en"), "Soviet Union, Developed Socialism");
+  assert.ok(!getCompactPeriodLabel("ussr_1953_1964", "uk").includes("1922"));
+  assert.ok(getCompactPeriodLabel("ussr_1953_1964", "uk").includes(", "));
 });
 
 test("country aliases resolve localized and historical names back to canonical country ids", () => {
-  assert.equal(getCatalogLabel("country", "Австро-Венгрия", "uk"), getCatalogLabel("country", "austro_hungary_1900_1918", "uk"));
-  assert.equal(getCatalogLabel("country", "Российская империя", "uk"), getCatalogLabel("country", "russian_empire_1900_1917", "uk"));
-  assert.equal(getCatalogLabel("country", "СССР", "uk"), getCatalogLabel("country", "ussr", "uk"));
+  assert.equal(getCatalogLabel("country", "Austria-Hungary (1867\u20131918)", "uk"), getCatalogLabel("country", "austro_hungary_1900_1918", "uk"));
+  assert.equal(getCatalogLabel("country", "Russian Empire (1721\u20131917)", "et"), getCatalogLabel("country", "russian_empire_1900_1917", "et"));
+  assert.equal(getCatalogLabel("country", "Congress Poland (1815\u20131915)", "en"), "Congress Poland (1815\u20131915)");
 });
 
 test("movement and subcategory labels are localized through the shared catalog", () => {
-  assert.equal(getCatalogLabel("country", "Армия Крайова", "uk"), "Армія Крайова");
-  assert.equal(getCatalogLabel("country", "Лесные братья", "et"), "Metsavennad");
-  assert.equal(getCatalogLabel("country", "Белая эмиграция", "en"), "White émigrés - since 1917");
-  assert.equal(getCatalogLabel("country", "Украинская повстанческая армия", "uk"), "Українська повстанська армія");
+  assert.equal(getCatalogLabel("country", "Forest Brothers (1944\u20131956)", "et"), "Metsavennad (1944\u20131956)");
+  assert.equal(getCatalogLabel("country", "White \u00e9migr\u00e9s (since 1917)", "en"), "White \u00e9migr\u00e9s (since 1917)");
+  assert.ok(getCatalogLabel("country", "Armia Krajowa (1942\u20131945)", "uk").endsWith("(1942\u20131945)"));
+  assert.ok(getCatalogLabel("country", "Ukrainian Insurgent Army (1942\u20131956)", "uk").endsWith("(1942\u20131956)"));
 });

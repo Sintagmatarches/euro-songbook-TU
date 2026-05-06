@@ -1,4 +1,6 @@
-﻿const SUPPORTED_LOCALES = new Set(["ru", "uk", "en", "et"]);
+import { COUNTRY_DISPLAY_LABEL_OVERRIDES } from "./navigation-display-labels.generated.js";
+
+const SUPPORTED_LOCALES = new Set(["ru", "uk", "en", "et"]);
 
 function pickLocale(locale) {
   return SUPPORTED_LOCALES.has(locale) ? locale : "ru";
@@ -1832,14 +1834,22 @@ Object.entries(REQUESTED_COUNTRY_LABELS).forEach(([locale, entries]) => {
 
 const CURRENT_COUNTRY_SIMPLE_LABELS = {
   ru: {
+    rsfsr_1917_1991: "РСФСР",
+    rsfsr_1917_1922: "РСФСР",
     russian_federation_1991: "Россия",
     finland_1917: "Финляндия",
     estonia_1991: "Эстония",
+    estonian_ssr_1940_1991: "Эстонская ССР",
     latvia_1991: "Латвия",
+    latvian_ssr_1940_1990: "Латвийская ССР",
     lithuania_1990: "Литва",
+    lithuanian_ssr_1940_1990: "Литовская ССР",
     belarus_1991: "Беларусь",
+    bssr_1919_1991: "Белорусская ССР",
     ukraine_1991: "Украина",
+    ukr_ssr_1919_1991: "Украинская ССР",
     moldova_1991: "Молдова",
+    moldavian_ssr_1940_1991: "Молдавская ССР",
     poland_1989: "Польша",
     czechia_1993: "Чехия",
     slovakia_1993: "Словакия",
@@ -1859,10 +1869,15 @@ const CURRENT_COUNTRY_SIMPLE_LABELS = {
     hellenic_republic_1974: "Греция",
     turkey_1923: "Турция",
     armenia_1991: "Армения",
+    armenian_ssr_1920_1991: "Армянская ССР",
     azerbaijan_1991: "Азербайджан",
+    azerbaijan_ssr_1920_1991: "Азербайджанская ССР",
     georgia_1991: "Грузия",
+    georgian_ssr_1921_1991: "Грузинская ССР",
     kazakhstan_1991: "Казахстан",
+    kazakh_ssr_1936_1991: "Казахская ССР",
     uzbekistan_1991: "Узбекистан",
+    uzbek_ssr_1924_1991: "Узбекская ССР",
     sweden_1900: "Швеция",
     norway_1905: "Норвегия",
     denmark_1900: "Дания",
@@ -1889,14 +1904,22 @@ const CURRENT_COUNTRY_SIMPLE_LABELS = {
     ussr: "Радянський Союз",
     russian_empire_1900_1917: "Російська імперія",
     austro_hungary_1900_1918: "Австро-Угорщина",
+    rsfsr_1917_1991: "РРФСР",
+    rsfsr_1917_1922: "РРФСР",
     russian_federation_1991: "Росія",
     finland_1917: "Фінляндія",
     estonia_1991: "Естонія",
+    estonian_ssr_1940_1991: "Естонська РСР",
     latvia_1991: "Латвія",
+    latvian_ssr_1940_1990: "Латвійська РСР",
     lithuania_1990: "Литва",
+    lithuanian_ssr_1940_1990: "Литовська РСР",
     belarus_1991: "Білорусь",
+    bssr_1919_1991: "Білоруська РСР",
     ukraine_1991: "Україна",
+    ukr_ssr_1919_1991: "Українська РСР",
     moldova_1991: "Молдова",
+    moldavian_ssr_1940_1991: "Молдавська РСР",
     poland_1989: "Польща",
     czechia_1993: "Чехія",
     slovakia_1993: "Словаччина",
@@ -1916,10 +1939,15 @@ const CURRENT_COUNTRY_SIMPLE_LABELS = {
     hellenic_republic_1974: "Греція",
     turkey_1923: "Туреччина",
     armenia_1991: "Вірменія",
+    armenian_ssr_1920_1991: "Вірменська РСР",
     azerbaijan_1991: "Азербайджан",
+    azerbaijan_ssr_1920_1991: "Азербайджанська РСР",
     georgia_1991: "Грузія",
+    georgian_ssr_1921_1991: "Грузинська РСР",
     kazakhstan_1991: "Казахстан",
+    kazakh_ssr_1936_1991: "Казахська РСР",
     uzbekistan_1991: "Узбекистан",
+    uzbek_ssr_1924_1991: "Узбецька РСР",
     sweden_1900: "Швеція",
     norway_1905: "Норвегія",
     denmark_1900: "Данія",
@@ -1946,14 +1974,22 @@ const CURRENT_COUNTRY_SIMPLE_LABELS = {
     ussr: "Nõukogude Liit",
     russian_empire_1900_1917: "Vene Keisririik",
     austro_hungary_1900_1918: "Austria-Ungari",
+    rsfsr_1917_1991: "VNFSV",
+    rsfsr_1917_1922: "VNFSV",
     russian_federation_1991: "Venemaa",
     finland_1917: "Soome",
     estonia_1991: "Eesti",
+    estonian_ssr_1940_1991: "Eesti NSV",
     latvia_1991: "Läti",
+    latvian_ssr_1940_1990: "Läti NSV",
     lithuania_1990: "Leedu",
+    lithuanian_ssr_1940_1990: "Leedu NSV",
     belarus_1991: "Valgevene",
+    bssr_1919_1991: "Valgevene NSV",
     ukraine_1991: "Ukraina",
+    ukr_ssr_1919_1991: "Ukraina NSV",
     moldova_1991: "Moldova",
+    moldavian_ssr_1940_1991: "Moldaavia NSV",
     poland_1989: "Poola",
     czechia_1993: "Tšehhi",
     slovakia_1993: "Slovakkia",
@@ -1973,10 +2009,15 @@ const CURRENT_COUNTRY_SIMPLE_LABELS = {
     hellenic_republic_1974: "Kreeka",
     turkey_1923: "Türgi",
     armenia_1991: "Armeenia",
+    armenian_ssr_1920_1991: "Armeenia NSV",
     azerbaijan_1991: "Aserbaidžaan",
+    azerbaijan_ssr_1920_1991: "Aserbaidžaani NSV",
     georgia_1991: "Gruusia",
+    georgian_ssr_1921_1991: "Gruusia NSV",
     kazakhstan_1991: "Kasahstan",
+    kazakh_ssr_1936_1991: "Kasahhi NSV",
     uzbekistan_1991: "Usbekistan",
+    uzbek_ssr_1924_1991: "Usbeki NSV",
     sweden_1900: "Rootsi",
     norway_1905: "Norra",
     denmark_1900: "Taani",
@@ -2000,14 +2041,25 @@ const CURRENT_COUNTRY_SIMPLE_LABELS = {
     vatican_1929: "Vatikan",
   },
   en: {
+    ussr: "Soviet Union",
+    russian_empire_1900_1917: "Russian Empire",
+    austro_hungary_1900_1918: "Austria-Hungary",
+    rsfsr_1917_1991: "RSFSR",
+    rsfsr_1917_1922: "RSFSR",
     russian_federation_1991: "Russia",
     finland_1917: "Finland",
     estonia_1991: "Estonia",
+    estonian_ssr_1940_1991: "Estonian SSR",
     latvia_1991: "Latvia",
+    latvian_ssr_1940_1990: "Latvian SSR",
     lithuania_1990: "Lithuania",
+    lithuanian_ssr_1940_1990: "Lithuanian SSR",
     belarus_1991: "Belarus",
+    bssr_1919_1991: "Byelorussian SSR",
     ukraine_1991: "Ukraine",
+    ukr_ssr_1919_1991: "Ukrainian SSR",
     moldova_1991: "Moldova",
+    moldavian_ssr_1940_1991: "Moldavian SSR",
     poland_1989: "Poland",
     czechia_1993: "Czechia",
     slovakia_1993: "Slovakia",
@@ -2027,10 +2079,15 @@ const CURRENT_COUNTRY_SIMPLE_LABELS = {
     hellenic_republic_1974: "Greece",
     turkey_1923: "Turkey",
     armenia_1991: "Armenia",
+    armenian_ssr_1920_1991: "Armenian SSR",
     azerbaijan_1991: "Azerbaijan",
+    azerbaijan_ssr_1920_1991: "Azerbaijan SSR",
     georgia_1991: "Georgia",
+    georgian_ssr_1921_1991: "Georgian SSR",
     kazakhstan_1991: "Kazakhstan",
+    kazakh_ssr_1936_1991: "Kazakh SSR",
     uzbekistan_1991: "Uzbekistan",
+    uzbek_ssr_1924_1991: "Uzbek SSR",
     sweden_1900: "Sweden",
     norway_1905: "Norway",
     denmark_1900: "Denmark",
@@ -2641,6 +2698,10 @@ function registerDerivedCountryAliases() {
     if (!table || typeof table !== "object") return;
     Object.entries(table).forEach(([value, label]) => registerCountryAliasLabel(label, value));
   });
+  Object.entries(COUNTRY_DISPLAY_LABEL_OVERRIDES || {}).forEach(([, table]) => {
+    if (!table || typeof table !== "object") return;
+    Object.entries(table).forEach(([value, label]) => registerCountryAliasLabel(label, value));
+  });
 }
 
 registerDerivedCountryAliases();
@@ -2780,9 +2841,46 @@ export function normalizeSongCatalogInput(input = {}, options = {}) {
   return { ok: true, value: { lang, country, period } };
 }
 
+function displayLabelBaseKey(label) {
+  const safeLabel = clean(label);
+  if (!safeLabel) return "";
+  return safeLabel
+    .replace(/\s*\(([^()]*\d[^()]*)\)\s*$/u, "")
+    .replace(/\s[-–—]\s(?:(?:before|до|kuni|since)\s+)?\d.*$/iu, "")
+    .replace(/\s{2,}/g, " ")
+    .trim()
+    .toLowerCase();
+}
+
+function countryDisplayOverrideFor(value, locale) {
+  const lc = pickLocale(locale);
+  const exact = clean(COUNTRY_DISPLAY_LABEL_OVERRIDES?.[lc]?.[value] || COUNTRY_DISPLAY_LABEL_OVERRIDES?.en?.[value]);
+  if (exact) return exact;
+
+  const englishBase = displayLabelBaseKey(LABELS?.country?.en?.[value] || LABELS?.country?.ru?.[value] || "");
+  if (!englishBase) return "";
+
+  for (const table of [COUNTRY_DISPLAY_LABEL_OVERRIDES?.[lc] || {}, COUNTRY_DISPLAY_LABEL_OVERRIDES?.en || {}]) {
+    for (const [candidateValue, candidateLabel] of Object.entries(table)) {
+      const candidateBase = displayLabelBaseKey(
+        LABELS?.country?.en?.[candidateValue]
+        || LABELS?.country?.ru?.[candidateValue]
+        || candidateLabel,
+      );
+      if (candidateBase && candidateBase === englishBase) {
+        const localized = clean(COUNTRY_DISPLAY_LABEL_OVERRIDES?.[lc]?.[candidateValue]);
+        return localized || clean(candidateLabel);
+      }
+    }
+  }
+  return "";
+}
+
 function labelFor(kind, value, locale) {
   const lc = pickLocale(locale);
   if (kind === "country") {
+    const displayOverride = countryDisplayOverrideFor(value, lc);
+    if (displayOverride) return displayOverride;
     const simple = CURRENT_COUNTRY_SIMPLE_LABELS[lc]?.[value] || CURRENT_COUNTRY_SIMPLE_LABELS.en?.[value] || "";
     if (simple) return simple;
   }
@@ -2802,6 +2900,21 @@ function compactHistoricalRangeLabel(label, locale) {
   return safeLabel;
 }
 
+function compactCatalogRangePrefix(label) {
+  const safeLabel = clean(label);
+  if (!safeLabel) return "";
+  return safeLabel
+    .split(/\s[-–—]\s/)[0]
+    .replace(/\s{2,}/g, " ")
+    .trim();
+}
+
+function stripTrailingDisplayRange(label) {
+  const safeLabel = clean(label);
+  if (!safeLabel) return "";
+  return safeLabel.replace(/\s*\(([^()]*\d[^()]*)\)\s*$/u, "").trim();
+}
+
 export function getCatalogLabel(kind, value, locale) {
   const raw = clean(value);
   if (!raw) return "-";
@@ -2818,6 +2931,39 @@ export function getCatalogLabel(kind, value, locale) {
     return canonical ? compactHistoricalRangeLabel(labelFor("period", canonical, locale), locale) : raw;
   }
   return raw;
+}
+
+export function getCompactCountryLabel(value, locale) {
+  const raw = clean(value);
+  if (!raw) return "";
+  const canonical = normalizeSongCountry(raw);
+  if (!canonical) return raw;
+  const lc = pickLocale(locale);
+  const displayOverride = countryDisplayOverrideFor(canonical, lc);
+  if (displayOverride) return displayOverride;
+  const simple = clean(CURRENT_COUNTRY_SIMPLE_LABELS?.[lc]?.[canonical]);
+  if (simple) return simple;
+  return compactCatalogRangePrefix(getCatalogLabel("country", canonical, lc));
+}
+
+export function getCompactPeriodLabel(value, locale) {
+  const raw = clean(value);
+  if (!raw) return "";
+  const canonical = normalizeSongPeriod(raw);
+  if (!canonical) return raw;
+  const lc = pickLocale(locale);
+  const meta = getPeriodMeta(canonical);
+  const compactLabel = compactCatalogRangePrefix(getCatalogLabel("period", canonical, lc));
+  if (!compactLabel) return "";
+  const country = Array.isArray(meta?.countries) && meta.countries.length ? meta.countries[0] : "";
+  const countryLabel = country ? stripTrailingDisplayRange(getCompactCountryLabel(country, lc)) : "";
+  if (!countryLabel) return compactLabel.replace(/\s*,\s*/g, " ").trim();
+
+  const commaIndex = compactLabel.indexOf(",");
+  if (commaIndex === -1) return countryLabel;
+  const suffix = compactLabel.slice(commaIndex + 1).trim();
+  if (!suffix) return countryLabel;
+  return `${countryLabel}, ${suffix}`.replace(/\s{2,}/g, " ").trim();
 }
 
 function getKindValues(kind, options = {}) {

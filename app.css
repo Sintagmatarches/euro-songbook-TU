@@ -16485,6 +16485,57 @@ html[data-theme="white"] .home-result-group[data-bucket="fuzzy"] .home-result-gr
   min-height: 18px;
 }
 
+.display-label {
+  display: inline-flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 3px;
+  min-width: 0;
+}
+
+.display-label-inline {
+  display: inline-flex;
+}
+
+.display-label-compact {
+  gap: 2px;
+}
+
+.display-label-text {
+  min-width: 0;
+}
+
+.display-label-range {
+  display: block;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: rgba(173, 202, 244, 0.82);
+  font-size: 0.7em;
+  line-height: 1.15;
+  letter-spacing: 0.04em;
+  white-space: normal;
+  box-shadow: none;
+}
+
+.display-label-range-compact {
+  font-size: 0.66em;
+}
+
+.home-entity-nav-title .display-label,
+.home-entity-nav-child-title .display-label,
+.home-entity-top-title .display-label,
+.home-entity-breadcrumb-current .display-label,
+.home-entity-breadcrumbs a .display-label,
+.home-entity-branch .h1 .display-label {
+  max-width: 100%;
+}
+
+html[data-theme="light"] .display-label-range,
+html[data-theme="white"] .display-label-range {
+  color: rgba(75, 108, 156, 0.9);
+}
+
 .yt-card-main-meta-part {
   display: inline-flex;
   align-items: center;

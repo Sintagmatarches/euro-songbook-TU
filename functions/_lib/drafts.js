@@ -1,4 +1,13 @@
-import { dbAll, dbGet, dbRun, requireAuth } from "./db.js";
+import {
+  assertScopeForLang,
+  canViewAdminContent,
+  dbAll,
+  dbGet,
+  dbRun,
+  getUserAccess,
+  hasAccessPermission,
+  requireAuth,
+} from "./db.js";
 import { err, makeId } from "./utils.js";
 import {
   confidenceLevelFromValue,
@@ -256,8 +265,7 @@ export async function createDraft(env, { userId, songId = "", seed = {} }) {
 
   let sourceSong = null;
   if (songId) {
-    sourceSong = await dbGet(env, `SELECT * FROM songs WHERE id=?`, [songId]);
-    if (!sourceSong) throw new Error("Song not found");
+    sourceSong = await ensureDraftSourceReadable(env, { userId, songId });
   }
 
   const snapshot = await normalizeDraftSnapshot({
@@ -324,6 +332,57 @@ export async function createDraft(env, { userId, songId = "", seed = {} }) {
   }
 
   return id;
+}
+
+export async function ensureDraftSourceReadable(env, { userId, songId }) {
+  const normalizedSongId = String(songId || "").trim();
+  if (!normalizedSongId) throw new Error("Song not found");
+  const sourceSong = await dbGet(env, `SELECT * FROM songs WHERE id=?`, [normalizedSongId]);
+  if (!sourceSong || String(sourceSong.status || "").trim() !== "published") {
+    throw new Error("Song not found");
+  }
+  const access = await getUserAccess(env, userId);
+  if (!access) throw new Error("Unauthorized");
+  if (Number(sourceSong.is_admin_content || 0) === 1 && !canViewAdminContent(access)) {
+    throw new Error("Song not found");
+  }
+  return sourceSong;
+}
+
+export async function ensureDraftPublishAccess(env, { userId, draftSongId = "", snapshot = {} }) {
+  const access = await getUserAccess(env, userId);
+  if (!access) throw new Error("Unauthorized");
+
+  const normalizedSongId = String(draftSongId || "").trim();
+  if (normalizedSongId) {
+    const targetSong = await dbGet(env, `SELECT * FROM songs WHERE id=?`, [normalizedSongId]);
+    if (!targetSong || String(targetSong.status || "").trim() !== "published") {
+      throw new Error("Song not found");
+    }
+    if (Number(targetSong.is_admin_content || 0) === 1 && !canViewAdminContent(access)) {
+      throw new Error("Song not found");
+    }
+    if (!hasAccessPermission(access, "songs.edit")) {
+      throw new Error("Forbidden: missing permission songs.edit");
+    }
+    try {
+      assertScopeForLang(access, String(targetSong.lang || "").trim());
+    } catch (cause) {
+      throw new Error(cause?.status === 403 ? `Forbidden: language scope ${String(targetSong.lang || "").trim()}` : (cause?.message || "Forbidden"));
+    }
+    return { access, targetSong };
+  }
+
+  const draftLang = String(snapshot?.lang || "").trim();
+  if (!hasAccessPermission(access, "songs.create")) {
+    throw new Error("Forbidden: missing permission songs.create");
+  }
+  try {
+    assertScopeForLang(access, draftLang);
+  } catch (cause) {
+    throw new Error(cause?.status === 403 ? `Forbidden: language scope ${draftLang}` : (cause?.message || "Forbidden"));
+  }
+  return { access, targetSong: null };
 }
 
 export async function listDraftCollaborators(env, draftId) {
@@ -1051,6 +1110,11 @@ export async function publishDraftToSong(env, { draftId, userId }) {
   if (!state) throw new Error("Draft not found");
 
   const snapshot = state.draft.snapshot || {};
+  const { targetSong } = await ensureDraftPublishAccess(env, {
+    userId,
+    draftSongId: String(state.draft.song_id || "").trim(),
+    snapshot,
+  });
   const orderedLines = [...state.lines].sort((a, b) => a.sort_order - b.sort_order);
   const textLines = orderedLines.map((line) => {
     const active = line.variants.find((v) => v.is_active) || line.variants[0];
@@ -1079,7 +1143,7 @@ export async function publishDraftToSong(env, { draftId, userId }) {
   const verified = asBoolInt(snapshot.verified);
   const now = nowIso();
 
-  let songId = String(state.draft.song_id || "").trim();
+  let songId = String(targetSong?.id || state.draft.song_id || "").trim();
   if (songId) {
     await dbRun(
       env,
@@ -1153,11 +1217,18 @@ export async function publishDraftToSong(env, { draftId, userId }) {
   return { songId, lyricsMeta };
 }
 
-export async function markDraftPublished(env, { draftId, songId = "", updatedAt = "" }) {
+export async function markDraftPublished(env, { draftId, songId = "", userId = "", updatedAt = "" }) {
   const current = await dbGet(env, `SELECT snapshot_json FROM drafts WHERE id=?`, [draftId]);
   if (!current) throw new Error("Draft not found");
   const now = String(updatedAt || "").trim() || nowIso();
   const normalizedSongId = String(songId || "").trim() || null;
+  if (normalizedSongId) {
+    await ensureDraftPublishAccess(env, {
+      userId,
+      draftSongId: normalizedSongId,
+      snapshot: parseJSON(current.snapshot_json, {}),
+    });
+  }
   const previousSnapshot = parseJSON(current.snapshot_json, {});
   const nextSnapshot = normalizedSongId
     ? { ...previousSnapshot, song_id: normalizedSongId }

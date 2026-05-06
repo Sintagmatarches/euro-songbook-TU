@@ -3,6 +3,8 @@ import { state } from "./state.js";
 import { t } from "./i18n.js";
 import {
   countrySupportsPeriods,
+  getCompactCountryLabel,
+  getCompactPeriodLabel,
   getCatalogLabel,
   getCatalogOptions,
   getPeriodValuesForCountry,
@@ -13,6 +15,7 @@ import {
   PERIOD_YEAR_RANGES,
   SONG_LANGUAGE_VALUES,
 } from "../shared/song-catalogs.js";
+import { ENTITY_DISPLAY_LABEL_OVERRIDES } from "../shared/navigation-display-labels.generated.js";
 import {
   getHistoricalAffiliationMeta,
   getHistoricalAffiliationOptions,
@@ -503,19 +506,42 @@ function formatPeriod(value) {
 }
 
 function compactHistoricalCountryLabel(value) {
-  const label = String(value ? formatCountry(value) : "").trim();
-  if (!label) return "";
-  return label.split(/\s[-–—]\s/)[0].trim();
+  return String(getCompactCountryLabel(value, uiLocale()) || "").trim();
 }
 
 function compactHistoricalPeriodLabel(value) {
-  const label = String(value ? formatPeriod(value) : "").trim();
-  if (!label) return "";
-  return label
-    .split(/\s[-–—]\s/)[0]
-    .replace(/\s*,\s*/g, " ")
-    .replace(/\s{2,}/g, " ")
-    .trim();
+  return String(getCompactPeriodLabel(value, uiLocale()) || "").trim();
+}
+
+function splitDisplayLabelParts(label = "") {
+  const safeLabel = String(label || "").trim();
+  if (!safeLabel) return { title: "", range: "" };
+  const match = safeLabel.match(/^(.*?)\s*\(([^()]*\d[^()]*)\)\s*$/u);
+  if (!match) return { title: safeLabel, range: "" };
+  return {
+    title: String(match[1] || "").trim(),
+    range: String(match[2] || "").trim(),
+  };
+}
+
+function renderDisplayLabel(label = "", options = {}) {
+  const { title, range } = splitDisplayLabelParts(label);
+  const wrapperClass = String(options.wrapperClass || "display-label").trim();
+  const textClass = String(options.textClass || "display-label-text").trim();
+  const rangeClass = String(options.rangeClass || "display-label-range").trim();
+  if (!range) return `<span class="${esc(wrapperClass)}"><span class="${esc(textClass)}">${esc(title)}</span></span>`;
+  return `<span class="${esc(wrapperClass)}"><span class="${esc(textClass)}">${esc(title)}</span><span class="${esc(rangeClass)}">${esc(range)}</span></span>`;
+}
+
+function renderMetaLabelPart(label = "", classes = "") {
+  const safeClasses = String(classes || "").trim();
+  const { range } = splitDisplayLabelParts(label);
+  if (!range) return `<span class="${esc(safeClasses)}">${esc(label)}</span>`;
+  return `<span class="${esc(safeClasses)}">${renderDisplayLabel(label, {
+    wrapperClass: "display-label display-label-inline display-label-compact",
+    textClass: "display-label-text",
+    rangeClass: "display-label-range display-label-range-compact",
+  })}</span>`;
 }
 
 function normalizeForKind(kind, value) {
@@ -2124,8 +2150,10 @@ function homeEntityNameLabel(entityName = "") {
   if (!safeName) return "";
   const ownCountry = homeEntityOwnCountry(safeName);
   const localizedCountryLabel = ownCountry ? compactHistoricalCountryLabel(ownCountry) : "";
+  const generatedOverride = ENTITY_DISPLAY_LABEL_OVERRIDES[uiLocale()]?.[safeName]
+    || ENTITY_DISPLAY_LABEL_OVERRIDES.en?.[safeName];
   const override = HOME_ENTITY_LABEL_OVERRIDES[uiLocale()]?.[safeName];
-  return localizedCountryLabel || override || safeName;
+  return localizedCountryLabel || generatedOverride || override || safeName;
 }
 
 function homeEntityCountries(entityName = "", visited = new Set()) {
@@ -2304,7 +2332,11 @@ function renderHomeEntityNavigationSection(section = {}) {
           <details class="home-entity-nav-group" ${index < 2 ? "open" : ""}>
             <summary class="home-entity-nav-summary">
               <span class="home-entity-nav-summary-main">
-                <span class="home-entity-nav-title">${esc(group.label || "")}</span>
+                <span class="home-entity-nav-title">${renderDisplayLabel(group.label || "", {
+                  wrapperClass: "display-label display-label-inline",
+                  textClass: "display-label-text",
+                  rangeClass: "display-label-range",
+                })}</span>
                 <span class="home-entity-nav-hint">${esc(homeEntityNavGroupHint(section.key, group.childCount || 0))}</span>
               </span>
               <span class="home-entity-nav-count">${esc(homeCountrySongsCountLabel(group.count))}</span>
@@ -2312,7 +2344,11 @@ function renderHomeEntityNavigationSection(section = {}) {
             <div class="home-entity-nav-children">
               ${group.children.map((child) => `
                 ${child.href ? `<a class="home-entity-nav-child" href="${esc(child.href)}">` : `<div class="home-entity-nav-child">`}
-                  <span class="home-entity-nav-child-title">${esc(child.label || "")}</span>
+                  <span class="home-entity-nav-child-title">${renderDisplayLabel(child.label || "", {
+                    wrapperClass: "display-label display-label-inline",
+                    textClass: "display-label-text",
+                    rangeClass: "display-label-range",
+                  })}</span>
                   <span class="home-entity-nav-child-meta">
                     <span>${esc(homeCountrySongsCountLabel(child.count))}</span>
                     ${child.href ? `<span class="home-entity-nav-open">${esc(homeEntityOpenLabel())}</span>` : ""}
@@ -2433,7 +2469,11 @@ function renderHomeTopNavigation(directCounts, lang = "") {
       <div class="home-entity-top-grid">
         ${cards.map((item) => `
           <a class="home-entity-top-card" href="${esc(item.href)}">
-            <span class="home-entity-top-title">${esc(item.label)}</span>
+            <span class="home-entity-top-title">${renderDisplayLabel(item.label, {
+              wrapperClass: "display-label display-label-inline",
+              textClass: "display-label-text",
+              rangeClass: "display-label-range",
+            })}</span>
             <span class="home-entity-top-count">${esc(homeCountrySongsCountLabel(item.count))}</span>
           </a>
         `).join("")}
@@ -2520,8 +2560,16 @@ function renderHomeEntityBreadcrumbs(path = [], lang = "") {
       ${cleanPath.map((name, index) => {
         const partialPath = cleanPath.slice(0, index + 1);
         const label = homeEntityNameLabel(name);
-        if (index === cleanPath.length - 1) return `<span class="home-entity-breadcrumb-current">${esc(label)}</span>`;
-        return `<a href="${esc(catalogHashForEntity(name, { lang, path: partialPath }))}">${esc(label)}</a>`;
+        if (index === cleanPath.length - 1) return `<span class="home-entity-breadcrumb-current">${renderDisplayLabel(label, {
+          wrapperClass: "display-label display-label-inline display-label-compact",
+          textClass: "display-label-text",
+          rangeClass: "display-label-range display-label-range-compact",
+        })}</span>`;
+        return `<a href="${esc(catalogHashForEntity(name, { lang, path: partialPath }))}">${renderDisplayLabel(label, {
+          wrapperClass: "display-label display-label-inline display-label-compact",
+          textClass: "display-label-text",
+          rangeClass: "display-label-range display-label-range-compact",
+        })}</a>`;
       }).join(`<span class="home-entity-breadcrumb-separator">&gt;</span>`)}
     </nav>
   `;
@@ -2535,7 +2583,11 @@ function renderHomeEntityChildRow(child, lang = "", path = [], directCounts) {
     ? homeEntityDirectSongsHref(child.name, lang, child.isDirectSongsEntry ? path : childPath)
     : catalogHashForEntity(child.name, { lang, path: childPath });
   const content = `
-    <span class="home-entity-nav-child-title">${esc(child.label)}</span>
+    <span class="home-entity-nav-child-title">${renderDisplayLabel(child.label, {
+      wrapperClass: "display-label display-label-inline",
+      textClass: "display-label-text",
+      rangeClass: "display-label-range",
+    })}</span>
     <span class="home-entity-nav-child-meta">
       <span>${esc(homeCountrySongsCountLabel(child.count))}</span>
       <span class="home-entity-nav-open">${esc(homeEntityOpenLabel())}</span>
@@ -2555,7 +2607,11 @@ function renderHomeEntityBranch(entityName = "", directCounts, lang = "", pathPa
       <div class="home-country-head">
         <div class="home-country-head-main">
           ${renderHomeEntityBreadcrumbs(path, lang)}
-          <div class="h1">${esc(homeBranchTitle(safeName))}</div>
+          <div class="h1">${renderDisplayLabel(homeBranchTitle(safeName), {
+            wrapperClass: "display-label",
+            textClass: "display-label-text",
+            rangeClass: "display-label-range",
+          })}</div>
           <div class="muted">${esc(homeCountrySongsCountLabel(state.count))}</div>
         </div>
       </div>
@@ -2974,8 +3030,8 @@ function renderHomeSongCard(song = {}, options = {}) {
     yearValue ? `<span class="yt-card-main-meta-part yt-card-main-meta-year">${esc(yearValue)}</span>` : "",
     langValue ? `<span class="yt-card-main-meta-part yt-card-main-meta-soft">${esc(langValue)}</span>` : "",
     periodValue
-      ? `<span class="yt-card-main-meta-part yt-card-main-meta-soft">${esc(periodValue)}</span>`
-      : (countryValue ? `<span class="yt-card-main-meta-part yt-card-main-meta-soft">${esc(countryValue)}</span>` : ""),
+      ? renderMetaLabelPart(periodValue, "yt-card-main-meta-part yt-card-main-meta-soft")
+      : (countryValue ? renderMetaLabelPart(countryValue, "yt-card-main-meta-part yt-card-main-meta-soft") : ""),
   ].filter(Boolean);
   const mainMeta = mainMetaParts.length ? `<div class="yt-card-main-meta">${mainMetaParts.join("")}</div>` : ``;
   /*
@@ -3051,14 +3107,18 @@ function renderHomeSongCardFallback(song = {}, options = {}) {
   const langValue = String(song?.lang ? formatLang(song.lang) : "").trim();
   const countryValue = compactHistoricalCountryLabel(song?.country || "");
   const periodValue = compactHistoricalPeriodLabel(song?.period || "");
-  const metaParts = [yearValue, langValue, periodValue || countryValue].filter(Boolean);
+  const datedMetaValue = periodValue || countryValue;
   return `
     <a class="yt-card yt-card-preview-3" href="${esc(href)}">
       <div class="yt-card-content">
         <div class="yt-card-title-row">
           <div class="yt-card-title">${esc(String(song?.title || "").trim() || "Untitled")}</div>
         </div>
-        ${metaParts.length ? `<div class="yt-card-main-meta">${metaParts.map((part) => `<span class="yt-card-main-meta-part yt-card-main-meta-soft">${esc(part)}</span>`).join("")}</div>` : ``}
+        ${(yearValue || langValue || datedMetaValue) ? `<div class="yt-card-main-meta">
+          ${yearValue ? `<span class="yt-card-main-meta-part yt-card-main-meta-soft">${esc(yearValue)}</span>` : ""}
+          ${langValue ? `<span class="yt-card-main-meta-part yt-card-main-meta-soft">${esc(langValue)}</span>` : ""}
+          ${datedMetaValue ? renderMetaLabelPart(datedMetaValue, "yt-card-main-meta-part yt-card-main-meta-soft") : ""}
+        </div>` : ``}
       </div>
       <div class="yt-card-side yt-card-side-plain"></div>
     </a>

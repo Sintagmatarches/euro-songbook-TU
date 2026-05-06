@@ -113,6 +113,10 @@ export async function requirePermission(env, req, permission, options = {}){
   const access = await getUserAccess(env, payload.sub);
   if(!access) return err("Unauthorized", 401);
   if(!hasAccessPermission(access, permission)) return err(`Forbidden: missing permission ${permission}`, 403);
+  const scopedLang = String(options?.lang || "").trim();
+  if (scopedLang && !isSuperAdminRole(access.role) && !hasLanguageScope(access.scopeLanguages, scopedLang)) {
+    return err(`Forbidden: language scope ${scopedLang}`, 403);
+  }
   return access;
 }
 

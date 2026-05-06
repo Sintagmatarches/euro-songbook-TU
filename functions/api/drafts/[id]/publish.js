@@ -15,7 +15,7 @@ export async function onRequestPost({ env, request, params }) {
     if (attachOnly) {
       const songId = String(payload?.song_id || "").trim();
       if (!songId) return err("song_id required", 400);
-      await markDraftPublished(env, { draftId, songId });
+      await markDraftPublished(env, { draftId, songId, userId: access.userId });
       return json({ ok: true, draft_id: draftId, song_id: songId, attach_only: true });
     }
     const out = await publishDraftToSong(env, { draftId, userId: access.userId });
