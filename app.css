@@ -21612,6 +21612,14 @@ html body.menu-open {
   overflow: auto !important;
 }
 
+@media (min-width: 961px) {
+  /* Center the header logo over the fixed left rail without shifting the brand text. */
+  html body .brand .logo,
+  html body.song-page-country-bg .brand .logo {
+    margin-left: -17px !important;
+  }
+}
+
 @media (max-width: 960px) {
   html {
     --topbar-h: 64px !important;
