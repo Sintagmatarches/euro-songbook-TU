@@ -2844,7 +2844,8 @@ export function normalizeSongCatalogInput(input = {}, options = {}) {
 function displayLabelBaseKey(label) {
   const safeLabel = clean(label);
   if (!safeLabel) return "";
-  return safeLabel
+  const withoutParentheticalRange = safeLabel.replace(/\s*\(([^()]*\d[^()]*)\)\s*$/u, "").trim();
+  return withoutParentheticalRange
     .replace(/\s*\(([^()]*\d[^()]*)\)\s*$/u, "")
     .replace(/\s[-–—]\s(?:(?:before|до|kuni|since)\s+)?\d.*$/iu, "")
     .replace(/\s{2,}/g, " ")
@@ -2900,10 +2901,39 @@ function compactHistoricalRangeLabel(label, locale) {
   return safeLabel;
 }
 
+function normalizeHistoricalRangeLabel(label, locale) {
+  const safeLabel = compactHistoricalRangeLabel(label, locale);
+  if (!safeLabel) return safeLabel;
+  const localeCode = pickLocale(locale);
+  const ruOngoingMatch = safeLabel.match(/^(.+?)\s[-–—]\s(\d{4})-н\.в\.$/u);
+  if (ruOngoingMatch) {
+    const [, base, from] = ruOngoingMatch;
+    return `${base} (${from}–по н. в.)`;
+  }
+  const ongoingMatch = safeLabel.match(/^(.+?)\s[-–—]\s(\d{4})-(present|дотепер|tänapäev)$/u);
+  if (ongoingMatch) {
+    const [, base, from, rawTo] = ongoingMatch;
+    const to = localeCode === "ru" && rawTo === "present" ? "по н. в." : rawTo;
+    return `${base} (${from}–${to})`;
+  }
+  const ruStartOnlyMatch = safeLabel.match(/^(.+?)\s[-–—]\sс\s(\d{4})$/u);
+  if (ruStartOnlyMatch) {
+    const [, base, from] = ruStartOnlyMatch;
+    return `${base} (${from}–по н. в.)`;
+  }
+  const closedRangeMatch = safeLabel.match(/^(.+?)\s[-–—]\s(\d{4})-(\d{4})$/u);
+  if (closedRangeMatch) {
+    const [, base, from, to] = closedRangeMatch;
+    return `${base} (${from}–${to})`;
+  }
+  return safeLabel;
+}
+
 function compactCatalogRangePrefix(label) {
   const safeLabel = clean(label);
   if (!safeLabel) return "";
-  return safeLabel
+  const withoutParentheticalRange = safeLabel.replace(/\s*\(([^()]*\d[^()]*)\)\s*$/u, "").trim();
+  return withoutParentheticalRange
     .split(/\s[-–—]\s/)[0]
     .replace(/\s{2,}/g, " ")
     .trim();
@@ -2920,15 +2950,15 @@ export function getCatalogLabel(kind, value, locale) {
   if (!raw) return "-";
   if (kind === "language") {
     const canonical = normalizeSongLanguage(raw);
-    return canonical ? compactHistoricalRangeLabel(labelFor("language", canonical, locale), locale) : raw;
+    return canonical ? normalizeHistoricalRangeLabel(labelFor("language", canonical, locale), locale) : raw;
   }
   if (kind === "country") {
     const canonical = normalizeSongCountry(raw);
-    return canonical ? compactHistoricalRangeLabel(labelFor("country", canonical, locale), locale) : raw;
+    return canonical ? normalizeHistoricalRangeLabel(labelFor("country", canonical, locale), locale) : raw;
   }
   if (kind === "period") {
     const canonical = normalizeSongPeriod(raw);
-    return canonical ? compactHistoricalRangeLabel(labelFor("period", canonical, locale), locale) : raw;
+    return canonical ? normalizeHistoricalRangeLabel(labelFor("period", canonical, locale), locale) : raw;
   }
   return raw;
 }
@@ -2952,7 +2982,7 @@ export function getFullCountryLabel(value, locale) {
   const canonical = normalizeSongCountry(raw);
   if (!canonical) return raw;
   const lc = pickLocale(locale);
-  return compactHistoricalRangeLabel(
+  return normalizeHistoricalRangeLabel(
     LABELS?.country?.[lc]?.[canonical]
     || LABELS?.country?.en?.[canonical]
     || LABELS?.country?.ru?.[canonical]

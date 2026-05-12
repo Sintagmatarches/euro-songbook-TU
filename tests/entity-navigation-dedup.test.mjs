@@ -21,8 +21,9 @@ test("entity labels use localized country names instead of raw Russian entity st
   const source = fs.readFileSync(renderPath, "utf8");
   assert.match(source, /const ownCountry = homeEntityOwnCountry\(safeName\);/);
   assert.match(source, /const localizedCountryLabel = ownCountry \? compactHistoricalCountryLabel\(ownCountry\) : "";/);
+  assert.match(source, /const generatedOverride = ENTITY_DISPLAY_LABEL_OVERRIDES\[uiLocale\(\)\]\?\.\[safeName\]/);
   assert.match(source, /const override = HOME_ENTITY_LABEL_OVERRIDES\[uiLocale\(\)\]\?\.\[safeName\];/);
-  assert.match(source, /return localizedCountryLabel \|\| override \|\| safeName;/);
+  assert.match(source, /return localizedCountryLabel \|\| generatedOverride \|\| override \|\| safeName;/);
 });
 
 test("movement and category labels have locale overrides instead of falling back to Russian", () => {

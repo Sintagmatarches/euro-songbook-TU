@@ -10,7 +10,7 @@ import subprocess
 import sys
 import unicodedata
 from collections import Counter, defaultdict
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from pathlib import Path
 
 
@@ -445,14 +445,14 @@ class RowSignals:
     be_marker_count: int
     uz_marker_count: int
     yi_marker_count: int
-    line_lang_counts: dict[str, int]
-    line_lang_ratios: dict[str, float]
-    likely_translation_block: bool
-    translation_block_langs: list[str]
-    title_is_polluted: bool
-    notes_has_meta: bool
-    geo_votes: dict[str, int]
-    geo_lyrics_votes: dict[str, int]
+    line_lang_counts: dict[str, int] = field(default_factory=dict)
+    line_lang_ratios: dict[str, float] = field(default_factory=dict)
+    likely_translation_block: bool = False
+    translation_block_langs: list[str] = field(default_factory=list)
+    title_is_polluted: bool = False
+    notes_has_meta: bool = False
+    geo_votes: dict[str, int] = field(default_factory=dict)
+    geo_lyrics_votes: dict[str, int] = field(default_factory=dict)
 
 
 def norm_text(value: str | None) -> str:
