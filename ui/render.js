@@ -7,6 +7,7 @@ import {
   getCompactPeriodLabel,
   getCatalogLabel,
   getCatalogOptions,
+  getFullCountryLabel,
   getPeriodValuesForCountry,
   getUiText,
   normalizeSongCountry,
@@ -1885,6 +1886,77 @@ function historicalCardTitle(label = "", yearsDisplay = "") {
     .trim();
 }
 
+function stripDisplayLabelRange(label = "") {
+  const parts = splitDisplayLabelParts(label);
+  return String(parts.title || label || "").trim();
+}
+
+function formatHistoricalYearsForInnerDisplay(meta = {}) {
+  const start = Number(meta?.start || 0);
+  const end = Number(meta?.end || 0);
+  if (Number.isFinite(start) && start > 0 && Number.isFinite(end) && end >= 3000) {
+    if (uiLocale() === "ru") return `${start}–по н. в.`;
+    if (uiLocale() === "uk") return `${start}–дотепер`;
+    if (uiLocale() === "et") return `${start}–tänapäev`;
+    return `${start}–present`;
+  }
+  return String(meta?.display || "")
+    .replace(/\s*-\s*/g, "–")
+    .replace(/\s+/g, " ")
+    .trim();
+}
+
+function historicalYearsMetaScore(meta = {}) {
+  const start = Number(meta?.start || 0);
+  const end = Number(meta?.end || 0);
+  if (!String(meta?.display || "").trim()) return 0;
+  if (Number.isFinite(start) && start > 0 && Number.isFinite(end) && end >= 3000) return 3;
+  if (Number.isFinite(start) && start > 0 && Number.isFinite(end) && end > start) return 2;
+  return 1;
+}
+
+function resolveHistoricalYearsForCountry(countryValue = "", currentLocaleLabel = "") {
+  const canonical = normalizeSongCountry(countryValue || "") || "";
+  if (!canonical) return { display: "", start: Number.MAX_SAFE_INTEGER, end: Number.MAX_SAFE_INTEGER };
+  const seen = new Set();
+  const candidates = [
+    currentLocaleLabel,
+    getFullCountryLabel(canonical, uiLocale()),
+    getFullCountryLabel(canonical, "ru"),
+    getFullCountryLabel(canonical, "uk"),
+    getFullCountryLabel(canonical, "en"),
+    getFullCountryLabel(canonical, "et"),
+    canonical,
+  ];
+  let best = { display: "", start: Number.MAX_SAFE_INTEGER, end: Number.MAX_SAFE_INTEGER };
+  let bestScore = 0;
+  for (const candidate of candidates) {
+    const label = String(candidate || "").trim();
+    if (seen.has(label)) continue;
+    seen.add(label);
+    const meta = historicalYearsMeta(canonical, label);
+    const score = historicalYearsMetaScore(meta);
+    if (score > bestScore) {
+      best = meta;
+      bestScore = score;
+      if (score >= 3) break;
+    }
+  }
+  return best;
+}
+
+function fullHistoricalCountryDisplayLabel(countryValue = "") {
+  const canonical = normalizeSongCountry(countryValue || "") || "";
+  if (!canonical) return "";
+  const compactLabel = stripDisplayLabelRange(compactHistoricalCountryLabel(canonical));
+  const fullLabel = String(getFullCountryLabel(canonical, uiLocale()) || "").trim();
+  const years = resolveHistoricalYearsForCountry(canonical, fullLabel);
+  const title = compactLabel || historicalCardTitle(fullLabel, years.display) || fullLabel;
+  const range = formatHistoricalYearsForInnerDisplay(years);
+  if (!title) return fullLabel;
+  return range ? `${title} (${range})` : title;
+}
+
 function historicalFlagYear(countryKey = "", fallbackLabel = "") {
   const years = historicalYearsMeta(countryKey, fallbackLabel);
   if (Number.isFinite(years?.start) && Number(years.start) > 0) return String(Math.round(Number(years.start)));
@@ -2143,6 +2215,21 @@ function homeEntityNameLabel(entityName = "") {
     || ENTITY_DISPLAY_LABEL_OVERRIDES.en?.[safeName];
   const override = HOME_ENTITY_LABEL_OVERRIDES[uiLocale()]?.[safeName];
   return localizedCountryLabel || generatedOverride || override || safeName;
+}
+
+function homeEntityDetailedLabel(entityName = "") {
+  const safeName = String(entityName || "").trim();
+  if (!safeName) return "";
+  const ownCountry = homeEntityOwnCountry(safeName);
+  if (ownCountry) {
+    const detailed = fullHistoricalCountryDisplayLabel(ownCountry);
+    if (detailed) return detailed;
+  }
+  return homeEntityNameLabel(safeName);
+}
+
+function homeEntityMenuLabel(entityName = "") {
+  return stripDisplayLabelRange(homeEntityNameLabel(entityName));
 }
 
 function homeEntityCountries(entityName = "", visited = new Set()) {
@@ -2437,7 +2524,7 @@ function buildHomeTopCards(directCounts, lang = "") {
   return entityRootNames()
     .map((name) => ({
       key: name,
-      label: homeEntityNameLabel(name),
+      label: homeEntityMenuLabel(name),
       count: homeEntityCount(name, directCounts),
       href: entityHasNavigationChildren(name)
         ? catalogHashForEntity(name, { lang, path: [name] })
@@ -2502,7 +2589,7 @@ function directVisibleEntityChildren(entityName = "", directCounts) {
     if (childOwnCountry) directChildCountries.add(childOwnCountry);
     children.push({
       name: childName,
-      label: homeEntityNameLabel(childName),
+      label: homeEntityDetailedLabel(childName),
       count,
       sortOrder: Number(link.sort_order || 0),
       hasChildren: entityHasNavigationChildren(childName),
@@ -2513,7 +2600,7 @@ function directVisibleEntityChildren(entityName = "", directCounts) {
   if (ownCountry && ownCount > 0 && !directChildCountries.has(ownCountry)) {
     children.push({
       name: safeName,
-      label: homeEntityNameLabel(safeName),
+      label: homeEntityDetailedLabel(safeName),
       count: ownCount,
       sortOrder: -1,
       hasChildren: false,
@@ -2548,7 +2635,7 @@ function renderHomeEntityBreadcrumbs(path = [], lang = "") {
     <nav class="home-entity-breadcrumbs" aria-label="Breadcrumb">
       ${cleanPath.map((name, index) => {
         const partialPath = cleanPath.slice(0, index + 1);
-        const label = homeEntityNameLabel(name);
+        const label = homeEntityDetailedLabel(name);
         if (index === cleanPath.length - 1) return `<span class="home-entity-breadcrumb-current">${renderDisplayLabel(label, {
           wrapperClass: "display-label display-label-inline display-label-compact",
           textClass: "display-label-text",
@@ -2591,12 +2678,13 @@ function renderHomeEntityBranch(entityName = "", directCounts, lang = "", pathPa
   const state = homeEntityBranchState(safeName, directCounts);
   if (state.count <= 0 || homeEntityBranchCollapsesToDirectSongs(safeName, directCounts)) return "";
   const path = entityPathFromParam(pathParam, safeName);
+  const label = homeEntityDetailedLabel(safeName);
   return `
     <section class="home-entity-branch">
       <div class="home-country-head">
         <div class="home-country-head-main">
           ${renderHomeEntityBreadcrumbs(path, lang)}
-          <div class="h1">${renderDisplayLabel(homeBranchTitle(safeName), {
+          <div class="h1">${renderDisplayLabel(label || homeBranchTitle(safeName), {
             wrapperClass: "display-label",
             textClass: "display-label-text",
             rangeClass: "display-label-range",
@@ -2658,6 +2746,13 @@ function homeResultsTitle() {
   if (uiLocale() === "uk") return "\u0420\u0435\u0437\u0443\u043b\u044c\u0442\u0430\u0442\u0438 \u043f\u043e\u0448\u0443\u043a\u0443:";
   if (uiLocale() === "et") return "Otsingutulemused:";
   return "Search results:";
+}
+
+function homeResultsContextSubtitle() {
+  if (uiLocale() === "ru") return "\u0420\u0435\u0437\u0443\u043b\u044c\u0442\u0430\u0442\u044b";
+  if (uiLocale() === "uk") return "\u0420\u0435\u0437\u0443\u043b\u044c\u0442\u0430\u0442\u0438";
+  if (uiLocale() === "et") return "Tulemused";
+  return "Results";
 }
 
 function homeSearchHintText() {
@@ -3439,6 +3534,11 @@ function homeUI(data, params, homeExtras = {}) {
     || (!!lang && !!country && !!period)
     || (!!lang && !!country && selectedCountryPeriodCards.length === 0);
   const showPassiveHint = !showNavigationRoot && !showEntityBranch && !showLanguageRoot && !showLanguageCountryPicker && !showLanguagePeriodPicker;
+  const resultsContextLabel = shouldShowResults
+    ? (selectedEntityName && !selectedEntityHasChildren
+      ? homeEntityDetailedLabel(selectedEntityName)
+      : fullHistoricalCountryDisplayLabel(country))
+    : "";
 
   const loadingResultsText = homeLoadingResultsText();
   const resultLoadingScreenMarkup = `
@@ -3560,7 +3660,12 @@ function homeUI(data, params, homeExtras = {}) {
       ${shouldShowResults ? `
         <div class="yt-feed-head yt-results-head">
           <div>
-            <div class="h1">${esc(homeResultsTitle())}</div>
+            ${resultsContextLabel ? `<div class="h1">${renderDisplayLabel(resultsContextLabel, {
+              wrapperClass: "display-label",
+              textClass: "display-label-text",
+              rangeClass: "display-label-range",
+            })}</div>
+            <div class="muted">${esc(homeResultsContextSubtitle())}</div>` : `<div class="h1">${esc(homeResultsTitle())}</div>`}
           </div>
         </div>
         ${hasExactResults ? `
@@ -9196,9 +9301,95 @@ function adminSongsUI(data, params = {}) {
   `;
 }
 
+function bulkImportFormatPanelContent() {
+  if (uiLocale() === "ru") {
+    return {
+      hint: "Каждая новая песня начинается с номера. Между песнями можно оставлять пустую строку.",
+      aside: "Припевы, куплеты и любые пометки можно оставлять обычным текстом внутри песни. Главное, чтобы следующая песня начиналась новой строкой вида 2. Название, 3. Название и так далее.",
+      example: `1. Название песни
+Первая строка куплета
+Вторая строка куплета
+
+Припев:
+Первая строка припева
+Вторая строка припева
+
+2. Вторая песня
+Первая строка
+Вторая строка
+
+3. Третья песня
+Короткий текст
+Ещё одна строка`,
+    };
+  }
+  if (uiLocale() === "uk") {
+    return {
+      hint: "Кожна нова пісня починається з номера. Між піснями можна лишати порожній рядок.",
+      aside: "Приспіви, куплети й будь-які помітки можна лишати звичайним текстом усередині пісні. Головне, щоб наступна пісня починалася новим рядком виду 2. Назва, 3. Назва і далі.",
+      example: `1. Назва пісні
+Перший рядок куплету
+Другий рядок куплету
+
+Приспів:
+Перший рядок приспіву
+Другий рядок приспіву
+
+2. Друга пісня
+Перший рядок
+Другий рядок
+
+3. Третя пісня
+Короткий текст
+Ще один рядок`,
+    };
+  }
+  if (uiLocale() === "et") {
+    return {
+      hint: "Iga uus laul algab numbriga. Laulude vahele voib jatta tuha rea.",
+      aside: "Refraanid, salmid ja muud markused voivad olla tavalise tekstina laulu sees. Oluline on ainult see, et järgmine laul algaks uue reaga kujul 2. Pealkiri, 3. Pealkiri ja nii edasi.",
+      example: `1. Laulu pealkiri
+Esimene salmirida
+Teine salmirida
+
+Refraan:
+Esimene refraani rida
+Teine refraani rida
+
+2. Teine laul
+Esimene rida
+Teine rida
+
+3. Kolmas laul
+Luhike tekst
+Veel uks rida`,
+    };
+  }
+  return {
+    hint: "Each new song starts with a number. You can leave an empty line between songs.",
+    aside: "Choruses, verses, and notes can stay as regular text inside the song body. The important part is that the next song starts on a new line like 2. Title, 3. Title, and so on.",
+    example: `1. Song title
+First verse line
+Second verse line
+
+Chorus:
+First chorus line
+Second chorus line
+
+2. Second song
+First line
+Second line
+
+3. Third song
+Short text
+One more line`,
+  };
+}
+
 function adminBulkImportUI(params = {}) {
   const languageOptions = getCatalogOptions("language", uiLocale(), "ru");
   const selectedBulkLang = normalizeSongLanguage(params?.bulkLang || "ru") || "ru";
+  const formatPanel = bulkImportFormatPanelContent();
   return `
     <div class="admin-section-stack admin-bulk-import-stack">
       ${adminTabs("bulk-import")}
@@ -9215,13 +9406,17 @@ function adminBulkImportUI(params = {}) {
             <input class="input" id="ac_bulk_source" value="${esc(params?.bulkSource || "")}" placeholder="${esc(bulkImportUiText("sourcePlaceholder"))}" />
           </label>
         </div>
-        <label class="field" style="margin-top:12px">
-          <div class="fieldLabel">${esc(bulkImportUiText("text"))}</div>
-          <textarea class="textarea song-editor-text song-editor-text-main ac-bulk-import-textarea" id="ac_bulk_text" placeholder="${esc(bulkImportUiText("textPlaceholder"))}">${esc(params?.bulkText || "")}</textarea>
-        </label>
-        <div class="ac-bulk-import-format">
-          <div class="fieldLabel">${esc(bulkImportUiText("formatExampleTitle"))}</div>
-          <pre class="ac-bulk-import-format-example">${esc(bulkImportUiText("formatExampleText"))}</pre>
+        <div class="ac-bulk-import-body">
+          <label class="field ac-bulk-import-text-field">
+            <div class="fieldLabel">${esc(bulkImportUiText("text"))}</div>
+            <textarea class="textarea song-editor-text song-editor-text-main ac-bulk-import-textarea" id="ac_bulk_text" placeholder="${esc(bulkImportUiText("textPlaceholder"))}">${esc(params?.bulkText || "")}</textarea>
+          </label>
+          <div class="ac-bulk-import-format">
+            <div class="fieldLabel">${esc(bulkImportUiText("formatExampleTitle"))}</div>
+            <div class="muted small ac-bulk-import-format-hint">${esc(formatPanel.hint)}</div>
+            <pre class="ac-bulk-import-format-example">${esc(formatPanel.example)}</pre>
+            <div class="muted small ac-bulk-import-format-aside">${esc(formatPanel.aside)}</div>
+          </div>
         </div>
         <div class="actions ac-bulk-import-actions">
           <button class="btn primary" id="ac_bulk_submit" type="button">${esc(bulkImportUiText("add"))}</button>
@@ -9282,6 +9477,7 @@ function adminEditorUI(song = {}, options = {}) {
   const publishBtn = canWriteSongs && canPublishDraft ? `<button class="btn" id="ac_publish" type="button">${esc(publishButtonLabel)}</button>` : "";
   const title = String(options.titleOverride || "").trim() || (isNew ? t("admin.newSong") : t("admin.editor"));
   const headerSubtitle = requestMode ? "" : subtitle;
+  const historyPanelMarkup = adminSongHistoryPanelUI(historyData, song);
   const footerActionsMarkup = (hideSongActions || (!canWriteSongs && !requestMode))
     ? ""
     : `
@@ -9459,9 +9655,11 @@ function adminEditorUI(song = {}, options = {}) {
         <div class="actions request-actions ac-version-danger-zone">
           <button class="btn danger hidden" id="ac_remove_active_version" type="button">${esc(deletePageVariantLabel())}</button>
         </div>
-        <section class="request-section ac-editor-history-section">
-          ${adminSongHistoryPanelUI(historyData, song)}
-        </section>
+        ${historyPanelMarkup ? `
+          <section class="request-section ac-editor-history-section">
+            ${historyPanelMarkup}
+          </section>
+        ` : ""}
       </div>
       ${footerActions}
     </div>
@@ -11968,9 +12166,17 @@ function readContentDraft(identity = contentDraftIdentity()) {
   return readScopedDraft(CONTENT_DRAFT_PREFIX, identity);
 }
 
-function saveContentDraft(payload) {
+function contentDraftLinkedDraftId(identity = contentDraftIdentity()) {
+  return String(readContentDraft(identity)?.payload?.draft_id || "").trim();
+}
+
+function saveContentDraft(payload, options = {}) {
   const identity = payload?.id ? String(payload.id).trim() : "__new";
-  saveScopedDraft(CONTENT_DRAFT_PREFIX, identity, { ...payload, id: payload?.id || undefined });
+  const nextPayload = { ...payload, id: payload?.id || undefined };
+  const linkedDraftId = String(options?.draftId || payload?.draft_id || "").trim();
+  if (linkedDraftId) nextPayload.draft_id = linkedDraftId;
+  else delete nextPayload.draft_id;
+  saveScopedDraft(CONTENT_DRAFT_PREFIX, identity, nextPayload);
 }
 
 function clearContentDraft(identity = contentDraftIdentity()) {
@@ -12284,11 +12490,23 @@ export async function render(route) {
     if (adminEditorMode) {
       const requestedDraftId = String(route?.query?.draft || "").trim();
       const requestedSongId = String(route?.query?.song_id || "").trim();
+      const localDraftIdentity = requestedSongId || "__new";
+      const fallbackDraftId = requestedDraftId ? "" : contentDraftLinkedDraftId(localDraftIdentity);
+      let resolvedDraftId = requestedDraftId || fallbackDraftId;
       let draftData = null;
-      if (requestedDraftId) {
+      if (resolvedDraftId) {
         try {
-          draftData = await api.draft(requestedDraftId);
-        } catch {}
+          draftData = await api.draft(resolvedDraftId);
+        } catch {
+          if (!requestedDraftId && fallbackDraftId) {
+            const localDraft = readContentDraft(localDraftIdentity);
+            if (localDraft?.payload && typeof localDraft.payload === "object") {
+              const { draft_id, ...restoredPayload } = localDraft.payload;
+              saveContentDraft(restoredPayload);
+            }
+          }
+          resolvedDraftId = "";
+        }
       }
       const fallbackSongId = String(draftData?.snapshot?.song_id || "").trim();
       const editorSongId = requestedSongId || fallbackSongId;
@@ -12330,11 +12548,11 @@ export async function render(route) {
       return {
         html: adminEditorUI(song, {
           isNew,
-          forceDraftId: requestedDraftId || "",
+          forceDraftId: resolvedDraftId || "",
           hideAdminTabs: true,
           hideDeleteButton: true,
           requestMode: true,
-          canPublishDraft: requestedDraftId
+          canPublishDraft: resolvedDraftId
             ? String(draftData?.owner?.id || "") === String(state?.user?.id || "")
             : allowDirectSave,
           hideStatusToggle: !allowDirectSave,
@@ -12356,7 +12574,7 @@ export async function render(route) {
           targetSongId: "",
           forceModeratedRequest: false,
           allowDirectSave,
-          draftId: requestedDraftId || "",
+          draftId: resolvedDraftId || "",
           draftData,
           adminEditorMode: true,
         },
@@ -19895,6 +20113,7 @@ export function bind(route, ctx) {
         saveContentDraft(payload);
         const hadDraftId = !!inlineDraftId;
         await inlineEnsureDraftForCollab();
+        saveContentDraft(payload, { draftId: inlineDraftId });
         if (hadDraftId) {
           await inlineFlushAutosave({ keepalive: false });
         }

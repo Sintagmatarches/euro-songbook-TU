@@ -4,6 +4,10 @@ import { dbAll, requireAuth } from "../_lib/db.js";
 import { createDraft } from "../_lib/drafts.js";
 
 function dedupeDraftList(items = []) {
+  const normalizeDraftFingerprintPart = (value) => String(value || "")
+    .replace(/\s+/g, " ")
+    .trim()
+    .toLowerCase();
   const picked = new Map();
   for (const item of Array.isArray(items) ? items : []) {
     const songId = String(item?.song_id || "").trim();
@@ -12,7 +16,17 @@ function dedupeDraftList(items = []) {
     const draftId = String(item?.id || "").trim();
     const duplicateKey = songId && ownerUserId && status === "draft"
       ? `song:${ownerUserId}:${songId}`
-      : `draft:${draftId}`;
+      : (!songId && ownerUserId && status === "draft"
+        ? `seed:${ownerUserId}:${[
+            item?.snapshot_title,
+            item?.snapshot_subtitle,
+            item?.snapshot_lang,
+            item?.snapshot_country,
+            item?.snapshot_period,
+            item?.snapshot_year,
+            item?.snippet,
+          ].map(normalizeDraftFingerprintPart).join("|")}`
+        : `draft:${draftId}`);
     const existing = picked.get(duplicateKey);
     if (!existing) {
       picked.set(duplicateKey, item);

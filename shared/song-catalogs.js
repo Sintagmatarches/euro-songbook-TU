@@ -2946,6 +2946,21 @@ export function getCompactCountryLabel(value, locale) {
   return compactCatalogRangePrefix(getCatalogLabel("country", canonical, lc));
 }
 
+export function getFullCountryLabel(value, locale) {
+  const raw = clean(value);
+  if (!raw) return "";
+  const canonical = normalizeSongCountry(raw);
+  if (!canonical) return raw;
+  const lc = pickLocale(locale);
+  return compactHistoricalRangeLabel(
+    LABELS?.country?.[lc]?.[canonical]
+    || LABELS?.country?.en?.[canonical]
+    || LABELS?.country?.ru?.[canonical]
+    || canonical,
+    lc
+  );
+}
+
 export function getCompactPeriodLabel(value, locale) {
   const raw = clean(value);
   if (!raw) return "";

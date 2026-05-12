@@ -10723,6 +10723,18 @@ html[data-theme="white"] #ac_editor.ac-editor-page:not(.ac-editor-request-mode) 
     font-size: 11px;
   }
 
+  #ac_editor.ac-editor-request-mode .ac-editor-variant-tabs {
+    flex-wrap: wrap !important;
+    justify-content: center !important;
+    overflow-x: visible !important;
+    white-space: normal !important;
+    margin-left: 0 !important;
+    margin-right: 0 !important;
+    padding-left: 0 !important;
+    padding-right: 0 !important;
+    padding-bottom: 0 !important;
+  }
+
   #ac_editor #ac_verified_toggle,
   #ac_editor #ac_admin_content_toggle {
     min-width: 48px;
@@ -15018,8 +15030,22 @@ html #ac_editor.ac-editor-request-mode {
   gap: 12px;
 }
 
+.ac-bulk-import-body {
+  display: grid;
+  grid-template-columns: minmax(0, 0.92fr) minmax(320px, 0.78fr);
+  gap: 16px;
+  align-items: stretch;
+  margin-top: 12px;
+}
+
+.ac-bulk-import-text-field,
+.ac-bulk-import-format {
+  margin: 0;
+}
+
 .ac-bulk-import-textarea {
-  min-height: 320px;
+  min-height: 540px;
+  resize: vertical;
   font-family: "IBM Plex Mono", "Cascadia Mono", "SFMono-Regular", Consolas, monospace;
   line-height: 1.5;
 }
@@ -15031,11 +15057,16 @@ html #ac_editor.ac-editor-request-mode {
 .ac-bulk-import-format {
   display: grid;
   gap: 8px;
-  margin-top: 12px;
   padding: 12px;
   border: 1px solid var(--line);
   border-radius: 12px;
   background: rgba(0, 0, 0, 0.12);
+  align-content: start;
+}
+
+.ac-bulk-import-format-hint,
+.ac-bulk-import-format-aside {
+  line-height: 1.45;
 }
 
 .ac-bulk-import-format-example {
@@ -15095,6 +15126,10 @@ html #ac_editor.ac-editor-request-mode {
 
 @media (max-width: 760px) {
   .ac-bulk-import-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .ac-bulk-import-body {
     grid-template-columns: 1fr;
   }
 
@@ -17562,6 +17597,11 @@ html[data-theme="white"] .admin-song-card-link {
   margin-left: auto;
   justify-content: flex-end;
   flex-wrap: wrap;
+}
+
+.admin-bulk-import-stack {
+  width: min(100%, 1180px);
+  margin-inline: auto;
 }
 
 .admin-bulk-import-stack .ac-bulk-import-card {
