@@ -38,8 +38,6 @@ function getRoom(draftId) {
 
 function extractToken(request) {
   const url = new URL(request.url);
-  const fromQuery = String(url.searchParams.get("token") || "").trim();
-  if (fromQuery) return fromQuery;
   const protocols = String(request.headers.get("sec-websocket-protocol") || "")
     .split(",")
     .map((value) => String(value || "").trim())

@@ -26,7 +26,7 @@ const ADMIN_ALL_PERMISSIONS = [...ADMIN_PERMISSION_VALUES];
 export const FULL_SCHEMA_MARKER_KEY = "schema.full.version";
 export const AUTH_SCHEMA_MARKER_KEY = "schema.auth.version";
 export const FULL_SCHEMA_MARKER_VALUE = "2026-04-26-full-v9-entity-graph";
-export const AUTH_SCHEMA_MARKER_VALUE = "2026-03-21-auth-v2";
+export const AUTH_SCHEMA_MARKER_VALUE = "2026-05-12-auth-v4-rbac-compat";
 export const VERIFICATION_RESET_MARKER_KEY = "data.verification_reset.version";
 export const VERIFICATION_RESET_MARKER_VALUE = "2026-04-20-reset-v1";
 const SEARCH_INLINE_REBUILD_MAX_SONGS = 2000;
@@ -513,6 +513,15 @@ async function ensureUsersNicknameData(env) {
      END
      WHERE nickname IS NULL OR trim(nickname) = ''`
   );
+}
+
+async function ensureUsersNicknameTimingData(env) {
+  try {
+    await dbRun(env, `ALTER TABLE users ADD COLUMN nickname_updated_at TEXT`);
+  } catch (cause) {
+    const message = String(cause?.message || cause || "");
+    if (!message.includes("duplicate column name: nickname_updated_at")) throw cause;
+  }
 }
 
 async function ensureUsersRoleConstraintSupportsSuperAdmin(env) {
@@ -1207,8 +1216,11 @@ export async function ensureAuthSchema(env) {
   );
   await ensurePassHashCompatibility(env);
   await ensureUsersNicknameData(env);
+  await ensureUsersNicknameTimingData(env);
   await ensureUsersRoleConstraintSupportsSuperAdmin(env);
   await ensureUsersNicknameUniqueness(env);
+  await ensureRBACArtifacts(env);
+  await normalizeRBACPermissions(env);
 
   await dbRun(
     env,
@@ -1361,6 +1373,7 @@ export async function ensureSchemaAndSeed(env) {
     await ensureSchema(env);
     await ensureSuperAdmin(env);
     await ensureUsersNicknameData(env);
+    await ensureUsersNicknameTimingData(env);
     await ensureSeed(env);
     await seedEntityGraph(env);
     await ensureCanonicalDemoSongMetadata(env);

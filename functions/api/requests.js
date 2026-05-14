@@ -43,6 +43,8 @@ function hasPermission(access, permission) {
 }
 
 function canDirectPublish(access, payloadLang, body) {
+  void payloadLang;
+  void body;
   if (!access) return false;
   return access.role === "super_admin";
 }

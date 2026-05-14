@@ -15,6 +15,7 @@ async function createDraftSecurityEnv() {
       nickname: "user",
       role: "user",
       created_at: "2024-01-01T00:00:00.000Z",
+      nickname_updated_at: null,
     }],
     ["u-admin-en", {
       id: "u-admin-en",
@@ -22,6 +23,7 @@ async function createDraftSecurityEnv() {
       nickname: "admin_en",
       role: "admin",
       created_at: "2024-01-01T00:00:00.000Z",
+      nickname_updated_at: null,
     }],
     ["u-super", {
       id: "u-super",
@@ -29,6 +31,7 @@ async function createDraftSecurityEnv() {
       nickname: "super",
       role: "super_admin",
       created_at: "2024-01-01T00:00:00.000Z",
+      nickname_updated_at: null,
     }],
   ]);
   const permissions = new Map([
@@ -67,7 +70,7 @@ async function createDraftSecurityEnv() {
   ]);
 
   const resolver = withFreshSchemaMarkers(async (sql, params, method) => {
-    if (sql.includes("SELECT id,email,nickname,role,created_at FROM users WHERE id=?")) {
+    if (sql.includes("SELECT id,email,nickname,role,created_at,nickname_updated_at FROM users WHERE id=?")) {
       return users.get(String(params[0] || "")) || null;
     }
     if (sql.includes("SELECT permission FROM user_permissions WHERE user_id=?")) {

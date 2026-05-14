@@ -1,6 +1,7 @@
 import { json, err } from "../../_lib/utils.js";
-import { dbGet, dbAll, getOptionalUserAccess, canViewAdminContent } from "../../_lib/db.js";
+import { dbGet, dbAll, getOptionalUserAccess, canViewAdminContent, hasAccessPermission } from "../../_lib/db.js";
 import { ensureSchemaAndSeed } from "../../_lib/schema.js";
+import { sanitizePublicLyricsText } from "../../_lib/public-song-cleanup.js";
 
 function parseJSON(text, fallback) {
   try {
@@ -64,6 +65,7 @@ async function listSongVersions(env, songId) {
   const rows = await dbAll(env, selectSql, [songId]);
   return (rows || []).map((row) => ({
     ...row,
+    lyrics: sanitizePublicLyricsText(row?.lyrics || "").lyrics,
     lyrics_meta_json: parseJSON(row?.lyrics_meta_json, {}),
   }));
 }
@@ -74,7 +76,7 @@ export async function onRequestGet({ env, request, params }){
     const id = params.id;
     const url = new URL(request.url);
     const access = await getOptionalUserAccess(env, request);
-    const includeEditorFields = url.searchParams.get("include_editor") === "1" && !!access;
+    const includeEditorRequested = url.searchParams.get("include_editor") === "1";
     const song = await dbGet(env, `SELECT * FROM songs WHERE id=?`, [id]);
     if(!song) return err("Not found", 404);
     if(song.status !== "published") {
@@ -85,6 +87,21 @@ export async function onRequestGet({ env, request, params }){
     if(Number(song.is_admin_content || 0) === 1 && !canViewAdminContent(access)) {
       return err("Not found", 404);
     }
+    const scopeLanguages = Array.isArray(access?.scopeLanguages)
+      ? access.scopeLanguages.map((value) => String(value || "").trim())
+      : [];
+    const canEditSong = !!access && (
+      access.role === "super_admin"
+      || (
+        hasAccessPermission(access, "songs.edit")
+        && (
+          !String(song.lang || "").trim()
+          || scopeLanguages.includes("*")
+          || scopeLanguages.includes(String(song.lang || "").trim())
+        )
+      )
+    );
+    const includeEditorFields = includeEditorRequested && canEditSong;
     const isSuperAdmin = access?.role === "super_admin";
     let createdByEmail = "";
     let updatedByEmail = "";
@@ -103,6 +120,7 @@ export async function onRequestGet({ env, request, params }){
     const versions = await listSongVersions(env, id);
     const links = await listSongLinks(env, id);
     const tags = parseJSON(song.tags_json, []);
+    const publicLyrics = sanitizePublicLyricsText(song.lyrics || "").lyrics;
     return json({
       id: song.id,
       title: song.title,
@@ -121,7 +139,7 @@ export async function onRequestGet({ env, request, params }){
       is_admin_content: Number(song.is_admin_content || 0) === 1,
       status: song.status,
       tags,
-      lyrics: song.lyrics,
+      lyrics: publicLyrics,
       lyrics_meta_json: parseJSON(song.lyrics_meta_json, {}),
       versions,
       links,

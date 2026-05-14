@@ -1,5 +1,6 @@
 import { json, err, readJSON } from "../../../../_lib/utils.js";
 import {
+  assertScopeForLang,
   dbGet,
   dbRun,
   requireAuth,
@@ -17,7 +18,7 @@ function normalizeBody(value) {
 async function getPublishedSong(env, songId) {
   return dbGet(
     env,
-    `SELECT id, status, is_admin_content
+    `SELECT id, status, is_admin_content, lang
      FROM songs
      WHERE id=? AND status='published'
      LIMIT 1`,
@@ -48,6 +49,22 @@ function canDeleteComment(access, comment) {
   return hasAccessPermission(access, "songs.delete");
 }
 
+function publicAuthorName(row = {}) {
+  const nickname = String(row?.author_nickname || "").trim();
+  if (nickname) return nickname;
+  const userId = String(row?.user_id || "").trim();
+  if (userId) return `user-${userId.slice(-6)}`;
+  return "user";
+}
+
+function serializeCommentItem(row = {}) {
+  if (!row || typeof row !== "object") return row;
+  return {
+    ...row,
+    author_name: publicAuthorName(row),
+  };
+}
+
 async function readCommentItem(env, commentId) {
   return dbGet(
     env,
@@ -58,7 +75,7 @@ async function readCommentItem(env, commentId) {
        c.body,
        c.created_at,
        c.updated_at,
-       coalesce(nullif(u.nickname, ''), u.email, u.id) AS author_name
+       u.nickname AS author_nickname
      FROM song_comments c
      JOIN users u ON u.id = c.user_id
      WHERE c.id=?
@@ -104,7 +121,7 @@ export async function onRequestPut({ env, request, params }) {
   );
 
   const item = await readCommentItem(env, commentId);
-  return json({ item });
+  return json({ item: serializeCommentItem(item) });
 }
 
 export async function onRequestDelete({ env, request, params }) {
@@ -129,6 +146,16 @@ export async function onRequestDelete({ env, request, params }) {
   const comment = await getComment(env, songId, commentId);
   if (!comment) return err("Comment not found", 404);
   if (!canDeleteComment(access, comment)) return err("Forbidden", 403);
+  if (
+    String(access.role || "") !== "super_admin"
+    && String(access.id || "") !== String(comment.user_id || "")
+  ) {
+    try {
+      assertScopeForLang(access, String(song.lang || "").trim());
+    } catch {
+      return err("Forbidden", 403);
+    }
+  }
 
   await dbRun(env, `DELETE FROM song_comments WHERE id=? AND song_id=?`, [commentId, songId]);
   return json({ ok: true });

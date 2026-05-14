@@ -690,6 +690,12 @@ export const api = {
   },
   getToken() { return ""; },
   async me() { return req("api/me"); },
+  async updateNickname(nickname) {
+    return req("api/me/nickname", {
+      method: "PUT",
+      body: JSON.stringify({ nickname }),
+    });
+  },
 
   async favorites() { return req("api/favorites"); },
   async favAdd(songId) { return req(`api/favorites/${encodeURIComponent(songId)}`, { method: "POST" }); },

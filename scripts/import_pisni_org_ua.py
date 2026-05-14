@@ -43,6 +43,9 @@ RE_BR = re.compile(r"<br\s*/?>", re.IGNORECASE)
 RE_TAG = re.compile(r"<[^>]+>", re.DOTALL)
 RE_YEAR = re.compile(r"\b(18\d{2}|19\d{2}|20\d{2})\b")
 RE_VIDEO = re.compile(r"showVideoClip\('([^']+)'\s*,\s*'([^']+)'\)", re.IGNORECASE)
+ROMAN_CHORD_POS_RE = re.compile(r"\([IVX]{1,6}\)$", re.IGNORECASE)
+CHORD_LABEL_RE = re.compile(r"^(?:\u0432\u0441\u0442\u0443\u043f|\u043f\u0440\u043e\u0433\u0440\u0430\u0448|\u043f\u0440\u043e\u0438\u0433\u0440\u044b\u0448|intro|solo|riff|bridge)\s*:\s*(.+)$", re.IGNORECASE)
+TITLE_FOOTNOTE_RE = re.compile(r"\s*(?:\^\{?\*+\}?|\*+)\s*$")
 RE_FIELD = re.compile(
     r"<b>\s*([^:<]{1,80})\s*:\s*</b>\s*(.*?)(?=(?:<br>\s*)?<b>\s*[^:<]{1,80}\s*:\s*</b>|$)",
     re.IGNORECASE | re.DOTALL,
@@ -417,16 +420,33 @@ def is_chord_line(line: str) -> bool:
     stripped = line.strip()
     if not stripped:
         return False
+    label_match = CHORD_LABEL_RE.match(stripped)
+    if label_match:
+        stripped = label_match.group(1).strip()
+        if not stripped:
+            return False
     if re.search(r"[\u0400-\u052f]", stripped):
         return False
+    if any(stripped.lower().startswith(prefix) for prefix in (
+        "chord",
+        "tab",
+        "tablature",
+        "tablatura",
+        "acorde",
+        "accordi",
+        "akkorde",
+        "akordy",
+        "chwyty",
+    )):
+        return True
     compact = stripped.replace(" ", "")
-    if len(compact) <= 1:
-        return False
-    if re.fullmatch(r"[A-Ha-h0-9#bmM/()+\-\s|]+", stripped):
+    if compact and re.fullmatch(r"[A-HIVXa-hivx0-9#bmM/()+\-\s|]+", stripped):
         tokens = [tok for tok in re.split(r"\s+", stripped) if tok]
         chordish = 0
         for tok in tokens:
-            tok = tok.strip("|()[]")
+            tok = tok.strip("|[]{}")
+            tok = ROMAN_CHORD_POS_RE.sub("", tok)
+            tok = tok.strip("()")
             if re.fullmatch(r"[A-H](?:#|b)?(?:m|maj|min|sus|dim|aug|add)?\d*(?:/[A-H](?:#|b)?)?", tok, re.IGNORECASE):
                 chordish += 1
         if len(tokens) == 1 and chordish == 1:
@@ -434,6 +454,16 @@ def is_chord_line(line: str) -> bool:
         if chordish and chordish >= max(2, len(tokens) // 2):
             return True
     return False
+
+
+def select_preferred_title(mobile_title: str, desktop_title: str) -> str:
+    mobile = TITLE_FOOTNOTE_RE.sub("", normalize_inline(mobile_title)).strip()
+    desktop = TITLE_FOOTNOTE_RE.sub("", normalize_inline(desktop_title)).strip()
+    if mobile and not is_chord_line(mobile):
+        return mobile
+    if desktop:
+        return desktop
+    return mobile
 
 
 def clean_lyrics(text: str) -> str:
@@ -630,10 +660,10 @@ def process_song(sid: str, categories: set[CategoryRef], *, refresh: bool) -> So
     mobile_text = fetch_text(MOBILE_URL_TEMPLATE.format(sid=sid), fixtures_root / "mobile" / f"{sid}.html", refresh=refresh)
     desktop_text = fetch_text(DESKTOP_URL_TEMPLATE.format(sid=sid), fixtures_root / "desktop" / f"{sid}.html", refresh=refresh)
 
-    title = html_to_text(RE_H1.search(mobile_text).group(1), preserve_breaks=False) if RE_H1.search(mobile_text) else ""
+    mobile_title = html_to_text(RE_H1.search(mobile_text).group(1), preserve_breaks=False) if RE_H1.search(mobile_text) else ""
+    desktop_title = html_to_text(RE_H1.search(desktop_text).group(1), preserve_breaks=False) if RE_H1.search(desktop_text) else ""
+    title = select_preferred_title(mobile_title, desktop_title)
     subtitle_text = html_to_text(RE_H3.search(mobile_text).group(1), preserve_breaks=False) if RE_H3.search(mobile_text) else ""
-    if not title:
-        title = html_to_text(RE_H1.search(desktop_text).group(1), preserve_breaks=False) if RE_H1.search(desktop_text) else ""
     if not title:
         return None
 
@@ -747,11 +777,27 @@ def run_remote_sql(db_name: str, sql_path: Path) -> None:
     subprocess.run(cmd, cwd=ROOT, check=True)
 
 
+def collect_target_song_ids(args: argparse.Namespace, known_song_ids: list[str]) -> list[str]:
+    requested_values = [str(value or "").strip() for value in getattr(args, "song_id", [])]
+    requested_values = [value for value in requested_values if value]
+    if not requested_values:
+        return known_song_ids
+    requested_set = set(requested_values)
+    requested_numeric = {value for value in requested_set if value.isdigit()}
+    return [
+        sid for sid in known_song_ids
+        if sid in requested_set
+        or f"{ID_PREFIX}_{sid}" in requested_set
+        or sid.removeprefix(f"{ID_PREFIX}_") in requested_numeric
+    ]
+
+
 def main() -> None:
     parser = argparse.ArgumentParser(description="Fast importer for pisni.org.ua")
     parser.add_argument("--refresh", action="store_true", help="Re-download fixtures even if cached")
     parser.add_argument("--limit-pages", type=int, default=None, help="Only process first N list pages")
     parser.add_argument("--limit-songs", type=int, default=None, help="Only process first N song cards")
+    parser.add_argument("--song-id", action="append", default=[], help="Import only selected pisni.org.ua sid or full song id; may be passed multiple times")
     parser.add_argument("--list-workers", type=int, default=16, help="Concurrent workers for songlist pages")
     parser.add_argument("--song-workers", type=int, default=24, help="Concurrent workers for song cards")
     parser.add_argument("--execute-remote", action="store_true", help="Execute generated SQL in remote D1")
@@ -759,7 +805,7 @@ def main() -> None:
     args = parser.parse_args()
 
     song_refs, list_report = collect_song_refs(refresh=args.refresh, limit_pages=args.limit_pages, list_workers=args.list_workers)
-    song_ids = sorted(song_refs)
+    song_ids = collect_target_song_ids(args, sorted(song_refs))
     if args.limit_songs and args.limit_songs > 0:
         song_ids = song_ids[: args.limit_songs]
 
@@ -772,12 +818,14 @@ def main() -> None:
     imported = 0
     skipped = 0
     errors: list[dict[str, str]] = []
+    imported_song_ids: list[str] = []
 
     with jsonl_path.open("w", encoding="utf-8") as jsonl, sql_path.open("w", encoding="utf-8") as sqlf:
-        sqlf.write(f"DELETE FROM song_links WHERE song_id LIKE '{ID_PREFIX}_%';\n")
-        sqlf.write(f"DELETE FROM song_versions WHERE song_id LIKE '{ID_PREFIX}_%';\n")
-        sqlf.write(f"DELETE FROM songs_fts WHERE song_id LIKE '{ID_PREFIX}_%';\n")
-        sqlf.write(f"DELETE FROM songs WHERE id LIKE '{ID_PREFIX}_%';\n")
+        if not args.song_id:
+            sqlf.write(f"DELETE FROM song_links WHERE song_id LIKE '{ID_PREFIX}_%';\n")
+            sqlf.write(f"DELETE FROM song_versions WHERE song_id LIKE '{ID_PREFIX}_%';\n")
+            sqlf.write(f"DELETE FROM songs_fts WHERE song_id LIKE '{ID_PREFIX}_%';\n")
+            sqlf.write(f"DELETE FROM songs WHERE id LIKE '{ID_PREFIX}_%';\n")
 
         with concurrent.futures.ThreadPoolExecutor(max_workers=max(1, args.song_workers)) as pool:
             future_map = {
@@ -804,6 +852,7 @@ def main() -> None:
                         "tags_json": json.loads(song.tags_json),
                         "links": song.links,
                     }, ensure_ascii=False) + "\n")
+                    imported_song_ids.append(song.id)
                     for line in build_insert_sql(song):
                         sqlf.write(line + "\n")
                     imported += 1
@@ -813,6 +862,16 @@ def main() -> None:
                     errors.append({"song_id": sid, "error": str(exc)})
 
         sqlf.write("\n")
+
+    if args.song_id and imported_song_ids:
+        delete_sql = []
+        sql_values = ",".join(f"'{esc_sql(song_id)}'" for song_id in imported_song_ids)
+        delete_sql.append(f"DELETE FROM song_links WHERE song_id IN ({sql_values});")
+        delete_sql.append(f"DELETE FROM song_versions WHERE song_id IN ({sql_values});")
+        delete_sql.append(f"DELETE FROM songs_fts WHERE song_id IN ({sql_values});")
+        delete_sql.append(f"DELETE FROM songs WHERE id IN ({sql_values});")
+        original_sql = sql_path.read_text(encoding="utf-8")
+        sql_path.write_text("\n".join([*delete_sql, original_sql]), encoding="utf-8")
 
     summary = {
         "site": SITE_TAG,

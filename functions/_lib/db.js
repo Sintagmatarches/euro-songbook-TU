@@ -37,11 +37,33 @@ export async function requireAuth(env, req){
 }
 
 export async function getUserAccess(env, userId){
-  const user = await dbGet(env, `SELECT id,email,nickname,role,created_at FROM users WHERE id=?`, [userId]);
+  let user = null;
+  try {
+    user = await dbGet(env, `SELECT id,email,nickname,role,created_at,nickname_updated_at FROM users WHERE id=?`, [userId]);
+  } catch (cause) {
+    const message = String(cause?.message || cause || "");
+    if (!message.includes("no such column: nickname_updated_at")) throw cause;
+    const legacyUser = await dbGet(env, `SELECT id,email,nickname,role,created_at FROM users WHERE id=?`, [userId]);
+    user = legacyUser ? { ...legacyUser, nickname_updated_at: null } : null;
+  }
   if(!user) return null;
 
-  const permsRows = await dbAll(env, `SELECT permission FROM user_permissions WHERE user_id=? ORDER BY permission ASC`, [userId]);
-  const scopeRows = await dbAll(env, `SELECT lang FROM user_scope_languages WHERE user_id=? ORDER BY lang ASC`, [userId]);
+  let permsRows = [];
+  try {
+    permsRows = await dbAll(env, `SELECT permission FROM user_permissions WHERE user_id=? ORDER BY permission ASC`, [userId]);
+  } catch (cause) {
+    const message = String(cause?.message || cause || "");
+    if (!message.includes("no such table: user_permissions")) throw cause;
+  }
+
+  let scopeRows = [];
+  try {
+    scopeRows = await dbAll(env, `SELECT lang FROM user_scope_languages WHERE user_id=? ORDER BY lang ASC`, [userId]);
+  } catch (cause) {
+    const message = String(cause?.message || cause || "");
+    if (!message.includes("no such table: user_scope_languages")) throw cause;
+  }
+
   const permissions = permsRows.map((r) => r.permission);
   const scopeLanguages = scopeRows.map((r) => String(r.lang || "").trim()).filter(Boolean);
   return { ...user, permissions, scopeLanguages };

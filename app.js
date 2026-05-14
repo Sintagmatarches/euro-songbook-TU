@@ -677,6 +677,21 @@ function getRegisterErrorMessage(error) {
   return error?.message || t("auth.registerFailed");
 }
 
+function getNicknameUpdateErrorMessage(error) {
+  const code = Number(error?.status || 0);
+  const message = String(error?.message || "").toLowerCase();
+  if (code === 429 || message.includes("once every 7 days")) {
+    return t("profile.nicknameRateLimited");
+  }
+  if (message.includes("nickname already")) {
+    return t("profile.nicknameTaken");
+  }
+  if (message.includes("invalid nickname")) {
+    return t("profile.nicknameInvalid");
+  }
+  return error?.message || t("common.error");
+}
+
 function authNicknameLabel() {
   return t("auth.nicknameLoginLabel");
 }
@@ -703,6 +718,14 @@ function authRegisterFieldsRequiredMessage() {
 
 function authPasswordMismatchMessage() {
   return t("auth.error.passwordMismatch");
+}
+
+function nicknameChangePromptMessage() {
+  return `${t("profile.nicknamePromptTitle")}\n\n${t("profile.nicknamePrompt")}`;
+}
+
+function nicknameChangeSavedMessage() {
+  return t("profile.nicknameSaved");
 }
 
 function setAuthDialogMode(mode = "login") {
@@ -1088,15 +1111,48 @@ function updateUserChip() {
       chipNode.textContent = "";
       chipNode.classList.add("hidden");
       chipNode.removeAttribute("title");
+      chipNode.removeAttribute("aria-label");
       return;
     }
     chipNode.textContent = displayName;
     chipNode.classList.remove("hidden");
-    if (email) chipNode.title = email;
-    else chipNode.removeAttribute("title");
+    const label = email
+      ? `${displayName} · ${email} · ${t("profile.nicknameActionHint")}`
+      : `${displayName} · ${t("profile.nicknameActionHint")}`;
+    chipNode.title = label;
+    chipNode.setAttribute("aria-label", label);
   };
   applyChip(userChip);
   applyChip(menuUserChip);
+}
+
+function bindNicknameChip(chipNode) {
+  if (!chipNode) return;
+  chipNode.addEventListener("click", () => {
+    void openNicknameChangePrompt();
+  });
+}
+
+async function openNicknameChangePrompt() {
+  if (!state.user) return;
+  const currentNickname = String(state.user?.nickname || "").trim();
+  const nextNickname = window.prompt(nicknameChangePromptMessage(), currentNickname);
+  if (nextNickname == null) return;
+  const normalized = String(nextNickname || "").trim();
+  if (!normalized || normalized === currentNickname) return;
+  try {
+    const out = await api.updateNickname(normalized);
+    state.lastNickname = String(out?.nickname || normalized).trim();
+    state.user = {
+      ...(state.user || {}),
+      nickname: String(out?.nickname || normalized).trim(),
+      nickname_updated_at: out?.nickname_updated_at || null,
+    };
+    updateUserChip();
+    showStatusOverlay(nicknameChangeSavedMessage(), "success");
+  } catch (error) {
+    showStatusOverlay(getNicknameUpdateErrorMessage(error), "error");
+  }
 }
 
 function permissionAliases(permission) {
@@ -1646,6 +1702,8 @@ btnMenuLogin?.addEventListener("click", () => {
   setMenuOpen(false);
   window.setTimeout(() => openAuthDialog("login"), motionDuration(MENU_DRAWER_MOTION_MS));
 });
+bindNicknameChip(userChip);
+bindNicknameChip(menuUserChip);
 authModeLogin?.addEventListener("click", () => setAuthDialogMode("login"));
 authModeRegister?.addEventListener("click", () => setAuthDialogMode("register"));
 authForm?.addEventListener("submit", (e) => {
@@ -1683,6 +1741,7 @@ document.addEventListener("click", (event) => {
 
 async function doLogout() {
   await api.logout();
+  clearAuthSessionHint();
   state.user = null;
   pendingAdminRequestsCount = 0;
   pendingAdminRequestsFetchedAt = 0;
@@ -1779,7 +1838,7 @@ router.on(async (route) => {
   } catch (error) {
     if (renderToken !== activeRouteRenderToken) return;
     const msg = error?.message || t("app.unexpectedError");
-    app.innerHTML = `<div class="card"><div class="h1">${t("common.error")}</div><div class="sep"></div><div class="muted">${msg}</div></div>`;
+    app.innerHTML = `<div class="card"><div class="h1">${escapeHtml(t("common.error"))}</div><div class="sep"></div><div class="muted">${escapeHtml(msg)}</div></div>`;
     if (useReducedRouteMotion) {
       clearStagedReveal(app);
       app.classList.remove("page-enter", "page-enter-active");

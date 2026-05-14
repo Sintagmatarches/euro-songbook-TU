@@ -7,13 +7,14 @@ import { createMockEnv, readJson, withFreshSchemaMarkers } from "./helpers/mock-
 
 function createCommentsEnv() {
   const songs = new Map([
-    ["song-1", { id: "song-1", status: "published", is_admin_content: 0 }],
+    ["song-1", { id: "song-1", status: "published", is_admin_content: 0, lang: "ru" }],
   ]);
   const users = new Map([
-    ["user-owner", { id: "user-owner", email: "owner@example.com", nickname: "owner", role: "user", created_at: "2024-01-01T00:00:00.000Z" }],
-    ["user-other", { id: "user-other", email: "other@example.com", nickname: "other", role: "user", created_at: "2024-01-01T00:00:00.000Z" }],
-    ["user-super", { id: "user-super", email: "super@example.com", nickname: "super", role: "super_admin", created_at: "2024-01-01T00:00:00.000Z" }],
-    ["user-admin-delete", { id: "user-admin-delete", email: "admin@example.com", nickname: "admin", role: "admin", created_at: "2024-01-01T00:00:00.000Z" }],
+    ["user-owner", { id: "user-owner", email: "owner@example.com", nickname: "owner", role: "user", created_at: "2024-01-01T00:00:00.000Z", nickname_updated_at: null }],
+    ["user-other", { id: "user-other", email: "other@example.com", nickname: "other", role: "user", created_at: "2024-01-01T00:00:00.000Z", nickname_updated_at: null }],
+    ["user-super", { id: "user-super", email: "super@example.com", nickname: "super", role: "super_admin", created_at: "2024-01-01T00:00:00.000Z", nickname_updated_at: null }],
+    ["user-admin-delete", { id: "user-admin-delete", email: "admin@example.com", nickname: "admin", role: "admin", created_at: "2024-01-01T00:00:00.000Z", nickname_updated_at: null }],
+    ["user-admin-ru", { id: "user-admin-ru", email: "admin-ru@example.com", nickname: "admin_ru", role: "admin", created_at: "2024-01-01T00:00:00.000Z", nickname_updated_at: null }],
   ]);
   const comments = new Map([
     ["comment-1", {
@@ -31,18 +32,24 @@ function createCommentsEnv() {
       return songs.get(String(params[0] || "")) || null;
     }
 
-    if (sql.includes("SELECT id,email,nickname,role,created_at FROM users WHERE id=?")) {
+    if (sql.includes("SELECT id,email,nickname,role,created_at,nickname_updated_at FROM users WHERE id=?")) {
       return users.get(String(params[0] || "")) || null;
     }
 
     if (sql.includes("SELECT permission FROM user_permissions WHERE user_id=?")) {
-      if (String(params[0] || "") === "user-admin-delete") {
+      if (String(params[0] || "") === "user-admin-delete" || String(params[0] || "") === "user-admin-ru") {
         return [{ permission: "songs.delete" }];
       }
       return [];
     }
 
     if (sql.includes("SELECT lang FROM user_scope_languages WHERE user_id=?")) {
+      if (String(params[0] || "") === "user-admin-delete") {
+        return [{ lang: "en" }];
+      }
+      if (String(params[0] || "") === "user-admin-ru") {
+        return [{ lang: "ru" }];
+      }
       return [];
     }
 
@@ -74,13 +81,13 @@ function createCommentsEnv() {
       return { success: true };
     }
 
-    if (sql.includes("coalesce(nullif(u.nickname, ''), u.email, u.id) AS author_name")) {
+    if (sql.includes("u.nickname AS author_nickname")) {
       const comment = comments.get(String(params[0] || ""));
       if (!comment) return null;
       const user = users.get(String(comment.user_id || ""));
       return {
         ...comment,
-        author_name: String(user?.nickname || user?.email || user?.id || ""),
+        author_nickname: String(user?.nickname || ""),
       };
     }
 
@@ -201,9 +208,27 @@ test("comment owner can delete own comment", async () => {
   assert.equal(comments.has("comment-1"), false);
 });
 
-test("admin with songs.delete can delete another user's comment", async () => {
+test("admin with songs.delete cannot delete another user's comment outside language scope", async () => {
   const { env, comments } = createCommentsEnv();
   const cookie = await authCookie(env, { id: "user-admin-delete", email: "admin@example.com", nickname: "admin", role: "admin" });
+  const response = await onRequestDelete({
+    env,
+    request: new Request("https://example.com/api/songs/song-1/comments/comment-1", {
+      method: "DELETE",
+      headers: {
+        Cookie: cookie,
+      },
+    }),
+    params: { id: "song-1", comment_id: "comment-1" },
+  });
+
+  assert.equal(response.status, 403);
+  assert.equal(comments.has("comment-1"), true);
+});
+
+test("admin with songs.delete can delete another user's comment within language scope", async () => {
+  const { env, comments } = createCommentsEnv();
+  const cookie = await authCookie(env, { id: "user-admin-ru", email: "admin-ru@example.com", nickname: "admin_ru", role: "admin" });
   const response = await onRequestDelete({
     env,
     request: new Request("https://example.com/api/songs/song-1/comments/comment-1", {

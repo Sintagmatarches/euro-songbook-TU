@@ -104,7 +104,7 @@ export async function requireFragmentReportAccess(env, request, reportId) {
   return { access, report, isOwner, isSuperAdmin };
 }
 
-export async function getFragmentReportDetail(env, reportId) {
+export async function getFragmentReportDetail(env, reportId, options = {}) {
   const report = await dbGet(
     env,
     `SELECT
@@ -146,6 +146,7 @@ export async function getFragmentReportDetail(env, reportId) {
      ORDER BY datetime(m.created_at) ASC, m.id ASC`,
     [reportId]
   );
+  const includePrivateEmails = options?.includePrivateEmails === true;
 
   return {
     id: report.id,
@@ -157,13 +158,13 @@ export async function getFragmentReportDetail(env, reportId) {
     last_message_at: report.last_message_at,
     user: {
       id: report.user_id,
-      email: String(report.user_email || ""),
+      email: includePrivateEmails ? String(report.user_email || "") : "",
       nickname: String(report.user_nickname || ""),
       name: normalizeDisplayName({ email: report.user_email, nickname: report.user_nickname }),
     },
     admin: report.assigned_admin_user_id ? {
       id: report.assigned_admin_user_id,
-      email: String(report.admin_email || ""),
+      email: includePrivateEmails ? String(report.admin_email || "") : "",
       nickname: String(report.admin_nickname || ""),
       name: normalizeDisplayName({ email: report.admin_email, nickname: report.admin_nickname }),
     } : null,
@@ -176,7 +177,7 @@ export async function getFragmentReportDetail(env, reportId) {
       created_at: message.created_at,
       sender: {
         id: message.sender_user_id,
-        email: String(message.sender_email || ""),
+        email: includePrivateEmails ? String(message.sender_email || "") : "",
         nickname: String(message.sender_nickname || ""),
         name: normalizeDisplayName({ email: message.sender_email, nickname: message.sender_nickname }),
       },

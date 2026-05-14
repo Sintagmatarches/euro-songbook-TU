@@ -6,6 +6,22 @@ function normalizeBody(value) {
   return String(value || "").replace(/\r\n?/g, "\n").trim();
 }
 
+function publicAuthorName(row = {}) {
+  const nickname = String(row?.author_nickname || "").trim();
+  if (nickname) return nickname;
+  const userId = String(row?.user_id || "").trim();
+  if (userId) return `user-${userId.slice(-6)}`;
+  return "user";
+}
+
+function serializeCommentItem(row = {}) {
+  if (!row || typeof row !== "object") return row;
+  return {
+    ...row,
+    author_name: publicAuthorName(row),
+  };
+}
+
 async function getPublishedSong(env, songId) {
   return dbGet(
     env,
@@ -37,7 +53,7 @@ export async function onRequestGet({ env, request, params }) {
        c.body,
        c.created_at,
        c.updated_at,
-       coalesce(nullif(u.nickname, ''), u.email, u.id) AS author_name
+       u.nickname AS author_nickname
      FROM song_comments c
      JOIN users u ON u.id = c.user_id
      WHERE c.song_id=?
@@ -46,7 +62,7 @@ export async function onRequestGet({ env, request, params }) {
     [songId]
   );
 
-  return json({ items });
+  return json({ items: items.map((item) => serializeCommentItem(item)) });
 }
 
 export async function onRequestPost({ env, request, params }) {
@@ -86,7 +102,7 @@ export async function onRequestPost({ env, request, params }) {
        c.body,
        c.created_at,
        c.updated_at,
-       coalesce(nullif(u.nickname, ''), u.email, u.id) AS author_name
+       u.nickname AS author_nickname
      FROM song_comments c
      JOIN users u ON u.id = c.user_id
      WHERE c.id=?
@@ -94,5 +110,5 @@ export async function onRequestPost({ env, request, params }) {
     [commentId]
   );
 
-  return json({ item });
+  return json({ item: serializeCommentItem(item) });
 }

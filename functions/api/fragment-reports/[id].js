@@ -11,7 +11,9 @@ export async function onRequestGet({ env, request, params }) {
   const access = await requireFragmentReportAccess(env, request, reportId);
   if (access instanceof Response) return access;
 
-  const detail = await getFragmentReportDetail(env, reportId);
+  const detail = await getFragmentReportDetail(env, reportId, {
+    includePrivateEmails: access.isSuperAdmin,
+  });
   if (!detail) return err("Fragment report not found", 404);
   return json(detail);
 }

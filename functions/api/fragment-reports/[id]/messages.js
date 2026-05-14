@@ -26,7 +26,9 @@ export async function onRequestPost({ env, request, params }) {
     isAdminReply: access.isSuperAdmin,
   });
 
-  const detail = await getFragmentReportDetail(env, reportId);
+  const detail = await getFragmentReportDetail(env, reportId, {
+    includePrivateEmails: access.isSuperAdmin,
+  });
   if (!detail) return err("Fragment report not found", 404);
   return json(detail);
 }

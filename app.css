@@ -901,6 +901,7 @@ button.menu-trigger:-moz-focusring,
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
+  cursor: pointer;
 }
 
 .ig-rail {

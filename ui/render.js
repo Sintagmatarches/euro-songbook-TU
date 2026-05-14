@@ -8867,7 +8867,7 @@ async function songbookImportExtractTextFromFile(file, options = {}) {
 
 function normalizeAdminSection(value = "") {
   const normalized = String(value || "").trim().toLowerCase();
-  if (!normalized || normalized === "content" || normalized === "songs") return "bulk-import";
+  if (!normalized || normalized === "content" || normalized === "songs") return "songs";
   if (normalized === "import" || normalized === "imports" || normalized === "bulk" || normalized === "bulk_import") {
     return "bulk-import";
   }
@@ -8876,12 +8876,15 @@ function normalizeAdminSection(value = "") {
 
 function adminTabs(active) {
   const normalizedActive = normalizeAdminSection(active);
+  const canManageSongs = can("songs.edit");
+  const canCreateSongs = can("songs.create");
   const canBulkImport = can("songs.bulk_import");
   const canManageBackgrounds = isSuperAdmin();
   const canReviewRequests = can("proposals.review");
   const canManageUsers = isSuperAdmin();
   return `
     <div class="admin-tabs" style="margin-bottom:12px">
+      ${(canManageSongs || canCreateSongs) ? `<a class="btn admin-tab-btn ${normalizedActive === "songs" ? "primary" : "ghost"}" href="#/admin/songs">${esc(t("admin.tab.songs"))}</a>` : ``}
       ${canBulkImport ? `<a class="btn admin-tab-btn ${normalizedActive === "bulk-import" ? "primary" : "ghost"}" href="#/admin/bulk-import">${esc(t("admin.tab.bulkImport"))}</a>` : ``}
       ${canManageBackgrounds ? `<a class="btn admin-tab-btn ${normalizedActive === "backgrounds" ? "primary" : "ghost"}" href="#/admin/backgrounds">${esc(t("admin.tab.backgrounds"))}</a>` : ``}
       ${canReviewRequests ? `<a class="btn admin-tab-btn ${normalizedActive === "requests" ? "primary" : "ghost"}" href="#/admin/requests?status=new">${esc(t("admin.tab.requests"))}</a>` : ``}
@@ -12583,7 +12586,7 @@ export async function render(route) {
     const isEditProposal = !adminEditorMode && String(route?.query?.mode || "").trim().toLowerCase() === "edit";
     const targetSongId = isEditProposal ? String(route?.query?.song_id || "").trim() : "";
     const sourceSong = isEditProposal && targetSongId
-      ? await api.song(targetSongId, { includeEditor: true })
+      ? await api.song(targetSongId)
       : null;
     const song = sourceSong
       ? {
@@ -12656,6 +12659,7 @@ export async function render(route) {
     const canBackgrounds = isSuperAdmin();
     const canUsers = isSuperAdmin();
     const allowedSections = [
+      canEditSongs ? "songs" : "",
       canBulkImport ? "bulk-import" : "",
       (canEditSongs || canCreateSongs) ? "editor" : "",
       canRequests ? "requests" : "",

@@ -36,7 +36,7 @@
     html[data-theme="white"] .app-boot-splash-title { color: #000000; }
     html[data-theme="white"] .app-boot-splash-subtitle { color: #162182; }
   </style>
-<link rel="stylesheet" href="/app.css?v=20260428-bg-compress-v55" />
+<link rel="stylesheet" href="/app.css?v=20260512-auth-session-fix-v57" />
 </head>
 <body>
   <div class="app-boot-splash" id="appBootSplash" role="status" aria-live="polite" aria-label="Loading application">
@@ -97,7 +97,7 @@
           </div>
         </div>
       </form>
-      <div class="user-chip hidden" id="userChip"></div>
+      <button class="user-chip hidden" id="userChip" type="button"></button>
     </div>
   </header>
 
@@ -298,7 +298,30 @@
       }, 7000);
     }());
   </script>
-  <script type="module" src="/app.js?v=20260505-i18n-fix-v2"></script>
+  <script>
+    (function () {
+      if (!("serviceWorker" in navigator)) return;
+      Promise.resolve()
+        .then(function () { return navigator.serviceWorker.getRegistrations(); })
+        .then(function (registrations) {
+          return Promise.all((registrations || []).map(function (registration) {
+            return registration.unregister();
+          }));
+        })
+        .catch(function () {});
+      if ("caches" in window) {
+        Promise.resolve()
+          .then(function () { return caches.keys(); })
+          .then(function (keys) {
+            return Promise.all((keys || [])
+              .filter(function (key) { return String(key || "").indexOf("songbook-app-") === 0; })
+              .map(function (key) { return caches.delete(key); }));
+          })
+          .catch(function () {});
+      }
+    }());
+  </script>
+  <script type="module" src="/app.js?v=20260512-auth-session-fix-v57"></script>
 </body>
 </html>
 

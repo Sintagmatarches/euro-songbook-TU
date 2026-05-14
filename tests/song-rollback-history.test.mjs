@@ -16,6 +16,7 @@ function makeAdminUser() {
     nickname: "Admin",
     role: "super_admin",
     created_at: "2026-04-13T09:00:00.000Z",
+    nickname_updated_at: null,
   };
 }
 
@@ -99,7 +100,7 @@ function createHistoryEnv() {
     if (sql.includes("FROM sqlite_master") && String(params?.[0] || "").toLowerCase() === "rate_limits") {
       return { name: "rate_limits" };
     }
-    if (sql.includes("SELECT id,email,nickname,role,created_at FROM users WHERE id=?")) {
+    if (sql.includes("SELECT id,email,nickname,role,created_at,nickname_updated_at FROM users WHERE id=?")) {
       return makeAdminUser();
     }
     if (sql.includes("SELECT permission FROM user_permissions WHERE user_id=?")) {
@@ -182,7 +183,7 @@ function createRestoreEnv() {
     if (sql.includes("FROM sqlite_master") && String(params?.[0] || "").toLowerCase() === "rate_limits") {
       return { name: "rate_limits" };
     }
-    if (sql.includes("SELECT id,email,nickname,role,created_at FROM users WHERE id=?")) {
+    if (sql.includes("SELECT id,email,nickname,role,created_at,nickname_updated_at FROM users WHERE id=?")) {
       return makeAdminUser();
     }
     if (sql.includes("SELECT permission FROM user_permissions WHERE user_id=?")) {
