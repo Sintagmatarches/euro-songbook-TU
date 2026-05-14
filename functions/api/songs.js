@@ -353,8 +353,8 @@ export async function onRequestGet({ env, request }) {
               ORDER BY filtered.version_rows DESC, datetime(filtered.created_at) DESC, filtered.id ASC
             ) AS duplicate_rank
           FROM filtered
-        )
-          SELECT s.id, s.title, s.subtitle, '' AS lyrics, s.lang, s.country, s.period, s.region, s.event, s.theme, coalesce(s.verified, 0) AS verified, s.year, s.created_at,
+         )
+          SELECT s.id, s.title, s.subtitle, coalesce(s.lyrics, '') AS lyrics, s.lang, s.country, s.period, s.region, s.event, s.theme, coalesce(s.verified, 0) AS verified, s.year, s.created_at,
                '' AS snippet, ranked.version_rows
           FROM ranked
           JOIN songs s ON s.id = ranked.id

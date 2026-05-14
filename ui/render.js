@@ -190,6 +190,19 @@ const PERMISSION_DESCRIPTIONS_UK = {
 };
 
 const esc = (s = "") => String(s).replace(/[&<>\"']/g, (m) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", "\"": "&quot;", "'": "&#39;" }[m]));
+const LEGACY_YAT_RE = /[Ѣѣ]/g;
+const LEGACY_YAT_UPPER = "Ѣ";
+const LEGACY_YAT_LOWER = "ѣ";
+
+function wrapLegacyGlyphMarkup(text = "") {
+  return String(text || "").replace(LEGACY_YAT_RE, (glyph) => (
+    `<span class="legacy-yat" aria-label="${glyph === LEGACY_YAT_UPPER ? LEGACY_YAT_UPPER : LEGACY_YAT_LOWER}">${glyph}</span>`
+  ));
+}
+
+function escDisplayText(text = "") {
+  return wrapLegacyGlyphMarkup(esc(text));
+}
 const qs = (id) => document.getElementById(id);
 const uiLocale = () => (state.locale || "ru");
 function formatDateTime(value) {
@@ -3008,12 +3021,12 @@ function previewLineContainsSearchHit(line = "", queryTokens = []) {
 }
 
 function highlightPreviewSearchTerms(line = "", queryTokens = []) {
-  if (!line || !queryTokens.length) return esc(line);
+  if (!line || !queryTokens.length) return escDisplayText(line);
   const literalTokens = queryTokens
     .map((token) => String(token?.raw || "").trim())
     .filter((token) => token.length >= 2)
     .sort((left, right) => right.length - left.length);
-  if (!literalTokens.length) return esc(line);
+  if (!literalTokens.length) return escDisplayText(line);
   const matches = [];
   for (const token of literalTokens) {
     const pattern = token.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
@@ -3027,17 +3040,17 @@ function highlightPreviewSearchTerms(line = "", queryTokens = []) {
       if (regex.lastIndex === found.index) regex.lastIndex += 1;
     }
   }
-  if (!matches.length) return esc(line);
+  if (!matches.length) return escDisplayText(line);
   matches.sort((left, right) => left.start - right.start || right.end - left.end);
   let html = "";
   let cursor = 0;
   for (const match of matches) {
     if (match.start < cursor) continue;
-    html += esc(line.slice(cursor, match.start));
-    html += `<mark class="yt-card-search-hit">${esc(line.slice(match.start, match.end))}</mark>`;
+    html += escDisplayText(line.slice(cursor, match.start));
+    html += `<mark class="yt-card-search-hit">${escDisplayText(line.slice(match.start, match.end))}</mark>`;
     cursor = match.end;
   }
-  html += esc(line.slice(cursor));
+  html += escDisplayText(line.slice(cursor));
   return html;
 }
 
@@ -3068,7 +3081,7 @@ function renderHomeSongSecondary(song = {}, options = {}) {
     const withEllipsis = preview.truncated && index === lastLineIndex ? `${text}...` : text;
     const html = allowSearchHighlight && previewLineContainsSearchHit(text, queryTokens)
       ? highlightPreviewSearchTerms(withEllipsis, queryTokens)
-      : esc(withEllipsis);
+      : escDisplayText(withEllipsis);
     return `<span class="yt-card-performer-line">${html}</span>`;
   }).join("");
 }
@@ -3154,7 +3167,7 @@ function renderHomeSongCard(song = {}, options = {}) {
         </div>
         <div class="yt-card-historical-body">
           <div class="yt-card-historical-heading">
-            <div class="yt-card-title">${esc(song.title)}</div>
+            <div class="yt-card-title">${escDisplayText(song.title)}</div>
             <div class="yt-card-historical-era">${esc(getPublicSongYear(song?.year || ""))}</div>
           </div>
           <div class="yt-card-historical-count" aria-label="${esc(homeCountrySongsCountLabel(song?.count || 0))}">
@@ -3170,7 +3183,7 @@ function renderHomeSongCard(song = {}, options = {}) {
       ${isHistoricalCountryCard ? historicalBody : `
       <div class="yt-card-content">
         <div class="yt-card-title-row">
-          <div class="yt-card-title">${esc(song.title)}</div>
+          <div class="yt-card-title">${escDisplayText(song.title)}</div>
           ${isVerified ? `<div class="yt-card-title-badges"><span class="yt-card-verified">${esc(verifiedLabel())}</span></div>` : ``}
         </div>
         ${mainMeta}
@@ -3196,7 +3209,7 @@ function renderHomeSongCardFallback(song = {}, options = {}) {
     <a class="yt-card yt-card-preview-3" href="${esc(href)}">
       <div class="yt-card-content">
         <div class="yt-card-title-row">
-          <div class="yt-card-title">${esc(String(song?.title || "").trim() || "Untitled")}</div>
+          <div class="yt-card-title">${escDisplayText(String(song?.title || "").trim() || "Untitled")}</div>
         </div>
         ${(yearValue || langValue || datedMetaValue) ? `<div class="yt-card-main-meta">
           ${yearValue ? `<span class="yt-card-main-meta-part yt-card-main-meta-soft">${esc(yearValue)}</span>` : ""}
@@ -3622,7 +3635,16 @@ function homeUI(data, params, homeExtras = {}) {
 
       ${showNavigationRoot ? `<div class="home-country-head">
         <div class="home-country-head-main">
-          ${homeCurrentUserDisplayName() ? `<div class="h1 home-user-title">${esc(homeCurrentUserDisplayName())}</div>` : ""}
+          ${homeCurrentUserDisplayName() ? `<div class="home-user-account">
+            <button class="home-user-account-button" id="homeUserAccountButton" type="button" aria-haspopup="menu" aria-expanded="false">
+              <span class="h1 home-user-title">${esc(homeCurrentUserDisplayName())}</span>
+              <span class="home-user-account-caret" aria-hidden="true"></span>
+            </button>
+            <div class="home-user-account-menu hidden" id="homeUserAccountMenu" role="menu">
+              <button class="home-user-account-item" id="homeUserChangeNickname" type="button" role="menuitem">${esc(t("profile.changeNickname"))}</button>
+              <button class="home-user-account-item" id="homeUserLogout" type="button" role="menuitem">${esc(t("auth.logout"))}</button>
+            </div>
+          </div>` : ""}
           ${totalSongsOnSite > 0 ? `<div class="home-catalog-total" aria-label="${esc(homeCatalogTotalLabel())}">
             <span class="home-catalog-total-value">${esc(formatUiInteger(totalSongsOnSite))}</span>
             <span class="home-catalog-total-label">${esc(homeCatalogTotalLabel())}</span>
@@ -5906,27 +5928,27 @@ function renderTextWithConfidenceWords(text, segments = [], options = {}) {
 function renderEditorTextWithConfidenceWords(text, segments = []) {
   const source = String(text || "");
   const normalizedSegments = draftNormalizeSegments(segments, source);
-  if (!normalizedSegments.length) return esc(source);
+  if (!normalizedSegments.length) return escDisplayText(source);
   const words = draftWordTokens(source);
-  if (!words.length) return esc(source);
+  if (!words.length) return escDisplayText(source);
   let out = "";
   let cursor = 0;
   for (const word of words) {
     const start = Math.max(cursor, Number(word?.start || 0));
     const end = Math.max(start, Number(word?.end || start));
-    if (start > cursor) out += esc(source.slice(cursor, start));
+    if (start > cursor) out += escDisplayText(source.slice(cursor, start));
     const wordText = source.slice(start, end);
     const confidence = draftConfidenceForWord(normalizedSegments, word, 100);
     if (confidence >= 100) {
-      out += esc(wordText);
+      out += escDisplayText(wordText);
     } else {
       const confidenceStyle = songConfidenceWordStyleValue(confidence);
-      out += `<span class="editor-confidence-word" style="${confidenceStyle}">${esc(wordText)}</span>`;
+      out += `<span class="editor-confidence-word" style="${confidenceStyle}">${escDisplayText(wordText)}</span>`;
     }
     cursor = end;
   }
-  if (cursor < source.length) out += esc(source.slice(cursor));
-  return out || esc(source);
+  if (cursor < source.length) out += escDisplayText(source.slice(cursor));
+  return out || escDisplayText(source);
 }
 
 function renderLyricsEditorOverlayLines(sourceLines = [], lines = []) {
@@ -5946,7 +5968,7 @@ function renderLyricsEditorMeasureLines(sourceLines = []) {
   const safeSourceLines = Array.isArray(sourceLines) ? sourceLines : [];
   return safeSourceLines.map((sourceText) => {
     const content = String(sourceText ?? "");
-    return `<div class="ac-lyrics-measure-line"><span class="ac-lyrics-measure-anchor">${content ? esc(content) : "&nbsp;"}</span></div>`;
+    return `<div class="ac-lyrics-measure-line"><span class="ac-lyrics-measure-anchor">${content ? escDisplayText(content) : "&nbsp;"}</span></div>`;
   }).join("");
 }
 
@@ -6264,7 +6286,7 @@ function renderTextWithUnknownMarkers(text) {
     if (ch === "?" && isUnknownQuestionMarkAt(src, i)) {
       out += `<span class="song-unknown-char">?</span>`;
     } else {
-      out += esc(ch);
+      out += escDisplayText(ch);
     }
   }
   return out;

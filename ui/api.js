@@ -93,6 +93,15 @@ function normalizeDisplayText(value = "") {
     .trim();
 }
 
+export function repairOldOrthographyDisplaySpacing(value = "") {
+  return String(value || "").replace(/([\p{L}]+)\s+([ѢѣІіѲѳѴѵЪъ])(?:\s+([\p{L}]+))?/gu, (_match, left, legacy, right = "") => {
+    const mergedLeft = `${left}${legacy}`;
+    if (!right) return mergedLeft;
+    const shouldMergeRight = left.length <= 3 || right.length <= 2;
+    return shouldMergeRight ? `${mergedLeft}${right}` : `${mergedLeft} ${right}`;
+  });
+}
+
 function cleanDisplayTitle(value = "") {
   return normalizeDisplayText(value)
     .replace(/\s*(?:\*{1,6}|_{1,6}|#{1,6})\s*$/g, "")
@@ -179,10 +188,10 @@ function looksLikeLyricContentLine(line = "") {
   return /[\p{L}]/u.test(text);
 }
 
-function cleanLyricsForDisplay(value = "") {
+export function cleanLyricsForDisplay(value = "") {
   const source = String(value || "").replace(/\r\n?/g, "\n");
   if (!source.trim()) return "";
-  let rows = source.split("\n").map((line) => normalizeDisplayText(line));
+  let rows = source.split("\n").map((line) => repairOldOrthographyDisplaySpacing(normalizeDisplayText(line)));
   rows = rows.filter((line, index) => !(index < 6 && isCopyrightPlaceholderLine(line)));
 
   let firstMeaningfulIndex = rows.findIndex((line) => line);

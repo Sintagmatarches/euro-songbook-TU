@@ -9,16 +9,27 @@ const btnLogin = document.getElementById("btnLogin");
 const btnLogout = document.getElementById("btnLogout");
 const btnMenuLogin = document.getElementById("btnMenuLogin");
 const btnMenuLogout = document.getElementById("btnMenuLogout");
+const btnMenuAccountLogin = document.getElementById("btnMenuAccountLogin");
+const btnMenuAccountRegister = document.getElementById("btnMenuAccountRegister");
+const btnMenuAccountLogout = document.getElementById("btnMenuAccountLogout");
+const btnMenuNickname = document.getElementById("btnMenuNickname");
 const btnThemeToggle = document.getElementById("btnThemeToggle");
 const btnSidebarToggle = document.getElementById("btnSidebarToggle");
 const btnMenuClose = document.getElementById("btnMenuClose");
 const menuDrawer = document.getElementById("menuDrawer");
 const menuBackdrop = document.getElementById("menuBackdrop");
 const menuSettingsGroup = document.getElementById("menuSettingsGroup");
+const menuAccountGroup = document.getElementById("menuAccountGroup");
 const mNavMenu = document.getElementById("mNavMenu");
 const btnInstallApp = document.getElementById("btnInstallApp");
 const userChip = document.getElementById("userChip");
 const menuUserChip = document.getElementById("menuUserChip");
+const topAccountControl = document.getElementById("topAccountControl");
+const topAccountMenu = document.getElementById("topAccountMenu");
+const btnTopAccountLogin = document.getElementById("btnTopAccountLogin");
+const btnTopAccountRegister = document.getElementById("btnTopAccountRegister");
+const btnTopNickname = document.getElementById("btnTopNickname");
+const btnTopAccountLogout = document.getElementById("btnTopAccountLogout");
 const topSearchWrap = document.getElementById("topSearchWrap");
 const topSearchInput = document.getElementById("topSearchInput");
 const topSearchBtn = document.getElementById("topSearchBtn");
@@ -26,7 +37,7 @@ const topLocaleControl = document.getElementById("topLocaleControl");
 const topLocaleButton = document.getElementById("topLocaleButton");
 const topThemeToggle = document.getElementById("topThemeToggle");
 const topLocaleMenu = document.getElementById("topLocaleMenu");
-const topLocaleItems = Array.from(document.querySelectorAll(".catalog-top-locale-item"));
+const topLocaleItems = Array.from(document.querySelectorAll("#topLocaleMenu .catalog-top-locale-item"));
 const topSearchThemeToggle = document.getElementById("topSearchThemeToggle");
 const topSearchLocaleItems = Array.from(document.querySelectorAll(".catalog-top-search-locale-item"));
 const localeSwitchTop = document.getElementById("localeSwitchTop");
@@ -546,20 +557,25 @@ function syncSongPageBackgroundParallax() {
     || (!isMobile && songPageBgParallaxMetrics.documentHeight !== documentHeight)
   );
   if (shouldMeasureLayout) {
-    const songCard = document.querySelector(".song-view .song-card-shell.song-card-shell-has-bg");
-    if (songCard) {
-      const cardRect = songCard.getBoundingClientRect();
-      const cardTop = cardRect.top + scrollY;
-      const cardHeight = Math.max(songCard.offsetHeight, viewportHeight);
-      const start = Math.max(0, cardTop - Math.round(viewportHeight * 0.08));
-      const end = Math.max(start + 1, cardTop + cardHeight - Math.round(viewportHeight * 0.62));
+    const songViewRoot = document.querySelector(".song-view.app-shell") || document.querySelector(".song-view");
+    if (songViewRoot) {
+      const rootRect = songViewRoot.getBoundingClientRect();
+      const rootTop = rootRect.top + scrollY;
+      const rootHeight = Math.max(
+        viewportHeight,
+        Math.round(rootRect.height || 0),
+        Math.round(songViewRoot.scrollHeight || 0),
+        Math.round(songViewRoot.offsetHeight || 0)
+      );
+      const start = Math.max(0, rootTop - Math.round(viewportHeight * 0.08));
+      const end = Math.max(start + 1, rootTop + rootHeight - Math.round(viewportHeight * 0.62));
       const scrollRangePx = Math.max(1, end - start);
       songPageBgParallaxMetrics = {
         viewportHeight,
         start,
         end,
         scrollRangePx,
-        cardHeight,
+        contentHeight: rootHeight,
         documentHeight,
         maxScroll,
       };
@@ -569,7 +585,7 @@ function syncSongPageBackgroundParallax() {
         start: 0,
         end: maxScroll,
         scrollRangePx: maxScroll,
-        cardHeight: viewportHeight,
+        contentHeight: viewportHeight,
         documentHeight,
         maxScroll,
       };
@@ -582,7 +598,7 @@ function syncSongPageBackgroundParallax() {
     start: 0,
     end: 1,
     scrollRangePx: 1,
-    cardHeight: viewportHeight,
+    contentHeight: viewportHeight,
     documentHeight,
     maxScroll,
   };
@@ -620,8 +636,8 @@ function syncSongPageBackgroundParallax() {
   const progress = Math.min(1, Math.max(0, (scrollY - metrics.start) / progressRange));
   const scrollRangePx = metrics.scrollRangePx;
 
-  const cardHeightForSlowdown = metrics.cardHeight;
-  const longTextExtra = Math.max(0, cardHeightForSlowdown - viewportHeight - SONG_PAGE_BG_PARALLAX_LONG_TEXT_THRESHOLD_PX);
+  const contentHeightForSlowdown = metrics.contentHeight;
+  const longTextExtra = Math.max(0, contentHeightForSlowdown - viewportHeight - SONG_PAGE_BG_PARALLAX_LONG_TEXT_THRESHOLD_PX);
   const longTextRatio = Math.min(1, longTextExtra / Math.max(1, viewportHeight));
   const slowDownFactor = 1 + (SONG_PAGE_BG_PARALLAX_LONG_TEXT_SLOWDOWN_MAX - 1) * longTextRatio;
 
@@ -1051,6 +1067,67 @@ function toggleTopLocaleMenu() {
   closeTopLocaleMenu();
 }
 
+function openTopAccountMenu() {
+  if (!topAccountMenu || !userChip) return;
+  closeTopLocaleMenu();
+  topAccountMenu.classList.remove("hidden");
+  topAccountMenu.classList.add("is-open");
+  userChip.classList.add("is-open");
+  userChip.setAttribute("aria-expanded", "true");
+}
+
+function closeTopAccountMenu() {
+  if (!topAccountMenu || !userChip) return;
+  topAccountMenu.classList.add("hidden");
+  topAccountMenu.classList.remove("is-open");
+  userChip.classList.remove("is-open");
+  userChip.setAttribute("aria-expanded", "false");
+}
+
+function toggleTopAccountMenu() {
+  if (!topAccountMenu || topAccountMenu.classList.contains("hidden")) {
+    openTopAccountMenu();
+    return;
+  }
+  closeTopAccountMenu();
+}
+
+function homeUserMenuRefs() {
+  const button = document.getElementById("homeUserAccountButton");
+  const menu = document.getElementById("homeUserAccountMenu");
+  return {
+    button: button instanceof HTMLElement ? button : null,
+    menu: menu instanceof HTMLElement ? menu : null,
+  };
+}
+
+function openHomeUserMenu() {
+  const { button, menu } = homeUserMenuRefs();
+  if (!(button && menu)) return;
+  menu.classList.remove("hidden");
+  menu.classList.add("is-open");
+  button.classList.add("is-open");
+  button.setAttribute("aria-expanded", "true");
+}
+
+function closeHomeUserMenu() {
+  const { button, menu } = homeUserMenuRefs();
+  if (!(button && menu)) return;
+  menu.classList.add("hidden");
+  menu.classList.remove("is-open");
+  button.classList.remove("is-open");
+  button.setAttribute("aria-expanded", "false");
+}
+
+function toggleHomeUserMenu() {
+  const { menu } = homeUserMenuRefs();
+  if (!menu || menu.classList.contains("hidden")) {
+    openHomeUserMenu();
+    return;
+  }
+  closeHomeUserMenu();
+}
+
 function openTopSearchMenu() {
   if (!topSearchMenu || !topSearchMenuToggle || !topSearchWrap?.classList.contains("has-actions-menu")) return;
   topSearchMenu.classList.remove("hidden");
@@ -1105,13 +1182,22 @@ function deriveUserDisplayName(user) {
 function updateUserChip() {
   const displayName = deriveUserDisplayName(state.user);
   const email = String(state.user?.email || "").trim();
-  const applyChip = (chipNode) => {
+  const applyChip = (chipNode, options = {}) => {
     if (!chipNode) return;
+    const showLoginAction = options?.showLoginWhenAnonymous === true;
     if (!state.user || !displayName) {
-      chipNode.textContent = "";
-      chipNode.classList.add("hidden");
-      chipNode.removeAttribute("title");
-      chipNode.removeAttribute("aria-label");
+      if (!showLoginAction) {
+        chipNode.textContent = "";
+        chipNode.classList.add("hidden");
+        chipNode.removeAttribute("title");
+        chipNode.removeAttribute("aria-label");
+        return;
+      }
+      const loginLabel = t("auth.login");
+      chipNode.textContent = loginLabel;
+      chipNode.classList.remove("hidden");
+      chipNode.title = loginLabel;
+      chipNode.setAttribute("aria-label", loginLabel);
       return;
     }
     chipNode.textContent = displayName;
@@ -1122,13 +1208,29 @@ function updateUserChip() {
     chipNode.title = label;
     chipNode.setAttribute("aria-label", label);
   };
-  applyChip(userChip);
+  applyChip(userChip, { showLoginWhenAnonymous: true });
   applyChip(menuUserChip);
 }
 
-function bindNicknameChip(chipNode) {
+function bindUserChip(chipNode, options = {}) {
   if (!chipNode) return;
   chipNode.addEventListener("click", () => {
+    if (!state.user) {
+      if (options?.closeMenu) setMenuOpen(false);
+      if (options?.closeMenu) {
+        window.setTimeout(() => openAuthDialog("login"), motionDuration(MENU_DRAWER_MOTION_MS));
+      } else {
+        openAuthDialog("login");
+      }
+      return;
+    }
+    if (options?.closeMenu) {
+      setMenuOpen(false);
+      window.setTimeout(() => {
+        void openNicknameChangePrompt();
+      }, motionDuration(MENU_DRAWER_MOTION_MS));
+      return;
+    }
     void openNicknameChangePrompt();
   });
 }
@@ -1326,6 +1428,7 @@ function applyStaticTexts() {
 
   setTextById("menuTitle", t("menu.title"));
   setTextById("menuMainLabel", t("menu.sections"));
+  setTextById("menuAccountLabel", t("menu.account"));
   setTextById("menuSettingsLabel", t("menu.settings"));
   setTextById("menuLocaleLabel", t("home.lang"));
 
@@ -1338,6 +1441,14 @@ function applyStaticTexts() {
   if (btnLogout) btnLogout.textContent = t("auth.logout");
   if (btnMenuLogin) btnMenuLogin.textContent = t("auth.login");
   if (btnMenuLogout) btnMenuLogout.textContent = t("auth.logout");
+  if (btnMenuAccountLogin) btnMenuAccountLogin.textContent = t("auth.login");
+  if (btnMenuAccountRegister) btnMenuAccountRegister.textContent = t("auth.doRegister");
+  if (btnMenuAccountLogout) btnMenuAccountLogout.textContent = t("auth.logout");
+  if (btnMenuNickname) btnMenuNickname.textContent = t("profile.changeNickname");
+  if (btnTopAccountLogin) btnTopAccountLogin.textContent = t("auth.login");
+  if (btnTopAccountRegister) btnTopAccountRegister.textContent = t("auth.doRegister");
+  if (btnTopAccountLogout) btnTopAccountLogout.textContent = t("auth.logout");
+  if (btnTopNickname) btnTopNickname.textContent = t("profile.changeNickname");
   if (topSearchInput && topSearchBtn) {
     const labels = topSearchText();
     topSearchInput.placeholder = labels.placeholder;
@@ -1529,6 +1640,7 @@ function setActiveNav() {
   document.getElementById("dNavAdminBackgrounds")?.classList.toggle("hidden", !isSuperAdmin);
   document.getElementById("dNavAdminRequests")?.classList.toggle("hidden", !canReviewRequests);
   document.getElementById("dNavAdminUsers")?.classList.toggle("hidden", !isSuperAdmin);
+  menuAccountGroup?.classList.remove("hidden");
   menuSettingsGroup?.classList.remove("hidden");
   if (!canSeeUser && menuUserChip) {
     menuUserChip.textContent = "";
@@ -1538,8 +1650,16 @@ function setActiveNav() {
 
   if (btnLogin) btnLogin.classList.toggle("hidden", !!state.user);
   if (btnLogout) btnLogout.classList.add("hidden");
-  if (btnMenuLogin) btnMenuLogin.classList.toggle("hidden", !!state.user);
-  if (btnMenuLogout) btnMenuLogout.classList.toggle("hidden", !state.user);
+  if (btnMenuLogin) btnMenuLogin.classList.add("hidden");
+  if (btnMenuLogout) btnMenuLogout.classList.add("hidden");
+  if (btnMenuAccountLogin) btnMenuAccountLogin.classList.toggle("hidden", !!state.user);
+  if (btnMenuAccountRegister) btnMenuAccountRegister.classList.toggle("hidden", !!state.user);
+  if (btnMenuNickname) btnMenuNickname.classList.toggle("hidden", !state.user);
+  if (btnMenuAccountLogout) btnMenuAccountLogout.classList.toggle("hidden", !state.user);
+  if (btnTopAccountLogin) btnTopAccountLogin.classList.toggle("hidden", !!state.user);
+  if (btnTopAccountRegister) btnTopAccountRegister.classList.toggle("hidden", !!state.user);
+  if (btnTopNickname) btnTopNickname.classList.toggle("hidden", !state.user);
+  if (btnTopAccountLogout) btnTopAccountLogout.classList.toggle("hidden", !state.user);
   updateInstallButtonVisibility();
   applyAdminAttentionLabels();
   updateUserChip();
@@ -1608,7 +1728,13 @@ topSearchBtn?.addEventListener("click", (e) => {
 topLocaleButton?.addEventListener("click", (e) => {
   e.preventDefault();
   e.stopPropagation();
+  closeTopAccountMenu();
   toggleTopLocaleMenu();
+});
+userChip?.addEventListener("click", (e) => {
+  e.preventDefault();
+  e.stopPropagation();
+  toggleTopAccountMenu();
 });
 topSearchMenuToggle?.addEventListener("click", (e) => {
   e.preventDefault();
@@ -1663,6 +1789,45 @@ topLocaleMenu?.addEventListener("click", (e) => {
   refreshRoute();
   closeTopLocaleMenu();
 });
+topAccountMenu?.addEventListener("click", (e) => {
+  const action = e.target instanceof Element ? e.target.closest("#btnTopAccountLogin, #btnTopAccountRegister, #btnTopNickname, #btnTopAccountLogout") : null;
+  if (!action) return;
+  e.preventDefault();
+  e.stopPropagation();
+  closeTopAccountMenu();
+  if (action.id === "btnTopAccountLogin") {
+    openAuthDialog("login");
+    return;
+  }
+  if (action.id === "btnTopAccountRegister") {
+    openAuthDialog("register");
+    return;
+  }
+  if (action.id === "btnTopNickname") {
+    void openNicknameChangePrompt();
+    return;
+  }
+  if (action.id === "btnTopAccountLogout") {
+    void doLogout();
+  }
+});
+document.addEventListener("click", (e) => {
+  const action = e.target instanceof Element ? e.target.closest("#homeUserAccountButton, #homeUserChangeNickname, #homeUserLogout") : null;
+  if (!action) return;
+  e.preventDefault();
+  if (action.id === "homeUserAccountButton") {
+    toggleHomeUserMenu();
+    return;
+  }
+  closeHomeUserMenu();
+  if (action.id === "homeUserChangeNickname") {
+    void openNicknameChangePrompt();
+    return;
+  }
+  if (action.id === "homeUserLogout") {
+    void doLogout();
+  }
+});
 document.addEventListener("pointerdown", (e) => {
   if (!topSearchWrap || !topSearchMenu || topSearchMenu.classList.contains("hidden")) return;
   const target = e.target;
@@ -1675,10 +1840,25 @@ document.addEventListener("pointerdown", (e) => {
   if (target instanceof Node && topLocaleControl.contains(target)) return;
   closeTopLocaleMenu();
 });
+document.addEventListener("pointerdown", (e) => {
+  if (!topAccountControl || !topAccountMenu || topAccountMenu.classList.contains("hidden")) return;
+  const target = e.target;
+  if (target instanceof Node && topAccountControl.contains(target)) return;
+  closeTopAccountMenu();
+});
+document.addEventListener("pointerdown", (e) => {
+  const { button, menu } = homeUserMenuRefs();
+  if (!(button && menu) || menu.classList.contains("hidden")) return;
+  const target = e.target;
+  if (target instanceof Node && (button.contains(target) || menu.contains(target))) return;
+  closeHomeUserMenu();
+});
 
 window.addEventListener("keydown", (e) => {
   if (e.key === "Escape") closeTopSearchMenu();
   if (e.key === "Escape") closeTopLocaleMenu();
+  if (e.key === "Escape") closeTopAccountMenu();
+  if (e.key === "Escape") closeHomeUserMenu();
   if (e.key === "Escape") setMenuOpen(false);
 });
 
@@ -1702,8 +1882,21 @@ btnMenuLogin?.addEventListener("click", () => {
   setMenuOpen(false);
   window.setTimeout(() => openAuthDialog("login"), motionDuration(MENU_DRAWER_MOTION_MS));
 });
-bindNicknameChip(userChip);
-bindNicknameChip(menuUserChip);
+btnMenuAccountLogin?.addEventListener("click", () => {
+  setMenuOpen(false);
+  window.setTimeout(() => openAuthDialog("login"), motionDuration(MENU_DRAWER_MOTION_MS));
+});
+btnMenuAccountRegister?.addEventListener("click", () => {
+  setMenuOpen(false);
+  window.setTimeout(() => openAuthDialog("register"), motionDuration(MENU_DRAWER_MOTION_MS));
+});
+btnMenuNickname?.addEventListener("click", () => {
+  setMenuOpen(false);
+  window.setTimeout(() => {
+    void openNicknameChangePrompt();
+  }, motionDuration(MENU_DRAWER_MOTION_MS));
+});
+bindUserChip(menuUserChip, { closeMenu: true });
 authModeLogin?.addEventListener("click", () => setAuthDialogMode("login"));
 authModeRegister?.addEventListener("click", () => setAuthDialogMode("register"));
 authForm?.addEventListener("submit", (e) => {
@@ -1752,6 +1945,10 @@ async function doLogout() {
 
 btnLogout?.addEventListener("click", doLogout);
 btnMenuLogout?.addEventListener("click", async () => {
+  await doLogout();
+  setMenuOpen(false);
+});
+btnMenuAccountLogout?.addEventListener("click", async () => {
   await doLogout();
   setMenuOpen(false);
 });

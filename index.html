@@ -36,7 +36,7 @@
     html[data-theme="white"] .app-boot-splash-title { color: #000000; }
     html[data-theme="white"] .app-boot-splash-subtitle { color: #162182; }
   </style>
-<link rel="stylesheet" href="/app.css?v=20260512-auth-session-fix-v57" />
+<link rel="stylesheet" href="/app.css?v=20260514-account-ui-fix-v59" />
 </head>
 <body>
   <div class="app-boot-splash" id="appBootSplash" role="status" aria-live="polite" aria-label="Loading application">
@@ -97,7 +97,15 @@
           </div>
         </div>
       </form>
-      <button class="user-chip hidden" id="userChip" type="button"></button>
+      <div class="catalog-top-locale top-account" id="topAccountControl">
+        <button class="user-chip hidden" id="userChip" type="button" aria-haspopup="menu" aria-expanded="false"></button>
+        <div class="catalog-top-locale-menu hidden" id="topAccountMenu" role="menu">
+          <button class="btn ghost catalog-top-locale-item top-account-menu-item" id="btnTopAccountLogin" type="button" role="menuitem">Login</button>
+          <button class="btn ghost catalog-top-locale-item top-account-menu-item" id="btnTopAccountRegister" type="button" role="menuitem">Register</button>
+          <button class="btn ghost catalog-top-locale-item top-account-menu-item hidden" id="btnTopNickname" type="button" role="menuitem">Change nickname</button>
+          <button class="btn ghost catalog-top-locale-item top-account-menu-item hidden" id="btnTopAccountLogout" type="button" role="menuitem">Logout</button>
+        </div>
+      </div>
     </div>
   </header>
 
@@ -155,6 +163,15 @@
       <a class="ig-drawer-link js-route-link" href="#/request" id="dNavRequest">Добавить песню</a>
       <a class="ig-drawer-link js-route-link" href="#/favorites" id="dNavFav">Избранное</a>
       <a class="ig-drawer-link js-route-link" href="#/drafts" id="dNavDrafts">Мои черновики</a>
+    </div>
+
+    <div class="ig-drawer-group" id="menuAccountGroup">
+      <div class="ig-drawer-label" id="menuAccountLabel">Account</div>
+      <button class="user-chip user-chip-drawer hidden" id="menuUserChip" type="button"></button>
+      <button class="ig-drawer-link ig-drawer-button" id="btnMenuAccountLogin" type="button">Login</button>
+      <button class="ig-drawer-link ig-drawer-button" id="btnMenuAccountRegister" type="button">Register</button>
+      <button class="ig-drawer-link ig-drawer-button hidden" id="btnMenuNickname" type="button">Change nickname</button>
+      <button class="ig-drawer-link ig-drawer-button hidden" id="btnMenuAccountLogout" type="button">Logout</button>
     </div>
 
     <div class="ig-drawer-group" id="menuSettingsGroup">
@@ -321,7 +338,7 @@
       }
     }());
   </script>
-  <script type="module" src="/app.js?v=20260512-auth-session-fix-v57"></script>
+  <script type="module" src="/app.js?v=20260514-account-ui-fix-v59"></script>
 </body>
 </html>
 

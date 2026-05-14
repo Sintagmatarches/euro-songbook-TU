@@ -31,7 +31,7 @@ function createBrowseEnv() {
         id: "empire-song-1",
         title: "Imperial Anthem",
         subtitle: "",
-        lyrics: "",
+        lyrics: "First line of the anthem\nSecond line of the anthem\nThird line of the anthem",
         lang: "ru",
         country: "russian_empire_1900_1917",
         period: "russian_empire",
@@ -61,6 +61,7 @@ test("entity own-country browse stays exact without inheriting descendants", asy
   const body = await readJson(response);
   assert.equal(body.total, 1);
   assert.equal(body.items.length, 1);
+  assert.match(String(body.items[0]?.lyrics || ""), /^First line of the anthem/);
 
   const countQuery = captured.find((entry) => entry.method === "count");
   assert.ok(countQuery);
