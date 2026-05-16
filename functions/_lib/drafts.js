@@ -1207,6 +1207,7 @@ export async function publishDraftToSong(env, { draftId, userId }) {
     );
   }
 
+  await dbRun(env, `DELETE FROM songs_fts WHERE song_id=?`, [songId]);
   await dbRun(
     env,
     `INSERT OR REPLACE INTO songs_fts(song_id,title,lyrics) VALUES (?,?,?)`,

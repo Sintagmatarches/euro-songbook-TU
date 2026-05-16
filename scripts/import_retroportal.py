@@ -594,6 +594,9 @@ def build_sql_for_operation(operation: dict[str, Any]) -> list[str]:
             "datetime('now'));"
         )
         lines.append(
+            f"DELETE FROM songs_fts WHERE song_id='{esc_sql(song_row['id'])}';"
+        )
+        lines.append(
             f"INSERT OR REPLACE INTO songs_fts(song_id,title,lyrics) VALUES ('{esc_sql(song_row['id'])}','{esc_sql(song_row['title'])}','{esc_sql(song_row['lyrics'])}');"
         )
 

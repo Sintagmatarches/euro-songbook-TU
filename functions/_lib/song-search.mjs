@@ -357,6 +357,7 @@ export async function syncSongSearchIndex(env, song = {}) {
   const versionsBySongId = await fetchSongVersionsBySongIds(env, [songId]);
   const searchDocument = buildSearchDocument(song, versionsBySongId.get(songId) || []);
 
+  await dbRun(env, `DELETE FROM songs_fts WHERE song_id=?`, [songId]);
   await dbRun(
     env,
     `INSERT OR REPLACE INTO songs_fts(song_id, title, lyrics) VALUES (?,?,?)`,

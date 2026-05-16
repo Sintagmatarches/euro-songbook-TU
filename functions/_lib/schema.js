@@ -1246,6 +1246,7 @@ export async function ensureAuthSchema(env) {
 }
 
 async function upsertFTS(env, songId, title, lyrics) {
+  await dbRun(env, `DELETE FROM songs_fts WHERE song_id=?`, [songId]);
   await dbRun(env, `INSERT OR REPLACE INTO songs_fts(song_id, title, lyrics) VALUES (?,?,?)`, [songId, title || "", lyrics || ""]);
 }
 
