@@ -15936,6 +15936,34 @@ html #ac_editor.ac-editor-request-mode {
   --yt-preview-lines: 2;
 }
 
+.yt-card.yt-card-catalog-country {
+  --yt-card-side-width: 0px;
+}
+
+.yt-card.yt-card-catalog-country .yt-card-content {
+  gap: 12px !important;
+}
+
+.yt-card-country-preview {
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+  overflow: hidden;
+  white-space: pre-line;
+  font-size: 12px;
+  line-height: 1.2;
+  font-weight: 700;
+  color: rgba(188, 214, 255, 0.92);
+}
+
+.yt-card-country-count {
+  margin-top: auto;
+  font-size: 15px;
+  line-height: 1.2;
+  font-weight: 800;
+  color: #f4f9ff;
+}
+
 .yt-card-title {
   margin: 0 !important;
   padding: 0 !important;

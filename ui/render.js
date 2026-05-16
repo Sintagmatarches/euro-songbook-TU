@@ -2126,23 +2126,22 @@ function renderHomeCatalogCard(item = {}) {
   if (item?.layout === "historical-country") {
     return renderHistoricalCountryCard(item);
   }
-  const style = [
-    item?.wallBg ? `--home-country-wall:${toCssUrlValue(item.wallBg)}` : "",
-    item?.flagBg ? `--home-country-flag:${toCssUrlValue(item.flagBg)}` : "",
-  ].filter(Boolean).join(";");
-  return `
-    <a
-      class="home-country-card ${item?.isActive ? "is-active" : ""}"
-      href="${esc(String(item?.href || "#/").trim() || "#/")}"
-      data-home-preview-card="1"
-      data-home-bg="${esc(String(item?.previewBg || "").trim())}"
-      ${style ? `style="${esc(style)}"` : ""}
-    >
-      ${renderHomeCountryCardLabel(String(item?.label || item?.title || "").trim())}
-      ${Array.isArray(item?.previewLines) && item.previewLines.length ? `<span class="home-country-card-sub home-country-card-preview">${esc(item.previewLines.filter(Boolean).join("\n"))}</span>` : ""}
-      ${item?.hideCount ? "" : `<span class="home-country-card-count">${esc(homeCountrySongsCountLabel(item?.count))}</span>`}
-    </a>
-  `;
+  const previewSong = {
+    id: String(item?.key || item?.href || item?.title || "").trim() || `country_${Math.random().toString(36).slice(2, 8)}`,
+    title: String(item?.label || item?.title || "").trim(),
+    snippet: "",
+    lang: "",
+    country: String(item?.country || item?.key || "").trim(),
+    year: "",
+    verified: 0,
+  };
+  return renderHomeSongCard(previewSong, {
+    href: String(item?.href || "#/").trim() || "#/",
+    cardKind: "catalog-country",
+    extraClass: `home-picker-card${item?.isActive ? " is-active" : ""}`,
+    previewLines: Array.isArray(item?.previewLines) ? item.previewLines : [],
+    countLabel: item?.hideCount ? "" : homeCountrySongsCountLabel(item?.count),
+  }).replace("<a ", `<a data-home-preview-card="1" data-home-bg="${esc(String(item?.previewBg || "").trim())}" `);
 }
 
 function homeOpenNavigationLabel() {
@@ -3118,6 +3117,7 @@ function renderHomeSongCard(song = {}, options = {}) {
   const cardKind = String(options.cardKind || "song").trim().toLowerCase();
   const isPickerCard = cardKind === "picker";
   const isHistoricalCountryCard = cardKind === "historical-country";
+  const isCatalogCountryCard = cardKind === "catalog-country";
   const flagDevice = options.flagDevice || preferredFlagCardDevice();
   const isVerified = Number(song?.verified || 0) === 1;
   const showFavoriteBadge = options.favoriteBadge === true;
@@ -3143,6 +3143,13 @@ function renderHomeSongCard(song = {}, options = {}) {
     maxLines: previewLineLimit,
     searchQuery: options.searchQuery || "",
   });
+  const catalogPreviewText = isCatalogCountryCard
+    ? (Array.isArray(options.previewLines) ? options.previewLines : [])
+      .map((line) => String(line || "").trim())
+      .filter(Boolean)
+      .join("\n")
+    : "";
+  const catalogCountLabel = isCatalogCountryCard ? String(options.countLabel || "").trim() : "";
   const flagStyle = hasSideFlag ? ` style="${esc(`--yt-card-flag-image:${toCssUrlValue(flagUrl)}`)}"` : "";
   const yearValue = isPickerCard ? "" : getPublicSongYear(song?.year || "");
   const langValue = isPickerCard ? "" : String(song?.lang ? formatLang(song.lang) : "").trim();
@@ -3181,6 +3188,7 @@ function renderHomeSongCard(song = {}, options = {}) {
     "yt-card",
     hasSideFlag ? "yt-card-has-flag" : "",
     isHistoricalCountryCard ? "yt-card-historical-country" : "",
+    isCatalogCountryCard ? "yt-card-catalog-country" : "",
     `yt-card-preview-${previewLineLimit}`,
     extraClass,
   ]
@@ -3213,8 +3221,12 @@ function renderHomeSongCard(song = {}, options = {}) {
           <div class="yt-card-title">${escDisplayText(song.title)}</div>
           ${isVerified ? `<div class="yt-card-title-badges"><span class="yt-card-verified">${esc(verifiedLabel())}</span></div>` : ``}
         </div>
-        ${mainMeta}
-        ${secondaryText ? `<div class="yt-card-performer">${secondaryText}</div>` : ``}
+        ${isCatalogCountryCard
+          ? `${catalogPreviewText ? `<div class="yt-card-country-preview">${esc(catalogPreviewText)}</div>` : ``}
+             ${catalogCountLabel ? `<div class="yt-card-country-count">${esc(catalogCountLabel)}</div>` : ``}`
+          : `${mainMeta}
+             ${secondaryText ? `<div class="yt-card-performer">${secondaryText}</div>` : ``}`
+        }
       </div>`}
       ${isHistoricalCountryCard ? "" : sideRail}
     </a>
