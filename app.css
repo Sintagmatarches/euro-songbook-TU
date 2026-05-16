@@ -83,6 +83,14 @@
   --site-wallpaper-overlay-light: linear-gradient(180deg, rgba(238, 248, 255, 0.72), rgba(220, 237, 252, 0.8));
   --song-card-surface-bg: rgba(8, 20, 72, 0.82);
   --song-card-surface-border: rgba(84, 119, 224, 0.68);
+  --site-glass-surface-bg:
+    linear-gradient(180deg, rgba(8, 22, 74, 0.72), rgba(3, 11, 42, 0.56));
+  --site-glass-surface-border: rgba(86, 145, 231, 0.52);
+  --site-glass-surface-shadow: 0 16px 34px rgba(0, 0, 0, 0.22);
+  --site-glass-surface-blur: blur(16px) saturate(128%);
+  --site-glass-surface-hover-bg:
+    linear-gradient(180deg, rgba(10, 28, 90, 0.78), rgba(4, 13, 50, 0.62));
+  --site-glass-surface-hover-border: rgba(116, 192, 255, 0.72);
   --drawer-surface-bg: #160276;
   --drawer-surface-border: rgba(84, 119, 224, 0.68);
   --drawer-backdrop-bg: transparent;
@@ -132,6 +140,14 @@ html[data-theme="light"] {
   --surface-elevated: #0A2375;
   --surface-control: #0A2375;
   --text-secondary: rgba(233, 246, 255, 0.86);
+  --site-glass-surface-bg:
+    linear-gradient(180deg, rgba(10, 35, 117, 0.34), rgba(10, 35, 117, 0.24));
+  --site-glass-surface-border: rgba(116, 175, 238, 0.34);
+  --site-glass-surface-shadow: 0 16px 30px rgba(10, 35, 117, 0.12);
+  --site-glass-surface-blur: blur(14px) saturate(120%);
+  --site-glass-surface-hover-bg:
+    linear-gradient(180deg, rgba(10, 35, 117, 0.42), rgba(10, 35, 117, 0.3));
+  --site-glass-surface-hover-border: rgba(0, 21, 255, 0.54);
   --drawer-surface-bg: #160276;
   --drawer-surface-border: rgba(116, 175, 238, 0.34);
   --drawer-backdrop-bg: transparent;
@@ -141,6 +157,14 @@ html[data-theme="light"] {
 html[data-theme="white"] {
   --song-card-surface-bg: rgba(10, 35, 117, 0.34);
   --song-card-surface-border: rgba(116, 175, 238, 0.34);
+  --site-glass-surface-bg:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.78), rgba(241, 248, 255, 0.68));
+  --site-glass-surface-border: rgba(29, 57, 221, 0.18);
+  --site-glass-surface-shadow: 0 16px 30px rgba(20, 49, 116, 0.08);
+  --site-glass-surface-blur: blur(18px) saturate(128%);
+  --site-glass-surface-hover-bg:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.84), rgba(236, 245, 255, 0.74));
+  --site-glass-surface-hover-border: rgba(29, 57, 221, 0.24);
   --drawer-surface-bg: #160276;
   --drawer-surface-border: rgba(116, 175, 238, 0.34);
   --drawer-backdrop-bg: transparent;
@@ -7292,10 +7316,13 @@ button.menu-trigger,
 .song-version-listen-col,
 .song-compare-version,
 .song-compare-panel {
-  background: #160276 !important;
-  background-color: #160276 !important;
+  background: var(--site-glass-surface-bg) !important;
+  background-color: transparent !important;
   background-image: none !important;
-  border-color: rgba(0, 21, 255, 0.46) !important;
+  border-color: var(--site-glass-surface-border) !important;
+  box-shadow: var(--site-glass-surface-shadow) !important;
+  backdrop-filter: var(--site-glass-surface-blur) !important;
+  -webkit-backdrop-filter: var(--site-glass-surface-blur) !important;
 }
 
 .yt-card-content,
@@ -11159,24 +11186,29 @@ html[data-theme="white"] #ac_editor.ac-editor-page:not(.ac-editor-request-mode) 
 
 .admin-tabs .admin-tab-btn {
   color: #eef6ff !important;
-  background: rgba(10, 29, 110, 0.86) !important;
-  border-color: rgba(92, 156, 255, 0.62) !important;
-  backdrop-filter: none !important;
-  -webkit-backdrop-filter: none !important;
+  background: var(--site-glass-surface-bg) !important;
+  border-color: var(--site-glass-surface-border) !important;
+  box-shadow: var(--site-glass-surface-shadow) !important;
+  backdrop-filter: var(--site-glass-surface-blur) !important;
+  -webkit-backdrop-filter: var(--site-glass-surface-blur) !important;
 }
 
 .admin-tabs .admin-tab-btn:hover,
 .admin-tabs .admin-tab-btn:focus-visible {
   color: #ffffff !important;
-  border-color: rgba(134, 198, 255, 0.86) !important;
+  background: var(--site-glass-surface-hover-bg) !important;
+  border-color: var(--site-glass-surface-hover-border) !important;
 }
 
 .admin-tabs .admin-tab-btn.primary,
 .admin-tabs .admin-tab-btn.active {
   color: #ffffff !important;
-  background: var(--btn-blue-grad) !important;
-  border-color: var(--btn-blue-border) !important;
-  box-shadow: var(--btn-blue-shadow) !important;
+  background:
+    linear-gradient(180deg, rgba(22, 77, 216, 0.48), rgba(7, 24, 87, 0.68)) !important;
+  border-color: rgba(135, 205, 255, 0.78) !important;
+  box-shadow:
+    0 0 0 1px rgba(142, 214, 255, 0.18) inset,
+    var(--site-glass-surface-shadow) !important;
 }
 
 .admin-tabs .admin-tab-btn.primary:hover,
@@ -11184,15 +11216,18 @@ html[data-theme="white"] #ac_editor.ac-editor-page:not(.ac-editor-request-mode) 
 .admin-tabs .admin-tab-btn.active:hover,
 .admin-tabs .admin-tab-btn.active:focus-visible {
   color: #ffffff !important;
-  background: var(--btn-blue-grad-hover) !important;
-  border-color: var(--btn-blue-border-hover) !important;
-  box-shadow: var(--btn-blue-shadow-hover) !important;
+  background:
+    linear-gradient(180deg, rgba(28, 96, 240, 0.56), rgba(8, 28, 102, 0.74)) !important;
+  border-color: rgba(164, 222, 255, 0.9) !important;
+  box-shadow:
+    0 0 0 1px rgba(162, 228, 255, 0.22) inset,
+    0 18px 36px rgba(0, 0, 0, 0.24) !important;
 }
 
 html[data-theme="light"] .admin-tabs .admin-tab-btn {
   color: #f5f9ff !important;
-  background: rgba(0, 20, 168, 0.76) !important;
-  border-color: rgba(183, 206, 255, 0.62) !important;
+  background: var(--site-glass-surface-bg) !important;
+  border-color: var(--site-glass-surface-border) !important;
 }
 
 html[data-theme="white"] .admin-tabs .admin-tab-btn {
