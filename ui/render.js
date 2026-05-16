@@ -2126,6 +2126,7 @@ function renderHomeCatalogCard(item = {}) {
   if (item?.layout === "historical-country") {
     return renderHistoricalCountryCard(item);
   }
+  const extraClass = String(item?.extraClass || "").trim();
   const previewSong = {
     id: String(item?.key || item?.href || item?.title || "").trim() || `country_${Math.random().toString(36).slice(2, 8)}`,
     title: String(item?.label || item?.title || "").trim(),
@@ -2138,7 +2139,7 @@ function renderHomeCatalogCard(item = {}) {
   return renderHomeSongCard(previewSong, {
     href: String(item?.href || "#/").trim() || "#/",
     cardKind: "catalog-country",
-    extraClass: `home-picker-card${item?.isActive ? " is-active" : ""}`,
+    extraClass: `home-picker-card${item?.isActive ? " is-active" : ""}${extraClass ? ` ${extraClass}` : ""}`,
     previewLines: Array.isArray(item?.previewLines) ? item.previewLines : [],
     countLabel: item?.hideCount ? "" : homeCountrySongsCountLabel(item?.count),
   }).replace("<a ", `<a data-home-preview-card="1" data-home-bg="${esc(String(item?.previewBg || "").trim())}" `);
@@ -2582,16 +2583,15 @@ function renderHomeTopNavigation(directCounts, lang = "") {
         <div class="h2">${esc(homeTopNavigationTitle())}</div>
       </div>
       <div class="home-entity-top-grid">
-        ${cards.map((item) => `
-          <a class="home-entity-top-card" href="${esc(item.href)}">
-            <span class="home-entity-top-title">${renderDisplayLabel(item.label, {
-              wrapperClass: "display-label display-label-inline",
-              textClass: "display-label-text",
-              rangeClass: "display-label-range",
-            })}</span>
-            <span class="home-entity-top-count">${esc(homeCountrySongsCountLabel(item.count))}</span>
-          </a>
-        `).join("")}
+        ${cards.map((item) => renderHomeCatalogCard({
+          key: item.key,
+          title: item.label,
+          label: item.label,
+          count: item.count,
+          href: item.href,
+          previewLines: [],
+          extraClass: "home-entity-top-card-surface",
+        })).join("")}
       </div>
     </section>
   `;
