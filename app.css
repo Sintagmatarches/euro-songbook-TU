@@ -7292,10 +7292,10 @@ button.menu-trigger,
 .song-version-listen-col,
 .song-compare-version,
 .song-compare-panel {
-  background: #160276 !important;
-  background-color: #160276 !important;
+  background: var(--song-card-surface-bg) !important;
+  background-color: var(--song-card-surface-bg) !important;
   background-image: none !important;
-  border-color: rgba(0, 21, 255, 0.46) !important;
+  border-color: var(--song-card-surface-border) !important;
 }
 
 .yt-card-content,
@@ -8396,36 +8396,38 @@ html[data-theme="light"] .home-country-card-cta {
 
 .home-country-card {
   background-image: none !important;
+  background: var(--song-card-surface-bg) !important;
+  border-color: var(--song-card-surface-border) !important;
 }
 
 .home-country-card::before {
   content: "" !important;
   background-image: var(--home-country-flag) !important;
-  background-color: rgba(6, 15, 56, 0.4) !important;
+  background-color: rgba(6, 15, 56, 0.18) !important;
   background-blend-mode: multiply !important;
   background-repeat: no-repeat !important;
   background-size: contain !important;
   background-position: center !important;
-  opacity: 0.52 !important;
+  opacity: 0.34 !important;
 }
 
 .home-country-card::after {
   content: "" !important;
   background-image: var(--home-country-wall) !important;
-  background-color: rgba(5, 12, 48, 0.56) !important;
+  background-color: rgba(5, 12, 48, 0.24) !important;
   background-blend-mode: multiply !important;
   background-repeat: no-repeat !important;
   background-size: cover !important;
   background-position: center !important;
-  opacity: 0.82 !important;
+  opacity: 0.48 !important;
 }
 
 .home-country-card:hover::before {
-  opacity: 0.46 !important;
+  opacity: 0.28 !important;
 }
 
 .home-country-card:hover::after {
-  opacity: 0.88 !important;
+  opacity: 0.56 !important;
 }
 
 .yt-card {
@@ -8461,11 +8463,11 @@ html[data-theme="light"] .home-country-card-cta {
 }
 
 html[data-theme="light"] .home-country-card::before {
-  background-color: rgba(10, 35, 117, 0.18) !important;
+  background-color: rgba(10, 35, 117, 0.08) !important;
 }
 
 html[data-theme="light"] .home-country-card::after {
-  background-color: rgba(10, 35, 117, 0.22) !important;
+  background-color: rgba(10, 35, 117, 0.12) !important;
 }
 
 html[data-theme="light"] .yt-card::before {
@@ -11159,8 +11161,8 @@ html[data-theme="white"] #ac_editor.ac-editor-page:not(.ac-editor-request-mode) 
 
 .admin-tabs .admin-tab-btn {
   color: #eef6ff !important;
-  background: rgba(10, 29, 110, 0.86) !important;
-  border-color: rgba(92, 156, 255, 0.62) !important;
+  background: var(--song-card-surface-bg) !important;
+  border-color: var(--song-card-surface-border) !important;
   backdrop-filter: none !important;
   -webkit-backdrop-filter: none !important;
 }
@@ -11168,15 +11170,16 @@ html[data-theme="white"] #ac_editor.ac-editor-page:not(.ac-editor-request-mode) 
 .admin-tabs .admin-tab-btn:hover,
 .admin-tabs .admin-tab-btn:focus-visible {
   color: #ffffff !important;
-  border-color: rgba(134, 198, 255, 0.86) !important;
+  background: rgba(10, 29, 110, 0.9) !important;
+  border-color: rgba(134, 198, 255, 0.78) !important;
 }
 
 .admin-tabs .admin-tab-btn.primary,
 .admin-tabs .admin-tab-btn.active {
   color: #ffffff !important;
-  background: var(--btn-blue-grad) !important;
-  border-color: var(--btn-blue-border) !important;
-  box-shadow: var(--btn-blue-shadow) !important;
+  background: rgba(18, 62, 184, 0.9) !important;
+  border-color: rgba(149, 221, 255, 0.88) !important;
+  box-shadow: 0 0 0 1px rgba(149, 221, 255, 0.18) inset !important;
 }
 
 .admin-tabs .admin-tab-btn.primary:hover,
@@ -11184,20 +11187,20 @@ html[data-theme="white"] #ac_editor.ac-editor-page:not(.ac-editor-request-mode) 
 .admin-tabs .admin-tab-btn.active:hover,
 .admin-tabs .admin-tab-btn.active:focus-visible {
   color: #ffffff !important;
-  background: var(--btn-blue-grad-hover) !important;
-  border-color: var(--btn-blue-border-hover) !important;
-  box-shadow: var(--btn-blue-shadow-hover) !important;
+  background: rgba(27, 82, 220, 0.92) !important;
+  border-color: rgba(178, 232, 255, 0.92) !important;
+  box-shadow: 0 0 0 1px rgba(178, 232, 255, 0.22) inset !important;
 }
 
 html[data-theme="light"] .admin-tabs .admin-tab-btn {
   color: #f5f9ff !important;
-  background: rgba(0, 20, 168, 0.76) !important;
-  border-color: rgba(183, 206, 255, 0.62) !important;
+  background: var(--song-card-surface-bg) !important;
+  border-color: var(--song-card-surface-border) !important;
 }
 
 html[data-theme="white"] .admin-tabs .admin-tab-btn {
   color: #ffffff !important;
-  background: rgba(25, 0, 255, 0.76) !important;
+  background: var(--song-card-surface-bg) !important;
   border-color: rgba(255, 255, 255, 0.54) !important;
 }
 
@@ -17690,27 +17693,24 @@ html[data-theme="white"] .song-chorus-label {
   display: block;
   --yt-card-wall-image: none !important;
   --yt-card-flag-image: none !important;
-  background: #06013f !important;
-  background-color: #06013f !important;
+  background: var(--song-card-surface-bg) !important;
+  background-color: var(--song-card-surface-bg) !important;
   background-image: none !important;
 }
 
 .admin-song-card-link::before,
 .admin-song-card-link::after {
-  background: transparent !important;
-  background-color: transparent !important;
-  background-image: none !important;
-  opacity: 0 !important;
+  opacity: 1 !important;
 }
 
 html[data-theme="light"] .admin-song-card-link {
-  background: #0014a8 !important;
-  background-color: #0014a8 !important;
+  background: var(--song-card-surface-bg) !important;
+  background-color: var(--song-card-surface-bg) !important;
 }
 
 html[data-theme="white"] .admin-song-card-link {
-  background: #1900ff !important;
-  background-color: #1900ff !important;
+  background: var(--song-card-surface-bg) !important;
+  background-color: var(--song-card-surface-bg) !important;
 }
 
 .admin-song-card-toolbar {
