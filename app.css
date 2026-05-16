@@ -22487,3 +22487,49 @@ html .home-user-account-item#homeUserLogout:focus-visible {
   color: #ff9fbe !important;
   -webkit-text-fill-color: #ff9fbe !important;
 }
+
+/* Final authority for home catalog country cards:
+   keep them visibly more transparent than the surrounding solid surfaces,
+   regardless of whether the page is rendering the legacy or unified markup. */
+html body .home-country-grid > .home-country-card,
+html body .home-country-grid > .yt-card.yt-card-catalog-country {
+  background: rgba(7, 19, 64, 0.28) !important;
+  background-color: rgba(7, 19, 64, 0.28) !important;
+  border-color: rgba(110, 167, 255, 0.24) !important;
+  box-shadow:
+    inset 0 1px 0 rgba(212, 232, 255, 0.03),
+    0 10px 24px rgba(1, 8, 30, 0.12) !important;
+}
+
+html body .home-country-grid > .home-country-card::before {
+  background-color: rgba(6, 15, 56, 0.08) !important;
+  opacity: 0.14 !important;
+}
+
+html body .home-country-grid > .home-country-card::after {
+  background-color: rgba(5, 12, 48, 0.08) !important;
+  opacity: 0.18 !important;
+}
+
+html body .home-country-grid > .home-country-card:hover::before {
+  opacity: 0.1 !important;
+}
+
+html body .home-country-grid > .home-country-card:hover::after {
+  opacity: 0.22 !important;
+}
+
+html[data-theme="light"] body .home-country-grid > .home-country-card,
+html[data-theme="light"] body .home-country-grid > .yt-card.yt-card-catalog-country {
+  background: rgba(7, 19, 64, 0.28) !important;
+  background-color: rgba(7, 19, 64, 0.28) !important;
+  border-color: rgba(110, 167, 255, 0.24) !important;
+}
+
+html[data-theme="light"] body .home-country-grid > .home-country-card::before {
+  background-color: rgba(10, 35, 117, 0.03) !important;
+}
+
+html[data-theme="light"] body .home-country-grid > .home-country-card::after {
+  background-color: rgba(10, 35, 117, 0.04) !important;
+}
