@@ -22533,3 +22533,19 @@ html[data-theme="light"] body .home-country-grid > .home-country-card::before {
 html[data-theme="light"] body .home-country-grid > .home-country-card::after {
   background-color: rgba(10, 35, 117, 0.04) !important;
 }
+
+/* Final authority for the actual top-level country cards shown on the live home page. */
+html body .home-entity-top-card {
+  background: linear-gradient(180deg, rgba(7, 21, 82, 0.42), rgba(5, 12, 52, 0.34)) !important;
+  background-color: rgba(7, 19, 64, 0.34) !important;
+  border-color: rgba(110, 167, 255, 0.24) !important;
+  box-shadow:
+    inset 0 1px 0 rgba(212, 232, 255, 0.03),
+    0 10px 24px rgba(1, 8, 30, 0.12) !important;
+}
+
+html body .home-entity-top-card:hover,
+html body .home-entity-top-card:focus-visible {
+  background: linear-gradient(180deg, rgba(10, 31, 96, 0.5), rgba(7, 18, 66, 0.4)) !important;
+  border-color: rgba(35, 210, 255, 0.62) !important;
+}
