@@ -10240,9 +10240,9 @@ function adminHistoricalVisualsUI(data) {
   const flagDesktopStd = FLAG_CARD_STANDARDS.desktopLong;
   const flagMobileStd = FLAG_CARD_STANDARDS.mobileLong;
   const title = pick("\u0412\u0438\u0437\u0443\u0430\u043b\u044b", "\u0412\u0456\u0437\u0443\u0430\u043b\u0438", "Visuaalid", "Visuals");
-  const entityLabel = pick("\u0421\u0443\u0449\u043d\u043e\u0441\u0442\u044c", "\u0421\u0443\u0442\u043d\u0456\u0441\u0442\u044c", "Olem", "Entity");
-  const entityPlaceholder = pick("\u0412\u044b\u0431\u0435\u0440\u0438\u0442\u0435 \u0441\u0443\u0449\u043d\u043e\u0441\u0442\u044c", "\u041e\u0431\u0435\u0440\u0456\u0442\u044c \u0441\u0443\u0442\u043d\u0456\u0441\u0442\u044c", "Vali olem", "Select entity");
-  const entitySearchPlaceholder = pick("\u041d\u0430\u0439\u0442\u0438 \u0441\u0443\u0449\u043d\u043e\u0441\u0442\u044c...", "\u0417\u043d\u0430\u0439\u0442\u0438 \u0441\u0443\u0442\u043d\u0456\u0441\u0442\u044c...", "Otsi olemit...", "Search entity...");
+  const entityLabel = pick("\u0421\u0442\u0440\u0430\u043d\u0430 / \u0438\u0441\u0442\u043e\u0440\u0438\u0447\u0435\u0441\u043a\u0430\u044f \u0441\u0443\u0449\u043d\u043e\u0441\u0442\u044c", "\u041a\u0440\u0430\u0457\u043d\u0430 / \u0456\u0441\u0442\u043e\u0440\u0438\u0447\u043d\u0430 \u0441\u0443\u0442\u043d\u0456\u0441\u0442\u044c", "Riik / ajalooline kuuluvus", "Country / historical affiliation");
+  const entityPlaceholder = pick("\u0412\u044b\u0431\u0435\u0440\u0438\u0442\u0435 \u0441\u0442\u0440\u0430\u043d\u0443 \u0438\u043b\u0438 \u0438\u0441\u0442\u043e\u0440\u0438\u0447\u0435\u0441\u043a\u0443\u044e \u0441\u0443\u0449\u043d\u043e\u0441\u0442\u044c", "\u041e\u0431\u0435\u0440\u0456\u0442\u044c \u043a\u0440\u0430\u0457\u043d\u0443 \u0430\u0431\u043e \u0456\u0441\u0442\u043e\u0440\u0438\u0447\u043d\u0443 \u0441\u0443\u0442\u043d\u0456\u0441\u0442\u044c", "Vali riik v\u00f5i ajalooline kuuluvus", "Select a country or historical affiliation");
+  const entitySearchPlaceholder = pick("\u041d\u0430\u0439\u0442\u0438 \u0441\u0442\u0440\u0430\u043d\u0443 \u0438\u043b\u0438 \u0441\u0443\u0449\u043d\u043e\u0441\u0442\u044c...", "\u0417\u043d\u0430\u0439\u0442\u0438 \u043a\u0440\u0430\u0457\u043d\u0443 \u0430\u0431\u043e \u0441\u0443\u0442\u043d\u0456\u0441\u0442\u044c...", "Otsi riiki v\u00f5i kuuluvust...", "Search country or affiliation...");
   const subtitle = pick("\u0424\u043e\u043d \u0438 \u0441\u0442\u0438\u043a\u0435\u0440 \u0434\u043b\u044f \u0432\u044b\u0431\u0440\u0430\u043d\u043d\u043e\u0439 \u0441\u0443\u0449\u043d\u043e\u0441\u0442\u0438. \u041c\u043e\u0436\u043d\u043e \u0437\u0430\u0434\u0430\u0442\u044c \u0434\u0435\u0444\u043e\u043b\u0442 \u0438 \u0434\u0438\u0430\u043f\u0430\u0437\u043e\u043d\u044b \u043b\u0435\u0442.", "\u0424\u043e\u043d \u0456 \u0441\u0442\u0456\u043a\u0435\u0440 \u0434\u043b\u044f \u0432\u0438\u0431\u0440\u0430\u043d\u043e\u0457 \u0441\u0443\u0442\u043d\u043e\u0441\u0442\u0456. \u041c\u043e\u0436\u043d\u0430 \u0437\u0430\u0434\u0430\u0442\u0438 \u0434\u0435\u0444\u043e\u043b\u0442 \u0456 \u0434\u0456\u0430\u043f\u0430\u0437\u043e\u043d\u0438 \u0440\u043e\u043a\u0456\u0432.", "Taust ja kleebis valitud kuuluvuse jaoks. Saad seadistada vaikimisi variandi ja aasta-vahemikud.", "Background and sticker for the selected affiliation. You can set a default and year ranges.");
   const scopeDefaultLabel = pick("\u041f\u043e \u0443\u043c\u043e\u043b\u0447\u0430\u043d\u0438\u044e", "\u0417\u0430 \u0437\u0430\u043c\u043e\u0432\u0447\u0443\u0432\u0430\u043d\u043d\u044f\u043c", "Vaikimisi", "Default");
   const scopeTitle = pick("\u0410\u043a\u0442\u0438\u0432\u043d\u044b\u0439 \u0434\u0438\u0430\u043f\u0430\u0437\u043e\u043d", "\u0410\u043a\u0442\u0438\u0432\u043d\u0438\u0439 \u0434\u0456\u0430\u043f\u0430\u0437\u043e\u043d", "Aktiivne vahemik", "Active scope");
@@ -12877,6 +12877,7 @@ function bindAdminVisualCategories(ctx) {
       const label = String(opt.textContent || "").trim();
       return value && label ? { value, label, count: Number(counts.get(value) || 0) } : null;
     })
+    .filter((opt) => opt && opt.value !== "other_countries")
     .filter(Boolean)
     .sort((a, b) => b.count - a.count || a.label.localeCompare(b.label));
   const countLabel = (count) => {
@@ -12892,8 +12893,7 @@ function bindAdminVisualCategories(ctx) {
   countrySelect.innerHTML = `<option value="">${esc(uiText("selectCountry"))}</option>${countryOptions.map((opt) => `<option value="${esc(opt.value)}">${esc(opt.label)}</option>`).join("")}`;
   const filteredOptions = (queryRaw = "") => {
     const query = searchText(queryRaw);
-    const list = query ? countryOptions.filter((opt) => searchText(opt.label).includes(query) || opt.value.includes(query)) : countryOptions;
-    return list.slice(0, 12);
+    return query ? countryOptions.filter((opt) => searchText(opt.label).includes(query) || opt.value.includes(query)) : countryOptions;
   };
   const renderEntityResults = (queryRaw = "", force = false) => {
     if (!countryResultsNode) return;
@@ -13379,6 +13379,7 @@ function bindAdminHistoricalVisuals(ctx) {
         ? { value, label, count: Number(countryCountMap.get(value) || 0) }
         : null;
     })
+    .filter((opt) => opt && opt.value !== "other_countries")
     .filter(Boolean)
     .sort((a, b) => b.count - a.count || a.label.localeCompare(b.label));
   const renderHiddenCountryOptions = () => {
@@ -13400,13 +13401,12 @@ function bindAdminHistoricalVisuals(ctx) {
   };
   const filteredCountryOptions = (queryRaw = "") => {
     const query = normalizeEntitySearch(queryRaw);
-    const list = query
+    return query
       ? countryOptions.filter((opt) => (
         normalizeEntitySearch(opt.label).includes(query)
         || opt.value.includes(query)
       ))
       : countryOptions;
-    return list.slice(0, 28);
   };
   const renderCountryResults = (queryRaw = "", options = {}) => {
     if (!countryResultsNode) return;
@@ -13418,7 +13418,7 @@ function bindAdminHistoricalVisuals(ctx) {
       return;
     }
     const selected = normalizeSongCountry(countrySelect.value || "") || "";
-    const list = filteredCountryOptions(queryRaw).slice(0, 12);
+    const list = filteredCountryOptions(queryRaw);
     countryResultsNode.innerHTML = list.length
       ? list.map((opt) => `
           <button class="ab-entity-result ${opt.value === selected ? "is-active" : ""}" type="button" data-country="${esc(opt.value)}">

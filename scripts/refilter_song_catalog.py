@@ -2438,7 +2438,7 @@ def classify_country(
         return old_country, "keep_old_movement", False, False
 
     # If year is unknown and there are no geo-votes, avoid timeline-default flips (e.g. empire -> ussr).
-    if old_country and year is None and old_country != new_country and not signals.geo_votes:
+    if old_country and old_country != "other_countries" and year is None and old_country != new_country and not signals.geo_votes:
         return old_country, "keep_old_no_year", False, True
 
     ambiguous, low_signal = is_country_ambiguous(signals.geo_votes, signals.geo_lyrics_votes)
