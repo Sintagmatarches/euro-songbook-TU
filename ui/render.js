@@ -1711,6 +1711,33 @@ function emptyHomeSongsResponse(params = {}) {
   };
 }
 
+function visualCategoryHasAnyConfiguredAsset(profile, key) {
+  const normalized = normalizeVisualProfile(profile);
+  const category = normalized?.categories?.[key] || {};
+  const hasSymbolAsset = (symbol = {}) => {
+    const safe = normalizeVisualSymbol(symbol);
+    return !!(safe.long || safe.long_mobile || safe.square);
+  };
+  const hasBackgroundAsset = (background = {}) => {
+    const safe = normalizeVisualBackground(background);
+    return !!String(safe.image_url || "").trim();
+  };
+  if (key === "flag" || key === "sticker") {
+    if (hasSymbolAsset(category.default)) return true;
+    return Array.isArray(category.variants) && category.variants.some((row) => hasSymbolAsset(row?.value));
+  }
+  if (hasBackgroundAsset(category.default)) return true;
+  return Array.isArray(category.variants) && category.variants.some((row) => hasBackgroundAsset(row?.value));
+}
+
+function widthHeightRatioText(width, height) {
+  const gcd = (a, b) => (b ? gcd(b, a % b) : a);
+  const safeWidth = Math.max(1, Math.round(Number(width) || 1));
+  const safeHeight = Math.max(1, Math.round(Number(height) || 1));
+  const divisor = gcd(safeWidth, safeHeight);
+  return `${safeWidth / divisor}:${safeHeight / divisor}`;
+}
+
 function collectHomeFilters() {
   const rawCountry = qs("yt_country")?.value || "";
   const country = normalizeSongCountry(rawCountry) || rawCountry;
@@ -12871,6 +12898,55 @@ function bindAdminVisualCategories(ctx) {
     if (country && count > 0) counts.set(country, count);
   });
   const searchText = (value = "") => String(value || "").toLowerCase().trim().replace(/\s+/g, " ");
+  const visualStatusLabel = (key, isPresent) => {
+    if (locale === "ru") {
+      if (key === "flag") return isPresent ? "Флаг есть" : "Флага нет";
+      if (key === "desktop") return isPresent ? "Фон ПК есть" : "Фона ПК нет";
+      return isPresent ? "Фон телефона есть" : "Фона телефона нет";
+    }
+    if (locale === "uk") {
+      if (key === "flag") return isPresent ? "Прапор є" : "Прапора немає";
+      if (key === "desktop") return isPresent ? "Фон ПК є" : "Фону ПК немає";
+      return isPresent ? "Фон телефону є" : "Фону телефону немає";
+    }
+    if (locale === "et") {
+      if (key === "flag") return isPresent ? "Lipp olemas" : "Lipp puudub";
+      if (key === "desktop") return isPresent ? "Töölaua taust olemas" : "Töölaua taust puudub";
+      return isPresent ? "Telefoni taust olemas" : "Telefoni taust puudub";
+    }
+    if (key === "flag") return isPresent ? "Flag present" : "Flag missing";
+    if (key === "desktop") return isPresent ? "Desktop background present" : "Desktop background missing";
+    return isPresent ? "Mobile background present" : "Mobile background missing";
+  };
+  const visualStatusMarkup = (country) => {
+    const normalized = byCountry.get(country);
+    const profile = normalized?.visual_profile || normalized?.visual_profile_json || createEmptyVisualProfile();
+    const iconMarkup = (key) => {
+      if (key === "flag") {
+        return `<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M7 3a1 1 0 0 1 1 1v1h8.2c.8 0 1.2 1 .6 1.6L15 8.4l1.8 1.8c.6.6.2 1.6-.6 1.6H8v8a1 1 0 1 1-2 0V4a1 1 0 0 1 1-1Z"/></svg>`;
+      }
+      if (key === "desktop") {
+        return `<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 4h14a2 2 0 0 1 2 2v8.5a2 2 0 0 1-2 2h-5.2l.7 2H17a1 1 0 1 1 0 2H7a1 1 0 1 1 0-2h2.5l.7-2H5a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2Zm0 2v8.5h14V6H5Z"/></svg>`;
+      }
+      return `<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M8 2h8a2 2 0 0 1 2 2v16a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2Zm0 3v13h8V5H8Zm4 16a1.2 1.2 0 1 0 0-2.4A1.2 1.2 0 0 0 12 21Z"/></svg>`;
+    };
+    const statuses = [
+      { key: "flag", present: visualCategoryHasAnyConfiguredAsset(profile, "flag") },
+      { key: "desktop", present: visualCategoryHasAnyConfiguredAsset(profile, "desktop") },
+      { key: "mobile", present: visualCategoryHasAnyConfiguredAsset(profile, "mobile") },
+    ];
+    return `
+      <span class="ab-entity-result-statuses" aria-label="${esc(locale === "ru" ? "Статусы визуалов" : locale === "uk" ? "Статуси візуалів" : locale === "et" ? "Visuaalide olekud" : "Visual statuses")}">
+        ${statuses.map((status) => `
+          <span
+            class="ab-entity-status-pill ${status.present ? "is-present" : "is-missing"}"
+            title="${esc(visualStatusLabel(status.key, status.present))}"
+            aria-label="${esc(visualStatusLabel(status.key, status.present))}"
+          ><span class="ab-entity-status-icon">${iconMarkup(status.key)}</span></span>
+        `).join("")}
+      </span>
+    `;
+  };
   const countryOptions = Array.from(countrySelect.options)
     .map((opt) => {
       const value = normalizeSongCountry(opt.value || "") || "";
@@ -12907,7 +12983,7 @@ function bindAdminVisualCategories(ctx) {
     const selected = normalizeSongCountry(countrySelect.value || "") || "";
     const list = filteredOptions(queryRaw);
     countryResultsNode.innerHTML = list.length
-      ? list.map((opt) => `<button class="ab-entity-result ${opt.value === selected ? "is-active" : ""}" type="button" data-country="${esc(opt.value)}"><span class="ab-entity-result-title">${esc(opt.label)}</span><span class="ab-entity-result-count">${esc(countLabel(opt.count))}</span></button>`).join("")
+      ? list.map((opt) => `<button class="ab-entity-result ${opt.value === selected ? "is-active" : ""}" type="button" data-country="${esc(opt.value)}"><span class="ab-entity-result-title">${esc(opt.label)}</span><span class="ab-entity-result-meta">${visualStatusMarkup(opt.value)}<span class="ab-entity-result-count">${esc(countLabel(opt.count))}</span></span></button>`).join("")
       : `<div class="muted small ab-entity-result-empty">${esc(locale === "ru" ? "Ничего не найдено" : "No matches")}</div>`;
   };
   const pickCountry = (queryRaw = "") => {
@@ -12920,13 +12996,14 @@ function bindAdminVisualCategories(ctx) {
   };
 
   const categoryDefs = {
-    desktop: { title: locale === "ru" ? "Фон ПК" : "Desktop background", type: "background", standard: COUNTRY_BACKGROUND_STANDARDS.desktop, previewClass: "ab-preview-desktop" },
-    mobile: { title: locale === "ru" ? "Фон телефона" : "Phone background", type: "background", standard: COUNTRY_BACKGROUND_STANDARDS.mobile, previewClass: "ab-preview-mobile" },
+    desktop: { title: locale === "ru" ? "Фон ПК" : "Desktop background", type: "background", standard: COUNTRY_BACKGROUND_STANDARDS.desktop, previewClass: "ab-visual-preview-desktop" },
+    mobile: { title: locale === "ru" ? "Фон телефона" : "Phone background", type: "background", standard: COUNTRY_BACKGROUND_STANDARDS.mobile, previewClass: "ab-visual-preview-mobile" },
     flag: { title: locale === "ru" ? "Флаг превью" : "Preview flag", type: "symbol", standard: FLAG_CARD_STANDARDS.desktopLong, previewClass: "ab-symbol-preview-wide" },
     sticker: { title: locale === "ru" ? "Стикер превью" : "Preview sticker", type: "symbol", standard: { width: 512, height: 512 }, previewClass: "ab-symbol-preview-square" },
   };
   let visualProfileState = normalizeVisualProfile(createEmptyVisualProfile());
   const backgroundPreviewMetricsCache = new Map();
+  const backgroundPreviewRenderCache = new Map();
 
   const setError = (message = "") => {
     if (!rangeErrorNode) return;
@@ -12946,6 +13023,34 @@ function bindAdminVisualCategories(ctx) {
     const normalized = normalizeRowValue(key, value);
     if (categoryDefs[key].type === "symbol") return normalized.long || normalized.long_mobile || normalized.square || "";
     return normalized.image_url || "";
+  };
+  const previewSpecText = (key) => {
+    const standard = categoryDefs[key]?.standard || { width: 1, height: 1 };
+    const ratio = widthHeightRatioText(standard.width, standard.height);
+    if (locale === "ru") return `Ширина:высота = ${ratio} (${standard.width}×${standard.height}px)`;
+    if (locale === "uk") return `Ширина:висота = ${ratio} (${standard.width}×${standard.height}px)`;
+    if (locale === "et") return `Laius:kõrgus = ${ratio} (${standard.width}×${standard.height}px)`;
+    return `Width:height = ${ratio} (${standard.width}×${standard.height}px)`;
+  };
+  const previewCaptionText = (key) => {
+    if (locale === "ru") {
+      if (key === "desktop") return "Точный итоговый кадр ПК";
+      if (key === "mobile") return "Точный итоговый кадр телефона";
+      return "Точный итоговый предпросмотр";
+    }
+    if (locale === "uk") {
+      if (key === "desktop") return "Точний підсумковий кадр ПК";
+      if (key === "mobile") return "Точний підсумковий кадр телефону";
+      return "Точний підсумковий перегляд";
+    }
+    if (locale === "et") {
+      if (key === "desktop") return "Täpselt lõplik lauaarvuti kaader";
+      if (key === "mobile") return "Täpselt lõplik telefoni kaader";
+      return "Täpselt lõplik eelvaade";
+    }
+    if (key === "desktop") return "Exact final desktop frame";
+    if (key === "mobile") return "Exact final mobile frame";
+    return "Exact final preview";
   };
   const rowHtml = (key, row, index) => {
     const isDefault = index < 0;
@@ -12974,6 +13079,7 @@ function bindAdminVisualCategories(ctx) {
             <button class="btn ghost" type="button" data-dx="4" data-dy="0">></button>
             <button class="btn ghost" type="button" data-dx="0" data-dy="4">v</button>
           </div>
+          <div class="ab-visual-preview-meta"><span class="ab-visual-preview-caption">${esc(previewCaptionText(key))}</span><span class="ab-visual-preview-spec">${esc(previewSpecText(key))}</span></div>
           <div class="ab-visual-preview ${esc(categoryDefs[key].previewClass)} ${image ? "" : "is-empty"}" data-empty="${esc(locale === "ru" ? "Нет изображения" : "No image")}" style="${image ? `background-image:url('${esc(image)}');background-position:${previewFocus.x}% ${previewFocus.y}%;${isBackground ? `background-size:cover;` : ""}` : ""}"></div>
         </div>
       </div>
@@ -13047,6 +13153,34 @@ function bindAdminVisualCategories(ctx) {
     backgroundPreviewMetricsCache.set(safeSource, pending);
     return pending;
   };
+  const getBackgroundPreviewRenderSource = async (key, value = {}) => {
+    const current = normalizeVisualBackground(value);
+    const source = String(current.source_url || current.image_url || "").trim();
+    if (!source) return "";
+    const standard = categoryDefs[key]?.standard || COUNTRY_BACKGROUND_STANDARDS.desktop;
+    const cacheKey = JSON.stringify([
+      key,
+      source,
+      clampPercent(current.focus_x),
+      clampPercent(current.focus_y),
+      standard.width,
+      standard.height,
+    ]);
+    if (backgroundPreviewRenderCache.has(cacheKey)) return backgroundPreviewRenderCache.get(cacheKey);
+    const pending = ensureStrictBackgroundImage(
+      source,
+      standard.width,
+      standard.height,
+      current.focus_x,
+      current.focus_y,
+      standard.maxDataUrlLength,
+    ).catch((error) => {
+      backgroundPreviewRenderCache.delete(cacheKey);
+      throw error;
+    });
+    backgroundPreviewRenderCache.set(cacheKey, pending);
+    return pending;
+  };
   const syncBackgroundPreviewNode = async (preview, key, value = {}) => {
     if (!(preview instanceof HTMLElement)) return;
     const current = normalizeVisualBackground(value);
@@ -13062,12 +13196,14 @@ function bindAdminVisualCategories(ctx) {
     }
     const token = JSON.stringify([key, previewSource, current.focus_x, current.focus_y]);
     preview.dataset.previewToken = token;
-    preview.classList.remove("is-empty");
-    preview.style.backgroundImage = toCssUrlValue(previewSource);
-    preview.style.backgroundPosition = `${previewFocus.x}% ${previewFocus.y}%`;
-    preview.style.backgroundSize = "cover";
     try {
-      const metrics = await getBackgroundPreviewMetrics(previewSource);
+      const renderSource = await getBackgroundPreviewRenderSource(key, current);
+      if (preview.dataset.previewToken !== token) return;
+      preview.classList.remove("is-empty");
+      preview.style.backgroundImage = toCssUrlValue(renderSource);
+      preview.style.backgroundPosition = `${previewFocus.x}% ${previewFocus.y}%`;
+      preview.style.backgroundSize = "cover";
+      const metrics = await getBackgroundPreviewMetrics(renderSource);
       if (preview.dataset.previewToken !== token) return;
       const fallbackViewport = categoryDefs[key]?.standard || { width: 1, height: 1 };
       const frame = computeVisualBackgroundRenderFrame(
