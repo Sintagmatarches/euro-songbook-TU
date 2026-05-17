@@ -1,4 +1,4 @@
-import { json, err } from "../../../_lib/utils.js";
+import { json, err, publicApiError } from "../../../_lib/utils.js";
 import { ensureSchemaAndSeed } from "../../../_lib/schema.js";
 import { requireAuth } from "../../../_lib/db.js";
 import { cancelDraftInvitation, getDraftInvitationForUser } from "../../../_lib/drafts.js";
@@ -19,7 +19,8 @@ export async function onRequestDelete({ env, request, params }) {
     const fresh = await getDraftInvitationForUser(env, { invitationId: inviteId, userId });
     return json({ ok: true, invitation: fresh });
   } catch (cause) {
-    return err(String(cause?.message || "Cancel failed"), 400);
+    console.error("[api/drafts/invitations/:invite_id] cancel failed:", cause?.message || cause);
+    return publicApiError(cause, { fallback: "Cancel failed" });
   }
 }
 

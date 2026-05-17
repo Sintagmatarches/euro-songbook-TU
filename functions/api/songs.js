@@ -3,6 +3,7 @@ import { dbAll, dbGet, getOptionalUserAccess, canViewAdminContent } from "../_li
 import { SONG_DUPLICATE_KEY_SQL } from "../_lib/song-dedupe.js";
 import { ensureSchemaAndSeed } from "../_lib/schema.js";
 import { readRuntimeJsonCache, writeRuntimeJsonCache } from "../_lib/runtime-cache.js";
+import { enforceRateLimit } from "../_lib/rate-limit.js";
 import {
   getCountryFilterValues,
   getPeriodFilterValues,
@@ -226,6 +227,12 @@ export async function onRequestGet({ env, request }) {
   const url = new URL(request.url);
   const q = (url.searchParams.get("q") || "").trim();
   const page = clamp(url.searchParams.get("page"), 1, 9999);
+  const rate = await enforceRateLimit(env, request, {
+    scope: q ? "songs_search" : "songs_browse",
+    limit: q ? 90 : 180,
+    windowSec: 60,
+  });
+  if (rate) return rate;
   try {
     await ensureSchemaAndSeed(env);
     const access = await getOptionalUserAccess(env, request);

@@ -1,4 +1,4 @@
-import { json, err, readJSON } from "../../../_lib/utils.js";
+import { json, err, readJSON, publicApiError } from "../../../_lib/utils.js";
 import { ensureSchemaAndSeed } from "../../../_lib/schema.js";
 import { dbGet } from "../../../_lib/db.js";
 import { createDraftInvitation, getDraftInvitationForUser, requireDraftAccess } from "../../../_lib/drafts.js";
@@ -40,7 +40,8 @@ export async function onRequestPost({ env, request, params }) {
       : null;
     return json({ ok: true, invitation });
   } catch (cause) {
-    return err(String(cause?.message || "Invitation failed"), 400);
+    console.error("[api/drafts/:id/invitations] failed:", cause?.message || cause);
+    return publicApiError(cause, { fallback: "Invitation failed" });
   }
 }
 

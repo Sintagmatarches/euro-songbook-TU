@@ -1,4 +1,4 @@
-import { err } from "./utils.js";
+import { err, enforceSameOrigin } from "./utils.js";
 import { isSafeJwtSecret } from "./security-config.js";
 const PERMISSION_ADMIN_CONTENT_VIEW = "songs.view_admin_content";
 
@@ -26,6 +26,8 @@ export async function dbRun(env, sql, params=[]){
 }
 
 export async function requireAuth(env, req){
+  const csrf = enforceSameOrigin(req);
+  if (csrf instanceof Response) return csrf;
   const { verifyJWT, getAuthToken } = await import("./auth.js");
   const token = getAuthToken(req);
   if(!token) return err("Unauthorized", 401);

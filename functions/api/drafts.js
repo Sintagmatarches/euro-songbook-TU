@@ -1,4 +1,4 @@
-import { json, err, readJSON } from "../_lib/utils.js";
+import { json, err, readJSON, publicApiError } from "../_lib/utils.js";
 import { ensureSchemaAndSeed } from "../_lib/schema.js";
 import { dbAll, requireAuth } from "../_lib/db.js";
 import { createDraft } from "../_lib/drafts.js";
@@ -117,6 +117,7 @@ export async function onRequestPost({ env, request }) {
       lines: [],
     });
   } catch (cause) {
-    return err(cause?.message || "Draft create failed", 400);
+    console.error("[api/drafts] create failed:", cause?.message || cause);
+    return publicApiError(cause, { fallback: "Draft create failed" });
   }
 }

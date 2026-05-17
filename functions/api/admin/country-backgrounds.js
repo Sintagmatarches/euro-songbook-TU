@@ -19,6 +19,8 @@ import {
 const CHUNK_MARKER_PREFIX = "__chunked__:country_background:";
 const CHUNK_SIZE = 350_000;
 const MAX_BACKGROUND_DATA_URL_LENGTH = 420_000;
+const SAFE_IMAGE_DATA_URL_RE = /^data:image\/(?:png|jpe?g|webp|gif|avif);base64,/i;
+const DISALLOWED_IMAGE_PATH_RE = /\.(?:svgz?|html?|js|mjs|zip)(?:$|[?#])/i;
 
 function chunkMarker(field) {
   return `${CHUNK_MARKER_PREFIX}${field}`;
@@ -85,14 +87,15 @@ function clampFocus(value) {
 function normalizeImageValue(value) {
   const raw = String(value || "").trim();
   if (!raw) return "";
-  if (raw.startsWith("/")) return raw;
+  if (raw.startsWith("/")) return DISALLOWED_IMAGE_PATH_RE.test(raw) ? null : raw;
   if (raw.startsWith("data:image/")) {
-    if (!raw.includes(";base64,")) return null;
+    if (!SAFE_IMAGE_DATA_URL_RE.test(raw)) return null;
     return raw;
   }
   try {
     const parsed = new URL(raw);
     if (parsed.protocol !== "http:" && parsed.protocol !== "https:") return null;
+    if (DISALLOWED_IMAGE_PATH_RE.test(parsed.pathname || "")) return null;
     return parsed.toString();
   } catch {
     return null;

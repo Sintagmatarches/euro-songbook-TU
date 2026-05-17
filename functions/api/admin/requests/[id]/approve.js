@@ -1,4 +1,4 @@
-import { json, err, readJSON, makeId } from "../../../../_lib/utils.js";
+import { json, err, readJSON, makeId, internalServerError } from "../../../../_lib/utils.js";
 import { requirePermission, dbGet, dbRun, assertScopeForLang, hasAccessPermission } from "../../../../_lib/db.js";
 import { ensureSchemaAndSeed } from "../../../../_lib/schema.js";
 import { normalizeSongCatalogInput } from "../../../../../shared/song-catalogs.js";
@@ -292,6 +292,7 @@ export async function onRequestPost({ env, request, params }) {
     return json({ ok: true, requestId: id, songId });
   } catch (cause) {
     if (cause instanceof Response) return cause;
-    return err(`Approve failed: ${cause?.message || "unknown error"}`, 500);
+    console.error("[api/admin/requests/:id/approve] failed:", cause?.message || cause);
+    return internalServerError("Approve failed", "request_approve_failed");
   }
 }

@@ -3,6 +3,7 @@ import { render, bind, closePromptDialog } from "./ui/render.js";
 import { router } from "./ui/router.js";
 import { state } from "./ui/state.js";
 import { getInitialLocale, setLocale, t } from "./ui/i18n.js";
+import { sanitizeAppHtml } from "./ui/sanitize.js";
 import { normalizeSongCountry, normalizeSongLanguage } from "./shared/song-catalogs.js";
 
 const btnLogin = document.getElementById("btnLogin");
@@ -2017,7 +2018,7 @@ router.on(async (route) => {
   try {
     const out = await render(route);
     if (renderToken !== activeRouteRenderToken) return;
-    app.innerHTML = out.html;
+    app.innerHTML = sanitizeAppHtml(out.html);
     bind(route, out.ctx);
     if (route?.name === "request") {
       window.scrollTo({ top: 0, left: 0, behavior: "auto" });
@@ -2035,7 +2036,7 @@ router.on(async (route) => {
   } catch (error) {
     if (renderToken !== activeRouteRenderToken) return;
     const msg = error?.message || t("app.unexpectedError");
-    app.innerHTML = `<div class="card"><div class="h1">${escapeHtml(t("common.error"))}</div><div class="sep"></div><div class="muted">${escapeHtml(msg)}</div></div>`;
+    app.innerHTML = sanitizeAppHtml(`<div class="card"><div class="h1">${escapeHtml(t("common.error"))}</div><div class="sep"></div><div class="muted">${escapeHtml(msg)}</div></div>`);
     if (useReducedRouteMotion) {
       clearStagedReveal(app);
       app.classList.remove("page-enter", "page-enter-active");

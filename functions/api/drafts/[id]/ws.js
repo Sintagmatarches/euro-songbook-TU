@@ -1,6 +1,7 @@
 import { ensureSchemaAndSeed } from "../../../_lib/schema.js";
 import { applyDraftOperation, getDraftState, requireDraftAccess } from "../../../_lib/drafts.js";
 import { verifyJWT } from "../../../_lib/auth.js";
+import { normalizePublicApiError } from "../../../_lib/utils.js";
 
 const rooms = globalThis.__songbookDraftRooms || new Map();
 globalThis.__songbookDraftRooms = rooms;
@@ -164,7 +165,9 @@ async function attachRealtimeSocket({ env, draftId, access, ws, clients, onDisco
       const nextState = await getDraftState(env, draftId);
       broadcastClients(clients, { type: "snapshot", draft_id: draftId, state: nextState });
     } catch (cause) {
-      sendSafe(ws, { type: "error", message: String(cause?.message || "Operation failed") });
+      console.error("[api/drafts/:id/ws] operation failed:", cause?.message || cause);
+      const normalized = normalizePublicApiError(cause, { fallback: "Operation failed" });
+      sendSafe(ws, { type: "error", message: normalized.message });
     }
   });
 

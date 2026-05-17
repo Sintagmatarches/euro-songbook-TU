@@ -1,4 +1,4 @@
-import { json, err } from "../../_lib/utils.js";
+import { json, err, internalServerError } from "../../_lib/utils.js";
 import { dbGet, dbAll, getOptionalUserAccess, canViewAdminContent, hasAccessPermission } from "../../_lib/db.js";
 import { ensureSchemaAndSeed } from "../../_lib/schema.js";
 import { sanitizePublicLyricsText } from "../../_lib/public-song-cleanup.js";
@@ -150,6 +150,7 @@ export async function onRequestGet({ env, request, params }){
     });
   } catch (cause) {
     if (cause instanceof Response) return cause;
-    return err(`Song fetch failed: ${cause?.message || "unknown error"}`, 500);
+    console.error("[api/songs/:id] fetch failed:", cause?.message || cause);
+    return internalServerError("Song fetch failed", "song_fetch_failed");
   }
 }

@@ -1,4 +1,4 @@
-import { err, json, readJSON } from "../../_lib/utils.js";
+import { err, json, readJSON, publicApiError } from "../../_lib/utils.js";
 import { ensureSchemaAndSeed } from "../../_lib/schema.js";
 import { applyDraftOperation, requireDraftAccess, getDraftState, listDraftPendingInvitations } from "../../_lib/drafts.js";
 import { dbGet } from "../../_lib/db.js";
@@ -49,6 +49,7 @@ export async function onRequestPost({ env, request, params }) {
     const state = await getDraftState(env, draftId);
     return json({ ...out, state });
   } catch (cause) {
-    return err(cause?.message || "Draft operation failed", 400);
+    console.error("[api/drafts/:id] operation failed:", cause?.message || cause);
+    return publicApiError(cause, { fallback: "Draft operation failed" });
   }
 }

@@ -1,4 +1,4 @@
-import { json, err, readJSON } from "../../../_lib/utils.js";
+import { json, err, readJSON, publicApiError } from "../../../_lib/utils.js";
 import { ensureSchemaAndSeed } from "../../../_lib/schema.js";
 import { markDraftPublished, publishDraftToSong, requireDraftAccess } from "../../../_lib/drafts.js";
 
@@ -21,6 +21,7 @@ export async function onRequestPost({ env, request, params }) {
     const out = await publishDraftToSong(env, { draftId, userId: access.userId });
     return json({ ok: true, draft_id: draftId, song_id: out.songId });
   } catch (cause) {
-    return err(cause?.message || "Publish failed", 400);
+    console.error("[api/drafts/:id/publish] failed:", cause?.message || cause);
+    return publicApiError(cause, { fallback: "Publish failed" });
   }
 }

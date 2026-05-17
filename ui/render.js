@@ -1,6 +1,8 @@
 import { api } from "./api.js";
 import { state } from "./state.js";
 import { t } from "./i18n.js";
+import { decodeHtmlEntitiesStrict, normalizeSafeExternalUrl } from "../shared/security.js";
+import { sanitizeAppHtml, sanitizeLyricsHtml } from "./sanitize.js";
 import {
   countrySupportsPeriods,
   getCompactCountryLabel,
@@ -204,6 +206,18 @@ function escDisplayText(text = "") {
   return wrapLegacyGlyphMarkup(esc(text));
 }
 const qs = (id) => document.getElementById(id);
+function setSanitizedNodeHtml(node, html, sanitizer = sanitizeAppHtml) {
+  if (!(node instanceof HTMLElement)) return;
+  node.innerHTML = sanitizer(String(html || ""));
+}
+
+function appendSanitizedNodeHtml(node, html, sanitizer = sanitizeAppHtml) {
+  if (!(node instanceof HTMLElement)) return;
+  const template = document.createElement("template");
+  template.innerHTML = sanitizer(String(html || ""));
+  node.append(template.content.cloneNode(true));
+}
+
 const uiLocale = () => (state.locale || "ru");
 function formatDateTime(value) {
   if (!value) return "";
@@ -1446,15 +1460,7 @@ function listenHostText(url) {
 }
 
 function safeExternalUrl(url) {
-  const raw = String(url || "").trim();
-  if (!raw) return "";
-  try {
-    const parsed = new URL(raw);
-    if (parsed.protocol !== "http:" && parsed.protocol !== "https:") return "";
-    return parsed.toString();
-  } catch {
-    return "";
-  }
+  return normalizeSafeExternalUrl(url) || "";
 }
 
 function summarizeListenHosts(links = []) {
@@ -4679,7 +4685,6 @@ function splitLyricsLines(input) {
     .split("\n");
 }
 
-let lyricsHtmlEntityDecoder = null;
 const LYRICS_VARIANT_HEADING_RE = /^(?:вариант|version|variant|versioon|versija|версія)\s*(?:[ivxlcdm]+|\d+)\s*[:.)-]*$/iu;
 const LYRICS_SECTION_HEADING_RE = /^(?:куплет|припев|приспів|приспев|chorus|verse|bridge|intro|outro|рефрен|refrain|refrään)\s*(?:[ivxlcdm]+|\d+)?\s*[:.)-]*$/iu;
 const LYRICS_ARCHIVE_REF_RE = /(?:^|[\s(])(?:№\s*\d+|[ФF]\.\s*[-\w]+|Оп\.\s*\d+|Д\.\s*\d+|Л\.\s*[\d-]+)(?:$|[\s).,;:])/iu;
@@ -4690,24 +4695,7 @@ const LYRICS_LOCATION_REF_RE = /^(?:г\.|город|ст\.|станица|сел
 function decodeLyricsHtmlEntities(value = "") {
   const input = String(value || "");
   if (!input || !/[&]/.test(input)) return input;
-  if (typeof document !== "undefined") {
-    lyricsHtmlEntityDecoder = lyricsHtmlEntityDecoder || document.createElement("textarea");
-    lyricsHtmlEntityDecoder.innerHTML = input;
-    return lyricsHtmlEntityDecoder.value;
-  }
-  return input
-    .replace(/&nbsp;/gi, " ")
-    .replace(/&laquo;/gi, "«")
-    .replace(/&raquo;/gi, "»")
-    .replace(/&ldquo;/gi, "“")
-    .replace(/&rdquo;/gi, "”")
-    .replace(/&lsquo;/gi, "‘")
-    .replace(/&rsquo;/gi, "’")
-    .replace(/&quot;/gi, "\"")
-    .replace(/&#171;/g, "«")
-    .replace(/&#187;/g, "»")
-    .replace(/&#34;/g, "\"")
-    .replace(/&#39;/g, "'");
+  return decodeHtmlEntitiesStrict(input);
 }
 
 function normalizeLyricsDisplayLine(value = "") {
@@ -15021,7 +15009,7 @@ export function bind(route, ctx) {
         });
         window.setTimeout(() => {
           if (!document.body.contains(progressiveFeed)) return;
-          progressiveFeed.innerHTML = cardsHtml;
+          setSanitizedNodeHtml(progressiveFeed, cardsHtml);
           applyGlobalStagedReveal(progressiveFeed);
           progressiveLoadingScreen?.classList.add("hidden");
           window.requestAnimationFrame(() => {
@@ -15201,7 +15189,7 @@ export function bind(route, ctx) {
         lyrics_meta: lyricsMeta || null,
       });
       if (lyricsMain) {
-        lyricsMain.innerHTML = rendered.html;
+        setSanitizedNodeHtml(lyricsMain, rendered.html, sanitizeLyricsHtml);
         setupSongConfidenceMenus(lyricsMain);
       }
       promptSong.lyrics = rendered.expanded || String(lyricsValue || "");
@@ -15309,24 +15297,54 @@ export function bind(route, ctx) {
         commentCount.textContent = songCommentsCountText(commentItems.length);
       }
       if (!commentItems.length) {
-        commentList.innerHTML = `<div class="muted song-comments-empty">${esc(songCommentsEmptyText())}</div>`;
+        const emptyNode = document.createElement("div");
+        emptyNode.className = "muted song-comments-empty";
+        emptyNode.textContent = songCommentsEmptyText();
+        commentList.replaceChildren(emptyNode);
         return;
       }
-      commentList.innerHTML = commentItems.map((item) => `
-        <article class="song-comment-item" data-comment-id="${esc(item.id || "")}">
-          <div class="song-comment-meta">
-            <strong>${esc(String(item.author_name || "-"))}</strong>
-            <span>${esc(String(item.created_at || ""))}</span>
-          </div>
-          <div class="song-comment-body">${esc(String(item.body || ""))}</div>
-          ${(canEditCommentItem(item) || canDeleteCommentItem(item)) ? `
-            <div class="song-comment-actions">
-              ${canEditCommentItem(item) ? `<button class="btn ghost song-comment-edit" type="button" data-comment-id="${esc(item.id || "")}">${esc(songCommentEditLabel())}</button>` : ``}
-              ${canDeleteCommentItem(item) ? `<button class="btn ghost song-comment-delete" type="button" data-comment-id="${esc(item.id || "")}">${esc(songCommentDeleteLabel())}</button>` : ``}
-            </div>
-          ` : ``}
-        </article>
-      `).join("");
+      const nodes = commentItems.map((item) => {
+        const article = document.createElement("article");
+        article.className = "song-comment-item";
+        article.dataset.commentId = String(item?.id || "");
+
+        const meta = document.createElement("div");
+        meta.className = "song-comment-meta";
+        const author = document.createElement("strong");
+        author.textContent = String(item?.author_name || "-");
+        const createdAt = document.createElement("span");
+        createdAt.textContent = String(item?.created_at || "");
+        meta.append(author, createdAt);
+
+        const body = document.createElement("div");
+        body.className = "song-comment-body";
+        body.textContent = String(item?.body || "");
+        article.append(meta, body);
+
+        if (canEditCommentItem(item) || canDeleteCommentItem(item)) {
+          const actions = document.createElement("div");
+          actions.className = "song-comment-actions";
+          if (canEditCommentItem(item)) {
+            const editButton = document.createElement("button");
+            editButton.className = "btn ghost song-comment-edit";
+            editButton.type = "button";
+            editButton.dataset.commentId = String(item?.id || "");
+            editButton.textContent = songCommentEditLabel();
+            actions.appendChild(editButton);
+          }
+          if (canDeleteCommentItem(item)) {
+            const deleteButton = document.createElement("button");
+            deleteButton.className = "btn ghost song-comment-delete";
+            deleteButton.type = "button";
+            deleteButton.dataset.commentId = String(item?.id || "");
+            deleteButton.textContent = songCommentDeleteLabel();
+            actions.appendChild(deleteButton);
+          }
+          article.appendChild(actions);
+        }
+        return article;
+      });
+      commentList.replaceChildren(...nodes);
     };
     renderCommentItems();
     commentList?.addEventListener("click", async (event) => {
@@ -15342,15 +15360,36 @@ export function bind(route, ctx) {
         const actionsNode = card?.querySelector(".song-comment-actions");
         if (!(card instanceof HTMLElement) || !(bodyNode instanceof HTMLElement) || !(actionsNode instanceof HTMLElement)) return;
         const currentText = String(item.body || "");
-        bodyNode.innerHTML = `
-          <textarea class="textarea song-comment-edit-textarea" rows="4">${esc(currentText)}</textarea>
-        `;
-        actionsNode.innerHTML = `
-          <button class="btn primary song-comment-save" type="button" data-comment-id="${esc(commentId)}">${esc(songCommentSaveLabel())}</button>
-          <button class="btn ghost song-comment-cancel" type="button" data-comment-id="${esc(commentId)}">${esc(songCommentCancelLabel())}</button>
-          ${canDeleteCommentItem(item) ? `<button class="btn ghost song-comment-delete" type="button" data-comment-id="${esc(commentId)}">${esc(songCommentDeleteLabel())}</button>` : ``}
-        `;
-        const textarea = bodyNode.querySelector(".song-comment-edit-textarea");
+        const textarea = document.createElement("textarea");
+        textarea.className = "textarea song-comment-edit-textarea";
+        textarea.rows = 4;
+        textarea.value = currentText;
+        bodyNode.replaceChildren(textarea);
+
+        const actionNodes = [];
+        const saveButtonNode = document.createElement("button");
+        saveButtonNode.className = "btn primary song-comment-save";
+        saveButtonNode.type = "button";
+        saveButtonNode.dataset.commentId = commentId;
+        saveButtonNode.textContent = songCommentSaveLabel();
+        actionNodes.push(saveButtonNode);
+
+        const cancelButtonNode = document.createElement("button");
+        cancelButtonNode.className = "btn ghost song-comment-cancel";
+        cancelButtonNode.type = "button";
+        cancelButtonNode.dataset.commentId = commentId;
+        cancelButtonNode.textContent = songCommentCancelLabel();
+        actionNodes.push(cancelButtonNode);
+
+        if (canDeleteCommentItem(item)) {
+          const deleteButtonNode = document.createElement("button");
+          deleteButtonNode.className = "btn ghost song-comment-delete";
+          deleteButtonNode.type = "button";
+          deleteButtonNode.dataset.commentId = commentId;
+          deleteButtonNode.textContent = songCommentDeleteLabel();
+          actionNodes.push(deleteButtonNode);
+        }
+        actionsNode.replaceChildren(...actionNodes);
         if (textarea instanceof HTMLTextAreaElement) {
           autoGrowTextarea(textarea, { preserveViewport: false, extraBottomSpace: 0 });
           textarea.focus();
@@ -15548,8 +15587,8 @@ export function bind(route, ctx) {
         versionListenTitle1.textContent = formatVersionHeading(leftVersion, 0);
         const rightIndex = compareCandidates.findIndex((version) => version.id === rightVersion.id);
         versionListenTitle2.textContent = formatVersionHeading(rightVersion, rightIndex >= 0 ? rightIndex + 1 : 1);
-        versionListenLinks1.innerHTML = renderVersionListenLinks(leftItems);
-        versionListenLinks2.innerHTML = renderVersionListenLinks(rightItems);
+        setSanitizedNodeHtml(versionListenLinks1, renderVersionListenLinks(leftItems));
+        setSanitizedNodeHtml(versionListenLinks2, renderVersionListenLinks(rightItems));
       };
       syncVersionListenPanel();
       const compareWrap = qs("songVersionCompare");
@@ -15902,8 +15941,8 @@ export function bind(route, ctx) {
           const rightVersion = rightIndex >= 0 ? compareOptions[rightIndex] : compareOptions[0] || null;
           if (leftVersion) setComparePickerDisplay(compareMenuBySide.get("left"), leftVersion, leftIndex);
           if (rightVersion) setComparePickerDisplay(compareMenuBySide.get("right"), rightVersion, rightIndex);
-          comparePickLeftMenu.innerHTML = renderCompareMenuOptions("left", selectedCompareLeftId);
-          comparePickRightMenu.innerHTML = renderCompareMenuOptions("right", selectedCompareRightId);
+          setSanitizedNodeHtml(comparePickLeftMenu, renderCompareMenuOptions("left", selectedCompareLeftId));
+          setSanitizedNodeHtml(comparePickRightMenu, renderCompareMenuOptions("right", selectedCompareRightId));
         };
 
         renderCompare = () => {
@@ -15955,7 +15994,7 @@ export function bind(route, ctx) {
             `;
           void leftIndex;
           void rightIndex;
-          compareDiff.innerHTML = compareRowsHtml;
+          setSanitizedNodeHtml(compareDiff, compareRowsHtml);
         };
 
         syncCompareToggle = () => {
@@ -16095,7 +16134,7 @@ export function bind(route, ctx) {
       qs("ss_addLink")?.addEventListener("click", () => {
         const activeVersionId = activeVersionIdFromContainer(qs("ss_versions"));
         const versionOptions = versionRowSummaries(qs("ss_versions"));
-        qs("ss_links").insertAdjacentHTML("beforeend", songInlineLinkRow({ version_id: activeVersionId }, versionOptions));
+        appendSanitizedNodeHtml(qs("ss_links"), songInlineLinkRow({ version_id: activeVersionId }, versionOptions));
         applyGlobalStagedReveal(qs("ss_links"));
         wireDynamicRows(toolsPanel);
         wireAutoGrowTextareas(toolsPanel);
@@ -16103,7 +16142,7 @@ export function bind(route, ctx) {
         scheduleSongDraftSave();
       });
       qs("ss_addVersion")?.addEventListener("click", () => {
-        qs("ss_versions").insertAdjacentHTML("beforeend", songInlineVersionRow());
+        appendSanitizedNodeHtml(qs("ss_versions"), songInlineVersionRow());
         applyGlobalStagedReveal(qs("ss_versions"));
         const lastRow = Array.from(qs("ss_versions")?.querySelectorAll(".ss_version_row") || []).pop();
         if (lastRow instanceof HTMLElement) {
@@ -16302,13 +16341,13 @@ export function bind(route, ctx) {
     const renderCollaborators = () => {
       const listNode = qs("draft_collaborators_list");
       if (!listNode) return;
-      listNode.innerHTML = draftCollaboratorsUI(draftPayload);
+      setSanitizedNodeHtml(listNode, draftCollaboratorsUI(draftPayload));
     };
     const renderLines = () => {
       const listNode = qs("draft_lines_list");
       if (!listNode) return;
       const lines = Array.isArray(draftPayload?.lines) ? draftPayload.lines : [];
-      listNode.innerHTML = draftLineRowsUI(lines);
+      setSanitizedNodeHtml(listNode, draftLineRowsUI(lines));
     };
     const setPresence = (text) => {
       const node = qs("draft_presence");
@@ -17116,7 +17155,7 @@ export function bind(route, ctx) {
       };
       const requestAddPageVariant = ({ lyrics = "", activate = true } = {}) => {
         if (!(rqVersionsRoot instanceof HTMLElement)) return "";
-        rqVersionsRoot.insertAdjacentHTML("beforeend", songInlineVersionRow({ lyrics: String(lyrics || "") }));
+        appendSanitizedNodeHtml(rqVersionsRoot, songInlineVersionRow({ lyrics: String(lyrics || "") }));
         applyGlobalStagedReveal(rqVersionsRoot);
         wireDynamicRows(form);
         wireAutoGrowTextareas(form);
@@ -17214,7 +17253,7 @@ export function bind(route, ctx) {
           : null;
         const activeVersionId = activeRowNode?.querySelector(".ss_version_id")?.value || "";
         const versionOptions = versionRowSummaries(rqVersionsRoot);
-        qs("rq_links")?.insertAdjacentHTML("beforeend", songInlineLinkRow({ version_id: activeVersionId }, versionOptions));
+        appendSanitizedNodeHtml(qs("rq_links"), songInlineLinkRow({ version_id: activeVersionId }, versionOptions));
         applyGlobalStagedReveal(qs("rq_links"));
         wireDynamicRows(form);
         wireAutoGrowTextareas(form);
@@ -17385,9 +17424,9 @@ export function bind(route, ctx) {
           positionPopover();
           return;
         }
-        lineActionsPopoverNode.innerHTML = draftLinePopoverUI(line, index, {
+        setSanitizedNodeHtml(lineActionsPopoverNode, draftLinePopoverUI(line, index, {
           newVariantText: popoverNewVariantText.get(String(line?.id || "")) || "",
-        });
+        }));
         if (!isAnimatedElementOpen(lineActionsPopoverNode)) {
           openAnimatedElement(lineActionsPopoverNode);
         } else {
@@ -18557,7 +18596,7 @@ export function bind(route, ctx) {
     const acAddPageVariant = ({ lyrics = "", activate = true } = {}) => {
       if (!(acVersionsRoot instanceof HTMLElement)) return "";
       const nextLyrics = String(lyrics || "");
-      acVersionsRoot.insertAdjacentHTML("beforeend", songInlineVersionRow({ lyrics: nextLyrics }));
+      appendSanitizedNodeHtml(acVersionsRoot, songInlineVersionRow({ lyrics: nextLyrics }));
       applyGlobalStagedReveal(acVersionsRoot);
       wireDynamicRows(editorRoot);
       wireAutoGrowTextareas(editorRoot);
@@ -18686,7 +18725,7 @@ export function bind(route, ctx) {
         version_id: normalizeVersionIdentifier(initial.version_id ?? initial.versionId) || (activeRowId ? activeVersionId : ""),
       };
       acOpenLinksDetails();
-      qs("ac_links")?.insertAdjacentHTML("beforeend", songInlineLinkRow(nextInitial, versionOptions));
+      appendSanitizedNodeHtml(qs("ac_links"), songInlineLinkRow(nextInitial, versionOptions));
       applyGlobalStagedReveal(qs("ac_links"));
       wireDynamicRows(editorRoot);
       wireAutoGrowTextareas(editorRoot);
@@ -18890,7 +18929,7 @@ export function bind(route, ctx) {
       if (addWrap) addWrap.classList.remove("hidden");
       if (collabNicknameInput) collabNicknameInput.disabled = false;
       if (collabAddBtn) collabAddBtn.disabled = false;
-      collabCollaboratorsNode.innerHTML = draftCollaboratorsUI(inlineDraftPayload || {});
+      setSanitizedNodeHtml(collabCollaboratorsNode, draftCollaboratorsUI(inlineDraftPayload || {}));
       const ownerName = String(
         inlineDraftPayload?.owner?.nickname
           || inlineDraftPayload?.owner?.email
@@ -19102,9 +19141,9 @@ export function bind(route, ctx) {
         inlinePositionPopover();
         return;
       }
-      lineActionsPopoverNode.innerHTML = draftLinePopoverUI(selectedLine, selectedIndex, {
+      setSanitizedNodeHtml(lineActionsPopoverNode, draftLinePopoverUI(selectedLine, selectedIndex, {
         newVariantText: inlinePopoverNewVariantText.get(String(selectedLine?.id || "")) || "",
-      });
+      }));
       if (!isAnimatedElementOpen(lineActionsPopoverNode)) {
         openAnimatedElement(lineActionsPopoverNode);
       } else {
@@ -21645,3 +21684,8 @@ export function bind(route, ctx) {
     return;
   }
 }
+
+
+
+
+

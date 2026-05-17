@@ -1,4 +1,4 @@
-import { json, err, readJSON } from "../../../_lib/utils.js";
+import { json, err, readJSON, internalServerError } from "../../../_lib/utils.js";
 import { requirePermission, dbGet, assertScopeForLang, canViewAdminContent } from "../../../_lib/db.js";
 import { ensureSchemaAndSeed } from "../../../_lib/schema.js";
 import { normalizeSongCatalogInput } from "../../../../shared/song-catalogs.js";
@@ -82,7 +82,8 @@ export async function onRequestGet({ env, request, params }){
     });
   } catch (cause) {
     if (cause instanceof Response) return cause;
-    return err(`Admin song fetch failed: ${cause?.message || "unknown error"}`, 500);
+    console.error("[api/admin/songs/:id] fetch failed:", cause?.message || cause);
+    return internalServerError("Admin song fetch failed", "admin_song_fetch_failed");
   }
 }
 

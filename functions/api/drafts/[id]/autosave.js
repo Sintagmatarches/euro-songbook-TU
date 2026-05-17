@@ -1,4 +1,4 @@
-import { json, err, readJSON } from "../../../_lib/utils.js";
+import { json, err, readJSON, publicApiError } from "../../../_lib/utils.js";
 import { ensureSchemaAndSeed } from "../../../_lib/schema.js";
 import { autosaveDraftFromEditor, requireDraftAccess } from "../../../_lib/drafts.js";
 
@@ -21,7 +21,8 @@ export async function onRequestPost({ env, request, params }) {
     });
     return json({ ok: true, draft_id: draftId, changed: !!out?.changed, version: Number(out?.version || 0) });
   } catch (cause) {
-    return err(String(cause?.message || "Autosave failed"), 400);
+    console.error("[api/drafts/:id/autosave] failed:", cause?.message || cause);
+    return publicApiError(cause, { fallback: "Autosave failed" });
   }
 }
 

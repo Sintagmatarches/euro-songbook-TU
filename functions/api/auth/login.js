@@ -1,4 +1,4 @@
-import { json, err, readJSON } from "../../_lib/utils.js";
+import { json, err, readJSON, enforceSameOrigin } from "../../_lib/utils.js";
 import { dbGet } from "../../_lib/db.js";
 import { signJWT, buildAuthCookie } from "../../_lib/auth.js";
 import { verifyPassword } from "../../_lib/password.js";
@@ -19,6 +19,8 @@ function normalizeNicknameCandidate(value) {
 }
 
 export async function onRequestPost({ env, request }) {
+  const csrf = enforceSameOrigin(request);
+  if (csrf instanceof Response) return csrf;
   try {
     await ensureSchemaAndSeed(env);
   } catch (schemaError) {

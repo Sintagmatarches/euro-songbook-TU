@@ -1,4 +1,4 @@
-import { json, err, readJSON } from "../../../../_lib/utils.js";
+import { json, err, readJSON, internalServerError } from "../../../../_lib/utils.js";
 import { requirePermission, assertScopeForLang, canViewAdminContent } from "../../../../_lib/db.js";
 import { ensureSchemaAndSeed } from "../../../../_lib/schema.js";
 import { deleteSongSearchIndex, syncSongSearchIndex } from "../../../../_lib/song-search.mjs";
@@ -67,6 +67,7 @@ export async function onRequestPost({ env, request, params }) {
     });
   } catch (cause) {
     if (cause instanceof Response) return cause;
-    return err(`Song restore failed: ${cause?.message || "unknown error"}`, 500);
+    console.error("[api/admin/songs/:id/restore] failed:", cause?.message || cause);
+    return internalServerError("Song restore failed", "song_restore_failed");
   }
 }

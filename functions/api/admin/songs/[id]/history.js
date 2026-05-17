@@ -1,4 +1,4 @@
-import { json, err } from "../../../../_lib/utils.js";
+import { json, err, internalServerError } from "../../../../_lib/utils.js";
 import { requirePermission, assertScopeForLang, canViewAdminContent } from "../../../../_lib/db.js";
 import { ensureSchemaAndSeed } from "../../../../_lib/schema.js";
 import {
@@ -62,6 +62,7 @@ export async function onRequestGet({ env, request, params }) {
     });
   } catch (cause) {
     if (cause instanceof Response) return cause;
-    return err(`Song history failed: ${cause?.message || "unknown error"}`, 500);
+    console.error("[api/admin/songs/:id/history] failed:", cause?.message || cause);
+    return internalServerError("Song history failed", "song_history_failed");
   }
 }

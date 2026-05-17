@@ -1,4 +1,4 @@
-import { json, err, readJSON, makeId } from "../_lib/utils.js";
+import { json, err, readJSON, makeId, enforceSameOrigin } from "../_lib/utils.js";
 import { dbGet, dbRun } from "../_lib/db.js";
 import { hashPassword } from "../_lib/password.js";
 import { signJWT } from "../_lib/auth.js";
@@ -7,6 +7,8 @@ import { getUsersTableProfile, buildUserInsertStatement } from "../_lib/user-pas
 import { isSafeJwtSecret, isSafeSetupToken } from "../_lib/security-config.js";
 
 export async function onRequestPost({ env, request }) {
+  const csrf = enforceSameOrigin(request);
+  if (csrf instanceof Response) return csrf;
   try {
     const setupEnabled = String(env.ENABLE_SETUP || "").trim() === "1";
     if (!setupEnabled) return err("Setup endpoint disabled", 404);

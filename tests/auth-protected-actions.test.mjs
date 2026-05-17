@@ -220,6 +220,9 @@ test("register creates a user and sets auth cookies", async () => {
   assert.ok(String(state.users[0].pass_hash || "").startsWith("pbkdf2$"));
   const setCookie = response.headers.get("set-cookie") || "";
   assert.match(setCookie, /songbook_session=/);
+  assert.match(setCookie, /HttpOnly/i);
+  assert.match(setCookie, /SameSite=Lax/i);
+  assert.match(setCookie, /Secure/i);
   assert.doesNotMatch(setCookie, /songbook_session_hint=1/);
 });
 
@@ -296,6 +299,11 @@ test("login accepts normalized nickname input for legacy admin-style accounts", 
   });
 
   assert.equal(response.status, 200);
+  const setCookie = response.headers.get("set-cookie") || "";
+  assert.match(setCookie, /songbook_session=/);
+  assert.match(setCookie, /HttpOnly/i);
+  assert.match(setCookie, /SameSite=Lax/i);
+  assert.match(setCookie, /Secure/i);
   const body = await readJson(response);
   assert.equal(body.nickname, "legacy_admin");
 });
